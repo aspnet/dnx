@@ -209,21 +209,12 @@ namespace Microsoft.Dnx.Runtime
         {
             var sw = Stopwatch.StartNew();
 
-            foreach (var groupByResolver in _usedItems.GroupBy(x => x.Value.Resolver))
+            foreach (var item in _usedItems.Values)
             {
-                var resolver = groupByResolver.Key;
-
-                var resolverLibraries = new List<LibraryDescription>();
-                foreach(var entry in groupByResolver)
-                {
-                    var library = entry.Value.Description;
-                    library.Dependencies = library.Dependencies.SelectMany(CorrectDependencyVersion).ToList();
-                    library.Framework = library.Framework ?? frameworkName;
-                    resolverLibraries.Add(library);
-                }
-
-                resolver.Initialize(resolverLibraries, frameworkName, runtimeIdentifier: null);
-                libraries.AddRange(resolverLibraries);
+                var library = item.Description;
+                library.Dependencies = library.Dependencies.SelectMany(CorrectDependencyVersion).ToList();
+                library.Framework = library.Framework ?? frameworkName; 
+                libraries.Add(library);
             }
 
             sw.Stop();

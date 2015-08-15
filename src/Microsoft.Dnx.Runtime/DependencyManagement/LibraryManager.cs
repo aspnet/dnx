@@ -84,6 +84,12 @@ namespace Microsoft.Dnx.Runtime
             return _graph.Values.Select(l => l.Item1);
         }
 
+        public IEnumerable<LibraryDescription> GetLibraryDescriptions()
+        {
+            EnsureInitialized();
+            return _graph.Values.Select(l => l.Item2);
+        }
+
         private void EnsureInitialized()
         {
             lock (_initializeLock)

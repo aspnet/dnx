@@ -16,10 +16,7 @@ namespace Microsoft.Dnx.Runtime
         public ProjectReferenceDependencyProvider(IProjectResolver projectResolver)
         {
             _projectResolver = projectResolver;
-            Dependencies = Enumerable.Empty<LibraryDescription>();
         }
-
-        public IEnumerable<LibraryDescription> Dependencies { get; private set; }
 
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
@@ -91,11 +88,6 @@ namespace Microsoft.Dnx.Runtime
                 loadableAssemblies,
                 targetFrameworkInfo.FrameworkName,
                 !unresolved);
-        }
-
-        public virtual void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
-        {
-            Dependencies = dependencies;
         }
     }
 }

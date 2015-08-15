@@ -10,28 +10,28 @@ namespace Microsoft.Dnx.Tooling.Publish
 {
     public class PublishPackage
     {
-        private readonly LibraryDescription _libraryDescription;
+        private readonly PackageDescription _package;
 
-        public PublishPackage(LibraryDescription libraryDescription)
+        public PublishPackage(PackageDescription package)
         {
-            _libraryDescription = libraryDescription;
+            _package = package;
         }
 
-        public LibraryIdentity Library { get { return _libraryDescription.Identity; } }
+        public LibraryIdentity Library { get { return _package.Identity; } }
 
         public string TargetPath { get; private set; }
 
         public async Task Emit(PublishRoot root)
         {
-            root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _libraryDescription.Type, Library);
+            root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _package.Type, Library);
 
             var packagePathResolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
-            var srcNupkgPath = packagePathResolver.GetPackageFilePath(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version);
+            var srcNupkgPath = packagePathResolver.GetPackageFilePath(_package.Identity.Name, _package.Identity.Version);
 
             var options = new Packages.AddOptions
             {
                 NuGetPackage = srcNupkgPath,
-                PackageHashFilePath = Path.ChangeExtension(srcNupkgPath, NuGet.Constants.HashFileExtension),
+                PackageHash = _package.Library.Sha512,
                 SourcePackages = root.TargetPackagesPath,
             };
 

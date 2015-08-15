@@ -12,8 +12,6 @@ namespace Microsoft.Dnx.Runtime
 {
     public class ReferenceAssemblyDependencyResolver : IDependencyProvider
     {
-        private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
         public ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver frameworkReferenceResolver)
         {
             FrameworkResolver = frameworkReferenceResolver;
@@ -56,8 +54,6 @@ namespace Microsoft.Dnx.Runtime
 
             if (version == null || version.Version == assemblyVersion)
             {
-                _resolvedPaths[libraryRange.Name] = path;
-
                 return new LibraryDescription(
                     libraryRange,
                     new LibraryIdentity(libraryRange.Name, new SemanticVersion(assemblyVersion), isGacOrFrameworkReference: true),
@@ -69,10 +65,6 @@ namespace Microsoft.Dnx.Runtime
             }
 
             return null;
-        }
-
-        public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
-        {
         }
     }
 }

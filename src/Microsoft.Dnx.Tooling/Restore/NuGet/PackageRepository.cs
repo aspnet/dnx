@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Dnx.Runtime;
 
 namespace NuGet
 {
@@ -14,10 +13,9 @@ namespace NuGet
         private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache;
         private readonly IFileSystem _repositoryRoot;
         private readonly bool _checkPackageIdCase;
-        private ILookup<string, LockFilePackageLibrary> _lockFileLibraries;
 
         public PackageRepository(string path, bool caseSensitivePackagesName = false)
-            : this(new PhysicalFileSystem(path), caseSensitivePackagesName)
+            : this(new PhysicalFileSystem(path))
         {
         }
 
@@ -53,13 +51,6 @@ namespace NuGet
             return _cache;
         }
 
-        public void ApplyLockFile(LockFile lockFile)
-        {
-            var stringComparer = _checkPackageIdCase ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase;
-            _lockFileLibraries = lockFile.PackageLibraries
-                                         .ToLookup(l => l.Name, stringComparer);
-        }
-
         public IEnumerable<PackageInfo> FindPackagesById(string packageId)
         {
             if (string.IsNullOrEmpty(packageId))
@@ -71,23 +62,6 @@ namespace NuGet
             return _cache.GetOrAdd(packageId, id =>
             {
                 var packages = new List<PackageInfo>();
-
-                if (_lockFileLibraries != null)
-                {
-                    foreach (var lockFileLibrary in _lockFileLibraries[packageId])
-                    {
-                        packages.Add(new PackageInfo(
-                            _repositoryRoot,
-                            lockFileLibrary.Name,
-                            lockFileLibrary.Version,
-                            Path.Combine(
-                                lockFileLibrary.Name,
-                                lockFileLibrary.Version.ToString()),
-                            lockFileLibrary));
-                    }
-
-                    return packages;
-                }
 
                 foreach (var versionDir in _repositoryRoot.GetDirectories(id))
                 {

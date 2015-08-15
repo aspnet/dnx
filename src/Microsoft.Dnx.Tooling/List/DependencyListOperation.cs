@@ -68,9 +68,6 @@ namespace Microsoft.Dnx.Tooling.List
 
         private ApplicationHostContext CreateApplicationHostContext()
         {
-            var accessor = new CacheContextAccessor();
-            var cache = new Cache(accessor);
-
             var hostContext = new ApplicationHostContext(
                 hostServices: null,
                 projectDirectory: _options.Project.ProjectDirectory,

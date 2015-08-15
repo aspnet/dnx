@@ -38,12 +38,11 @@ namespace Microsoft.Dnx.Runtime
             ProjectGraphProvider = new ProjectGraphProvider(hostServices);
             _serviceProvider = new ServiceProvider(hostServices);
 
-            PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
+            PackagesDirectory = packagesDirectory ?? PackageDependencyProvider.ResolveRepositoryPath(RootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
-            NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory));
             var gacDependencyResolver = new GacDependencyResolver();
-            ProjectDependencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
+            var projectDependencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
 
             var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
@@ -76,11 +75,11 @@ namespace Microsoft.Dnx.Runtime
 
                 if (validLockFile || skipLockFileValidation)
                 {
-                    NuGetDependencyProvider.ApplyLockFile(_lockFile);
+                    var nugetDependencyProvider = new PackageDependencyProvider(PackagesDirectory, _lockFile);
 
                     DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                        ProjectDependencyProvider,
-                        NuGetDependencyProvider,
+                        projectDependencyProvider,
+                        nugetDependencyProvider,
                         referenceAssemblyDependencyResolver,
                         gacDependencyResolver,
                         unresolvedDependencyProvider
@@ -93,7 +92,7 @@ namespace Microsoft.Dnx.Runtime
                 // We don't add NuGetDependencyProvider to DependencyWalker
                 // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
                 DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                    ProjectDependencyProvider,
+                    projectDependencyProvider,
                     referenceAssemblyDependencyResolver,
                     gacDependencyResolver,
                     unresolvedDependencyProvider
@@ -121,9 +120,6 @@ namespace Microsoft.Dnx.Runtime
             _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(ProjectResolver));
 
             // Not exposed to the application layer
-            _serviceProvider.Add(typeof(IProjectResolver), ProjectResolver, includeInManifest: false);
-            _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider, includeInManifest: false);
-            _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDependencyProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory, includeInManifest: false);
         }
 
@@ -154,10 +150,6 @@ namespace Microsoft.Dnx.Runtime
 
         public IAssemblyLoadContextFactory AssemblyLoadContextFactory { get; private set; }
 
-        public NuGetDependencyResolver NuGetDependencyProvider { get; private set; }
-
-        public ProjectReferenceDependencyProvider ProjectDependencyProvider { get; private set; }
-
         public IProjectResolver ProjectResolver { get; private set; }
 
         public LibraryManager LibraryManager { get; private set; }
@@ -175,6 +167,7 @@ namespace Microsoft.Dnx.Runtime
         public string ProjectDirectory { get; private set; }
 
         public string PackagesDirectory { get; private set; }
+
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
 
         public IEnumerable<DiagnosticMessage> GetLockFileDiagnostics()

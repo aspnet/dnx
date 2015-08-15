@@ -34,10 +34,15 @@ namespace Microsoft.Dnx.Tooling.Packages
             using (var stream = File.OpenRead(Options.NuGetPackage))
             {
                 string packageHash = null;
-                if (File.Exists(Options.PackageHashFilePath))
+                if (!string.IsNullOrEmpty(Options.PackageHashFilePath) && File.Exists(Options.PackageHashFilePath))
                 {
                     packageHash = File.ReadAllText(Options.PackageHashFilePath);
                 }
+                else if (!string.IsNullOrEmpty(Options.PackageHash))
+                {
+                    packageHash = Options.PackageHash;
+                }
+
                 await NuGetPackageUtils.InstallFromStream(stream, library, LocalPackages, Reports.Quiet, packageHash);
             }
 

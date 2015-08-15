@@ -18,23 +18,16 @@ namespace Microsoft.Dnx.Tooling.Publish
 {
     public class PublishProject
     {
-        private readonly ProjectReferenceDependencyProvider _projectReferenceDependencyProvider;
-        private readonly IProjectResolver _projectResolver;
-        private readonly LibraryDescription _libraryDescription;
+        private readonly ProjectDescription _projectDesription;
         private string _relativeAppBase;
 
-        public PublishProject(
-            ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
-            IProjectResolver projectResolver,
-            LibraryDescription libraryDescription)
+        public PublishProject(ProjectDescription projectDescription)
         {
-            _projectReferenceDependencyProvider = projectReferenceDependencyProvider;
-            _projectResolver = projectResolver;
-            _libraryDescription = libraryDescription;
+            _projectDesription = projectDescription;
         }
 
         public string ApplicationBasePath { get; set; }
-        public string Name { get { return _libraryDescription.Identity.Name; } }
+        public string Name { get { return _projectDesription.Identity.Name; } }
         public string TargetPath { get; private set; }
         public string WwwRoot { get; set; }
         public string WwwRootOut { get; set; }
@@ -42,8 +35,8 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         public bool Emit(PublishRoot root)
         {
-            root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _libraryDescription.Type,
-                _libraryDescription.Identity, _libraryDescription.Framework.ToString().Yellow().Bold());
+            root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _projectDesription.Type,
+                _projectDesription.Identity, _projectDesription.Framework.ToString().Yellow().Bold());
 
             var success = true;
 
@@ -64,7 +57,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         private void EmitSource(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
-                _libraryDescription.Type, _libraryDescription.Identity.Name);
+                _projectDesription.Type, _projectDesription.Identity.Name);
 
             var project = GetCurrentProject();
             var targetName = project.Name;
@@ -77,7 +70,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
 
-            root.Reports.Quiet.WriteLine("    Source {0}", _libraryDescription.Path.Bold());
+            root.Reports.Quiet.WriteLine("    Source {0}", _projectDesription.Path.Bold());
             root.Reports.Quiet.WriteLine("    Target {0}", TargetPath);
 
             root.Operations.Delete(TargetPath);
@@ -97,7 +90,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         private bool EmitNupkg(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
-                _libraryDescription.Type, _libraryDescription.Identity.Name);
+                _projectDesription.Type, _projectDesription.Identity.Name);
 
             IsPackage = true;
 
@@ -106,7 +99,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
-            root.Reports.Quiet.WriteLine("    Source {0}", _libraryDescription.Path.Bold());
+            root.Reports.Quiet.WriteLine("    Source {0}", _projectDesription.Path.Bold());
             root.Reports.Quiet.WriteLine("    Target {0}", TargetPath);
 
             if (Directory.Exists(TargetPath))
@@ -157,7 +150,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             UpdateJson(rootProjectJson, jsonObj =>
             {
                 // Update the project entrypoint
-                jsonObj["entryPoint"] = _libraryDescription.Identity.Name;
+                jsonObj["entryPoint"] = _projectDesription.Identity.Name;
 
                 // Set mark this as non loadable
                 jsonObj["loadable"] = false;
@@ -166,10 +159,10 @@ namespace Microsoft.Dnx.Tooling.Publish
                 var deps = new JObject();
                 jsonObj["dependencies"] = deps;
 
-                deps[_libraryDescription.Identity.Name] = _libraryDescription.Identity.Version.ToString();
+                deps[_projectDesription.Identity.Name] = _projectDesription.Identity.Version.ToString();
             });
 
-            var appBase = Path.Combine(PublishRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
+            var appBase = Path.Combine(PublishRoot.AppRootName, "packages", resolver.GetPackageDirectory(_projectDesription.Identity.Name, _projectDesription.Identity.Version), "root");
 
             _relativeAppBase = Path.Combine("..", appBase);
             ApplicationBasePath = Path.Combine(root.OutputPath, appBase);
@@ -647,7 +640,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         private void CopyContentFiles(PublishRoot root, Runtime.Project project, string targetFolderPath)
         {
             root.Reports.Quiet.WriteLine("Copying contents of {0} dependency {1} to {2}",
-                _libraryDescription.Type, _libraryDescription.Identity.Name, targetFolderPath);
+                _projectDesription.Type, _projectDesription.Identity.Name, targetFolderPath);
 
             var contentSourcePath = GetWwwRootSourcePath(project.ProjectDirectory, WwwRoot);
 
@@ -684,12 +677,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         private Runtime.Project GetCurrentProject()
         {
-            Runtime.Project project;
-            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
-            {
-                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
-            }
-            return project;
+            return _projectDesription.Project;
         }
 
         private bool IsWrappingAssembly()

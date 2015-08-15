@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Reflection;
-using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime.Compilation;
 
 namespace Microsoft.Dnx.Runtime.Loader
@@ -11,15 +10,15 @@ namespace Microsoft.Dnx.Runtime.Loader
     {
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly ICompilationEngine _compilationEngine;
-        private readonly IProjectResolver _projectResolver;
+        private readonly LibraryManager _libraryManager;
 
         public ProjectAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
-                                     IProjectResolver projectResolver,
-                                     ICompilationEngine compilationEngine)
+                                     ICompilationEngine compilationEngine,
+                                     LibraryManager libraryManager)
         {
             _loadContextAccessor = loadContextAccessor;
             _compilationEngine = compilationEngine;
-            _projectResolver = projectResolver;
+            _libraryManager = libraryManager;
         }
 
         public Assembly Load(AssemblyName assemblyName)
@@ -45,14 +44,15 @@ namespace Microsoft.Dnx.Runtime.Loader
                 aspect = parts[1];
             }
 
-            Project project;
-            if (!_projectResolver.TryResolveProject(name, out project))
+            var library = _libraryManager.GetLibraryDescription(name) as ProjectDescription;
+
+            if (library == null)
             {
                 return null;
             }
 
             return _compilationEngine.LoadProject(
-                project, 
+                library.Project, 
                 aspect, 
                 loadContext);
         }

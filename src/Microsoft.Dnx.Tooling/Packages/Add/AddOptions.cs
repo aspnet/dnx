@@ -10,5 +10,6 @@ namespace Microsoft.Dnx.Tooling.Packages
     {
         public string NuGetPackage { get; set; }
         public string PackageHashFilePath { get; set; }
+        public string PackageHash { get; set; }
     }
 }

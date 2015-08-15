@@ -202,59 +202,60 @@ namespace Microsoft.Dnx.Tooling.Publish
             root.SourcePackagesPath = frameworkContexts.First().Value.PackagesDirectory;
 
             bool anyUnresolvedDependency = false;
+
             foreach (var dependencyContext in frameworkContexts.Values)
             {
-                // If there's any unresolved dependencies then complain and keep working
-                if (dependencyContext.DependencyWalker.Libraries.Any(l => !l.Resolved))
+                foreach (var library in dependencyContext.LibraryManager.GetLibraryDescriptions())
                 {
-                    anyUnresolvedDependency = true;
-                    var message = "Warning: " +
-                        dependencyContext.DependencyWalker.GetMissingDependenciesWarning(
-                            dependencyContext.FrameworkName);
-                    _options.Reports.Quiet.WriteLine(message.Yellow());
-                }
-
-                foreach (var libraryDescription in dependencyContext.NuGetDependencyResolver.Dependencies)
-                {
-                    IList<DependencyContext> contexts;
-                    if (!root.LibraryDependencyContexts.TryGetValue(libraryDescription.Identity, out contexts))
+                    if (!library.Resolved)
                     {
-                        root.Packages.Add(new PublishPackage(libraryDescription));
-                        contexts = new List<DependencyContext>();
-                        root.LibraryDependencyContexts[libraryDescription.Identity] = contexts;
+                        // If there's any unresolved dependencies then complain and keep working
+                        _options.Reports.Quiet.WriteLine($"Warning: {library} is unresolved.");
+                        anyUnresolvedDependency = true;
                     }
-                    contexts.Add(dependencyContext);
-                }
-
-                foreach (var libraryDescription in dependencyContext.ProjectReferenceDependencyProvider.Dependencies)
-                {
-                    if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
+                    else
                     {
-                        var publishProject = new PublishProject(
-                            dependencyContext.ProjectReferenceDependencyProvider,
-                            dependencyContext.ProjectResolver,
-                            libraryDescription);
-
-                        if (publishProject.Name == project.Name)
+                        if (library.Type == LibraryTypes.Project)
                         {
-                            publishProject.WwwRoot = _options.WwwRoot;
-                            publishProject.WwwRootOut = _options.WwwRootOut;
+                            if (!root.Projects.Any(p => p.Name == library.Identity.Name))
+                            {
+                                var publishProject = new PublishProject((ProjectDescription)library);
+
+                                if (publishProject.Name == project.Name)
+                                {
+                                    publishProject.WwwRoot = _options.WwwRoot;
+                                    publishProject.WwwRootOut = _options.WwwRootOut;
+                                }
+
+                                root.Projects.Add(publishProject);
+                            }
                         }
-                        root.Projects.Add(publishProject);
+                        else if (library.Type == LibraryTypes.Package)
+                        {
+                            IList<DependencyContext> contexts;
+                            if (!root.LibraryDependencyContexts.TryGetValue(library.Identity, out contexts))
+                            {
+                                root.Packages.Add(new PublishPackage((PackageDescription)library));
+                                contexts = new List<DependencyContext>();
+                                root.LibraryDependencyContexts[library.Identity] = contexts;
+                            }
+                            contexts.Add(dependencyContext);
+                        }
                     }
                 }
             }
 
-            NativeImageGenerator nativeImageGenerator = null;
-            if (_options.Native)
-            {
-                nativeImageGenerator = NativeImageGenerator.Create(_options, root, frameworkContexts.Values);
-                if (nativeImageGenerator == null)
-                {
-                    _options.Reports.Error.WriteLine("Fail to initiate native image generation process.".Red());
-                    return false;
-                }
-            }
+            // TODO: Bring this back
+            //NativeImageGenerator nativeImageGenerator = null;
+            //if (_options.Native)
+            //{
+            //    nativeImageGenerator = NativeImageGenerator.Create(_options, root, frameworkContexts.Values);
+            //    if (nativeImageGenerator == null)
+            //    {
+            //        _options.Reports.Error.WriteLine("Fail to initiate native image generation process.".Red());
+            //        return false;
+            //    }
+            //}
 
             var success = root.Emit();
 
@@ -264,11 +265,11 @@ namespace Microsoft.Dnx.Tooling.Publish
                 return false;
             }
 
-            if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
-            {
-                _options.Reports.Error.WriteLine("Native image generation failed.");
-                return false;
-            }
+            //if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
+            //{
+            //    _options.Reports.Error.WriteLine("Native image generation failed.");
+            //    return false;
+            //}
 
             sw.Stop();
 

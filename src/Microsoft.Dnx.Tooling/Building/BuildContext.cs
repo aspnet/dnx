@@ -94,8 +94,9 @@ namespace Microsoft.Dnx.Tooling
         public void PopulateDependencies(PackageBuilder packageBuilder)
         {
             var dependencies = new List<PackageDependency>();
-            var projectReferenceByName = _applicationHostContext.ProjectDependencyProvider
-                                                                .Dependencies
+            var projectReferenceByName = _applicationHostContext.LibraryManager
+                                                                .GetLibraryDescriptions()
+                                                                .Where(l => l.Type == LibraryTypes.Project)
                                                                 .ToDictionary(r => r.Identity.Name);
 
             LibraryDescription description;

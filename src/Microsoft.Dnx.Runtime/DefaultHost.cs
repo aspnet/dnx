@@ -9,7 +9,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
@@ -144,10 +143,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                     _targetFramework,
                     options.Configuration));
 
-            // Make the root project's library exports available for apps to read.
-            _applicationHostContext.AddService(typeof(ILibraryExporter), _compilationEngine.RootLibraryExporter);
-            _applicationHostContext.AddService(typeof(ICompilationEngine), _compilationEngine);
-
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
             Logger.TraceInformation("[{0}]: Project configuration: {1}", GetType().Name, _applicationHostContext.Configuration);
@@ -182,9 +177,10 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             // Configure Assembly loaders
             _loaders.Add(new ProjectAssemblyLoader(
                 loadContextAccessor,
-                _applicationHostContext.ProjectResolver,
-                _compilationEngine));
-            _loaders.Add(new NuGetAssemblyLoader(loadContextAccessor, _applicationHostContext.NuGetDependencyProvider));
+                _compilationEngine,
+                _applicationHostContext.LibraryManager));
+
+            _loaders.Add(new NuGetAssemblyLoader(loadContextAccessor, _applicationHostContext.LibraryManager));
         }
 
         private void AddRuntimeServiceBreadcrumb()

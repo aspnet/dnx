@@ -22,9 +22,6 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("AssemblyPlaceholderPackage", "DNX,Version=v4.5.1", false)]
         public void LibrariesAreResolvedCorrectly(string packageName, string framework, bool resolved)
         {
-            var repo = new PackageRepository("path/to/packages");
-            var resolver = new NuGetDependencyResolver(repo);
-
             var net45Target = new LockFileTarget
             {
                 TargetFramework = new FrameworkName(".NETFramework,Version=v4.5"),
@@ -136,7 +133,7 @@ namespace Microsoft.Dnx.Runtime.Tests
                 }
             };
 
-            resolver.ApplyLockFile(lockFile);
+            var resolver = new PackageDependencyProvider("/path/to/packages", lockFile);
 
             var libToLookup = new LibraryRange(packageName, frameworkReference: false);
             Assert.Equal(resolved, resolver.GetDescription(libToLookup, new FrameworkName(framework)).Resolved);

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -8,27 +7,27 @@ namespace Microsoft.Dnx.Runtime
     {
         public PackageDescription(
             LibraryRange requestedRange, 
-            PackageInfo package, 
+            LockFilePackageLibrary package, 
             LockFileTargetLibrary lockFileLibrary, 
             IEnumerable<LibraryDependency> dependencies, 
             bool resolved, 
             bool compatible)
             : base(
                   requestedRange,
-                  new LibraryIdentity(package.Id, package.Version, isGacOrFrameworkReference: false),
+                  new LibraryIdentity(package.Name, package.Version, isGacOrFrameworkReference: false),
                   path: null,
                   type: LibraryTypes.Package,
                   dependencies: dependencies,
                   assemblies: Enumerable.Empty<string>(),
                   framework: null)
         {
-            Package = package;
-            LockFileLibrary = lockFileLibrary;
+            Library = package;
+            Target = lockFileLibrary;
             Resolved = resolved;
             Compatible = compatible;
         }
 
-        public LockFileTargetLibrary LockFileLibrary { get; set; }
-        public PackageInfo Package { get; set; }
+        public LockFileTargetLibrary Target { get; set; }
+        public LockFilePackageLibrary Library { get; set; }
     }
 }

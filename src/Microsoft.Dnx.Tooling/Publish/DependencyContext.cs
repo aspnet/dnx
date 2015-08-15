@@ -25,27 +25,20 @@ namespace Microsoft.Dnx.Tooling.Publish
                 packagesDirectory: null,
                 configuration: configuration,
                 targetFramework: targetFramework);
-
-            ProjectResolver = applicationHostContext.ProjectResolver;
-            NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;
-            ProjectReferenceDependencyProvider = applicationHostContext.ProjectDependencyProvider;
             DependencyWalker = applicationHostContext.DependencyWalker;
             FrameworkName = targetFramework;
             PackagesDirectory = applicationHostContext.PackagesDirectory;
         }
 
-        public IProjectResolver ProjectResolver { get; set; }
-        public NuGetDependencyResolver NuGetDependencyResolver { get; set; }
-        public ProjectReferenceDependencyProvider ProjectReferenceDependencyProvider { get; set; }
-        public DependencyWalker DependencyWalker { get; set; }
+        private DependencyWalker DependencyWalker { get; }
+
+        public LibraryManager LibraryManager { get; set; }
         public FrameworkName FrameworkName { get; set; }
-        public ILookup<string, PackageAssembly> PackageAssemblies { get; set; }
         public string PackagesDirectory { get; private set; }
 
         public void Walk(string projectName, SemanticVersion projectVersion)
         {
             DependencyWalker.Walk(projectName, projectVersion, FrameworkName);
-            PackageAssemblies = NuGetDependencyResolver.PackageAssemblyLookup.Values.ToLookup(a => a.Library.Identity.Name);
         }
 
         public static FrameworkName SelectFrameworkNameForRuntime(IEnumerable<FrameworkName> availableFrameworks, FrameworkName currentFramework, string runtime)

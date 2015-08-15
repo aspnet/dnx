@@ -235,30 +235,29 @@ namespace Microsoft.Dnx.Compilation
             return new LibraryExport(new MetadataFileReference(library.Identity.Name, library.Path));
         }
 
-        private IEnumerable<string> GetSharedSources(PackageDescription library, FrameworkName targetFramework)
+        private IEnumerable<string> GetSharedSources(PackageDescription package, FrameworkName targetFramework)
         {
-            var directory = Path.Combine(library.Path, "shared");
+            var directory = Path.Combine(package.Path, "shared");
 
-            return library
-                .Package
-                .LockFileLibrary
+            return package
+                .Library
                 .Files
                 .Where(path => path.StartsWith("shared" + Path.DirectorySeparatorChar))
-                .Select(path => Path.Combine(library.Path, path));
+                .Select(path => Path.Combine(package.Path, path));
         }
 
 
-        private bool TryPopulateMetadataReferences(PackageDescription library, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)
+        private bool TryPopulateMetadataReferences(PackageDescription package, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)
         {
-            foreach (var assemblyPath in library.LockFileLibrary.CompileTimeAssemblies)
+            foreach (var assemblyPath in package.Target.CompileTimeAssemblies)
             {
-                if (NuGetDependencyResolver.IsPlaceholderFile(assemblyPath))
+                if (PackageDependencyProvider.IsPlaceholderFile(assemblyPath))
                 {
                     continue;
                 }
 
                 var name = Path.GetFileNameWithoutExtension(assemblyPath);
-                var path = Path.Combine(library.Path, assemblyPath);
+                var path = Path.Combine(package.Path, assemblyPath);
                 paths[name] = new MetadataFileReference(name, path);
             }
 

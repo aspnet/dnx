@@ -10,6 +10,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Tooling.Algorithms;
 using Microsoft.Dnx.Runtime;
 using NuGet;
+using Microsoft.Dnx.Runtime.Loader;
 
 namespace Microsoft.Dnx.Tooling.List
 {
@@ -26,6 +27,7 @@ namespace Microsoft.Dnx.Tooling.List
         private HashSet<string> _assemblyFilePaths;
         private Dictionary<string, HashSet<string>> _dependencyAssemblySources;
         private Dictionary<string, HashSet<string>> _dependencyPackageSources;
+        private Dictionary<AssemblyName, string> _paths;
 
         public AssemblyWalker(
             FrameworkName framework,
@@ -39,6 +41,7 @@ namespace Microsoft.Dnx.Tooling.List
             _runtimeFolder = runtimeFolder;
             _showDetails = showDetails;
             _reports = reports;
+            _paths = NuGetAssemblyLoader.ResolveAssemblyPaths(hostContext.LibraryManager);
         }
 
         public void Walk(IGraphNode<LibraryDescription> root)
@@ -152,10 +155,10 @@ namespace Microsoft.Dnx.Tooling.List
             }
 
             // Look into the NuGets then.
-            PackageAssembly assembly;
-            if (_hostContext.NuGetDependencyProvider.PackageAssemblyLookup.TryGetValue(new AssemblyName(assemblyName), out assembly))
+            string path;
+            if (_paths.TryGetValue(new AssemblyName(assemblyName), out path))
             {
-                return assembly.Path;
+                return path;
             }
 
             return null;

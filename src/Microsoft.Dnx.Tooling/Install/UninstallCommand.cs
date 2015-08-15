@@ -94,7 +94,6 @@ namespace Microsoft.Dnx.Tooling
                         _commandsRepo.PackagesRoot,
                         dependency.Name,
                         dependency.Version,
-                        null,
                         null);
 
                     if (usedPackages.ContainsKey(dependencyPackage))

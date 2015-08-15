@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
-using Microsoft.Dnx.Runtime;
 
 namespace NuGet
 {
@@ -13,24 +12,20 @@ namespace NuGet
         private IPackage _package;
 
         public PackageInfo(
-            IFileSystem repositoryRoot, 
-            string packageId, 
-            SemanticVersion version, 
-            string versionDir,
-            LockFilePackageLibrary lockFileLibrary = null)
+            IFileSystem repositoryRoot,
+            string packageId,
+            SemanticVersion version,
+            string versionDir)
         {
             _repositoryRoot = repositoryRoot;
             Id = packageId;
             Version = version;
             _versionDir = versionDir;
-            LockFileLibrary = lockFileLibrary;
         }
 
         public string Id { get; private set; }
 
         public SemanticVersion Version { get; private set; }
-
-        public LockFilePackageLibrary LockFileLibrary { get; private set; }
 
         public IPackage Package
         {
@@ -39,10 +34,7 @@ namespace NuGet
                 if (_package == null)
                 {
                     var nuspecPath = Path.Combine(_versionDir, string.Format("{0}.nuspec", Id));
-                    if (LockFileLibrary == null)
-                    {
-                        _package = new UnzippedPackage(_repositoryRoot, nuspecPath);
-                    }
+                    _package = new UnzippedPackage(_repositoryRoot, nuspecPath);
                 }
 
                 return _package;

@@ -12,8 +12,6 @@ namespace Microsoft.Dnx.Runtime
 {
     public class GacDependencyResolver : IDependencyProvider
     {
-        private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
             if (RuntimeEnvironmentHelper.IsMono || !RuntimeEnvironmentHelper.IsWindows)
@@ -55,8 +53,6 @@ namespace Microsoft.Dnx.Runtime
                 return null;
             }
 
-            _resolvedPaths[name] = path;
-
             return new LibraryDescription(
                 libraryRange,
                 new LibraryIdentity(name, version, isGacOrFrameworkReference: true),
@@ -65,10 +61,6 @@ namespace Microsoft.Dnx.Runtime
                 Enumerable.Empty<LibraryDependency>(),
                 new[] { libraryRange.GetReferenceAssemblyName() },
                 framework: null);
-        }
-
-        public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
-        {
         }
 
         private bool TryResolvePartialName(string name, SemanticVersion version, out string assemblyLocation)

@@ -61,14 +61,14 @@ namespace Microsoft.Dnx.Runtime.Servicing
             }
         }
 
-        public bool IsPackageServiceable(PackageInfo package)
+        public bool IsPackageServiceable(PackageDescription package)
         {
             if (!_isEnabled)
             {
                 return false;
             }
 
-            return package.LockFileLibrary.IsServiceable;
+            return package.Library.IsServiceable;
         }
 
         public void AddBreadcrumb(string packageId, SemanticVersion packageVersion)

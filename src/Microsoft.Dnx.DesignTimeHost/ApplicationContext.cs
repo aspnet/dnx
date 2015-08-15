@@ -1149,7 +1149,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     ExportedSourcesFiles = new List<string>()
                 };
 
-                foreach (var library in applicationHostContext.DependencyWalker.Libraries)
+                foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
                 {
                     var description = CreateDependencyDescription(library);
                     info.Dependencies[description.Name] = description;

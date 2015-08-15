@@ -10,8 +10,6 @@ namespace Microsoft.Dnx.Runtime
     {
         LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework);
 
-        void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier);
-
         IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework);
     }
 }
