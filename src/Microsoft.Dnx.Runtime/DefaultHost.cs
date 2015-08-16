@@ -134,14 +134,15 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 options.PackageDirectory,
                 _targetFramework);
 
-            _compilationEngine = _compilationEngineFactory.CreateEngine(
-                new CompilationEngineContext(
+            var compilationContext = new CompilationEngineContext(
                     _applicationHostContext.LibraryManager,
                     new ProjectGraphProvider(),
                     fileWatcher,
                     _targetFramework,
                     options.Configuration,
-                    loadContextAccessor.Default));
+                    loadContextAccessor.Default);
+
+            _compilationEngine = _compilationEngineFactory.CreateEngine(compilationContext);
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
@@ -176,7 +177,10 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _serviceProvider.Add(typeof(ILibraryExporter), _compilationEngine.RootLibraryExporter);
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
             _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_applicationHostContext.LibraryManager));
-            _serviceProvider.Add(typeof(RuntimeOptions), options);
+
+            // Compilation services available only for runtime compilation
+            compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
+            compilationContext.AddCompilationService(typeof(IApplicationShutdown), _shutdown);
 
             if (options.CompilationServerPort.HasValue)
             {
