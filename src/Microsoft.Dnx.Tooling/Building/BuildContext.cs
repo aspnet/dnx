@@ -111,7 +111,7 @@ namespace Microsoft.Dnx.Tooling
                     continue;
                 }
 
-                if (dependencyDescription?.Type == LibraryTypes.Project &&
+                if (dependencyDescription.Type == LibraryTypes.Project &&
                     ((ProjectDescription)dependencyDescription).Project.EmbedInteropTypes)
                 {
                     continue;
