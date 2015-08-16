@@ -191,13 +191,11 @@ namespace Microsoft.Dnx.Compilation
             }
         }
 
-        private LibraryExport ExportPackage(LibraryDescription library)
+        private LibraryExport ExportPackage(PackageDescription package)
         {
-            var packageLibrary = (PackageDescription)library;
-
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
 
-            if (!TryPopulateMetadataReferences(packageLibrary, references))
+            if (!TryPopulateMetadataReferences(package, references))
             {
                 return null;
             }
@@ -205,7 +203,7 @@ namespace Microsoft.Dnx.Compilation
             // REVIEW: This requires more design
             var sourceReferences = new List<ISourceReference>();
 
-            foreach (var sharedSource in GetSharedSources(packageLibrary))
+            foreach (var sharedSource in GetSharedSources(package))
             {
                 sourceReferences.Add(new SourceFileReference(sharedSource));
             }
@@ -213,10 +211,10 @@ namespace Microsoft.Dnx.Compilation
             return new LibraryExport(references.Values.ToList(), sourceReferences);
         }
 
-        private LibraryExport ExportProject(LibraryDescription library, string aspect)
+        private LibraryExport ExportProject(ProjectDescription project, string aspect)
         {
             return ProjectExporter.ExportProject(
-                ((ProjectDescription)library).Project,
+                project.Project,
                 _compilationEngine,
                 aspect,
                 _targetFramework,
