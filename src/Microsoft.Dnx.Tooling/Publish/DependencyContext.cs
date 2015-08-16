@@ -21,6 +21,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                 targetFramework: targetFramework);
 
             FrameworkName = targetFramework;
+            LibraryManager = applicationHostContext.LibraryManager;
             PackagesDirectory = applicationHostContext.PackagesDirectory;
         }
 
