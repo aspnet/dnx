@@ -8,7 +8,6 @@ using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-
     public class PackageDependencyProvider : IDependencyProvider
     {
         private readonly string _packagesPath;
