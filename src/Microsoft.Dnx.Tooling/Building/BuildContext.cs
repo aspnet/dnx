@@ -94,27 +94,25 @@ namespace Microsoft.Dnx.Tooling
         public void PopulateDependencies(PackageBuilder packageBuilder)
         {
             var dependencies = new List<PackageDependency>();
-            var projectReferenceByName = _applicationHostContext.LibraryManager
-                                                                .GetLibraryDescriptions()
-                                                                .Where(l => l.Type == LibraryTypes.Project)
-                                                                .ToDictionary(l => l.Identity.Name, l => (ProjectDescription)l);
+            var project = _applicationHostContext.LibraryManager.GetLibraryDescription(_project.Name);
 
-            ProjectDescription description;
-            if (!projectReferenceByName.TryGetValue(_project.Name, out description))
-            {
-                return;
-            }
-
-            foreach (var dependency in description.Dependencies)
+            foreach (var dependency in project.Dependencies)
             {
                 if (!dependency.HasFlag(LibraryDependencyTypeFlag.BecomesNupkgDependency))
                 {
                     continue;
                 }
 
-                ProjectDescription dependencyProject;
-                if (projectReferenceByName.TryGetValue(dependency.Name, out dependencyProject) && 
-                    dependencyProject.Project.EmbedInteropTypes)
+                var dependencyDescription = _applicationHostContext.LibraryManager.GetLibraryDescription(dependency.Name);
+
+                // REVIEW: Can we get this far with unresolved dependencies
+                if (dependencyDescription == null || !dependencyDescription.Resolved)
+                {
+                    continue;
+                }
+
+                if (dependencyDescription?.Type == LibraryTypes.Project &&
+                    ((ProjectDescription)dependencyDescription).Project.EmbedInteropTypes)
                 {
                     continue;
                 }
@@ -130,19 +128,11 @@ namespace Microsoft.Dnx.Tooling
                     if (dependency.LibraryRange.VersionRange == null ||
                         dependency.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None)
                     {
-                        var actual = _applicationHostContext.LibraryManager.GetLibraryDescriptions()
-                            .Where(pkg => string.Equals(pkg.Identity.Name, _project.Name, StringComparison.OrdinalIgnoreCase))
-                            .SelectMany(pkg => pkg.Dependencies)
-                            .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
-
-                        if (actual != null)
+                        dependencyVersion = new VersionSpec
                         {
-                            dependencyVersion = new VersionSpec
-                            {
-                                IsMinInclusive = true,
-                                MinVersion = actual.Library.Version
-                            };
-                        }
+                            IsMinInclusive = true,
+                            MinVersion = dependencyDescription.Identity.Version
+                        };
                     }
                     else
                     {
