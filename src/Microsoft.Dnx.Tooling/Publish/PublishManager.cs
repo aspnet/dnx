@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Common.Impl;
 
 namespace Microsoft.Dnx.Tooling.Publish
 {
@@ -286,7 +285,6 @@ namespace Microsoft.Dnx.Tooling.Publish
         private DependencyContext CreateDependencyContext(Runtime.Project project, FrameworkName frameworkName)
         {
             var dependencyContext = new DependencyContext(project.ProjectDirectory, _options.Configuration, frameworkName);
-            dependencyContext.Walk(project.Name, project.Version);
             return dependencyContext;
         }
 

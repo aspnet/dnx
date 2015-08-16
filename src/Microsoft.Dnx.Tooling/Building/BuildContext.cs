@@ -74,7 +74,7 @@ namespace Microsoft.Dnx.Tooling
                 .OfType<IMetadataProjectReference>()
                 .FirstOrDefault(r => string.Equals(r.Name, _project.Name, StringComparison.OrdinalIgnoreCase));
 
-            if(metadataReference == null)
+            if (metadataReference == null)
             {
                 return false;
             }
@@ -131,7 +131,7 @@ namespace Microsoft.Dnx.Tooling
                     if (dependency.LibraryRange.VersionRange == null ||
                         dependency.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None)
                     {
-                        var actual = _applicationHostContext.DependencyWalker.Libraries
+                        var actual = _applicationHostContext.LibraryManager.GetLibraryDescriptions()
                             .Where(pkg => string.Equals(pkg.Identity.Name, _project.Name, StringComparison.OrdinalIgnoreCase))
                             .SelectMany(pkg => pkg.Dependencies)
                             .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
@@ -189,7 +189,7 @@ namespace Microsoft.Dnx.Tooling
             var metadataFileRefs = projectExport.MetadataReferences
                 .OfType<IMetadataFileReference>();
 
-            foreach (var library in _applicationHostContext.DependencyWalker.Libraries)
+            foreach (var library in _applicationHostContext.LibraryManager.GetLibraryDescriptions())
             {
                 if (string.IsNullOrEmpty(library.Path))
                 {
@@ -231,8 +231,6 @@ namespace Microsoft.Dnx.Tooling
                                                                         targetFramework: targetFramework,
                                                                         loadContextFactory: GetRuntimeLoadContextFactory(project));
 
-                applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, targetFramework);
-
                 return applicationHostContext;
             });
         }
@@ -245,9 +243,6 @@ namespace Microsoft.Dnx.Tooling
                                                                     configuration: _appEnv.Configuration,
                                                                     targetFramework: _appEnv.RuntimeFramework,
                                                                     loadContextFactory: null);
-
-            applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
-
             return new AssemblyLoadContextFactory(applicationHostContext.ServiceProvider);
         }
 

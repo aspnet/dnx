@@ -21,21 +21,13 @@ namespace Microsoft.Dnx.Tooling.Publish
                 packagesDirectory: null,
                 configuration: configuration,
                 targetFramework: targetFramework);
-            DependencyWalker = applicationHostContext.DependencyWalker;
             FrameworkName = targetFramework;
             PackagesDirectory = applicationHostContext.PackagesDirectory;
         }
 
-        private DependencyWalker DependencyWalker { get; }
-
         public LibraryManager LibraryManager { get; set; }
         public FrameworkName FrameworkName { get; set; }
         public string PackagesDirectory { get; private set; }
-
-        public void Walk(string projectName, SemanticVersion projectVersion)
-        {
-            DependencyWalker.Walk(projectName, projectVersion, FrameworkName);
-        }
 
         public static FrameworkName SelectFrameworkNameForRuntime(IEnumerable<FrameworkName> availableFrameworks, FrameworkName currentFramework, string runtime)
         {

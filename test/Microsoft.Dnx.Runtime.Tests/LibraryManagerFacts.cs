@@ -57,7 +57,7 @@ namespace Microsoft.Dnx.Runtime.Tests
                 CreateRuntimeLibrary("Config", Enumerable.Empty<String>()),
                 CreateRuntimeLibrary("MyApp", new[] { "DI", "Hosting", "Mvc", "HttpAbstractions" })
             };
-            return new LibraryManager(() => libraryInfo);
+            return new LibraryManager(libraryInfo);
         }
 
         private static LibraryDescription CreateRuntimeLibrary(string name, IEnumerable<string> dependencies)

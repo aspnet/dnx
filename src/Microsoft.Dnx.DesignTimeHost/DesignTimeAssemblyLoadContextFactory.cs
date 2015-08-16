@@ -37,10 +37,8 @@ namespace Microsoft.Dnx.DesignTimeHost
                                                                         configuration: _appEnv.Configuration,
                                                                         targetFramework: _appEnv.RuntimeFramework);
 
-                applicationHostContext.DependencyWalker.Walk(_project.Name, _project.Version, _appEnv.RuntimeFramework);
-
                 // Watch all projects for project.json changes
-                foreach (var library in applicationHostContext.DependencyWalker.Libraries)
+                foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
                 {
                     if (string.Equals(library.Type, "Project"))
                     {

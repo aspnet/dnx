@@ -11,20 +11,16 @@ namespace Microsoft.Dnx.Runtime
     // REVIEW(anurse): This could also be much more lazy. Some consumers only use the RuntimeLibrary graph, some need the Library graph.
     public class LibraryManager : ILibraryManager
     {
-        private readonly Func<IEnumerable<LibraryDescription>> _librariesThunk;
+        private IList<LibraryDescription> _libraries;
+
         private readonly object _initializeLock = new object();
         private Dictionary<string, IEnumerable<Library>> _inverse;
         private Dictionary<string, Tuple<Library, LibraryDescription>> _graph;
         private bool _initialized;
 
-        public LibraryManager(IEnumerable<LibraryDescription> libraries)
-            : this(() => libraries)
+        public LibraryManager(IList<LibraryDescription> libraries)
         {
-        }
-
-        public LibraryManager(Func<IEnumerable<LibraryDescription>> librariesThunk)
-        {
-            _librariesThunk = librariesThunk;
+            _libraries = libraries;
         }
 
         private Dictionary<string, Tuple<Library, LibraryDescription>> Graph
@@ -97,8 +93,8 @@ namespace Microsoft.Dnx.Runtime
                 if (!_initialized)
                 {
                     _initialized = true;
-                    var libraries = _librariesThunk();
-                    _graph = libraries.ToDictionary(l => l.Identity.Name, l => Tuple.Create(l.ToLibrary(), l), StringComparer.Ordinal);
+                    _graph = _libraries.ToDictionary(l => l.Identity.Name, l => Tuple.Create(l.ToLibrary(), l), StringComparer.Ordinal);
+                    _libraries = null;
 
                     BuildInverseGraph();
                 }

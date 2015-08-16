@@ -1094,10 +1094,8 @@ namespace Microsoft.Dnx.DesignTimeHost
                                                                         loadContextFactory: GetRuntimeLoadContextFactory(project),
                                                                         skipLockFileValidation: true);
 
-                applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
-
                 // Watch all projects for project.json changes
-                foreach (var library in applicationHostContext.DependencyWalker.Libraries)
+                foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
                 {
                     if (string.Equals(library.Type, "Project"))
                     {

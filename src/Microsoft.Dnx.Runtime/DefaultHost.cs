@@ -63,7 +63,7 @@ namespace Microsoft.Dnx.Runtime
 
             Initialize();
 
-            var unresolvedLibs = _applicationHostContext.DependencyWalker.Libraries.Where(l => !l.Resolved);
+            var unresolvedLibs = _applicationHostContext.LibraryManager.GetLibraryDescriptions().Where(l => !l.Resolved);
 
             // If there's any unresolved dependencies then complain
             if (unresolvedLibs.Any())
@@ -87,7 +87,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 {
                     var lockFileErrorMessage = string.Join(string.Empty,
                         _applicationHostContext.GetLockFileDiagnostics().Select(x => $"{Environment.NewLine}{x.FormattedMessage}"));
-                    exceptionMsg = $@"{_applicationHostContext.DependencyWalker.GetMissingDependenciesWarning(_targetFramework)}{lockFileErrorMessage}
+                    exceptionMsg = $@"{_applicationHostContext.GetMissingDependenciesWarning(_targetFramework)}{lockFileErrorMessage}
 {runtimeFrameworkInfo}";
                 }
 
@@ -102,8 +102,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
         public void Initialize()
         {
             AddRuntimeServiceBreadcrumb();
-
-            _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
 
             Servicing.Breadcrumbs.Instance.WriteAllBreadcrumbs(background: true);
         }

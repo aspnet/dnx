@@ -12,7 +12,7 @@ namespace Microsoft.Dnx.Tooling.List
 {
     public class LibraryDependencyFinder
     {
-        public static IGraphNode<LibraryDescription> Build([NotNull] IList<LibraryDescription> libraries, 
+        public static IGraphNode<LibraryDescription> Build([NotNull] IEnumerable<LibraryDescription> libraries, 
                                                            [NotNull]Runtime.Project project)
         {
             var libDictionary = libraries.ToDictionary(desc => desc.Identity);

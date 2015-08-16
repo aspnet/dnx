@@ -13,7 +13,7 @@ namespace Microsoft.Dnx.Runtime
             _hostServices = hostServices;
         }
 
-        public IEnumerable<LibraryDescription> GetProjectGraph(Project project, FrameworkName targetFramework, string configuration)
+        public LibraryManager GetProjectGraph(Project project, FrameworkName targetFramework, string configuration)
         {
             // TODO: Cache sub-graph walk?
 
@@ -25,11 +25,8 @@ namespace Microsoft.Dnx.Runtime
                 configuration: configuration,
                 targetFramework: targetFramework);
 
-            // Walk the graph
-            context.DependencyWalker.Walk(project.Name, project.Version, targetFramework);
-
             // Return the results
-            return context.DependencyWalker.Libraries;
+            return context.LibraryManager;
         }
     }
 }

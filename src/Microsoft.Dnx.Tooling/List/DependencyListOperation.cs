@@ -28,7 +28,7 @@ namespace Microsoft.Dnx.Tooling.List
         public bool Execute()
         {
             // 1. Walk the graph of library dependencies
-            var root = LibraryDependencyFinder.Build(_hostContext.DependencyWalker.Libraries, _options.Project);
+            var root = LibraryDependencyFinder.Build(_hostContext.LibraryManager.GetLibraryDescriptions(), _options.Project);
 
             if (!_options.ShowAssemblies)
             {
@@ -74,8 +74,6 @@ namespace Microsoft.Dnx.Tooling.List
                 packagesDirectory: null,
                 configuration: Configuration,
                 targetFramework: _framework);
-
-            hostContext.DependencyWalker.Walk(hostContext.Project.Name, hostContext.Project.Version, _framework);
 
             return hostContext;
         }

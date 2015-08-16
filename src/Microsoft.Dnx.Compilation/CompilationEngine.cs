@@ -65,8 +65,7 @@ namespace Microsoft.Dnx.Compilation
 
         public LibraryExporter CreateProjectExporter(Project project, FrameworkName targetFramework, string configuration)
         {
-            var graph = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework, configuration);
-            var manager = new LibraryManager(graph);
+            var manager = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework, configuration);
             return new LibraryExporter(manager, this, targetFramework, configuration);
         }
 
