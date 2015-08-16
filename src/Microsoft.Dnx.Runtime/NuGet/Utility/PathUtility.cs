@@ -211,6 +211,10 @@ namespace NuGet
 
         public static string GetPathWithDirectorySeparator(string path)
         {
+            if (!RuntimeEnvironmentHelper.IsWindows)
+            {
+                return path;
+            }
             if (Path.DirectorySeparatorChar == '/')
             {
                 return GetPathWithForwardSlashes(path);
