@@ -173,7 +173,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), _applicationHostContext.LibraryManager);
+            _serviceProvider.Add(typeof(ILibraryExporter), _compilationEngine.RootLibraryExporter);
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
+            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_applicationHostContext.LibraryManager));
             _serviceProvider.Add(typeof(RuntimeOptions), options);
 
             if (options.CompilationServerPort.HasValue)

@@ -11,20 +11,21 @@ namespace Microsoft.Dnx.Runtime.Compilation
     /// </summary>
     public class CompilerOptionsProvider : ICompilerOptionsProvider
     {
-        private readonly IProjectResolver _projectResolver;
+        private readonly LibraryManager _libraryManager;
 
-        public CompilerOptionsProvider(IProjectResolver projectResolver)
+        public CompilerOptionsProvider(LibraryManager libraryManager)
         {
-            _projectResolver = projectResolver;
+            _libraryManager = libraryManager;
         }
 
         /// <inheritdoc />
         public ICompilerOptions GetCompilerOptions(string projectName, FrameworkName targetFramework, string configurationName)
         {
-            Project project;
-            if (_projectResolver.TryResolveProject(projectName, out project))
+            var projectDescription = _libraryManager.GetLibraryDescription(projectName) as ProjectDescription;
+
+            if (projectDescription != null)
             {
-                return project.GetCompilerOptions(targetFramework, configurationName);
+                return projectDescription.Project.GetCompilerOptions(targetFramework, configurationName);
             }
 
             return new CompilerOptions();
