@@ -166,42 +166,38 @@ namespace Microsoft.Dnx.Runtime
                 return item;
             }
 
-            Tuple<IDependencyProvider, LibraryDescription> hit = null;
+            LibraryDescription match = null;
 
             foreach (var dependencyProvider in providers)
             {
-                var match = dependencyProvider.GetDescription(packageKey, frameworkName);
+                match = dependencyProvider.GetDescription(packageKey, frameworkName);
+
                 if (match != null)
                 {
-                    hit = Tuple.Create(dependencyProvider, match);
                     break;
                 }
             }
 
-            if (hit == null)
+            if (match == null)
             {
                 resolvedItems[packageKey] = null;
                 return null;
             }
 
-            var provider = hit.Item1;
-            var libraryDescripton = hit.Item2;
-
-            if (resolvedItems.TryGetValue(libraryDescripton.Identity, out item))
+            if (resolvedItems.TryGetValue(match.Identity, out item))
             {
                 return item;
             }
 
             item = new Item()
             {
-                Description = libraryDescripton,
-                Key = libraryDescripton.Identity,
-                Dependencies = libraryDescripton.Dependencies,
-                Resolver = provider,
+                Description = match,
+                Key = match.Identity,
+                Dependencies = match.Dependencies
             };
 
             resolvedItems[packageKey] = item;
-            resolvedItems[libraryDescripton.Identity] = item;
+            resolvedItems[match.Identity] = item;
             return item;
         }
 
@@ -254,7 +250,6 @@ namespace Microsoft.Dnx.Runtime
         {
             public LibraryDescription Description { get; set; }
             public LibraryIdentity Key { get; set; }
-            public IDependencyProvider Resolver { get; set; }
             public IEnumerable<LibraryDependency> Dependencies { get; set; }
         }
     }
