@@ -26,7 +26,8 @@ namespace Microsoft.Dnx.Runtime
         private readonly ApplicationShutdown _shutdown = new ApplicationShutdown();
         private readonly IList<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
         private readonly ICompilationEngineFactory _compilationEngineFactory;
-        private ICompilationEngine _compilationEngine;
+        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
+        private readonly IRuntimeEnvironment _runtimeEnvironment;
 
         private Project _project;
         private readonly ServiceProvider _serviceProvider;
@@ -40,6 +41,8 @@ namespace Microsoft.Dnx.Runtime
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
             _compilationEngineFactory = compilationEngineFactory;
+            _loadContextAccessor = loadContextAccessor;
+            _runtimeEnvironment = (IRuntimeEnvironment)hostServices.GetService(typeof(IRuntimeEnvironment));
 
             _serviceProvider = new ServiceProvider(hostServices);
 
@@ -73,9 +76,8 @@ namespace Microsoft.Dnx.Runtime
             if (unresolvedLibs.Any())
             {
                 var targetFrameworkShortName = VersionUtility.GetShortFrameworkName(_targetFramework);
-                var runtimeEnv = ServiceProvider.GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
                 var runtimeFrameworkInfo = $@"Current runtime target framework: '{_targetFramework} ({targetFrameworkShortName})'
-{runtimeEnv.GetFullVersion()}";
+{_runtimeEnvironment.GetFullVersion()}";
                 string exceptionMsg;
 
                 // If the main project cannot be resolved, it means the app doesn't support current target framework
@@ -98,9 +100,11 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 throw new InvalidOperationException(exceptionMsg);
             }
 
-            var accessor = (IAssemblyLoadContextAccessor)ServiceProvider.GetService(typeof(IAssemblyLoadContextAccessor));
+            // Don't need these anymore
+            _applicationHostContext = null;
+            _project = null;
 
-            return accessor.Default.Load(applicationName);
+            return _loadContextAccessor.Default.Load(applicationName);
         }
 
         public void Initialize()
@@ -142,7 +146,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                     options.Configuration,
                     loadContextAccessor.Default);
 
-            _compilationEngine = _compilationEngineFactory.CreateEngine(compilationContext);
+            var compilationEngine = _compilationEngineFactory.CreateEngine(compilationContext);
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
@@ -174,7 +178,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), _applicationHostContext.LibraryManager);
-            _serviceProvider.Add(typeof(ILibraryExporter), _compilationEngine.RootLibraryExporter);
+            _serviceProvider.Add(typeof(ILibraryExporter), compilationEngine.RootLibraryExporter);
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
             _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_applicationHostContext.LibraryManager));
 
@@ -193,7 +197,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             // Configure Assembly loaders
             _loaders.Add(new ProjectAssemblyLoader(
                 loadContextAccessor,
-                _compilationEngine,
+                compilationEngine,
                 _applicationHostContext.LibraryManager));
 
             _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, _applicationHostContext.LibraryManager));
@@ -201,8 +205,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         private void AddRuntimeServiceBreadcrumb()
         {
-            var env = (IRuntimeEnvironment)ServiceProvider.GetService(typeof(IRuntimeEnvironment));
-            var frameworkBreadcrumbName = $"{Constants.RuntimeShortName}-{env.RuntimeType}-{env.RuntimeArchitecture}-{env.RuntimeVersion}";
+            var frameworkBreadcrumbName = $"{Constants.RuntimeShortName}-{_runtimeEnvironment.RuntimeType}-{_runtimeEnvironment.RuntimeArchitecture}-{_runtimeEnvironment.RuntimeVersion}";
             Servicing.Breadcrumbs.Instance.AddBreadcrumb(frameworkBreadcrumbName);
         }
     }
