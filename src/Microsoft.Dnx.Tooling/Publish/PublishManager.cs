@@ -217,11 +217,11 @@ namespace Microsoft.Dnx.Tooling.Publish
                     {
                         if (library.Type == LibraryTypes.Project)
                         {
-                            if (!root.Projects.Any(p => p.Name == library.Identity.Name))
+                            if (!root.Projects.Any(p => p.Library.Name == library.Identity.Name))
                             {
                                 var publishProject = new PublishProject((ProjectDescription)library);
 
-                                if (publishProject.Name == project.Name)
+                                if (publishProject.Library.Name == project.Name)
                                 {
                                     publishProject.WwwRoot = _options.WwwRoot;
                                     publishProject.WwwRootOut = _options.WwwRootOut;
@@ -232,30 +232,25 @@ namespace Microsoft.Dnx.Tooling.Publish
                         }
                         else if (library.Type == LibraryTypes.Package)
                         {
-                            IList<DependencyContext> contexts;
-                            if (!root.LibraryDependencyContexts.TryGetValue(library.Identity, out contexts))
+                            if (!root.Packages.Any(p => p.Library.Name == library.Identity.Name))
                             {
                                 root.Packages.Add(new PublishPackage((PackageDescription)library));
-                                contexts = new List<DependencyContext>();
-                                root.LibraryDependencyContexts[library.Identity] = contexts;
                             }
-                            contexts.Add(dependencyContext);
                         }
                     }
                 }
             }
 
-            // TODO: Bring this back
-            //NativeImageGenerator nativeImageGenerator = null;
-            //if (_options.Native)
-            //{
-            //    nativeImageGenerator = NativeImageGenerator.Create(_options, root, frameworkContexts.Values);
-            //    if (nativeImageGenerator == null)
-            //    {
-            //        _options.Reports.Error.WriteLine("Fail to initiate native image generation process.".Red());
-            //        return false;
-            //    }
-            //}
+            NativeImageGenerator nativeImageGenerator = null;
+            if (_options.Native)
+            {
+                nativeImageGenerator = NativeImageGenerator.Create(_options, root, frameworkContexts.Values);
+                if (nativeImageGenerator == null)
+                {
+                    _options.Reports.Error.WriteLine("Fail to initiate native image generation process.".Red());
+                    return false;
+                }
+            }
 
             var success = root.Emit();
 
@@ -265,11 +260,11 @@ namespace Microsoft.Dnx.Tooling.Publish
                 return false;
             }
 
-            //if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
-            //{
-            //    _options.Reports.Error.WriteLine("Native image generation failed.");
-            //    return false;
-            //}
+            if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
+            {
+                _options.Reports.Error.WriteLine("Native image generation failed.");
+                return false;
+            }
 
             sw.Stop();
 

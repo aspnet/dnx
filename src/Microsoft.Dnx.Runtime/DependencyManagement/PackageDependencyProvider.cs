@@ -42,6 +42,53 @@ namespace Microsoft.Dnx.Runtime
             }
         }
 
+        // REVIEW: Should this be here? Is there a better place for this static
+        public static void ResolvePackageAssemblyPaths(LibraryManager libraryManager, Action<PackageDescription, AssemblyName, string> onResolveAssembly)
+        {
+            foreach (var library in libraryManager.GetLibraryDescriptions())
+            {
+                if (library.Type != LibraryTypes.Package)
+                {
+                    var packageDescription = (PackageDescription)library;
+
+                    foreach (var runtimeAssemblyPath in packageDescription.Target.RuntimeAssemblies)
+                    {
+                        // Fix up the slashes to match the platform
+                        var assemblyPath = runtimeAssemblyPath.Path.Replace('/', Path.DirectorySeparatorChar);
+                        var name = Path.GetFileNameWithoutExtension(assemblyPath);
+                        var path = Path.Combine(library.Path, assemblyPath);
+                        var assemblyName = new AssemblyName(name);
+
+                        string replacementPath;
+                        if (Servicing.ServicingTable.TryGetReplacement(
+                            library.Identity.Name,
+                            library.Identity.Version,
+                            assemblyPath,
+                            out replacementPath))
+                        {
+                            onResolveAssembly(packageDescription, assemblyName, replacementPath);
+                        }
+                        else
+                        {
+                            onResolveAssembly(packageDescription, assemblyName, path);
+                        }
+                    }
+                }
+            }
+        }
+
+        public static Dictionary<AssemblyName, string> ResolvePackageAssemblyPaths(LibraryManager libraryManager)
+        {
+            var assemblies = new Dictionary<AssemblyName, string>(AssemblyNameComparer.OrdinalIgnoreCase);
+
+            ResolvePackageAssemblyPaths(libraryManager, (package, assemblyName, path) =>
+            {
+                assemblies[assemblyName] = path;
+            });
+
+            return assemblies;
+        }
+
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
             return new[]
@@ -222,6 +269,30 @@ namespace Microsoft.Dnx.Runtime
             }
 
             return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
+        }
+
+        private class AssemblyNameComparer : IEqualityComparer<AssemblyName>
+        {
+            public static IEqualityComparer<AssemblyName> OrdinalIgnoreCase = new AssemblyNameComparer();
+
+            public bool Equals(AssemblyName x, AssemblyName y)
+            {
+                return
+                    string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(x.CultureName ?? "", y.CultureName ?? "", StringComparison.OrdinalIgnoreCase);
+            }
+
+            public int GetHashCode(AssemblyName obj)
+            {
+                var hashCode = 0;
+                if (obj.Name != null)
+                {
+                    hashCode ^= obj.Name.ToUpperInvariant().GetHashCode();
+                }
+
+                hashCode ^= (obj.CultureName?.ToUpperInvariant() ?? "").GetHashCode();
+                return hashCode;
+            }
         }
     }
 }

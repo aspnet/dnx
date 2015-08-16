@@ -30,7 +30,6 @@ namespace Microsoft.Dnx.Tooling.Publish
             TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
             TargetRuntimesPath = Path.Combine(outputPath, AppRootName, "runtimes");
             Operations = new PublishOperations();
-            LibraryDependencyContexts = new Dictionary<LibraryIdentity, IList<DependencyContext>>();
         }
 
         public string OutputPath { get; private set; }
@@ -45,10 +44,12 @@ namespace Microsoft.Dnx.Tooling.Publish
         public IList<PublishRuntime> Runtimes { get; set; }
         public IList<PublishProject> Projects { get; private set; }
         public IList<PublishPackage> Packages { get; private set; }
-        public IDictionary<LibraryIdentity, IList<DependencyContext>> LibraryDependencyContexts { get; private set; }
 
         public Reports Reports { get; private set; }
         public PublishOperations Operations { get; private set; }
+
+        // The lock file of the root project after the publish operation completes
+        public LockFile LockFile { get; set; }
 
         public IServiceProvider HostServices { get; private set; }
 
@@ -56,7 +57,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         {
             Reports.Information.WriteLine("Copying to output path {0}", OutputPath);
 
-            var mainProject = Projects.Single(project => project.Name == _project.Name);
+            var mainProject = Projects.Single(project => project.Library.Name == _project.Name);
 
             // Emit all package dependencies in parallel
             Task.WaitAll(Packages.Select(p => p.Emit(this)).ToArray());

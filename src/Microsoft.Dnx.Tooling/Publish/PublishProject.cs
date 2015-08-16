@@ -18,16 +18,16 @@ namespace Microsoft.Dnx.Tooling.Publish
 {
     public class PublishProject
     {
-        private readonly ProjectDescription _projectDesription;
+        private readonly ProjectDescription _projectDescription;
         private string _relativeAppBase;
 
         public PublishProject(ProjectDescription projectDescription)
         {
-            _projectDesription = projectDescription;
+            _projectDescription = projectDescription;
         }
 
         public string ApplicationBasePath { get; set; }
-        public string Name { get { return _projectDesription.Identity.Name; } }
+        public LibraryIdentity Library { get { return _projectDescription.Identity; } }
         public string TargetPath { get; private set; }
         public string WwwRoot { get; set; }
         public string WwwRootOut { get; set; }
@@ -35,8 +35,8 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         public bool Emit(PublishRoot root)
         {
-            root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _projectDesription.Type,
-                _projectDesription.Identity, _projectDesription.Framework.ToString().Yellow().Bold());
+            root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _projectDescription.Type,
+                _projectDescription.Identity, _projectDescription.Framework.ToString().Yellow().Bold());
 
             var success = true;
 
@@ -57,7 +57,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         private void EmitSource(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
-                _projectDesription.Type, _projectDesription.Identity.Name);
+                _projectDescription.Type, _projectDescription.Identity.Name);
 
             var project = GetCurrentProject();
             var targetName = project.Name;
@@ -70,7 +70,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
 
-            root.Reports.Quiet.WriteLine("    Source {0}", _projectDesription.Path.Bold());
+            root.Reports.Quiet.WriteLine("    Source {0}", _projectDescription.Path.Bold());
             root.Reports.Quiet.WriteLine("    Target {0}", TargetPath);
 
             root.Operations.Delete(TargetPath);
@@ -90,7 +90,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         private bool EmitNupkg(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
-                _projectDesription.Type, _projectDesription.Identity.Name);
+                _projectDescription.Type, _projectDescription.Identity.Name);
 
             IsPackage = true;
 
@@ -99,7 +99,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
-            root.Reports.Quiet.WriteLine("    Source {0}", _projectDesription.Path.Bold());
+            root.Reports.Quiet.WriteLine("    Source {0}", _projectDescription.Path.Bold());
             root.Reports.Quiet.WriteLine("    Target {0}", TargetPath);
 
             if (Directory.Exists(TargetPath))
@@ -150,7 +150,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             UpdateJson(rootProjectJson, jsonObj =>
             {
                 // Update the project entrypoint
-                jsonObj["entryPoint"] = _projectDesription.Identity.Name;
+                jsonObj["entryPoint"] = _projectDescription.Identity.Name;
 
                 // Set mark this as non loadable
                 jsonObj["loadable"] = false;
@@ -159,10 +159,10 @@ namespace Microsoft.Dnx.Tooling.Publish
                 var deps = new JObject();
                 jsonObj["dependencies"] = deps;
 
-                deps[_projectDesription.Identity.Name] = _projectDesription.Identity.Version.ToString();
+                deps[_projectDescription.Identity.Name] = _projectDescription.Identity.Version.ToString();
             });
 
-            var appBase = Path.Combine(PublishRoot.AppRootName, "packages", resolver.GetPackageDirectory(_projectDesription.Identity.Name, _projectDesription.Identity.Version), "root");
+            var appBase = Path.Combine(PublishRoot.AppRootName, "packages", resolver.GetPackageDirectory(_projectDescription.Identity.Name, _projectDescription.Identity.Version), "root");
 
             _relativeAppBase = Path.Combine("..", appBase);
             ApplicationBasePath = Path.Combine(root.OutputPath, appBase);
@@ -326,49 +326,46 @@ namespace Microsoft.Dnx.Tooling.Publish
                 specialFolders.Add("shared");
             }
 
+            var lockFilePath = Path.GetFullPath(Path.Combine(ApplicationBasePath, LockFileFormat.LockFileName));
+            var format = new LockFileFormat();
+            root.LockFile = format.Read(lockFilePath);
+
             var keep = new HashSet<string>();
 
-            foreach (var project in root.Projects)
+            foreach (var target in root.LockFile.Targets)
             {
-                var lockFilePath = Path.GetFullPath(Path.Combine(ApplicationBasePath, LockFileFormat.LockFileName));
-                var format = new LockFileFormat();
-                var lockFile = format.Read(lockFilePath);
-
-                foreach (var target in lockFile.Targets)
+                foreach (var library in target.Libraries)
                 {
-                    foreach (var library in target.Libraries)
+                    var packagesDir = resolver.GetInstallPath(library.Name, library.Version);
+                    var manifest = resolver.GetManifestFilePath(library.Name, library.Version);
+
+                    keep.Add(manifest);
+
+                    foreach (var path in library.RuntimeAssemblies)
                     {
-                        var packagesDir = resolver.GetInstallPath(library.Name, library.Version);
-                        var manifest = resolver.GetManifestFilePath(library.Name, library.Version);
+                        keep.Add(CombinePath(packagesDir, path));
+                    }
 
-                        keep.Add(manifest);
+                    foreach (var path in library.CompileTimeAssemblies)
+                    {
+                        keep.Add(CombinePath(packagesDir, path));
+                    }
 
-                        foreach (var path in library.RuntimeAssemblies)
+                    foreach (var path in library.NativeLibraries)
+                    {
+                        keep.Add(CombinePath(packagesDir, path));
+                    }
+
+                    foreach (var specialFolder in specialFolders)
+                    {
+                        var specialFolderPath = CombinePath(packagesDir, specialFolder);
+
+                        if (!Directory.Exists(specialFolderPath))
                         {
-                            keep.Add(CombinePath(packagesDir, path));
+                            continue;
                         }
 
-                        foreach (var path in library.CompileTimeAssemblies)
-                        {
-                            keep.Add(CombinePath(packagesDir, path));
-                        }
-
-                        foreach (var path in library.NativeLibraries)
-                        {
-                            keep.Add(CombinePath(packagesDir, path));
-                        }
-
-                        foreach (var specialFolder in specialFolders)
-                        {
-                            var specialFolderPath = CombinePath(packagesDir, specialFolder);
-
-                            if (!Directory.Exists(specialFolderPath))
-                            {
-                                continue;
-                            }
-
-                            keep.AddRange(Directory.EnumerateFiles(specialFolderPath, "*.*", SearchOption.AllDirectories));
-                        }
+                        keep.AddRange(Directory.EnumerateFiles(specialFolderPath, "*.*", SearchOption.AllDirectories));
                     }
                 }
             }
@@ -640,7 +637,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         private void CopyContentFiles(PublishRoot root, Runtime.Project project, string targetFolderPath)
         {
             root.Reports.Quiet.WriteLine("Copying contents of {0} dependency {1} to {2}",
-                _projectDesription.Type, _projectDesription.Identity.Name, targetFolderPath);
+                _projectDescription.Type, _projectDescription.Identity.Name, targetFolderPath);
 
             var contentSourcePath = GetWwwRootSourcePath(project.ProjectDirectory, WwwRoot);
 
@@ -677,7 +674,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         private Runtime.Project GetCurrentProject()
         {
-            return _projectDesription.Project;
+            return _projectDescription.Project;
         }
 
         private bool IsWrappingAssembly()

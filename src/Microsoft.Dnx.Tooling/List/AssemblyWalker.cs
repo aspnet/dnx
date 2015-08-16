@@ -19,7 +19,6 @@ namespace Microsoft.Dnx.Tooling.List
         private readonly static FrameworkName AspNetCore50 = VersionUtility.ParseFrameworkName("dnxcore50");
 
         private readonly FrameworkName _framework;
-        private readonly ApplicationHostContext _hostContext;
         private readonly string _runtimeFolder;
         private readonly bool _showDetails;
         private readonly Reports _reports;
@@ -37,11 +36,10 @@ namespace Microsoft.Dnx.Tooling.List
             Reports reports)
         {
             _framework = framework;
-            _hostContext = hostContext;
             _runtimeFolder = runtimeFolder;
             _showDetails = showDetails;
             _reports = reports;
-            _paths = NuGetAssemblyLoader.ResolveAssemblyPaths(hostContext.LibraryManager);
+            _paths = PackageDependencyProvider.ResolvePackageAssemblyPaths(hostContext.LibraryManager);
         }
 
         public void Walk(IGraphNode<LibraryDescription> root)

@@ -105,7 +105,7 @@ namespace Microsoft.Dnx.Runtime
             }
         }
 
-        public void BuildInverseGraph()
+        private void BuildInverseGraph()
         {
             var firstLevelLookups = new Dictionary<string, List<Library>>(StringComparer.OrdinalIgnoreCase);
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

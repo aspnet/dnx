@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.Impl;
 using NuGet;
@@ -16,9 +15,6 @@ namespace Microsoft.Dnx.Tooling.Publish
     {
         public DependencyContext(string projectDirectory, string configuration, FrameworkName targetFramework)
         {
-            var cacheContextAccessor = new CacheContextAccessor();
-            var cache = new Cache(cacheContextAccessor);
-
             var applicationHostContext = new ApplicationHostContext(
                 hostServices: null,
                 projectDirectory: projectDirectory,
