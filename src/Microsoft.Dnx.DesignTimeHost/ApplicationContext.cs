@@ -1068,19 +1068,35 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 state.Projects.Add(projectInfo);
 
-                if (state.ProjectSearchPaths == null)
-                {
-                    state.ProjectSearchPaths = dependencyInfo.HostContext.ProjectResolver.SearchPaths.ToList();
-                }
+                GlobalSettings settings = null;
 
                 if (state.GlobalJsonPath == null)
                 {
-                    GlobalSettings settings;
                     if (GlobalSettings.TryGetGlobalSettings(dependencyInfo.HostContext.RootDirectory, out settings))
                     {
                         state.GlobalJsonPath = settings.FilePath;
                     }
                 }
+
+                if (state.ProjectSearchPaths == null)
+                {
+                    var searchPaths = new HashSet<string>()
+                    {
+                        Directory.GetParent(project.ProjectDirectory).FullName
+                    };
+
+                    if (settings != null)
+                    {
+                        foreach (var searchPath in settings.ProjectSearchPaths)
+                        {
+                            var path = Path.Combine(settings.DirectoryPath, searchPath);
+                            searchPaths.Add(Path.GetFullPath(path));
+                        }
+                    }
+
+                    state.ProjectSearchPaths = searchPaths.ToList();
+                }
+
             }
 
             return state;

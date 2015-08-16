@@ -23,22 +23,22 @@ namespace Microsoft.Dnx.Runtime
                                       bool skipLockFileValidation = false)
         {
             ProjectDirectory = projectDirectory;
-            RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
-            ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
+            RootDirectory = ProjectResolver.ResolveRootDirectory(ProjectDirectory);
+            var projectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
 
             PackagesDirectory = packagesDirectory ?? PackageDependencyProvider.ResolveRepositoryPath(RootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
             var gacDependencyResolver = new GacDependencyResolver();
-            var projectDependencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
+            var projectDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
             DependencyWalker dependencyWalker = null;
 
             var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
 
             Project project;
-            if (ProjectResolver.TryResolveProject(projectName, out project))
+            if (projectResolver.TryResolveProject(projectName, out project))
             {
                 Project = project;
             }
@@ -95,9 +95,6 @@ namespace Microsoft.Dnx.Runtime
         }
 
         public Project Project { get; private set; }
-
-        // TODO: Remove
-        public IProjectResolver ProjectResolver { get; private set; }
 
         public LibraryManager LibraryManager { get; private set; }
 

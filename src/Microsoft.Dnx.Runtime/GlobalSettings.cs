@@ -15,6 +15,13 @@ namespace Microsoft.Dnx.Runtime
         public IList<string> ProjectSearchPaths { get; private set; }
         public string PackagesPath { get; private set; }
         public string FilePath { get; private set; }
+        public string DirectoryPath
+        {
+            get
+            {
+                return Path.GetFullPath(Path.GetDirectoryName(FilePath));
+            }
+        }
 
         public static bool TryGetGlobalSettings(string path, out GlobalSettings globalSettings)
         {
