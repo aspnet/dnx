@@ -3,7 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
+using System.Text;
+using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -84,6 +88,95 @@ namespace Microsoft.Dnx.Runtime
         {
             EnsureInitialized();
             return _graph.Values.Select(l => l.Item2);
+        }
+
+        public IList<DiagnosticMessage> GetDependencyDiagnostics(string projectFilePath)
+        {
+            var messages = new List<DiagnosticMessage>();
+            foreach (var library in GetLibraryDescriptions())
+            {
+                string projectPath = library.RequestedRange.FileName ?? projectFilePath;
+
+                if (!library.Resolved)
+                {
+                    string message;
+                    if (library.Compatible)
+                    {
+                        message = $"The dependency {library.RequestedRange} could not be resolved.";
+                    }
+                    else
+                    {
+                        var projectName = Directory.GetParent(projectFilePath).Name;
+                        message =
+                            $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
+                    }
+
+                    messages.Add(
+                        new DiagnosticMessage(
+                            message,
+                            projectPath,
+                            DiagnosticMessageSeverity.Error,
+                            library.RequestedRange.Line,
+                            library.RequestedRange.Column));
+                }
+                else
+                {
+                    // Skip libraries that aren't specified in a project.json
+                    if (string.IsNullOrEmpty(library.RequestedRange.FileName))
+                    {
+                        continue;
+                    }
+
+                    if (library.RequestedRange.VersionRange == null)
+                    {
+                        // TODO: Show errors/warnings for things without versions
+                        continue;
+                    }
+
+                    // If we ended up with a declared version that isn't what was asked for directly
+                    // then report a warning
+                    // Case 1: Non floating version and the minimum doesn't match what was specified
+                    // Case 2: Floating version that fell outside of the range
+                    if ((library.RequestedRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                         library.RequestedRange.VersionRange.MinVersion != library.Identity.Version) ||
+                        (library.RequestedRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None &&
+                         !library.RequestedRange.VersionRange.EqualsFloating(library.Identity.Version)))
+                    {
+                        var message = string.Format("Dependency specified was {0} but ended up with {1}.", library.RequestedRange, library.Identity);
+                        messages.Add(
+                            new DiagnosticMessage(
+                                message,
+                                projectPath,
+                                DiagnosticMessageSeverity.Warning,
+                                library.RequestedRange.Line,
+                                library.RequestedRange.Column));
+                    }
+                }
+            }
+
+            return messages;
+        }
+
+        public string GetMissingDependenciesWarning(FrameworkName targetFramework)
+        {
+            var sb = new StringBuilder();
+
+            // TODO: Localize messages
+
+            sb.AppendFormat("Failed to resolve the following dependencies for target framework '{0}':", targetFramework.ToString());
+            sb.AppendLine();
+
+            foreach (var d in GetLibraryDescriptions().Where(d => !d.Resolved).OrderBy(d => d.Identity.Name))
+            {
+                sb.Append("   " + d.Identity);
+                if (!d.Compatible)
+                {
+                    sb.Append(" (incompatible)");
+                }
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
         }
 
         private void EnsureInitialized()
