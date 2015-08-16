@@ -123,7 +123,6 @@ namespace Microsoft.Dnx.Runtime
 
                 var resolved = compatible;
 
-
                 var packageDescription = new PackageDescription(
                     libraryRange,
                     package,

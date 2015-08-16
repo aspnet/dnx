@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Microsoft.Dnx.Runtime.Tests
 {
-    public class NuGetDependencyResolverFacts
+    public class PackageDependencyProviderFacts
     {
         [Theory]
         [InlineData("MetaPackage", ".NETFramework,Version=v4.5", true)]
@@ -136,7 +136,9 @@ namespace Microsoft.Dnx.Runtime.Tests
             var resolver = new PackageDependencyProvider("/path/to/packages", lockFile);
 
             var libToLookup = new LibraryRange(packageName, frameworkReference: false);
-            Assert.Equal(resolved, resolver.GetDescription(libToLookup, new FrameworkName(framework)).Resolved);
+            var description = resolver.GetDescription(libToLookup, new FrameworkName(framework));
+            Assert.Equal(resolved, description.Compatible);
+            Assert.NotNull(description);
         }
     }
 }
