@@ -7,37 +7,25 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
-using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Runtime.Common.DependencyInjection;
-using Microsoft.Dnx.Runtime.Compilation;
-using Microsoft.Dnx.Runtime.Infrastructure;
-using Microsoft.Dnx.Runtime.Loader;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
     public class ApplicationHostContext
     {
-        private readonly ServiceProvider _serviceProvider;
         private readonly LockFile _lockFile;
         private readonly Lazy<List<DiagnosticMessage>> _lockFileDiagnostics =
             new Lazy<List<DiagnosticMessage>>();
 
-        public ApplicationHostContext(IServiceProvider hostServices,
-                                      string projectDirectory,
+        public ApplicationHostContext(string projectDirectory,
                                       string packagesDirectory,
-                                      string configuration,
                                       FrameworkName targetFramework,
-                                      IAssemblyLoadContextFactory loadContextFactory = null,
                                       bool skipLockFileValidation = false)
         {
             ProjectDirectory = projectDirectory;
-            Configuration = configuration;
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
             ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
-            ProjectGraphProvider = new ProjectGraphProvider(hostServices);
-            _serviceProvider = new ServiceProvider(hostServices);
 
             PackagesDirectory = packagesDirectory ?? PackageDependencyProvider.ResolveRepositoryPath(RootDirectory);
 
@@ -104,73 +92,23 @@ namespace Microsoft.Dnx.Runtime
             dependencyWalker.Walk(Project.Name, Project.Version, targetFramework);
 
             LibraryManager = new LibraryManager(dependencyWalker.Libraries);
-
-            AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
-
-            // Create a new Application Environment for running the app. It needs a reference to the Host's application environment
-            // (if any), which we can get from the service provider we were given.
-            // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
-            // will just have it's own independent set of global data.
-            IApplicationEnvironment hostEnvironment = null;
-            if (hostServices != null)
-            {
-                hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
-            }
-            ApplicationEnvironment = new ApplicationEnvironment(Project, targetFramework, configuration, hostEnvironment);
-
-            // Default services
-            _serviceProvider.Add(typeof(IApplicationEnvironment), ApplicationEnvironment);
-            _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
-            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(ProjectResolver));
-
-            // Not exposed to the application layer
-            _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory, includeInManifest: false);
-        }
-
-        public void AddService(Type type, object instance, bool includeInManifest)
-        {
-            _serviceProvider.Add(type, instance, includeInManifest);
-        }
-
-        public void AddService(Type type, object instance)
-        {
-            _serviceProvider.Add(type, instance);
-        }
-
-        public T CreateInstance<T>()
-        {
-            return ActivatorUtilities.CreateInstance<T>(_serviceProvider);
-        }
-
-        public IServiceProvider ServiceProvider
-        {
-            get
-            {
-                return _serviceProvider;
-            }
         }
 
         public Project Project { get; private set; }
 
-        public IAssemblyLoadContextFactory AssemblyLoadContextFactory { get; private set; }
-
+        // TODO: Remove
         public IProjectResolver ProjectResolver { get; private set; }
 
         public LibraryManager LibraryManager { get; private set; }
 
+        // TODO: Remove
         public FrameworkReferenceResolver FrameworkReferenceResolver { get; private set; }
-
-        public IProjectGraphProvider ProjectGraphProvider { get; }
-
-        public string Configuration { get; private set; }
 
         public string RootDirectory { get; private set; }
 
         public string ProjectDirectory { get; private set; }
 
         public string PackagesDirectory { get; private set; }
-
-        public IApplicationEnvironment ApplicationEnvironment { get; private set; }
 
         public IEnumerable<DiagnosticMessage> GetLockFileDiagnostics()
         {

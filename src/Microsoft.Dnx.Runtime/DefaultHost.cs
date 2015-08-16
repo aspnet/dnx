@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
+using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
@@ -28,6 +29,7 @@ namespace Microsoft.Dnx.Runtime
         private ICompilationEngine _compilationEngine;
 
         private Project _project;
+        private readonly ServiceProvider _serviceProvider;
 
         public DefaultHost(RuntimeOptions options,
                            IServiceProvider hostServices,
@@ -39,12 +41,14 @@ namespace Microsoft.Dnx.Runtime
             _targetFramework = options.TargetFramework;
             _compilationEngineFactory = compilationEngineFactory;
 
+            _serviceProvider = new ServiceProvider(hostServices);
+
             Initialize(options, hostServices, loadContextAccessor, fileWatcher);
         }
 
         public IServiceProvider ServiceProvider
         {
-            get { return _applicationHostContext.ServiceProvider; }
+            get { return _serviceProvider; }
         }
 
         public Project Project
@@ -126,24 +130,22 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
         private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor, IFileWatcher fileWatcher)
         {
             _applicationHostContext = new ApplicationHostContext(
-                hostServices,
                 _projectDirectory,
                 options.PackageDirectory,
-                options.Configuration,
                 _targetFramework);
 
             _compilationEngine = _compilationEngineFactory.CreateEngine(
                 new CompilationEngineContext(
                     _applicationHostContext.LibraryManager,
-                    _applicationHostContext.ProjectGraphProvider,
+                    new ProjectGraphProvider(),
                     fileWatcher,
-                    _applicationHostContext.ServiceProvider,
                     _targetFramework,
-                    options.Configuration));
+                    options.Configuration,
+                    loadContextAccessor.Default));
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
-            Logger.TraceInformation("[{0}]: Project configuration: {1}", GetType().Name, _applicationHostContext.Configuration);
+            Logger.TraceInformation("[{0}]: Project configuration: {1}", GetType().Name, options.Configuration);
             Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, _applicationHostContext.PackagesDirectory);
 
             _project = _applicationHostContext.Project;
@@ -161,8 +163,18 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 };
             }
 
-            _applicationHostContext.AddService(typeof(IApplicationShutdown), _shutdown);
-            _applicationHostContext.AddService(typeof(RuntimeOptions), options);
+            // Create a new Application Environment for running the app. It needs a reference to the Host's application environment
+            // (if any), which we can get from the service provider we were given.
+            // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
+            // will just have it's own independent set of global data.
+            var hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration, hostEnvironment);
+
+            // Default services
+            _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
+            _serviceProvider.Add(typeof(ILibraryManager), _applicationHostContext.LibraryManager);
+            _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
+            _serviceProvider.Add(typeof(RuntimeOptions), options);
 
             if (options.CompilationServerPort.HasValue)
             {
@@ -178,7 +190,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 _compilationEngine,
                 _applicationHostContext.LibraryManager));
 
-            _loaders.Add(new NuGetAssemblyLoader(loadContextAccessor, _applicationHostContext.LibraryManager));
+            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, _applicationHostContext.LibraryManager));
         }
 
         private void AddRuntimeServiceBreadcrumb()

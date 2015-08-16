@@ -3,7 +3,6 @@
 
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Tooling.Algorithms;
 using NuGet;
@@ -12,8 +11,6 @@ namespace Microsoft.Dnx.Tooling.List
 {
     internal class DependencyListOperation
     {
-        private const string Configuration = "Debug";
-
         private readonly FrameworkName _framework;
         private readonly DependencyListOptions _options;
         private readonly ApplicationHostContext _hostContext;
@@ -69,10 +66,8 @@ namespace Microsoft.Dnx.Tooling.List
         private ApplicationHostContext CreateApplicationHostContext()
         {
             var hostContext = new ApplicationHostContext(
-                hostServices: null,
                 projectDirectory: _options.Project.ProjectDirectory,
                 packagesDirectory: null,
-                configuration: Configuration,
                 targetFramework: _framework);
 
             return hostContext;

@@ -16,7 +16,6 @@ using Microsoft.CodeAnalysis.Text;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
-using Microsoft.Dnx.Runtime.Infrastructure;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {
@@ -25,7 +24,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
-        private readonly IAssemblyLoadContextFactory _loadContextFactory;
+        private readonly IAssemblyLoadContext _loadContext;
         private readonly IFileWatcher _watcher;
         private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _services;
@@ -33,7 +32,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
         public RoslynCompiler(ICache cache,
                               ICacheContextAccessor cacheContextAccessor,
                               INamedCacheDependencyProvider namedDependencyProvider,
-                              IAssemblyLoadContextFactory loadContextFactory,
+                              IAssemblyLoadContext loadContext,
                               IFileWatcher watcher,
                               IApplicationEnvironment environment,
                               IServiceProvider services)
@@ -41,7 +40,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
-            _loadContextFactory = loadContextFactory;
+            _loadContext = loadContext;
             _watcher = watcher;
             _environment = environment;
             _services = services;
@@ -243,9 +242,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             {
                 var modules = new List<ICompileModule>();
 
-                var childContext = _loadContextFactory.Create(_services);
-
-                var preprocessAssembly = childContext.Load(target.Name + "!preprocess");
+                var preprocessAssembly = _loadContext.Load(target.Name + "!preprocess");
 
                 foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                 {
@@ -256,11 +253,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     }
                 }
 
-                // We do this so that the load context is disposed when the cache entry
-                // expires
                 return new CompilationModules
                 {
-                    LoadContext = childContext,
                     Modules = modules,
                 };
             });
@@ -459,16 +453,9 @@ namespace Microsoft.Dnx.Compilation.CSharp
             return metadata.GetReference();
         }
 
-        private class CompilationModules : IDisposable
+        private class CompilationModules
         {
-            public IAssemblyLoadContext LoadContext { get; set; }
-
             public List<ICompileModule> Modules { get; set; }
-
-            public void Dispose()
-            {
-                LoadContext.Dispose();
-            }
         }
     }
 }

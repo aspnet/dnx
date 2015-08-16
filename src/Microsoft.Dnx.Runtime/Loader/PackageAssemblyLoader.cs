@@ -8,13 +8,13 @@ using System.Reflection;
 
 namespace Microsoft.Dnx.Runtime.Loader
 {
-    public class NuGetAssemblyLoader : IAssemblyLoader
+    public class PackageAssemblyLoader : IAssemblyLoader
     {
         private readonly Dictionary<AssemblyName, string> _assemblies;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public NuGetAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
-                                   LibraryManager libraryManager)
+        public PackageAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
+                                     LibraryManager libraryManager)
         {
             _loadContextAccessor = loadContextAccessor;
             _assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraryManager);

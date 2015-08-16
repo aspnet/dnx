@@ -18,6 +18,7 @@ using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.Impl;
 using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Infrastructure;
+using Microsoft.Dnx.Runtime.Loader;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -28,6 +29,7 @@ namespace Microsoft.Dnx.DesignTimeHost
     {
         private readonly IServiceProvider _hostServices;
         private readonly IApplicationEnvironment _appEnv;
+        private readonly IAssemblyLoadContext _defaultLoadContext;
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
 
@@ -59,6 +61,7 @@ namespace Microsoft.Dnx.DesignTimeHost
         {
             _hostServices = services;
             _appEnv = (IApplicationEnvironment)services.GetService(typeof(IApplicationEnvironment));
+            _defaultLoadContext = ((IAssemblyLoadContextAccessor)services.GetService(typeof(IAssemblyLoadContextAccessor))).Default;
             _pluginHandler = new PluginHandler(services, SendPluginMessage);
             _compilationEngineFactory = compilationEngineFactory;
             _protocolManager = protocolManager;
@@ -551,11 +554,14 @@ namespace Microsoft.Dnx.DesignTimeHost
                     Resources.FormatPlugin_UnableToFindProjectJson(_appPath.Value));
             }
 
-            var loadContextFactory = GetRuntimeLoadContextFactory(project);
+            var hostContextKey = Tuple.Create("RuntimeLoadContext", project.Name, _appEnv.RuntimeFramework);
 
-            var assemblyLoadContext = loadContextFactory.Create(_hostServices);
+            return _compilationEngineFactory.CompilationCache.Cache.Get<IAssemblyLoadContext>(hostContextKey, ctx =>
+            {
+                var appHostContext = GetApplicationHostContext(project, _appEnv.RuntimeFramework);
 
-            return assemblyLoadContext;
+                return new PackageLoadContext(appHostContext.LibraryManager, _defaultLoadContext);
+            });
         }
 
         private bool UpdateProjectCompilation(ProjectWorld project, out ProjectCompilation compilation)
@@ -1080,18 +1086,15 @@ namespace Microsoft.Dnx.DesignTimeHost
             return state;
         }
 
-        private ApplicationHostContext GetApplicationHostContext(Project project, string configuration, FrameworkName frameworkName, bool useRuntimeLoadContextFactory = true)
+        private ApplicationHostContext GetApplicationHostContext(Project project, FrameworkName frameworkName)
         {
-            var cacheKey = Tuple.Create("ApplicationContext", project.Name, configuration, frameworkName);
+            var cacheKey = Tuple.Create("ApplicationContext", project.Name, frameworkName);
 
             return _compilationEngineFactory.CompilationCache.Cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
-                var applicationHostContext = new ApplicationHostContext(_hostServices,
-                                                                        project.ProjectDirectory,
+                var applicationHostContext = new ApplicationHostContext(project.ProjectDirectory,
                                                                         packagesDirectory: null,
-                                                                        configuration: configuration,
                                                                         targetFramework: frameworkName,
-                                                                        loadContextFactory: GetRuntimeLoadContextFactory(project),
                                                                         skipLockFileValidation: true);
 
                 // Watch all projects for project.json changes
@@ -1110,28 +1113,20 @@ namespace Microsoft.Dnx.DesignTimeHost
             });
         }
 
-        private IAssemblyLoadContextFactory GetRuntimeLoadContextFactory(Project project)
-        {
-            return new DesignTimeAssemblyLoadContextFactory(
-                project,
-                _appEnv,
-                _compilationEngineFactory);
-        }
-
         private DependencyInfo ResolveProjectDependencies(Project project, string configuration, FrameworkName frameworkName)
         {
             var cacheKey = Tuple.Create("DependencyInfo", project.Name, configuration, frameworkName);
 
             return _compilationEngineFactory.CompilationCache.Cache.Get<DependencyInfo>(cacheKey, ctx =>
             {
-                var applicationHostContext = GetApplicationHostContext(project, configuration, frameworkName);
+                var applicationHostContext = GetApplicationHostContext(project, frameworkName);
                 var compilationEngine = _compilationEngineFactory.CreateEngine(new CompilationEngineContext(
                     applicationHostContext.LibraryManager,
-                    applicationHostContext.ProjectGraphProvider,
+                    new ProjectGraphProvider(),
                     NoopWatcher.Instance,
-                    applicationHostContext.ServiceProvider,
                     frameworkName,
-                    configuration));
+                    configuration,
+                    GetAppRuntimeLoadContext()));
 
                 var libraryManager = applicationHostContext.LibraryManager;
                 var frameworkResolver = applicationHostContext.FrameworkReferenceResolver;

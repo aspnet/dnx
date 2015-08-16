@@ -7,7 +7,6 @@ using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Infrastructure;
 
 namespace Microsoft.Dnx.Compilation
 {
@@ -54,7 +53,7 @@ namespace Microsoft.Dnx.Compilation
                     Logger.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", provider.TypeName, project.Name, targetFramework, configuration, aspect);
 
                     // Get the exports for the project dependencies
-                    var projectExport = new Lazy<LibraryExport>(() => ExportProjectDependencies(project, targetFramework, configuration, aspect, compilationEngine)); 
+                    var projectExport = new Lazy<LibraryExport>(() => ExportProjectDependencies(project, targetFramework, configuration, aspect, compilationEngine));
 
                     // Resolve the project export
                     IMetadataProjectReference projectReference = projectCompiler.CompileProject(

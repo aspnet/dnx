@@ -7,7 +7,6 @@ using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
-using Microsoft.Dnx.Runtime.Infrastructure;
 
 namespace Microsoft.Dnx.Compilation
 {
@@ -15,36 +14,29 @@ namespace Microsoft.Dnx.Compilation
     {
         private readonly Dictionary<TypeInformation, IProjectCompiler> _compilers = new Dictionary<TypeInformation, IProjectCompiler>();
 
-        private readonly Lazy<IAssemblyLoadContext> _compilerLoadContext;
         private readonly CompilationEngineContext _context;
+        private readonly ServiceProvider _compilerServices = new ServiceProvider();
 
-        public CompilationEngine(
-            CompilationCache compilationCache, 
-            CompilationEngineContext context)
+        public CompilationEngine(CompilationCache compilationCache, CompilationEngineContext context)
         {
             _context = context;
+
             RootLibraryExporter = new LibraryExporter(_context.LibraryManager, this, _context.TargetFramework, _context.Configuration);
-            _compilerLoadContext = new Lazy<IAssemblyLoadContext>(() =>
-            {
-                var factory = (IAssemblyLoadContextFactory)_context.Services.GetService(typeof(IAssemblyLoadContextFactory));
-                return factory.Create(_context.Services);
-            });
 
             CompilationCache = compilationCache;
 
             // Register compiler services
             // TODO(anurse): Switch to project factory model to avoid needing to do this.
-            _context.AddService(typeof(ICache), CompilationCache.Cache);
-            _context.AddService(typeof(ICacheContextAccessor), CompilationCache.CacheContextAccessor);
-            _context.AddService(typeof(INamedCacheDependencyProvider), CompilationCache.NamedCacheDependencyProvider);
-            _context.AddService(typeof(IFileWatcher), context.FileWatcher);
+            _compilerServices.Add(typeof(ICache), CompilationCache.Cache);
+            _compilerServices.Add(typeof(ICacheContextAccessor), CompilationCache.CacheContextAccessor);
+            _compilerServices.Add(typeof(INamedCacheDependencyProvider), CompilationCache.NamedCacheDependencyProvider);
+            _compilerServices.Add(typeof(IFileWatcher), context.FileWatcher);
+            _compilerServices.Add(typeof(IAssemblyLoadContext), context.BuildLoadContext);
         }
 
         public CompilationCache CompilationCache { get; }
 
         public ILibraryExporter RootLibraryExporter { get; }
-
-        public event Action<string> OnInputFileChanged;
 
         public Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext)
         {
@@ -65,7 +57,7 @@ namespace Microsoft.Dnx.Compilation
 
         public LibraryExporter CreateProjectExporter(Project project, FrameworkName targetFramework, string configuration)
         {
-            var manager = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework, configuration);
+            var manager = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework);
             return new LibraryExporter(manager, this, targetFramework, configuration);
         }
 
@@ -73,7 +65,7 @@ namespace Microsoft.Dnx.Compilation
         {
             // Load the factory
             return _compilers.GetOrAdd(provider, typeInfo =>
-                CompilerServices.CreateService<IProjectCompiler>(_context.Services, _compilerLoadContext.Value, typeInfo));
+                CompilerServices.CreateService<IProjectCompiler>(_compilerServices, _context.BuildLoadContext, typeInfo));
         }
     }
 }

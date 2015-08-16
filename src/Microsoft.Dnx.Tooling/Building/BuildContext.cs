@@ -7,7 +7,6 @@ using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Compilation;
-using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
 using NuGet;
 
@@ -25,6 +24,7 @@ namespace Microsoft.Dnx.Tooling
         private readonly IServiceProvider _hostServices;
         private readonly IApplicationEnvironment _appEnv;
         private readonly LibraryExporter _libraryExporter;
+        private readonly IAssemblyLoadContext _defaultLoadContext;
 
         public BuildContext(IServiceProvider hostServices,
                             IApplicationEnvironment appEnv,
@@ -41,20 +41,20 @@ namespace Microsoft.Dnx.Tooling
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
             _hostServices = hostServices;
             _appEnv = appEnv;
+            _defaultLoadContext = ((IAssemblyLoadContextAccessor)hostServices.GetService(typeof(IAssemblyLoadContextAccessor))).Default;
 
-            _applicationHostContext = GetApplicationHostContext(project, targetFramework, configuration, compilationFactory.CompilationCache);
+            _applicationHostContext = GetApplicationHostContext(project, targetFramework, compilationFactory.CompilationCache);
             var compilationEngine = compilationFactory.CreateEngine(
                 new CompilationEngineContext(
                     _applicationHostContext.LibraryManager,
-                    _applicationHostContext.ProjectGraphProvider,
+                    new ProjectGraphProvider(),
                     NoopWatcher.Instance,
-                    _applicationHostContext.ServiceProvider,
                     _targetFramework,
-                    _configuration));
+                    _configuration,
+                    GetBuildLoadContext(project, compilationFactory.CompilationCache)));
+
             _libraryExporter = compilationEngine.CreateProjectExporter(
                 _project, _targetFramework, _configuration);
-            _applicationHostContext.AddService(typeof(ILibraryExporter), _libraryExporter);
-            _applicationHostContext.AddService(typeof(ICompilationEngine), compilationEngine);
         }
 
         public void Initialize(IReport report)
@@ -97,9 +97,9 @@ namespace Microsoft.Dnx.Tooling
             var projectReferenceByName = _applicationHostContext.LibraryManager
                                                                 .GetLibraryDescriptions()
                                                                 .Where(l => l.Type == LibraryTypes.Project)
-                                                                .ToDictionary(r => r.Identity.Name);
+                                                                .ToDictionary(l => l.Identity.Name, l => (ProjectDescription)l);
 
-            LibraryDescription description;
+            ProjectDescription description;
             if (!projectReferenceByName.TryGetValue(_project.Name, out description))
             {
                 return;
@@ -112,10 +112,9 @@ namespace Microsoft.Dnx.Tooling
                     continue;
                 }
 
-                Runtime.Project dependencyProject;
-                if (projectReferenceByName.ContainsKey(dependency.Name) &&
-                    _applicationHostContext.ProjectResolver.TryResolveProject(dependency.Name, out dependencyProject) &&
-                    dependencyProject.EmbedInteropTypes)
+                ProjectDescription dependencyProject;
+                if (projectReferenceByName.TryGetValue(dependency.Name, out dependencyProject) && 
+                    dependencyProject.Project.EmbedInteropTypes)
                 {
                     continue;
                 }
@@ -218,32 +217,30 @@ namespace Microsoft.Dnx.Tooling
             }
         }
 
-        private ApplicationHostContext GetApplicationHostContext(Runtime.Project project, FrameworkName targetFramework, string configuration, CompilationCache cache)
+        private ApplicationHostContext GetApplicationHostContext(Runtime.Project project, FrameworkName targetFramework, CompilationCache cache)
         {
-            var cacheKey = Tuple.Create("ApplicationContext", project.Name, configuration, targetFramework);
+            var cacheKey = Tuple.Create("ApplicationContext", project.Name, targetFramework);
 
             return cache.Cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
-                var applicationHostContext = new ApplicationHostContext(hostServices: _hostServices,
-                                                                        projectDirectory: project.ProjectDirectory,
+                var applicationHostContext = new ApplicationHostContext(projectDirectory: project.ProjectDirectory,
                                                                         packagesDirectory: null,
-                                                                        configuration: configuration,
-                                                                        targetFramework: targetFramework,
-                                                                        loadContextFactory: GetRuntimeLoadContextFactory(project));
+                                                                        targetFramework: targetFramework);
 
                 return applicationHostContext;
             });
         }
 
-        private IAssemblyLoadContextFactory GetRuntimeLoadContextFactory(Runtime.Project project)
+        private IAssemblyLoadContext GetBuildLoadContext(Runtime.Project project, CompilationCache cache)
         {
-            var applicationHostContext = new ApplicationHostContext(_hostServices,
-                                                                    project.ProjectDirectory,
-                                                                    packagesDirectory: null,
-                                                                    configuration: _appEnv.Configuration,
-                                                                    targetFramework: _appEnv.RuntimeFramework,
-                                                                    loadContextFactory: null);
-            return new AssemblyLoadContextFactory(applicationHostContext.ServiceProvider);
+            var cacheKey = Tuple.Create("RuntimeLoadContext", project.Name, _appEnv.RuntimeFramework);
+
+            return cache.Cache.Get<IAssemblyLoadContext>(cacheKey, ctx =>
+            {
+                var appHostContext = GetApplicationHostContext(project, _appEnv.RuntimeFramework, cache);
+
+                return new PackageLoadContext(appHostContext.LibraryManager, _defaultLoadContext);
+            });
         }
 
         private static string NormalizeDirectoryPath(string path)

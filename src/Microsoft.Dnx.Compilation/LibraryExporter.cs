@@ -197,7 +197,7 @@ namespace Microsoft.Dnx.Compilation
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
 
-            if (!TryPopulateMetadataReferences(packageLibrary, _targetFramework, references))
+            if (!TryPopulateMetadataReferences(packageLibrary, references))
             {
                 return null;
             }
@@ -205,7 +205,7 @@ namespace Microsoft.Dnx.Compilation
             // REVIEW: This requires more design
             var sourceReferences = new List<ISourceReference>();
 
-            foreach (var sharedSource in GetSharedSources(packageLibrary, _targetFramework))
+            foreach (var sharedSource in GetSharedSources(packageLibrary))
             {
                 sourceReferences.Add(new SourceFileReference(sharedSource));
             }
@@ -235,7 +235,7 @@ namespace Microsoft.Dnx.Compilation
             return new LibraryExport(new MetadataFileReference(library.Identity.Name, library.Path));
         }
 
-        private IEnumerable<string> GetSharedSources(PackageDescription package, FrameworkName targetFramework)
+        private IEnumerable<string> GetSharedSources(PackageDescription package)
         {
             var directory = Path.Combine(package.Path, "shared");
 
@@ -247,7 +247,7 @@ namespace Microsoft.Dnx.Compilation
         }
 
 
-        private bool TryPopulateMetadataReferences(PackageDescription package, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)
+        private bool TryPopulateMetadataReferences(PackageDescription package, IDictionary<string, IMetadataReference> paths)
         {
             foreach (var assemblyPath in package.Target.CompileTimeAssemblies)
             {

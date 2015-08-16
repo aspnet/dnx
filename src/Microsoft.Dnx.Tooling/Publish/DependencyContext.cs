@@ -13,14 +13,13 @@ namespace Microsoft.Dnx.Tooling.Publish
 {
     public class DependencyContext
     {
-        public DependencyContext(string projectDirectory, string configuration, FrameworkName targetFramework)
+        public DependencyContext(string projectDirectory, FrameworkName targetFramework)
         {
             var applicationHostContext = new ApplicationHostContext(
-                hostServices: null,
                 projectDirectory: projectDirectory,
                 packagesDirectory: null,
-                configuration: configuration,
                 targetFramework: targetFramework);
+
             FrameworkName = targetFramework;
             PackagesDirectory = applicationHostContext.PackagesDirectory;
         }

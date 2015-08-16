@@ -9,6 +9,6 @@ namespace Microsoft.Dnx.Runtime
     /// </summary>
     public interface IProjectGraphProvider
     {
-        LibraryManager GetProjectGraph(Project project, FrameworkName targetFramework, string configuration);
+        LibraryManager GetProjectGraph(Project project, FrameworkName targetFramework);
     }
 }
