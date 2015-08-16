@@ -24,10 +24,6 @@ namespace Microsoft.Dnx.Runtime
             };
         }
 
-        public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
-        {
-        }
-
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
             return Enumerable.Empty<string>();

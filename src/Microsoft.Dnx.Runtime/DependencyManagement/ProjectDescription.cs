@@ -6,11 +6,11 @@ namespace Microsoft.Dnx.Runtime
     public class ProjectDescription : LibraryDescription
     {
         public ProjectDescription(
-            LibraryRange libraryRange, 
-            Project project, 
-            IEnumerable<LibraryDependency> dependencies, 
-            IEnumerable<string> assemblies, 
-            FrameworkName framework, 
+            LibraryRange libraryRange,
+            Project project,
+            IEnumerable<LibraryDependency> dependencies,
+            IEnumerable<string> assemblies,
+            FrameworkName framework,
             bool resolved) :
                 base(
                     libraryRange,
@@ -26,6 +26,6 @@ namespace Microsoft.Dnx.Runtime
             Compatible = resolved;
         }
 
-        public Project Project { get; set; }
+        public Project Project { get; }
     }
 }

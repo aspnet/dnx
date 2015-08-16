@@ -47,14 +47,13 @@ namespace Microsoft.Dnx.Runtime
         {
             foreach (var library in libraryManager.GetLibraryDescriptions())
             {
-                if (library.Type != LibraryTypes.Package)
+                if (library.Type == LibraryTypes.Package)
                 {
                     var packageDescription = (PackageDescription)library;
 
                     foreach (var runtimeAssemblyPath in packageDescription.Target.RuntimeAssemblies)
                     {
-                        // Fix up the slashes to match the platform
-                        var assemblyPath = runtimeAssemblyPath.Path.Replace('/', Path.DirectorySeparatorChar);
+                        var assemblyPath = runtimeAssemblyPath.Path;
                         var name = Path.GetFileNameWithoutExtension(assemblyPath);
                         var path = Path.Combine(library.Path, assemblyPath);
                         var assemblyName = new AssemblyName(name);

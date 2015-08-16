@@ -212,7 +212,7 @@ namespace Microsoft.Dnx.Runtime
 
         private LockFileItem ReadFileItem(string property, JsonValue json)
         {
-            var item = new LockFileItem { Path = property };
+            var item = new LockFileItem { Path = PathUtility.GetPathWithDirectorySeparator(property) };
             var jobject = json as JsonObject;
 
             if (jobject != null)

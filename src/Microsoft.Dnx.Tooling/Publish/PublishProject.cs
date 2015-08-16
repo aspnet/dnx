@@ -391,7 +391,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         private static string CombinePath(string path1, string path2)
         {
-            return Path.Combine(path1, path2.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+            return Path.Combine(path1, path2);
         }
 
         private bool UpdateLockFile(PublishRoot root)
