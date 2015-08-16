@@ -91,7 +91,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 {
                     var lockFileErrorMessage = string.Join(string.Empty,
                         _applicationHostContext.GetLockFileDiagnostics().Select(x => $"{Environment.NewLine}{x.FormattedMessage}"));
-                    exceptionMsg = $@"{_applicationHostContext.GetMissingDependenciesWarning(_targetFramework)}{lockFileErrorMessage}
+                    exceptionMsg = $@"{_applicationHostContext.LibraryManager.GetMissingDependenciesWarning(_targetFramework)}{lockFileErrorMessage}
 {runtimeFrameworkInfo}";
                 }
 
