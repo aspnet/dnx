@@ -100,13 +100,16 @@ namespace NuGet
             var len1 = path1Segments.Length - 1;
             var len2 = path2Segments.Length;
 
+            // find largest common absolute path between both paths
             var min = Math.Min(len1, len2);
             while (min > index)
             {
-                if (string.Compare(path1Segments[index], path2Segments[index], compare) != 0)
+                if (!string.Equals(path1Segments[index], path2Segments[index], compare))
                 {
                     break;
                 }
+                // Handle scenarios where folder and file have same name (only if os supports same name for file and directory)
+                // e.g. /file/name /file/name/app
                 else if ((len1 == index && len2 > index + 1) || (len1 > index && len2 == index + 1))
                 {
                     break;
@@ -118,7 +121,7 @@ namespace NuGet
 
             // check if path2 ends with a non-directory separator and if path1 has the same non-directory at the end
             if (len1 + 1 == len2 && !string.IsNullOrEmpty(path1Segments[index]) &&
-                string.Compare(path1Segments[index], path2Segments[index], compare) == 0)
+                string.Equals(path1Segments[index], path2Segments[index], compare))
             {
                 return path;
             }
