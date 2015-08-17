@@ -102,7 +102,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
         [MemberData(nameof(RuntimeComponents))]
         public void DnuPublishWebApp_RootAsPublicFolder(string flavor, string os, string architecture)
         {
-
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig'],
   'Views': {
@@ -116,7 +115,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 }";
             var expectedOutputStructure = @"{
   'wwwroot': {
-    '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig', 'web.config'],
+    '.': ['project.json', 'project.lock.json', 'Config.json', 'Program.cs', 'build_config1.bconfig', 'web.config'],
       'Views': {
         'Home': ['index.cshtml'],
         'Shared': ['_Layout.cshtml']
@@ -173,6 +172,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 }")
                     .WriteTo(testEnv.ProjectPath);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
+
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
@@ -197,6 +202,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
+                    .WithFileContents(Path.Combine("wwwroot", "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
   ""publishExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden"",
@@ -211,6 +218,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
+
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
@@ -288,6 +296,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 }")
                     .WriteTo(testEnv.ProjectPath);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
+
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
@@ -358,6 +372,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 }")
                     .WriteTo(testEnv.ProjectPath);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
+
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
@@ -416,6 +436,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   }
 }")
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -514,6 +540,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 }")
                     .WriteTo(solutionDir);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: solutionDir);
+                Assert.Equal(0, restoreExitCode);
+
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
@@ -586,6 +618,12 @@ string expectedAppLockFile = @"{
   }
 }")
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -679,6 +717,12 @@ string expectedAppLockFile = @"{
   ]
 }")
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -793,6 +837,12 @@ string expectedAppLockFile = @"{
 }")
                     .WriteTo(testEnv.ProjectPath);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
+
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
@@ -900,6 +950,12 @@ string expectedAppLockFile = @"{
 }")
                     .WriteTo(testEnv.ProjectPath);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
+
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
@@ -979,6 +1035,12 @@ string expectedAppLockFile = @"{
 }")
                     .WriteTo(testEnv.ProjectPath);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
+
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
@@ -1028,6 +1090,12 @@ string expectedAppLockFile = @"{
 }")
                     .WriteTo(testEnv.ProjectPath);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
+
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
@@ -1068,6 +1136,12 @@ string expectedAppLockFile = @"{
   ""frameworks"": {""" + frameworkInProject + @""":{}}
 }")
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -1160,6 +1234,12 @@ string expectedAppLockFile = @"{
   }
 }")
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -1254,6 +1334,12 @@ string expectedAppLockFile = @"{
 }")
                     .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -1352,6 +1438,12 @@ string expectedAppLockFile = @"{
 }")
                     .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -1461,6 +1553,12 @@ string expectedAppLockFile = @"{
                     .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
                     .WriteTo(testEnv.ProjectPath);
 
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
+
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
@@ -1532,6 +1630,12 @@ string expectedAppLockFile = @"{
   }
 }")
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -1644,6 +1748,12 @@ string expectedAppLockFile = @"{
   }
 }")
                     .WriteTo(testEnv.ProjectPath);
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {
@@ -2034,6 +2144,12 @@ string expectedAppLockFile = @"{
                     .WriteTo(testEnv.ProjectPath);
 
                 BuildLongPath(Path.Combine(testEnv.ProjectPath, "node_modules"));
+
+                var restoreExitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore", 
+                    arguments: testEnv.ProjectPath);
+                Assert.Equal(0, restoreExitCode);
 
                 var environment = new Dictionary<string, string>()
                 {

@@ -51,7 +51,7 @@ namespace Microsoft.Dnx.Compilation.FileSystem
                 // To reduce the number of watchers we have we add a watcher to the root
                 // of this project so that we'll be notified if anything we care
                 // about changes
-                var rootPath = ProjectResolver.ResolveRootDirectory(projectPath);
+                var rootPath = PathSearchBasedProjectResolver.ResolveRootDirectory(projectPath);
                 AddWatcher(rootPath);
             }
         }

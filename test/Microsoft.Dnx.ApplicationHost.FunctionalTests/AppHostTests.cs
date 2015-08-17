@@ -111,9 +111,23 @@ namespace Microsoft.Dnx.ApplicationHost
   ""project.json"": ""{ }""
 }";
 
+            var lockFile = @"{
+  ""locked"": false,
+  ""version"": 1,
+  ""targets"": {
+    ""DNX,Version=v4.5.1"": {}
+  },
+  ""libraries"": {},
+  ""projectFileDependencyGroups"": {
+    """": []
+  }
+}";
+
             using (var projectPath = TestUtils.CreateTempDir())
             {
-                DirTree.CreateFromJson(projectStructure).WriteTo(projectPath);
+                DirTree.CreateFromJson(projectStructure)
+                       .WithFileContents("project.lock.json", lockFile)
+                       .WriteTo(projectPath);
 
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
@@ -145,12 +159,25 @@ namespace Microsoft.Dnx.ApplicationHost
   }
 }".Replace("FRAMEWORK_NAME", flavor == "coreclr" ? "dnx451" : "dnxcore50");
 
+            var projectLockFile = @"{
+  ""locked"": false,
+  ""version"": 1,
+  ""targets"": {
+    ""FRAMEWORK_NAME"": {}
+  },
+  ""libraries"": {},
+  ""projectFileDependencyGroups"": {
+    """": [],
+    ""FRAMEWORK_NAME"": []
+  }
+}".Replace("FRAMEWORK_NAME", flavor == "coreclr" ? "DNX,Version=v4.5.1" : "DNXCore,Version=v5.0");
+
             using (runtimeHomeDir)
             using (var projectPath = new DisposableDir())
             {
                 var projectName = new DirectoryInfo(projectPath).Name;
-                var projectJsonPath = Path.Combine(projectPath, Project.ProjectFileName);
-                File.WriteAllText(projectJsonPath, projectJsonContents);
+                File.WriteAllText(Path.Combine(projectPath, Project.ProjectFileName), projectJsonContents);
+                File.WriteAllText(Path.Combine(projectPath, "project.lock.json"), projectLockFile);
 
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(

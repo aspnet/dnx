@@ -50,7 +50,7 @@ namespace Microsoft.Dnx.Tooling.SourceControl
                 return false;
             }
 
-            _solutionRoot = ProjectResolver.ResolveRootDirectory(projectFile);
+            _solutionRoot = PathSearchBasedProjectResolver.ResolveRootDirectory(projectFile);
 
             var globalFile = GlobalSettings.GetGlobalFilePath(_solutionRoot);
             if (!File.Exists(globalFile))

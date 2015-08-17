@@ -188,7 +188,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             // We can reference source files outside of project root with "code" property in project.json,
             // e.g. { "code" : "..\\ExternalProject\\**.cs" }
             // So we find out external source files and copy them separately
-            var rootDirectory = ProjectResolver.ResolveRootDirectory(project.ProjectDirectory);
+            var rootDirectory = PathSearchBasedProjectResolver.ResolveRootDirectory(project.ProjectDirectory);
             foreach (var sourceFile in project.Files.SourceFiles)
             {
                 // This source file is in project root directory. So it was already copied.

@@ -209,13 +209,13 @@ namespace Microsoft.Dnx.Runtime.Tests
         }
 
         [Fact]
-        public void NameIsIgnoredIsSpecified()
+        public void NameIsNotIgnored()
         {
             // Arrange & Act
-            var project = ProjectUtilities.GetProject(@"{ ""name"": ""hello"" }", @"foo", @"c:\foo\project.json");
+            var project = ProjectUtilities.GetProject(@"{ ""id"": ""hello"" }", @"foo", @"c:\foo\project.json");
 
             // Assert
-            Assert.Equal("foo", project.Name);
+            Assert.Equal("hello", project.Name);
         }
 
         [Fact]

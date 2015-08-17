@@ -42,7 +42,7 @@ namespace Microsoft.Dnx.Tooling
             // Create source provider from solution settings
             _addCommand.ProjectDir = _addCommand.ProjectDir ?? Directory.GetCurrentDirectory();
 
-            var rootDir = ProjectResolver.ResolveRootDirectory(_addCommand.ProjectDir);
+            var rootDir = PathSearchBasedProjectResolver.ResolveRootDirectory(_addCommand.ProjectDir);
             var fileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
             var settings = SettingsUtils.ReadSettings(solutionDir: rootDir,
                 nugetConfigFile: null,

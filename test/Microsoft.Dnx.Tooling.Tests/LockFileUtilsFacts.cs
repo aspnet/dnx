@@ -18,7 +18,7 @@ namespace Microsoft.Dnx.Tooling.Tests
         [InlineData("UnserviceableLib2", false)]
         public void BuildPackageAndCheckServiceability(string projectName, bool expectedServiceability)
         {
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = PathSearchBasedProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var projectSrcDir = Path.Combine(rootDir, "misc", "ServicingTestProjects", projectName);
             const string configuration = "Debug";
 

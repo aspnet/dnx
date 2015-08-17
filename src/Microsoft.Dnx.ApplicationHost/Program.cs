@@ -47,7 +47,7 @@ namespace Microsoft.Dnx.ApplicationHost
             IFileWatcher watcher;
             if (options.WatchFiles)
             {
-                watcher = new FileWatcher(Runtime.ProjectResolver.ResolveRootDirectory(Path.GetFullPath(options.ApplicationBaseDirectory)));
+                watcher = new FileWatcher(Runtime.PathSearchBasedProjectResolver.ResolveRootDirectory(Path.GetFullPath(options.ApplicationBaseDirectory)));
             }
             else
             {
