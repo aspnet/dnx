@@ -25,21 +25,16 @@ namespace Microsoft.Dnx.Tooling.Publish
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _package.Type, Library);
 
-            var packagePathResolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
-            var srcNupkgPath = packagePathResolver.GetPackageFilePath(_package.Identity.Name, _package.Identity.Version);
+            var srcPackagePathResolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
+            var targetPackagePathResolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
+            var srcPackageDir = srcPackagePathResolver.GetInstallPath(
+                _package.Identity.Name,
+                _package.Identity.Version);
+            var targetPackageDir = targetPackagePathResolver.GetInstallPath(
+                _package.Identity.Name,
+                _package.Identity.Version);
 
-            var options = new Packages.AddOptions
-            {
-                NuGetPackage = srcNupkgPath,
-                PackageHash = _package.Library.Sha512,
-                SourcePackages = root.TargetPackagesPath,
-            };
-
-            // Mute "packages add" subcommand
-            options.Reports = Reports.Constants.NullReports;
-
-            var packagesAddCommand = new Packages.AddCommand(options);
-            await packagesAddCommand.Execute();
+            await Task.Run(() => root.Operations.Copy(srcPackageDir, targetPackageDir));
         }
     }
 }
