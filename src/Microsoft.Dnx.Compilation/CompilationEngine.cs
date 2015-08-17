@@ -27,7 +27,11 @@ namespace Microsoft.Dnx.Compilation
             _compilerLoadContext = new Lazy<IAssemblyLoadContext>(() =>
             {
                 var factory = (IAssemblyLoadContextFactory)_context.Services.GetService(typeof(IAssemblyLoadContextFactory));
-                return factory.Create(_context.Services);
+
+                // Ensure this compilation engine is in the service provider
+                var services = new ServiceProvider(_context.Services);
+                services.Add(typeof(ICompilationEngine), this);
+                return factory.Create(services);
             });
 
             CompilationCache = compilationCache;
@@ -43,8 +47,6 @@ namespace Microsoft.Dnx.Compilation
         public CompilationCache CompilationCache { get; }
 
         public ILibraryExporter RootLibraryExporter { get; }
-
-        public event Action<string> OnInputFileChanged;
 
         public Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext)
         {
