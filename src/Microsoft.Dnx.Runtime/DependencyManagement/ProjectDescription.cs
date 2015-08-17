@@ -10,7 +10,7 @@ namespace Microsoft.Dnx.Runtime
             Project project,
             IEnumerable<LibraryDependency> dependencies,
             IEnumerable<string> assemblies,
-            FrameworkName framework,
+            TargetFrameworkInformation targetFrameworkInfo,
             bool resolved) :
                 base(
                     libraryRange,
@@ -19,13 +19,15 @@ namespace Microsoft.Dnx.Runtime
                     LibraryTypes.Project,
                     dependencies,
                     assemblies,
-                    framework)
+                    targetFrameworkInfo.FrameworkName)
         {
             Project = project;
             Resolved = resolved;
             Compatible = resolved;
+            TargetFrameworkInfo = targetFrameworkInfo;
         }
 
         public Project Project { get; }
+        public TargetFrameworkInformation TargetFrameworkInfo { get; }
     }
 }

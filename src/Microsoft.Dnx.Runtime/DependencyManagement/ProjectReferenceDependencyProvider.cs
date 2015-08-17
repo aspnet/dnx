@@ -86,7 +86,7 @@ namespace Microsoft.Dnx.Runtime
                 project,
                 dependencies,
                 loadableAssemblies,
-                targetFrameworkInfo.FrameworkName,
+                targetFrameworkInfo,
                 !unresolved);
         }
     }
