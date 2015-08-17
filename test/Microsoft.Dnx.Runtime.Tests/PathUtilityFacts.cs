@@ -44,7 +44,8 @@ namespace Microsoft.Dnx.Runtime.Tests
 
         public static IEnumerable<object[]> FolderPaths
         {
-            get {
+            get
+            {
                 var list =  new List<object[]>
                 {
                     new object[] { "", "/folder/app", "/folder/app" },
@@ -89,7 +90,10 @@ namespace Microsoft.Dnx.Runtime.Tests
         [MemberData(nameof(FolderPaths))]
         public void GetRelativePathReturnsCorrectRelativePaths(string expected, string path1, string path2)
         {
-            expected = PathUtility.GetPathWithDirectorySeparator(expected);
+            if (RuntimeEnvironmentHelper.IsWindows)
+            {
+                expected = PathUtility.GetPathWithBackSlashes(expected);
+            }
             Assert.Equal(expected, PathUtility.GetRelativePath(path1, path2));
         }
     }

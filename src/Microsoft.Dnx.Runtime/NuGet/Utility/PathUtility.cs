@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using Microsoft.Dnx.Runtime;
 
 namespace NuGet
 {
@@ -73,18 +72,18 @@ namespace NuGet
         /// </summary>
         public static string GetRelativePath(string path1, string path2, char separator)
         {
-            if (path1 == null)
+            if (string.IsNullOrEmpty(path1))
             {
-                throw new ArgumentNullException("path1");
+                throw new ArgumentException(nameof(path1));
             }
 
-            if (path2 == null)
+            if (string.IsNullOrEmpty(path2))
             {
-                throw new ArgumentNullException("path2");
+                throw new ArgumentException(nameof(path2));
             }
 
             StringComparison compare;
-            if (RuntimeEnvironmentHelper.IsWindows)
+            if (Microsoft.Dnx.Runtime.RuntimeEnvironmentHelper.IsWindows)
             {
                 compare = StringComparison.OrdinalIgnoreCase;
             }
@@ -211,10 +210,6 @@ namespace NuGet
 
         public static string GetPathWithDirectorySeparator(string path)
         {
-            if (!RuntimeEnvironmentHelper.IsWindows)
-            {
-                return path;
-            }
             if (Path.DirectorySeparatorChar == '/')
             {
                 return GetPathWithForwardSlashes(path);
