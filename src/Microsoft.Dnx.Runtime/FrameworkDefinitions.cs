@@ -69,6 +69,11 @@ namespace Microsoft.Dnx.Runtime
             frameworkInfo.Path = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.6");
             frameworkInfo.RedistListPath = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.6", "RedistList", "FrameworkList.xml");
             frameworkInfo.Name = ".NET Framework 4.6";
+            frameworkInfo.SearchPaths = new[]
+            {
+                frameworkInfo.Path,
+                Path.Combine(frameworkInfo.Path, "Facades")
+            };
             frameworkInfo.Assemblies["Accessibility"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "Accessibility.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["CustomMarshalers"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "CustomMarshalers.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["ISymWrapper"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "ISymWrapper.dll"), Version = new Version(4, 0, 0, 0) };
@@ -265,6 +270,11 @@ namespace Microsoft.Dnx.Runtime
             frameworkInfo.Path = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.5.2");
             frameworkInfo.RedistListPath = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.5.2", "RedistList", "FrameworkList.xml");
             frameworkInfo.Name = ".NET Framework 4.5.2";
+            frameworkInfo.SearchPaths = new[]
+            {
+                frameworkInfo.Path,
+                Path.Combine(frameworkInfo.Path, "Facades")
+            };
             frameworkInfo.Assemblies["Accessibility"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "Accessibility.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["CustomMarshalers"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "CustomMarshalers.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["ISymWrapper"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "ISymWrapper.dll"), Version = new Version(4, 0, 0, 0) };
@@ -459,6 +469,11 @@ namespace Microsoft.Dnx.Runtime
             frameworkInfo.Path = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.5.1");
             frameworkInfo.RedistListPath = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.5.1", "RedistList", "FrameworkList.xml");
             frameworkInfo.Name = ".NET Framework 4.5.1";
+            frameworkInfo.SearchPaths = new[]
+            {
+                frameworkInfo.Path,
+                Path.Combine(frameworkInfo.Path, "Facades")
+            };
             frameworkInfo.Assemblies["Accessibility"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "Accessibility.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["CustomMarshalers"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "CustomMarshalers.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["ISymWrapper"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "ISymWrapper.dll"), Version = new Version(4, 0, 0, 0) };
@@ -653,6 +668,11 @@ namespace Microsoft.Dnx.Runtime
             frameworkInfo.Path = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.5");
             frameworkInfo.RedistListPath = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.5", "RedistList", "FrameworkList.xml");
             frameworkInfo.Name = ".NET Framework 4.5";
+            frameworkInfo.SearchPaths = new[]
+            {
+                frameworkInfo.Path,
+                Path.Combine(frameworkInfo.Path, "Facades")
+            };
             frameworkInfo.Assemblies["Accessibility"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "Accessibility.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["CustomMarshalers"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "CustomMarshalers.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["ISymWrapper"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "ISymWrapper.dll"), Version = new Version(4, 0, 0, 0) };
@@ -846,6 +866,11 @@ namespace Microsoft.Dnx.Runtime
             frameworkInfo.Path = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.0");
             frameworkInfo.RedistListPath = Path.Combine(referenceAssembliesPath, ".NETFramework", "v4.0", "RedistList", "FrameworkList.xml");
             frameworkInfo.Name = ".NET Framework 4";
+            frameworkInfo.SearchPaths = new[]
+            {
+                frameworkInfo.Path,
+                Path.Combine(frameworkInfo.Path, "Facades")
+            };
             frameworkInfo.Assemblies["Accessibility"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "Accessibility.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["CustomMarshalers"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "CustomMarshalers.dll"), Version = new Version(4, 0, 0, 0) };
             frameworkInfo.Assemblies["ISymWrapper"] = new AssemblyEntry { Path = Path.Combine(frameworkInfo.Path, "ISymWrapper.dll"), Version = new Version(4, 0, 0, 0) };

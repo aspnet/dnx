@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -56,15 +57,21 @@ namespace Microsoft.Dnx.Runtime
                     LibraryRange = new LibraryRange("System", frameworkReference: true)
                 });
 
-                targetFrameworkDependencies.Add(new LibraryDependency
+                if (targetFramework.Version >= Constants.Version35)
                 {
-                    LibraryRange = new LibraryRange("System.Core", frameworkReference: true)
-                });
+                    targetFrameworkDependencies.Add(new LibraryDependency
+                    {
+                        LibraryRange = new LibraryRange("System.Core", frameworkReference: true)
+                    });
 
-                targetFrameworkDependencies.Add(new LibraryDependency
-                {
-                    LibraryRange = new LibraryRange("Microsoft.CSharp", frameworkReference: true)
-                });
+                    if (targetFramework.Version >= Constants.Version40)
+                    {
+                        targetFrameworkDependencies.Add(new LibraryDependency
+                        {
+                            LibraryRange = new LibraryRange("Microsoft.CSharp", frameworkReference: true)
+                        });
+                    }
+                }
             }
 
             var dependencies = project.Dependencies.Concat(targetFrameworkDependencies).ToList();
