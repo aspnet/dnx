@@ -25,5 +25,8 @@ namespace Microsoft.Dnx.Runtime
 
         public static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(10);
         public static readonly string AppConfigurationFileName = "app.config";
+
+        public static readonly Version Version35 = new Version(3, 5);
+        public static readonly Version Version40 = new Version(4, 0);
     }
 }

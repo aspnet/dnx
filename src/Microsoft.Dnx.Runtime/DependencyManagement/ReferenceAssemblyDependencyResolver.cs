@@ -21,17 +21,7 @@ namespace Microsoft.Dnx.Runtime
 
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
-            string path = FrameworkResolver.GetFrameworkPath(targetFramework);
-            if (!string.IsNullOrEmpty(path))
-            {
-                return new[]
-                {
-                    Path.Combine(path, "{name}.dll"),
-                    Path.Combine(path, "Facades", "{name}.dll")
-                };
-            }
-
-            return Enumerable.Empty<string>();
+            return FrameworkResolver.GetAttemptedPaths(targetFramework);
         }
 
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
