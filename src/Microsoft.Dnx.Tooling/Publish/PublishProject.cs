@@ -107,6 +107,17 @@ namespace Microsoft.Dnx.Tooling.Publish
                 root.Operations.Delete(TargetPath);
             }
 
+            // If this is a wrapper project, we need to generate a lock file before building it
+            if (IsWrappingAssembly())
+            {
+                var success = Restore(root, publishProject: this, restoreDirectory: project.ProjectDirectory)
+                    .GetAwaiter().GetResult();
+                if (!success)
+                {
+                    return false;
+                }
+            }
+
             // Generate nupkg from this project dependency
             var buildOptions = new BuildOptions();
             buildOptions.ProjectPatterns.Add(project.ProjectDirectory);
@@ -394,7 +405,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             return Path.Combine(path1, path2);
         }
 
-        private bool UpdateLockFile(PublishRoot root)
+        private async Task<bool> Restore(PublishRoot root, PublishProject publishProject, string restoreDirectory)
         {
             var appEnv = (IApplicationEnvironment)root.HostServices.GetService(typeof(IApplicationEnvironment));
 
@@ -403,33 +414,39 @@ namespace Microsoft.Dnx.Tooling.Publish
             feedOptions.Sources.Add(root.TargetPackagesPath);
             feedOptions.TargetPackagesFolder = root.TargetPackagesPath;
 
+            var restoreCommand = new RestoreCommand(appEnv);
+
+            foreach (var runtime in root.Runtimes)
+            {
+                restoreCommand.TargetFrameworks.Add(publishProject.SelectFrameworkForRuntime(runtime));
+            }
+
+            restoreCommand.SkipRestoreEvents = true;
+            restoreCommand.SkipInstall = true;
+            // This is a workaround for #1322. Since we use restore to generate the lock file
+            // after publish, it's possible to fail restore after copying the closure
+            // if framework assemblies and packages have the same name. This is more likely now
+            // since dependencies may exist in the top level
+            restoreCommand.IgnoreMissingDependencies = true;
+            restoreCommand.CheckHashFile = false;
+            restoreCommand.RestoreDirectories.Add(restoreDirectory);
+            restoreCommand.FeedOptions = feedOptions;
+
+            // Mute "dnu restore" subcommand
+            restoreCommand.Reports = Reports.Constants.NullReports;
+
+            var success = await restoreCommand.Execute();
+            return success;
+        }
+
+        private bool UpdateLockFile(PublishRoot root)
+        {
             var tasks = new Task<bool>[root.Projects.Count];
             for (int i = 0; i < root.Projects.Count; i++)
             {
                 var project = root.Projects[i];
-                var restoreCommand = new RestoreCommand(appEnv);
-
-                foreach (var runtime in root.Runtimes)
-                {
-                    restoreCommand.TargetFrameworks.Add(project.SelectFrameworkForRuntime(runtime));
-                }
-
                 var restoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
-                restoreCommand.SkipRestoreEvents = true;
-                restoreCommand.SkipInstall = true;
-                // This is a workaround for #1322. Since we use restore to generate the lock file
-                // after publish, it's possible to fail restore after copying the closure
-                // if framework assemblies and packages have the same name. This is more likely now
-                // since dependencies may exist in the top level
-                restoreCommand.IgnoreMissingDependencies = true;
-                restoreCommand.CheckHashFile = false;
-                restoreCommand.RestoreDirectories.Add(restoreDirectory);
-                restoreCommand.FeedOptions = feedOptions;
-
-                // Mute "dnu restore" subcommand
-                restoreCommand.Reports = Reports.Constants.NullReports;
-
-                tasks[i] = restoreCommand.Execute();
+                tasks[i] = Restore(root, project, restoreDirectory);
             }
 
             Task.WaitAll(tasks);
