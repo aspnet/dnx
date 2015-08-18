@@ -1043,11 +1043,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                         continue;
                     }
 
-                    Project referencedProject;
-                    if (Project.TryGetProject(reference.Path, out referencedProject))
-                    {
-                        dependencySources.AddRange(referencedProject.Files.SharedFiles);
-                    }
+                    dependencySources.AddRange(reference.Project.Files.SharedFiles);
                 }
 
                 var projectInfo = new ProjectInfo()
@@ -1159,23 +1155,18 @@ namespace Microsoft.Dnx.DesignTimeHost
                         continue;
                     }
 
-                    if (string.Equals(library.Type, "Project") &&
+                    if (string.Equals(library.Type, LibraryTypes.Project) &&
                        !string.Equals(library.Identity.Name, project.Name))
                     {
-                        Project referencedProject;
-                        if (!Project.TryGetProject(library.Path, out referencedProject))
-                        {
-                            // Should never happen
-                            continue;
-                        }
+                        var referencedProject = (ProjectDescription)library;
 
-                        var targetFrameworkInformation = referencedProject.GetTargetFramework(library.Framework);
+                        var targetFrameworkInformation = referencedProject.TargetFrameworkInfo;
 
                         // If this is an assembly reference then treat it like a file reference
                         if (!string.IsNullOrEmpty(targetFrameworkInformation.AssemblyPath) &&
                             string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
                         {
-                            string assemblyPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.AssemblyPath);
+                            string assemblyPath = GetProjectRelativeFullPath(referencedProject.Project, targetFrameworkInformation.AssemblyPath);
                             info.References.Add(assemblyPath);
 
                             description.Path = assemblyPath;
@@ -1187,12 +1178,12 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                             if (!string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
                             {
-                                wrappedProjectPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.WrappedProject);
+                                wrappedProjectPath = GetProjectRelativeFullPath(referencedProject.Project, targetFrameworkInformation.WrappedProject);
                             }
 
                             info.ProjectReferences.Add(new ProjectReference
                             {
-                                Name = referencedProject.Name,
+                                Name = referencedProject.Identity.Name,
                                 Framework = new FrameworkData
                                 {
                                     ShortName = VersionUtility.GetShortFrameworkName(library.Framework),
@@ -1200,7 +1191,8 @@ namespace Microsoft.Dnx.DesignTimeHost
                                     FriendlyName = frameworkResolver.GetFriendlyFrameworkName(library.Framework)
                                 },
                                 Path = library.Path,
-                                WrappedProjectPath = wrappedProjectPath
+                                WrappedProjectPath = wrappedProjectPath,
+                                Project = referencedProject.Project
                             });
                         }
                     }

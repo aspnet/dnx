@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Dnx.Runtime;
+using Newtonsoft.Json;
 
 namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
 {
@@ -11,6 +13,9 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
         public string Name { get; set; }
         public string Path { get; set; }
         public string WrappedProjectPath { get; set; }
+
+        [JsonIgnore]
+        public Project Project { get; set; }
 
         public override bool Equals(object obj)
         {
