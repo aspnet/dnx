@@ -284,7 +284,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         private DependencyContext CreateDependencyContext(Runtime.Project project, FrameworkName frameworkName)
         {
-            var dependencyContext = new DependencyContext(project.ProjectDirectory, frameworkName);
+            var dependencyContext = new DependencyContext(project, frameworkName);
             return dependencyContext;
         }
 

@@ -16,15 +16,28 @@ namespace Microsoft.Dnx.Runtime
     public class LibraryManager : ILibraryManager
     {
         private IList<LibraryDescription> _libraries;
+        private IList<DiagnosticMessage> _diagnostics;
 
         private readonly object _initializeLock = new object();
         private Dictionary<string, IEnumerable<Library>> _inverse;
         private Dictionary<string, Tuple<Library, LibraryDescription>> _graph;
         private bool _initialized;
+        private readonly string _projectPath;
 
-        public LibraryManager(IList<LibraryDescription> libraries)
+        public LibraryManager(string projectPath, IList<LibraryDescription> libraries)
         {
+            _projectPath = projectPath;
             _libraries = libraries;
+        }
+
+        public void AddGlobalDiagnostics(DiagnosticMessage message)
+        {
+            if (_diagnostics == null)
+            {
+                _diagnostics = new List<DiagnosticMessage>();
+            }
+
+            _diagnostics.Add(message);
         }
 
         private Dictionary<string, Tuple<Library, LibraryDescription>> Graph
@@ -90,12 +103,23 @@ namespace Microsoft.Dnx.Runtime
             return _graph.Values.Select(l => l.Item2);
         }
 
-        public IList<DiagnosticMessage> GetDependencyDiagnostics(string projectFilePath)
+        public IList<DiagnosticMessage> GetGlobalDiagnostics()
+        {
+            return _diagnostics;
+        }
+
+        public IList<DiagnosticMessage> GetAllDiagnostics()
         {
             var messages = new List<DiagnosticMessage>();
+
+            if (_diagnostics != null)
+            {
+                messages.AddRange(_diagnostics);
+            }
+
             foreach (var library in GetLibraryDescriptions())
             {
-                string projectPath = library.RequestedRange.FileName ?? projectFilePath;
+                string projectPath = library.RequestedRange.FileName ?? _projectPath;
 
                 if (!library.Resolved)
                 {
@@ -106,7 +130,7 @@ namespace Microsoft.Dnx.Runtime
                     }
                     else
                     {
-                        var projectName = Directory.GetParent(projectFilePath).Name;
+                        var projectName = Directory.GetParent(_projectPath).Name;
                         message =
                             $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
                     }

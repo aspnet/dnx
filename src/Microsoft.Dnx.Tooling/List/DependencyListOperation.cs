@@ -13,19 +13,19 @@ namespace Microsoft.Dnx.Tooling.List
     {
         private readonly FrameworkName _framework;
         private readonly DependencyListOptions _options;
-        private readonly ApplicationHostContext _hostContext;
+        private readonly LibraryManager _libraryManager;
 
         public DependencyListOperation(DependencyListOptions options, FrameworkName framework)
         {
             _options = options;
             _framework = framework;
-            _hostContext = CreateApplicationHostContext();
+            _libraryManager = CreateLibraryManager();
         }
 
         public bool Execute()
         {
             // 1. Walk the graph of library dependencies
-            var root = LibraryDependencyFinder.Build(_hostContext.LibraryManager.GetLibraryDescriptions(), _options.Project);
+            var root = LibraryDependencyFinder.Build(_libraryManager.GetLibraryDescriptions(), _options.Project);
 
             if (!_options.ShowAssemblies)
             {
@@ -33,9 +33,11 @@ namespace Microsoft.Dnx.Tooling.List
                 return true;
             }
 
+            var assemblyPaths = PackageDependencyProvider.ResolvePackageAssemblyPaths(_libraryManager);
+
             // 2. Walk the local dependencies and print the assemblies list
             var assemblyWalker = new AssemblyWalker(_framework,
-                                                    _hostContext,
+                                                    assemblyPaths,
                                                     _options.RuntimeFolder,
                                                     _options.Details,
                                                     _options.Reports);
@@ -63,13 +65,17 @@ namespace Microsoft.Dnx.Tooling.List
             }
         }
 
-        private ApplicationHostContext CreateApplicationHostContext()
+        private LibraryManager CreateLibraryManager()
         {
-            var hostContext = new ApplicationHostContext(
-                projectDirectory: _options.Project.ProjectDirectory,
-                targetFramework: _framework);
+            var hostContext = new ApplicationHostContext
+            {
+                Project = _options.Project,
+                TargetFramework = _framework
+            };
 
-            return hostContext;
+            ApplicationHostContext.Initialize(hostContext);
+
+            return hostContext.LibraryManager;
         }
     }
 }

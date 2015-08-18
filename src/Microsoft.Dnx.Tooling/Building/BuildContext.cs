@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 
 using NuGet;
@@ -18,7 +17,7 @@ namespace Microsoft.Dnx.Tooling
         private readonly string _configuration;
         private readonly string _targetFrameworkFolder;
         private readonly string _outputPath;
-        private readonly ApplicationHostContext _applicationHostContext;
+        private readonly LibraryManager _libraryManager;
         private readonly LibraryExporter _libraryExporter;
 
         public BuildContext(CompilationEngine compilationEngine,
@@ -33,10 +32,10 @@ namespace Microsoft.Dnx.Tooling
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
 
-            _applicationHostContext = GetApplicationHostContext(project, targetFramework, compilationEngine.CompilationCache);
-
             _libraryExporter = compilationEngine.CreateProjectExporter(
                 _project, _targetFramework, _configuration);
+
+            _libraryManager = _libraryExporter.LibraryManager;
         }
 
         public void Initialize(IReport report)
@@ -63,7 +62,7 @@ namespace Microsoft.Dnx.Tooling
 
             var result = metadataReference.EmitAssembly(_outputPath);
 
-            diagnostics.AddRange(_applicationHostContext.GetAllDiagnostics());
+            diagnostics.AddRange(_libraryManager.GetAllDiagnostics());
 
             if (result.Diagnostics != null)
             {
@@ -76,7 +75,7 @@ namespace Microsoft.Dnx.Tooling
         public void PopulateDependencies(PackageBuilder packageBuilder)
         {
             var dependencies = new List<PackageDependency>();
-            var project = _applicationHostContext.LibraryManager.GetLibraryDescription(_project.Name);
+            var project = _libraryManager.GetLibraryDescription(_project.Name);
 
             foreach (var dependency in project.Dependencies)
             {
@@ -85,7 +84,7 @@ namespace Microsoft.Dnx.Tooling
                     continue;
                 }
 
-                var dependencyDescription = _applicationHostContext.LibraryManager.GetLibraryDescription(dependency.Name);
+                var dependencyDescription = _libraryManager.GetLibraryDescription(dependency.Name);
 
                 // REVIEW: Can we get this far with unresolved dependencies
                 if (dependencyDescription == null || !dependencyDescription.Resolved)
@@ -160,7 +159,7 @@ namespace Microsoft.Dnx.Tooling
             var metadataFileRefs = projectExport.MetadataReferences
                 .OfType<IMetadataFileReference>();
 
-            foreach (var library in _applicationHostContext.LibraryManager.GetLibraryDescriptions())
+            foreach (var library in _libraryManager.GetLibraryDescriptions())
             {
                 if (string.IsNullOrEmpty(library.Path))
                 {
@@ -187,19 +186,6 @@ namespace Microsoft.Dnx.Tooling
                 }
                 report.WriteLine();
             }
-        }
-
-        private ApplicationHostContext GetApplicationHostContext(Runtime.Project project, FrameworkName targetFramework, CompilationCache cache)
-        {
-            var cacheKey = Tuple.Create("ApplicationContext", project.Name, targetFramework);
-
-            return cache.Cache.Get<ApplicationHostContext>(cacheKey, ctx =>
-            {
-                var applicationHostContext = new ApplicationHostContext(projectDirectory: project.ProjectDirectory,
-                    targetFramework: targetFramework);
-
-                return applicationHostContext;
-            });
         }
 
         private static string NormalizeDirectoryPath(string path)

@@ -30,7 +30,7 @@ namespace Microsoft.Dnx.Tooling.List
 
         public AssemblyWalker(
             FrameworkName framework,
-            ApplicationHostContext hostContext,
+            Dictionary<AssemblyName, string> paths,
             string runtimeFolder,
             bool showDetails,
             Reports reports)
@@ -39,7 +39,7 @@ namespace Microsoft.Dnx.Tooling.List
             _runtimeFolder = runtimeFolder;
             _showDetails = showDetails;
             _reports = reports;
-            _paths = PackageDependencyProvider.ResolvePackageAssemblyPaths(hostContext.LibraryManager);
+            _paths = paths;
         }
 
         public void Walk(IGraphNode<LibraryDescription> root)

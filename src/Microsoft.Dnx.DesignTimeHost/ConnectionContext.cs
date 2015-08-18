@@ -5,11 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Compilation.Caching;
-using Microsoft.Dnx.Compilation.FileSystem;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Compilation;
 
 namespace Microsoft.Dnx.DesignTimeHost
 {
@@ -23,11 +20,13 @@ namespace Microsoft.Dnx.DesignTimeHost
         private string _hostId;
         private readonly IApplicationEnvironment _applicationEnvironment;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
+        private FrameworkReferenceResolver _frameworkResolver;
 
         public ConnectionContext(IDictionary<int, ApplicationContext> contexts,
                                  IServiceProvider services,
                                  IApplicationEnvironment applicationEnvironment,
                                  IAssemblyLoadContextAccessor loadContextAccessor,
+                                 FrameworkReferenceResolver frameworkResolver,
                                  ProcessingQueue queue,
                                  ProtocolManager protocolManager,
                                  CompilationEngine compilationEngine,
@@ -35,14 +34,14 @@ namespace Microsoft.Dnx.DesignTimeHost
         {
             _contexts = contexts;
             _services = services;
-            _queue = queue;
-            _compilationEngine = compilationEngine;
-            _hostId = hostId;
-            _protocolManager = protocolManager;
-
             _applicationEnvironment = applicationEnvironment;
             _loadContextAccessor = loadContextAccessor;
+            _frameworkResolver = frameworkResolver;
+            _queue = queue;
             _compilationEngine = compilationEngine;
+            _protocolManager = protocolManager;
+            _compilationEngine = compilationEngine;
+            _hostId = hostId;
         }
 
         public bool Transmit(Message message)
@@ -78,6 +77,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                                                                 _loadContextAccessor,
                                                                 _protocolManager,
                                                                 _compilationEngine,
+                                                                _frameworkResolver,
                                                                 message.ContextId);
 
                     _contexts.Add(message.ContextId, applicationContext);

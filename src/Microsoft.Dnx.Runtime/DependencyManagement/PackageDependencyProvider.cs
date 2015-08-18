@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.Dnx.Runtime.Servicing;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
@@ -11,80 +13,18 @@ namespace Microsoft.Dnx.Runtime
     public class PackageDependencyProvider : IDependencyProvider
     {
         private readonly string _packagesPath;
-        private readonly IDictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary> _lookup;
-        private readonly IDictionary<Tuple<string, SemanticVersion>, LockFilePackageLibrary> _packages;
+        private readonly LockFileLookup _lockFileLookup;
 
         private readonly IEnumerable<IPackagePathResolver> _cacheResolvers;
         private readonly IPackagePathResolver _packagePathResolver;
 
-        public PackageDependencyProvider(string packagesPath, LockFile lockFile)
+        public PackageDependencyProvider(string packagesPath, LockFileLookup lockFileLookup)
         {
             _packagesPath = packagesPath;
             _cacheResolvers = GetCacheResolvers();
             _packagePathResolver = new DefaultPackagePathResolver(packagesPath);
 
-            _lookup = new Dictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary>();
-            _packages = new Dictionary<Tuple<string, SemanticVersion>, LockFilePackageLibrary>();
-
-            foreach (var t in lockFile.Targets)
-            {
-                foreach (var library in t.Libraries)
-                {
-                    // Each target has a single package version per id
-                    _lookup[Tuple.Create(t.RuntimeIdentifier, t.TargetFramework, library.Name)] = library;
-                }
-            }
-
-            foreach (var library in lockFile.PackageLibraries)
-            {
-                _packages[Tuple.Create(library.Name, library.Version)] = library;
-            }
-        }
-
-        // REVIEW: Should this be here? Is there a better place for this static
-        public static void ResolvePackageAssemblyPaths(LibraryManager libraryManager, Action<PackageDescription, AssemblyName, string> onResolveAssembly)
-        {
-            foreach (var library in libraryManager.GetLibraryDescriptions())
-            {
-                if (library.Type == LibraryTypes.Package)
-                {
-                    var packageDescription = (PackageDescription)library;
-
-                    foreach (var runtimeAssemblyPath in packageDescription.Target.RuntimeAssemblies)
-                    {
-                        var assemblyPath = runtimeAssemblyPath.Path;
-                        var name = Path.GetFileNameWithoutExtension(assemblyPath);
-                        var path = Path.Combine(library.Path, assemblyPath);
-                        var assemblyName = new AssemblyName(name);
-
-                        string replacementPath;
-                        if (Servicing.ServicingTable.TryGetReplacement(
-                            library.Identity.Name,
-                            library.Identity.Version,
-                            assemblyPath,
-                            out replacementPath))
-                        {
-                            onResolveAssembly(packageDescription, assemblyName, replacementPath);
-                        }
-                        else
-                        {
-                            onResolveAssembly(packageDescription, assemblyName, path);
-                        }
-                    }
-                }
-            }
-        }
-
-        public static Dictionary<AssemblyName, string> ResolvePackageAssemblyPaths(LibraryManager libraryManager)
-        {
-            var assemblies = new Dictionary<AssemblyName, string>(AssemblyNameComparer.OrdinalIgnoreCase);
-
-            ResolvePackageAssemblyPaths(libraryManager, (package, assemblyName, path) =>
-            {
-                assemblies[assemblyName] = path;
-            });
-
-            return assemblies;
+            _lockFileLookup = lockFileLookup;
         }
 
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
@@ -102,13 +42,13 @@ namespace Microsoft.Dnx.Runtime
                 return null;
             }
 
-            var targetKey = Tuple.Create((string)null, targetFramework, libraryRange.Name);
+            LockFileTargetLibrary targetLibrary = _lockFileLookup.GetTargetLibrary(targetFramework, libraryRange.Name);
 
-            LockFileTargetLibrary targetLibrary;
-            if (_lookup.TryGetValue(targetKey, out targetLibrary))
+            if (targetLibrary != null)
             {
-                var packageKey = Tuple.Create(targetLibrary.Name, targetLibrary.Version);
-                var package = _packages[packageKey];
+                var package = _lockFileLookup.GetPackage(targetLibrary.Name, targetLibrary.Version);
+
+                Debug.Assert(package != null);
 
                 // If a NuGet dependency is supposed to provide assemblies but there is no assembly compatible with
                 // current target framework, we should mark this dependency as unresolved
@@ -173,9 +113,9 @@ namespace Microsoft.Dnx.Runtime
 
             package.Path = packagePath;
 
-            if (Servicing.Breadcrumbs.Instance.IsPackageServiceable(package))
+            if (Breadcrumbs.Instance.IsPackageServiceable(package))
             {
-                Servicing.Breadcrumbs.Instance.AddBreadcrumb(package.Identity.Name, package.Identity.Version);
+                Breadcrumbs.Instance.AddBreadcrumb(package.Identity.Name, package.Identity.Version);
             }
 
             var assemblies = new List<string>();
@@ -213,17 +153,50 @@ namespace Microsoft.Dnx.Runtime
             return _packagePathResolver.GetInstallPath(package.Identity.Name, package.Identity.Version);
         }
 
-        private static IEnumerable<IPackagePathResolver> GetCacheResolvers()
+        // REVIEW: Should this be here? Is there a better place for this static
+        public static void ResolvePackageAssemblyPaths(LibraryManager libraryManager, Action<PackageDescription, AssemblyName, string> onResolveAssembly)
         {
-            var packageCachePathValue = Environment.GetEnvironmentVariable(EnvironmentNames.PackagesCache);
-
-            if (string.IsNullOrEmpty(packageCachePathValue))
+            foreach (var library in libraryManager.GetLibraryDescriptions())
             {
-                return Enumerable.Empty<IPackagePathResolver>();
-            }
+                if (library.Type == LibraryTypes.Package)
+                {
+                    var packageDescription = (PackageDescription)library;
 
-            return packageCachePathValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-                                        .Select(path => new DefaultPackagePathResolver(path));
+                    foreach (var runtimeAssemblyPath in packageDescription.Target.RuntimeAssemblies)
+                    {
+                        var assemblyPath = runtimeAssemblyPath.Path;
+                        var name = Path.GetFileNameWithoutExtension(assemblyPath);
+                        var path = Path.Combine(library.Path, assemblyPath);
+                        var assemblyName = new AssemblyName(name);
+
+                        string replacementPath;
+                        if (Servicing.ServicingTable.TryGetReplacement(
+                            library.Identity.Name,
+                            library.Identity.Version,
+                            assemblyPath,
+                            out replacementPath))
+                        {
+                            onResolveAssembly(packageDescription, assemblyName, replacementPath);
+                        }
+                        else
+                        {
+                            onResolveAssembly(packageDescription, assemblyName, path);
+                        }
+                    }
+                }
+            }
+        }
+
+        public static Dictionary<AssemblyName, string> ResolvePackageAssemblyPaths(LibraryManager libraryManager)
+        {
+            var assemblies = new Dictionary<AssemblyName, string>(AssemblyNameComparer.OrdinalIgnoreCase);
+
+            ResolvePackageAssemblyPaths(libraryManager, (package, assemblyName, path) =>
+            {
+                assemblies[assemblyName] = path;
+            });
+
+            return assemblies;
         }
 
         public static bool IsPlaceholderFile(string path)
@@ -266,6 +239,19 @@ namespace Microsoft.Dnx.Runtime
             }
 
             return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
+        }
+
+        private static IEnumerable<IPackagePathResolver> GetCacheResolvers()
+        {
+            var packageCachePathValue = Environment.GetEnvironmentVariable(EnvironmentNames.PackagesCache);
+
+            if (string.IsNullOrEmpty(packageCachePathValue))
+            {
+                return Enumerable.Empty<IPackagePathResolver>();
+            }
+
+            return packageCachePathValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                        .Select(path => new DefaultPackagePathResolver(path));
         }
 
         private class AssemblyNameComparer : IEqualityComparer<AssemblyName>

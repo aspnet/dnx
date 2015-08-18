@@ -62,9 +62,11 @@ namespace Microsoft.Dnx.DesignTimeHost
             var contexts = new Dictionary<int, ApplicationContext>();
             var protocolManager = new ProtocolManager(maxVersion: 2);
 
+            // REVIEW: Should these be on a shared context object that flows?
             var applicationEnvironment = (IApplicationEnvironment)_services.GetService(typeof(IApplicationEnvironment));
             var loadContextAccessor = (IAssemblyLoadContextAccessor)_services.GetService(typeof(IAssemblyLoadContextAccessor));
             var compilationEngine = new CompilationEngine(new CompilationEngineContext(applicationEnvironment, loadContextAccessor.Default, new CompilationCache()));
+            var frameworkResolver = new FrameworkReferenceResolver();
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
             var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -87,6 +89,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     _services,
                     applicationEnvironment,
                     loadContextAccessor,
+                    frameworkResolver,
                     queue,
                     protocolManager,
                     compilationEngine,

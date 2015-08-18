@@ -133,7 +133,7 @@ namespace Microsoft.Dnx.Runtime.Tests
                 }
             };
 
-            var resolver = new PackageDependencyProvider("/path/to/packages", lockFile);
+            var resolver = new PackageDependencyProvider("/path/to/packages", new LockFileLookup(lockFile));
 
             var libToLookup = new LibraryRange(packageName, frameworkReference: false);
             var description = resolver.GetDescription(libToLookup, new FrameworkName(framework));

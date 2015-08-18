@@ -86,6 +86,12 @@ namespace Microsoft.Dnx.Runtime
                 .ToLookup(d => d.Name);
         }
 
+        public void Clear()
+        {
+            _searchPaths.Clear();
+            _projects = null;
+        }
+
         public static string ResolveRootDirectory(string projectPath)
         {
             var di = new DirectoryInfo(projectPath);

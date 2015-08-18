@@ -11,8 +11,13 @@ namespace Microsoft.Dnx.Runtime
             // TODO: Cache sub-graph walk?
 
             // Create a child app context for this graph walk
-            var context = new ApplicationHostContext(project.ProjectDirectory,
-                targetFramework: targetFramework);
+            var context = new ApplicationHostContext
+            {
+                Project = project,
+                TargetFramework = targetFramework
+            };
+
+            ApplicationHostContext.Initialize(context);
 
             // Return the results
             return context.LibraryManager;

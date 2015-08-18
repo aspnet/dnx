@@ -15,7 +15,6 @@ namespace Microsoft.Dnx.Compilation
 {
     public class LibraryExporter : ILibraryExporter
     {
-        private readonly LibraryManager _manager;
         private readonly CompilationEngine _compilationEngine;
         private readonly FrameworkName _targetFramework;
         private readonly string _configuration;
@@ -23,12 +22,14 @@ namespace Microsoft.Dnx.Compilation
 
         public LibraryExporter(LibraryManager manager, IAssemblyLoadContext loadContext, CompilationEngine compilationEngine, FrameworkName targetFramework, string configuration)
         {
-            _manager = manager;
+            LibraryManager = manager;
             _compilationEngine = compilationEngine;
             _targetFramework = targetFramework;
             _configuration = configuration;
             _loadContext = loadContext;
         }
+
+        public LibraryManager LibraryManager { get; }
 
         public LibraryExport GetExport(string name)
         {
@@ -37,7 +38,7 @@ namespace Microsoft.Dnx.Compilation
 
         public LibraryExport GetExport(string name, string aspect)
         {
-            var library = _manager.GetLibraryDescription(name);
+            var library = LibraryManager.GetLibraryDescription(name);
             if (library == null)
             {
                 return null;
@@ -75,7 +76,7 @@ namespace Microsoft.Dnx.Compilation
             string aspect,
             Func<LibraryDescription, bool> libraryFilter)
         {
-            var library = _manager.GetLibraryDescription(name);
+            var library = LibraryManager.GetLibraryDescription(name);
             if (library == null)
             {
                 return null;
@@ -100,7 +101,7 @@ namespace Microsoft.Dnx.Compilation
 
             var rootNode = new Node
             {
-                Library = _manager.GetLibraryDescription(projectLibrary.Identity.Name)
+                Library = LibraryManager.GetLibraryDescription(projectLibrary.Identity.Name)
             };
 
             queue.Enqueue(rootNode);
@@ -137,7 +138,7 @@ namespace Microsoft.Dnx.Compilation
                 {
                     var childNode = new Node
                     {
-                        Library = _manager.GetLibraryDescription(dependency.Name),
+                        Library = LibraryManager.GetLibraryDescription(dependency.Name),
                         Parent = node
                     };
 

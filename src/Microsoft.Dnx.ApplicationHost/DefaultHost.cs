@@ -22,7 +22,7 @@ namespace Microsoft.Dnx.ApplicationHost
 {
     public class DefaultHost
     {
-        private ApplicationHostContext _applicationHostContext;
+        private LibraryManager _libraryManager;
 
         private readonly string _projectDirectory;
         private readonly FrameworkName _targetFramework;
@@ -70,7 +70,7 @@ namespace Microsoft.Dnx.ApplicationHost
 
             Initialize();
 
-            var unresolvedLibs = _applicationHostContext.LibraryManager.GetLibraryDescriptions().Where(l => !l.Resolved);
+            var unresolvedLibs = _libraryManager.GetLibraryDescriptions().Where(l => !l.Resolved);
 
             // If there's any unresolved dependencies then complain
             if (unresolvedLibs.Any())
@@ -91,9 +91,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 }
                 else
                 {
-                    var lockFileErrorMessage = string.Join(string.Empty,
-                        _applicationHostContext.GetLockFileDiagnostics().Select(x => $"{Environment.NewLine}{x.FormattedMessage}"));
-                    exceptionMsg = $@"{_applicationHostContext.LibraryManager.GetMissingDependenciesWarning(_targetFramework)}{lockFileErrorMessage}
+                    var globalDiagnosticsErrorMessage = string.Join(string.Empty,
+                        _libraryManager.GetGlobalDiagnostics().Select(x => $"{Environment.NewLine}{x.FormattedMessage}"));
+                    exceptionMsg = $@"{_libraryManager.GetMissingDependenciesWarning(_targetFramework)}{globalDiagnosticsErrorMessage}
 {runtimeFrameworkInfo}";
                 }
 
@@ -129,19 +129,22 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor, IFileWatcher fileWatcher)
         {
-            _applicationHostContext = new ApplicationHostContext(_projectDirectory, _targetFramework);
+            var applicationHostContext = new ApplicationHostContext
+            {
+                ProjectDirectory = _projectDirectory,
+                TargetFramework = _targetFramework
+            };
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
-            Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
+            Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, applicationHostContext.RootDirectory);
             Logger.TraceInformation("[{0}]: Project configuration: {1}", GetType().Name, options.Configuration);
-            Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, _applicationHostContext.PackagesDirectory);
+            Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, applicationHostContext.PackagesDirectory);
 
-            _project = _applicationHostContext.Project;
+            ApplicationHostContext.Initialize(applicationHostContext);
 
-            if (Project == null)
-            {
-                throw new Exception("Unable to locate " + Project.ProjectFileName);
-            }
+            _libraryManager = applicationHostContext.LibraryManager;
+
+            _project = applicationHostContext.Project;
 
             if (options.WatchFiles)
             {
@@ -168,12 +171,12 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            _serviceProvider.Add(typeof(ILibraryManager), _applicationHostContext.LibraryManager);
-        
+            _serviceProvider.Add(typeof(ILibraryManager), _libraryManager);
+
             // TODO: Make this lazy
             _serviceProvider.Add(typeof(ILibraryExporter), compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration));
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
-            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_applicationHostContext.LibraryManager));
+            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_libraryManager));
 
             if (options.CompilationServerPort.HasValue)
             {
@@ -187,9 +190,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _loaders.Add(new ProjectAssemblyLoader(
                 loadContextAccessor,
                 compilationEngine,
-                _applicationHostContext.LibraryManager));
+                _libraryManager));
 
-            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, _applicationHostContext.LibraryManager));
+            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, _libraryManager));
         }
 
         private void AddRuntimeServiceBreadcrumb()

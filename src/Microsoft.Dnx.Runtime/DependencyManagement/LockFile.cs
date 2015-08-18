@@ -17,25 +17,13 @@ namespace Microsoft.Dnx.Runtime
         public IList<LockFileProjectLibrary> ProjectLibraries { get; set; } = new List<LockFileProjectLibrary>();
         public IList<LockFileTarget> Targets { get; set; } = new List<LockFileTarget>();
 
-        public IEnumerable<DiagnosticMessage> GetDiagnostics(Project project)
-        {
-            string message;
-            if (!IsValidForProject(project, out message))
-            {
-                yield return new DiagnosticMessage(
-                    $"{message}. Please run \"dnu restore\" to generate a new lock file.",
-                    Path.Combine(project.ProjectDirectory, LockFileReader.LockFileName),
-                    DiagnosticMessageSeverity.Error);
-            }
-        }
-
         public bool IsValidForProject(Project project)
         {
             string message;
             return IsValidForProject(project, out message);
         }
 
-        private bool IsValidForProject(Project project, out string message)
+        public bool IsValidForProject(Project project, out string message)
         {
             if (Version != Constants.LockFileVersion)
             {

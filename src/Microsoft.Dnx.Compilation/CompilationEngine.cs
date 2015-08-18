@@ -13,8 +13,6 @@ namespace Microsoft.Dnx.Compilation
 {
     public class CompilationEngine : ICompilationEngine
     {
-        private readonly Dictionary<TypeInformation, IProjectCompiler> _compilers = new Dictionary<TypeInformation, IProjectCompiler>();
-
         private readonly CompilationEngineContext _context;
 
         public CompilationEngine(CompilationEngineContext context)
@@ -58,12 +56,12 @@ namespace Microsoft.Dnx.Compilation
 
         public IProjectCompiler GetCompiler(TypeInformation provider, IAssemblyLoadContext loadContext)
         {
+            // TODO: Optimize the default compiler case by using the default load context directly
+
             var services = new ServiceProvider(_context.Services);
             services.Add(typeof(IAssemblyLoadContext), loadContext);
 
-            // Load the factory
-            return _compilers.GetOrAdd(provider, typeInfo =>
-                CompilerServices.CreateService<IProjectCompiler>(services, loadContext, typeInfo));
+            return CompilerServices.CreateService<IProjectCompiler>(services, loadContext, provider);
         }
     }
 }

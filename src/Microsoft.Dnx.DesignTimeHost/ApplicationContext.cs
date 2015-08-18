@@ -27,6 +27,7 @@ namespace Microsoft.Dnx.DesignTimeHost
     {
         private readonly IApplicationEnvironment _applicationEnvironment;
         private readonly IAssemblyLoadContext _defaultLoadContext;
+        private readonly FrameworkReferenceResolver _frameworkResolver;
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
 
@@ -56,14 +57,15 @@ namespace Microsoft.Dnx.DesignTimeHost
                                   IAssemblyLoadContextAccessor loadContextAccessor,
                                   ProtocolManager protocolManager,
                                   CompilationEngine compilationEngine,
+                                  FrameworkReferenceResolver frameworkResolver,
                                   int id)
         {
             _applicationEnvironment = applicationEnvironment;
             _defaultLoadContext = loadContextAccessor.Default;
             _pluginHandler = new PluginHandler(services, SendPluginMessage);
-            _compilationEngine = compilationEngine;
             _protocolManager = protocolManager;
-
+            _compilationEngine = compilationEngine;
+            _frameworkResolver = frameworkResolver;
             Id = id;
         }
 
@@ -1019,14 +1021,12 @@ namespace Microsoft.Dnx.DesignTimeHost
                 var dependencyInfo = ResolveProjectDependencies(project, configuration, frameworkName);
                 var dependencySources = new List<string>(sourcesProjectWideSources);
 
-                var frameworkResolver = dependencyInfo.HostContext.FrameworkReferenceResolver;
-
                 var frameworkData = new FrameworkData
                 {
                     ShortName = VersionUtility.GetShortFrameworkName(frameworkName),
                     FrameworkName = frameworkName.ToString(),
-                    FriendlyName = frameworkResolver.GetFriendlyFrameworkName(frameworkName),
-                    RedistListPath = frameworkResolver.GetFrameworkRedistListPath(frameworkName)
+                    FriendlyName = _frameworkResolver.GetFriendlyFrameworkName(frameworkName),
+                    RedistListPath = _frameworkResolver.GetFrameworkRedistListPath(frameworkName)
                 };
 
                 state.Frameworks.Add(frameworkData);
@@ -1056,7 +1056,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
                                                  .ToCompilationSettings(frameworkName),
                     SourceFiles = dependencySources,
-                    Diagnostics = dependencyInfo.HostContext.GetAllDiagnostics().ToList(),
+                    Diagnostics = dependencyInfo.HostContext.LibraryManager.GetAllDiagnostics().ToList(),
                     DependencyInfo = dependencyInfo
                 };
 
@@ -1102,9 +1102,15 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             return _compilationEngine.CompilationCache.Cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
-                var applicationHostContext = new ApplicationHostContext(project.ProjectDirectory,
-                    targetFramework: frameworkName,
-                    skipLockFileValidation: true);
+                var applicationHostContext = new ApplicationHostContext
+                {
+                    Project = project,
+                    TargetFramework = frameworkName,
+                    FrameworkResolver = _frameworkResolver,
+                    SkipLockfileValidation = true
+                };
+
+                ApplicationHostContext.Initialize(applicationHostContext);
 
                 // Watch all projects for project.json changes
                 foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
@@ -1130,7 +1136,6 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var applicationHostContext = GetApplicationHostContext(project, frameworkName);
                 var libraryManager = applicationHostContext.LibraryManager;
-                var frameworkResolver = applicationHostContext.FrameworkReferenceResolver;
 
                 var info = new DependencyInfo
                 {
@@ -1187,7 +1192,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                                 {
                                     ShortName = VersionUtility.GetShortFrameworkName(library.Framework),
                                     FrameworkName = library.Framework.ToString(),
-                                    FriendlyName = frameworkResolver.GetFriendlyFrameworkName(library.Framework)
+                                    FriendlyName = _frameworkResolver.GetFriendlyFrameworkName(library.Framework)
                                 },
                                 Path = library.Path,
                                 WrappedProjectPath = wrappedProjectPath,
