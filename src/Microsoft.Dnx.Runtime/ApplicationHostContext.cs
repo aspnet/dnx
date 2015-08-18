@@ -49,19 +49,15 @@ namespace Microsoft.Dnx.Runtime
 
             if (context.Project == null)
             {
-                var projectName = PathUtility.GetDirectoryName(context.ProjectDirectory);
-
                 Project project;
-                if (projectResolver.TryResolveProject(projectName, out project) && 
-                    string.Equals(PathUtility.EnsureTrailingSlash(project.ProjectDirectory), 
-                                  context.ProjectDirectory))
+                if (Project.TryGetProject(context.ProjectDirectory, out project))
                 {
                     context.Project = project;
                 }
                 else
                 {
                     throw new InvalidOperationException(
-                        string.Format("Unable to resolve project '{0}' from {1}", projectName, context.ProjectDirectory));
+                        string.Format("Unable to resolve project from {1}", context.ProjectDirectory));
                 }
             }
 

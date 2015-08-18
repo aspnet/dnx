@@ -135,12 +135,12 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 TargetFramework = _targetFramework
             };
 
-            Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
+            ApplicationHostContext.Initialize(applicationHostContext);
+
+            Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, applicationHostContext.ProjectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, applicationHostContext.RootDirectory);
             Logger.TraceInformation("[{0}]: Project configuration: {1}", GetType().Name, options.Configuration);
             Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, applicationHostContext.PackagesDirectory);
-
-            ApplicationHostContext.Initialize(applicationHostContext);
 
             _libraryManager = applicationHostContext.LibraryManager;
 
