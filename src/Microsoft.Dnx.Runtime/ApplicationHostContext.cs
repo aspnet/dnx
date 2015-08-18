@@ -53,7 +53,8 @@ namespace Microsoft.Dnx.Runtime
 
                 Project project;
                 if (projectResolver.TryResolveProject(projectName, out project) && 
-                    string.Equals(project.ProjectDirectory, context.ProjectDirectory))
+                    string.Equals(PathUtility.EnsureTrailingSlash(project.ProjectDirectory), 
+                                  context.ProjectDirectory))
                 {
                     context.Project = project;
                 }
