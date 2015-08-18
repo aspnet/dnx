@@ -100,10 +100,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 throw new InvalidOperationException(exceptionMsg);
             }
 
-            // Don't need these anymore
-            _applicationHostContext = null;
-            _project = null;
-
             return _loadContextAccessor.Default.Load(applicationName);
         }
 
