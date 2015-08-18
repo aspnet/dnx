@@ -272,6 +272,30 @@ namespace Microsoft.Dnx.CommonTestUtils
             return tempDir;
         }
 
+        public static int CreateDisposableTestProject(string runtimeHomeDir,
+                                                      string targetDir,
+                                                      string projectDir)
+        {
+            // Find the misc project to copy
+            var targetProjectDir = Path.Combine(targetDir, Path.GetFileName(projectDir));
+            CopyFolder(projectDir, targetProjectDir);
+
+            // Make sure package restore can be successful
+            var currentDnxSolutionRootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+
+            File.Copy(Path.Combine(currentDnxSolutionRootDir, NuGet.Constants.SettingsFileName),
+                      Path.Combine(targetProjectDir, NuGet.Constants.SettingsFileName));
+
+            // Use the newly built runtime to generate lock files for samples
+            string stdOut, stdErr;
+            return DnuTestUtils.ExecDnu(
+                runtimeHomeDir,
+                subcommand: "restore",
+                arguments: targetProjectDir,
+                stdOut: out stdOut,
+                stdErr: out stdErr);
+        }
+
         public static void CopyFolder(string sourceFolder, string targetFolder)
         {
             if (!Directory.Exists(targetFolder))
@@ -402,10 +426,10 @@ namespace Microsoft.Dnx.CommonTestUtils
             return RuntimeEnvironmentHelper.IsWindows;
         }
 
-        private static string RemoveAnsiColorCodes(string text)
+        public static string RemoveAnsiColorCodes(string text)
         {
             var escapeIndex = 0;
-            for (; ;)
+            while (true)
             {
                 escapeIndex = text.IndexOf("\x1b[", escapeIndex);
                 if (escapeIndex != -1)
