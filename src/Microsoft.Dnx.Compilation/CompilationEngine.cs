@@ -17,16 +17,11 @@ namespace Microsoft.Dnx.Compilation
 
         private readonly CompilationEngineContext _context;
 
-        public CompilationEngine(CompilationCache compilationCache, CompilationEngineContext context)
+        public CompilationEngine(CompilationEngineContext context)
         {
             _context = context;
 
-            CompilationCache = compilationCache;
-
-            // TODO(anurse): Switch to project factory model to avoid needing to do this.
-            _context.AddCompilationService(typeof(ICache), CompilationCache.Cache);
-            _context.AddCompilationService(typeof(ICacheContextAccessor), CompilationCache.CacheContextAccessor);
-            _context.AddCompilationService(typeof(INamedCacheDependencyProvider), CompilationCache.NamedCacheDependencyProvider);
+            CompilationCache = _context.CompilationCache;
         }
 
         public CompilationCache CompilationCache { get; }

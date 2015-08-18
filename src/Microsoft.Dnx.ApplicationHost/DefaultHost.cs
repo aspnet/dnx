@@ -158,13 +158,13 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             var hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
             var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration, hostEnvironment);
 
-            var compilationContext = new CompilationEngineContext(applicationEnvironment, loadContextAccessor.Default, fileWatcher);
+            var compilationContext = new CompilationEngineContext(applicationEnvironment, loadContextAccessor.Default, new CompilationCache(), fileWatcher);
 
             // Compilation services available only for runtime compilation
             compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
             compilationContext.AddCompilationService(typeof(IApplicationShutdown), _shutdown);
 
-            var compilationEngine = new CompilationEngine(new CompilationCache(), compilationContext);
+            var compilationEngine = new CompilationEngine(compilationContext);
 
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);

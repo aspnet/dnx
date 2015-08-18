@@ -64,7 +64,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             var applicationEnvironment = (IApplicationEnvironment)_services.GetService(typeof(IApplicationEnvironment));
             var loadContextAccessor = (IAssemblyLoadContextAccessor)_services.GetService(typeof(IAssemblyLoadContextAccessor));
-            var compilationEngine = new CompilationEngine(new CompilationCache(), new CompilationEngineContext(applicationEnvironment, loadContextAccessor.Default));
+            var compilationEngine = new CompilationEngine(new CompilationEngineContext(applicationEnvironment, loadContextAccessor.Default, new CompilationCache()));
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
             var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
