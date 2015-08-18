@@ -1103,9 +1103,8 @@ namespace Microsoft.Dnx.DesignTimeHost
             return _compilationEngine.CompilationCache.Cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
                 var applicationHostContext = new ApplicationHostContext(project.ProjectDirectory,
-                                                                        packagesDirectory: null,
-                                                                        targetFramework: frameworkName,
-                                                                        skipLockFileValidation: true);
+                    targetFramework: frameworkName,
+                    skipLockFileValidation: true);
 
                 // Watch all projects for project.json changes
                 foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())

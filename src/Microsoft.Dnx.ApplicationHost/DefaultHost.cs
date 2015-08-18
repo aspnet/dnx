@@ -129,7 +129,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor, IFileWatcher fileWatcher)
         {
-            _applicationHostContext = new ApplicationHostContext(_projectDirectory, options.PackageDirectory, _targetFramework);
+            _applicationHostContext = new ApplicationHostContext(_projectDirectory, _targetFramework);
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);

@@ -134,8 +134,6 @@ namespace Microsoft.Dnx.ApplicationHost
             app.Name = "Microsoft.Dnx.ApplicationHost";
             app.FullName = app.Name;
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
-            var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
-                CommandOptionType.SingleValue);
             var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
             var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
 
@@ -178,7 +176,6 @@ namespace Microsoft.Dnx.ApplicationHost
 
             defaultHostOptions = new RuntimeOptions();
             defaultHostOptions.WatchFiles = optionWatch.HasValue();
-            defaultHostOptions.PackageDirectory = optionPackages.Value();
 
             defaultHostOptions.TargetFramework = _environment.RuntimeFramework;
             defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";

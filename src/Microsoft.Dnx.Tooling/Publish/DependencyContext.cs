@@ -17,7 +17,6 @@ namespace Microsoft.Dnx.Tooling.Publish
         {
             var applicationHostContext = new ApplicationHostContext(
                 projectDirectory: projectDirectory,
-                packagesDirectory: null,
                 targetFramework: targetFramework);
 
             FrameworkName = targetFramework;

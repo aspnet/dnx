@@ -18,7 +18,6 @@ namespace Microsoft.Dnx.Runtime
             new Lazy<List<DiagnosticMessage>>();
 
         public ApplicationHostContext(string projectDirectory,
-                                      string packagesDirectory,
                                       FrameworkName targetFramework,
                                       bool skipLockFileValidation = false)
         {
@@ -27,7 +26,7 @@ namespace Microsoft.Dnx.Runtime
             var projectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
 
-            PackagesDirectory = packagesDirectory ?? PackageDependencyProvider.ResolveRepositoryPath(RootDirectory);
+            PackagesDirectory = PackageDependencyProvider.ResolveRepositoryPath(RootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
             var gacDependencyResolver = new GacDependencyResolver();

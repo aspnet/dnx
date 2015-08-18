@@ -15,8 +15,6 @@ namespace Microsoft.Dnx.Runtime
 
         public string ApplicationBaseDirectory { get; set; }
 
-        public string PackageDirectory { get; set; }
-
         public FrameworkName TargetFramework { get; set; }
 
         public string Configuration { get; set; }

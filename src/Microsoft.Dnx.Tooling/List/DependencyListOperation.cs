@@ -67,7 +67,6 @@ namespace Microsoft.Dnx.Tooling.List
         {
             var hostContext = new ApplicationHostContext(
                 projectDirectory: _options.Project.ProjectDirectory,
-                packagesDirectory: null,
                 targetFramework: _framework);
 
             return hostContext;

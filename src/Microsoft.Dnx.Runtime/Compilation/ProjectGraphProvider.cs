@@ -12,8 +12,7 @@ namespace Microsoft.Dnx.Runtime
 
             // Create a child app context for this graph walk
             var context = new ApplicationHostContext(project.ProjectDirectory,
-                                                     packagesDirectory: null,
-                                                     targetFramework: targetFramework);
+                targetFramework: targetFramework);
 
             // Return the results
             return context.LibraryManager;

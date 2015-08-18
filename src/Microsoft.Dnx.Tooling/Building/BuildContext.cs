@@ -196,8 +196,7 @@ namespace Microsoft.Dnx.Tooling
             return cache.Cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
                 var applicationHostContext = new ApplicationHostContext(projectDirectory: project.ProjectDirectory,
-                                                                        packagesDirectory: null,
-                                                                        targetFramework: targetFramework);
+                    targetFramework: targetFramework);
 
                 return applicationHostContext;
             });
