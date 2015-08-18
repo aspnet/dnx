@@ -56,8 +56,7 @@ namespace Microsoft.Dnx.Runtime
                 }
                 else
                 {
-                    throw new InvalidOperationException(
-                        string.Format("Unable to resolve project from {1}", context.ProjectDirectory));
+                    throw new InvalidOperationException($"Unable to resolve project from {context.ProjectDirectory}");
                 }
             }
 
