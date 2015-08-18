@@ -223,6 +223,9 @@ namespace Microsoft.Dnx.Compilation
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
 
+                // Create the compilation context
+                var compilationContext = project.Project.ToCompilationContext(_targetFramework, _configuration, aspect);
+
                 if (!string.IsNullOrEmpty(project.TargetFrameworkInfo.AssemblyPath))
                 {
                     // Project specifies a pre-compiled binary. We're done!
@@ -230,13 +233,10 @@ namespace Microsoft.Dnx.Compilation
                     var assemblyPath = ResolvePath(project.Project, _configuration, project.TargetFrameworkInfo.AssemblyPath);
                     var pdbPath = ResolvePath(project.Project, _configuration, project.TargetFrameworkInfo.PdbPath);
 
-                    metadataReferences.Add(new CompiledProjectMetadataReference(project.Project.ToCompilationContext(_targetFramework, _configuration, aspect), assemblyPath, pdbPath));
+                    metadataReferences.Add(new CompiledProjectMetadataReference(compilationContext, assemblyPath, pdbPath));
                 }
                 else
                 {
-                    // Create the compilation context
-                    var compilationContext = project.Project.ToCompilationContext(_targetFramework, _configuration, aspect);
-
                     // We need to compile the project.
                     var compilerTypeInfo = project.Project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
 

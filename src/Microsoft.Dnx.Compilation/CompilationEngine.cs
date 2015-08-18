@@ -69,7 +69,7 @@ namespace Microsoft.Dnx.Compilation
 
             var type = assembly.GetType(provider.TypeName);
 
-            return (IProjectCompiler)ActivatorUtilities.CreateInstance(services, typeof(IProjectCompiler));
+            return (IProjectCompiler)ActivatorUtilities.CreateInstance(services, type);
         }
     }
 }
