@@ -45,9 +45,13 @@ namespace Microsoft.Dnx.Compilation
 
         public LibraryExporter CreateProjectExporter(Project project, FrameworkName targetFramework, string configuration)
         {
+            // This library manager represents the graph that will be used to resolve
+            // references (compiler /r in csc terms)
             var libraryManager = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework);
 
-            var runtimeLibraryManager = targetFramework != _context.ApplicationEnvironment.RuntimeFramework ? _context.ProjectGraphProvider.GetProjectGraph(project, _context.ApplicationEnvironment.RuntimeFramework) : libraryManager;
+            // This library manager represents the graph that will be used to *load* the compiler and other
+            // build time related dependencies
+            var runtimeLibraryManager = _context.ProjectGraphProvider.GetProjectGraph(project, _context.ApplicationEnvironment.RuntimeFramework);
 
             var loadContext = new RuntimeLoadContext(runtimeLibraryManager, this, _context.DefaultLoadContext);
 
@@ -61,7 +65,11 @@ namespace Microsoft.Dnx.Compilation
             var services = new ServiceProvider(_context.Services);
             services.Add(typeof(IAssemblyLoadContext), loadContext);
 
-            return CompilerServices.CreateService<IProjectCompiler>(services, loadContext, provider);
+            var assembly = loadContext.Load(provider.AssemblyName);
+
+            var type = assembly.GetType(provider.TypeName);
+
+            return (IProjectCompiler)ActivatorUtilities.CreateInstance(services, typeof(IProjectCompiler));
         }
     }
 }
