@@ -161,7 +161,7 @@ namespace Microsoft.Dnx.Tooling
 
             foreach (var library in _libraryManager.GetLibraryDescriptions())
             {
-                if (string.IsNullOrEmpty(library.Path))
+                if (!library.Resolved)
                 {
                     report.WriteLine("  Unable to resolve dependency {0}", library.Identity.ToString().Red().Bold());
                     report.WriteLine();
@@ -170,7 +170,7 @@ namespace Microsoft.Dnx.Tooling
                 report.WriteLine("  Using {0} dependency {1}", library.Type, library.Identity);
                 report.WriteLine("    Source: {0}", HighlightFile(library.Path));
 
-                if (library.Type == "Package")
+                if (library.Type == LibraryTypes.Package)
                 {
                     // TODO: temporarily use prefix to tell whether an assembly belongs to a package
                     // Should expose LibraryName from IMetadataReference later for more efficient lookup

@@ -209,7 +209,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                     if (!library.Resolved)
                     {
                         // If there's any unresolved dependencies then complain and keep working
-                        _options.Reports.Quiet.WriteLine($"Warning: {library} is unresolved.");
+                        _options.Reports.Quiet.WriteLine("  Unable to resolve dependency {0}", library.Identity.ToString().Red().Bold());
                         anyUnresolvedDependency = true;
                     }
                     else
