@@ -74,12 +74,12 @@ namespace NuGet
         {
             if (string.IsNullOrEmpty(path1))
             {
-                throw new ArgumentException(nameof(path1));
+                throw new ArgumentException("Path must have a value", nameof(path1));
             }
 
             if (string.IsNullOrEmpty(path2))
             {
-                throw new ArgumentException(nameof(path2));
+                throw new ArgumentException("Path must have a value", nameof(path2));
             }
 
             StringComparison compare;
