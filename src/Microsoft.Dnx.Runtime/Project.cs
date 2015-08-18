@@ -18,8 +18,8 @@ namespace Microsoft.Dnx.Runtime
     {
         public const string ProjectFileName = "project.json";
 
-        internal static readonly TypeInformation DefaultRuntimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.CSharp", "Microsoft.Dnx.Compilation.CSharp.RoslynProjectCompiler");
-        internal static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.DesignTime", "Microsoft.Dnx.Compilation.DesignTime.DesignTimeHostProjectCompiler");
+        public static readonly TypeInformation DefaultRuntimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.CSharp", "Microsoft.Dnx.Compilation.CSharp.RoslynProjectCompiler");
+        public static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.DesignTime", "Microsoft.Dnx.Compilation.DesignTime.DesignTimeHostProjectCompiler");
 
         public static TypeInformation DefaultCompiler = DefaultRuntimeCompiler;
 

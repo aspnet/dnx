@@ -4,7 +4,7 @@
 using System;
 using System.Threading;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.ApplicationHost
 {
     internal class DisposableAction : IDisposable
     {

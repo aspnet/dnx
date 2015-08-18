@@ -6,7 +6,7 @@ using Microsoft.Dnx.Runtime.Compilation;
 
 namespace Microsoft.Dnx.Runtime.Loader
 {
-    internal class ProjectAssemblyLoader : IAssemblyLoader
+    public class ProjectAssemblyLoader : IAssemblyLoader
     {
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly ICompilationEngine _compilationEngine;

@@ -47,14 +47,14 @@ namespace Microsoft.Dnx.ApplicationHost
             IFileWatcher watcher;
             if (options.WatchFiles)
             {
-                watcher = new FileWatcher(Runtime.ProjectResolver.ResolveRootDirectory(Path.GetFullPath(options.ApplicationBaseDirectory)));
+                watcher = new FileWatcher(ProjectResolver.ResolveRootDirectory(Path.GetFullPath(options.ApplicationBaseDirectory)));
             }
             else
             {
                 watcher = NoopWatcher.Instance;
             }
 
-            var host = new DefaultHost(options, _serviceProvider, _loadContextAccessor, watcher, new CompilationEngineFactory(new CompilationCache()));
+            var host = new DefaultHost(options, _serviceProvider, _loadContextAccessor, watcher);
 
             if (host.Project == null)
             {

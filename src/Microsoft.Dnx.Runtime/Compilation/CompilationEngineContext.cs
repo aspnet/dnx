@@ -7,28 +7,33 @@ namespace Microsoft.Dnx.Runtime.Compilation
 {
     public class CompilationEngineContext
     {
-        public LibraryManager LibraryManager { get; }
         public IProjectGraphProvider ProjectGraphProvider { get; }
         public IFileWatcher FileWatcher { get; }
-        public FrameworkName TargetFramework { get; }
-        public string Configuration { get; }
-        public IAssemblyLoadContext BuildLoadContext { get; }
         public IServiceProvider Services { get { return _compilerServices; } }
+        public IAssemblyLoadContext DefaultLoadContext { get; private set; }
+        public IApplicationEnvironment ApplicationEnvironment { get; private set; }
 
         private readonly ServiceProvider _compilerServices = new ServiceProvider();
 
-        public CompilationEngineContext(LibraryManager libraryManager, IProjectGraphProvider projectGraphProvider, IFileWatcher fileWatcher, FrameworkName targetFramework, string configuration, IAssemblyLoadContext buildLoadContext)
+        public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
+                                        IAssemblyLoadContext defaultLoadContext) : 
+            this(applicationEnvironment, defaultLoadContext, NoopWatcher.Instance)
         {
-            LibraryManager = libraryManager;
-            ProjectGraphProvider = projectGraphProvider;
+
+        }
+
+        public CompilationEngineContext(IApplicationEnvironment applicationEnvironment, 
+                                        IAssemblyLoadContext defaultLoadContext, 
+                                        IFileWatcher fileWatcher)
+        {
+            ApplicationEnvironment = applicationEnvironment;
+            DefaultLoadContext = defaultLoadContext;
+            ProjectGraphProvider = new ProjectGraphProvider();
             FileWatcher = fileWatcher;
-            TargetFramework = targetFramework;
-            Configuration = configuration;
-            BuildLoadContext = buildLoadContext;
 
             // Register compiler services
-            AddCompilationService(typeof(IFileWatcher), fileWatcher);
-            AddCompilationService(typeof(IAssemblyLoadContext), buildLoadContext);
+            AddCompilationService(typeof(IFileWatcher), FileWatcher);
+            AddCompilationService(typeof(IApplicationEnvironment), ApplicationEnvironment);
         }
 
         public void AddCompilationService(Type type, object instance)

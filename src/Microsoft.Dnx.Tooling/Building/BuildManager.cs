@@ -10,6 +10,7 @@ using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Compilation.FileSystem;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Tooling.SourceControl;
 using Microsoft.Dnx.Tooling.Utils;
 using Microsoft.Framework.FileSystemGlobbing;
@@ -25,7 +26,7 @@ namespace Microsoft.Dnx.Tooling
         private readonly BuildOptions _buildOptions;
 
         // Shared by all projects that will be built by this class
-        private CompilationEngineFactory _compilationEngine;
+        private CompilationEngine _compilationEngine;
 
         private Runtime.Project _currentProject;
 
@@ -35,6 +36,9 @@ namespace Microsoft.Dnx.Tooling
             _buildOptions = buildOptions;
 
             _applicationEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            var loadContextAccessor = (IAssemblyLoadContextAccessor)hostServices.GetService(typeof(IAssemblyLoadContextAccessor));
+
+            _compilationEngine = new CompilationEngine(new CompilationCache(), new CompilationEngineContext(_applicationEnvironment, loadContextAccessor.Default));
 
             ScriptExecutor = new ScriptExecutor(buildOptions.Reports.Information);
         }
@@ -67,8 +71,6 @@ namespace Microsoft.Dnx.Tooling
             projectFilesToBuild.AddRange(globbingProjects);
 
             var sw = Stopwatch.StartNew();
-
-            _compilationEngine = new CompilationEngineFactory(new CompilationCache());
 
             var globalSucess = true;
             foreach (var project in projectFilesToBuild)
@@ -170,9 +172,7 @@ namespace Microsoft.Dnx.Tooling
 
                     var diagnostics = new List<DiagnosticMessage>();
 
-                    var context = new BuildContext(_hostServices,
-                                                   _applicationEnvironment,
-                                                   _compilationEngine,
+                    var context = new BuildContext(_compilationEngine,
                                                    _currentProject,
                                                    targetFramework,
                                                    configuration,

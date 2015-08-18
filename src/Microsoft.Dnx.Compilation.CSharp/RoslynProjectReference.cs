@@ -202,11 +202,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
 
+                var diagnostics = CompilationContext.Diagnostics.Concat(
+                    emitResult.Diagnostics);
+
                 var afterCompileContext = new AfterCompileContext
                 {
                     ProjectContext = CompilationContext.ProjectContext,
                     Compilation = CompilationContext.Compilation,
-                    Diagnostics = new List<Diagnostic>(emitResult.Diagnostics),
+                    Diagnostics = new List<Diagnostic>(diagnostics),
                     AssemblyStream = assemblyStream,
                     SymbolStream = pdbStream,
                     XmlDocStream = xmlDocStream

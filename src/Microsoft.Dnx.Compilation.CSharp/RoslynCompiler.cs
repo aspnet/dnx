@@ -149,23 +149,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
                         compilationContext.Modules.Add(m);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex.InnerException is RoslynCompilationException)
                 {
                     var compilationException = ex.InnerException as RoslynCompilationException;
 
-                    if (compilationException != null)
+                    // Add diagnostics from the precompile step
+                    foreach (var diag in compilationException.Diagnostics)
                     {
-                        // Add diagnostics from the precompile step
-                        foreach (var diag in compilationException.Diagnostics)
-                        {
-                            compilationContext.Diagnostics.Add(diag);
-                        }
-
-                        Logger.TraceError("[{0}]: Failed loading meta assembly '{1}'", GetType().Name, name);
-                    }
-                    else
-                    {
-                        Logger.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
+                        compilationContext.Diagnostics.Add(diag);
                     }
                 }
             }

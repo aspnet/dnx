@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Infrastructure;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {

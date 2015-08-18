@@ -9,6 +9,7 @@ using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Compilation.FileSystem;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Runtime.Compilation;
 
 namespace Microsoft.Dnx.DesignTimeHost
 {
@@ -17,22 +18,31 @@ namespace Microsoft.Dnx.DesignTimeHost
         private readonly IDictionary<int, ApplicationContext> _contexts;
         private readonly IServiceProvider _services;
         private readonly ProtocolManager _protocolManager;
-        private readonly CompilationCache _cache;
+        private readonly CompilationEngine _compilationEngine;
         private ProcessingQueue _queue;
         private string _hostId;
+        private readonly IApplicationEnvironment _applicationEnvironment;
+        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
         public ConnectionContext(IDictionary<int, ApplicationContext> contexts,
                                  IServiceProvider services,
+                                 IApplicationEnvironment applicationEnvironment,
+                                 IAssemblyLoadContextAccessor loadContextAccessor,
                                  ProcessingQueue queue,
                                  ProtocolManager protocolManager,
+                                 CompilationEngine compilationEngine,
                                  string hostId)
         {
             _contexts = contexts;
             _services = services;
             _queue = queue;
+            _compilationEngine = compilationEngine;
             _hostId = hostId;
             _protocolManager = protocolManager;
-            _cache = new CompilationCache();
+
+            _applicationEnvironment = applicationEnvironment;
+            _loadContextAccessor = loadContextAccessor;
+            _compilationEngine = compilationEngine;
         }
 
         public bool Transmit(Message message)
@@ -64,8 +74,10 @@ namespace Microsoft.Dnx.DesignTimeHost
                     Logger.TraceInformation("[ConnectionContext]: Creating new application context for {0}", message.ContextId);
 
                     applicationContext = new ApplicationContext(_services,
+                                                                _applicationEnvironment,
+                                                                _loadContextAccessor,
                                                                 _protocolManager,
-                                                                new CompilationEngineFactory(_cache),
+                                                                _compilationEngine,
                                                                 message.ContextId);
 
                     _contexts.Add(message.ContextId, applicationContext);

@@ -9,13 +9,16 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
+using Microsoft.Dnx.Compilation.Caching;
+using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
+using Microsoft.Dnx.Runtime.Servicing;
 using NuGet;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.ApplicationHost
 {
     public class DefaultHost
     {
@@ -25,7 +28,6 @@ namespace Microsoft.Dnx.Runtime
         private readonly FrameworkName _targetFramework;
         private readonly ApplicationShutdown _shutdown = new ApplicationShutdown();
         private readonly IList<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
-        private readonly ICompilationEngineFactory _compilationEngineFactory;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly IRuntimeEnvironment _runtimeEnvironment;
 
@@ -35,12 +37,10 @@ namespace Microsoft.Dnx.Runtime
         public DefaultHost(RuntimeOptions options,
                            IServiceProvider hostServices,
                            IAssemblyLoadContextAccessor loadContextAccessor,
-                           IFileWatcher fileWatcher,
-                           ICompilationEngineFactory compilationEngineFactory)
+                           IFileWatcher fileWatcher)
         {
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
-            _compilationEngineFactory = compilationEngineFactory;
             _loadContextAccessor = loadContextAccessor;
             _runtimeEnvironment = (IRuntimeEnvironment)hostServices.GetService(typeof(IRuntimeEnvironment));
 
@@ -111,7 +111,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
         {
             AddRuntimeServiceBreadcrumb();
 
-            Servicing.Breadcrumbs.Instance.WriteAllBreadcrumbs(background: true);
+            Breadcrumbs.Instance.WriteAllBreadcrumbs(background: true);
         }
 
         public IDisposable AddLoaders(IAssemblyLoaderContainer container)
@@ -133,20 +133,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor, IFileWatcher fileWatcher)
         {
-            _applicationHostContext = new ApplicationHostContext(
-                _projectDirectory,
-                options.PackageDirectory,
-                _targetFramework);
-
-            var compilationContext = new CompilationEngineContext(
-                    _applicationHostContext.LibraryManager,
-                    new ProjectGraphProvider(),
-                    fileWatcher,
-                    _targetFramework,
-                    options.Configuration,
-                    loadContextAccessor.Default);
-
-            var compilationEngine = _compilationEngineFactory.CreateEngine(compilationContext);
+            _applicationHostContext = new ApplicationHostContext(_projectDirectory, options.PackageDirectory, _targetFramework);
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
@@ -175,16 +162,22 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             var hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
             var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration, hostEnvironment);
 
-            // Default services
-            _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            _serviceProvider.Add(typeof(ILibraryManager), _applicationHostContext.LibraryManager);
-            _serviceProvider.Add(typeof(ILibraryExporter), compilationEngine.RootLibraryExporter);
-            _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
-            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_applicationHostContext.LibraryManager));
+            var compilationContext = new CompilationEngineContext(applicationEnvironment, loadContextAccessor.Default, fileWatcher);
 
             // Compilation services available only for runtime compilation
             compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
             compilationContext.AddCompilationService(typeof(IApplicationShutdown), _shutdown);
+
+            var compilationEngine = new CompilationEngine(new CompilationCache(), compilationContext);
+
+            // Default services
+            _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
+            _serviceProvider.Add(typeof(ILibraryManager), _applicationHostContext.LibraryManager);
+        
+            // TODO: Make this lazy
+            _serviceProvider.Add(typeof(ILibraryExporter), compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration));
+            _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
+            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_applicationHostContext.LibraryManager));
 
             if (options.CompilationServerPort.HasValue)
             {
@@ -205,8 +198,8 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         private void AddRuntimeServiceBreadcrumb()
         {
-            var frameworkBreadcrumbName = $"{Constants.RuntimeShortName}-{_runtimeEnvironment.RuntimeType}-{_runtimeEnvironment.RuntimeArchitecture}-{_runtimeEnvironment.RuntimeVersion}";
-            Servicing.Breadcrumbs.Instance.AddBreadcrumb(frameworkBreadcrumbName);
+            var frameworkBreadcrumbName = $"{Runtime.Constants.RuntimeShortName}-{_runtimeEnvironment.RuntimeType}-{_runtimeEnvironment.RuntimeArchitecture}-{_runtimeEnvironment.RuntimeVersion}";
+            Breadcrumbs.Instance.AddBreadcrumb(frameworkBreadcrumbName);
         }
     }
 }

@@ -6,8 +6,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Compilation;
-using Microsoft.Dnx.Runtime.Loader;
+
 using NuGet;
 
 namespace Microsoft.Dnx.Tooling
@@ -20,15 +19,9 @@ namespace Microsoft.Dnx.Tooling
         private readonly string _targetFrameworkFolder;
         private readonly string _outputPath;
         private readonly ApplicationHostContext _applicationHostContext;
-
-        private readonly IServiceProvider _hostServices;
-        private readonly IApplicationEnvironment _appEnv;
         private readonly LibraryExporter _libraryExporter;
-        private readonly IAssemblyLoadContext _defaultLoadContext;
 
-        public BuildContext(IServiceProvider hostServices,
-                            IApplicationEnvironment appEnv,
-                            CompilationEngineFactory compilationFactory,
+        public BuildContext(CompilationEngine compilationEngine,
                             Runtime.Project project,
                             FrameworkName targetFramework,
                             string configuration,
@@ -39,19 +32,8 @@ namespace Microsoft.Dnx.Tooling
             _configuration = configuration;
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
-            _hostServices = hostServices;
-            _appEnv = appEnv;
-            _defaultLoadContext = ((IAssemblyLoadContextAccessor)hostServices.GetService(typeof(IAssemblyLoadContextAccessor))).Default;
 
-            _applicationHostContext = GetApplicationHostContext(project, targetFramework, compilationFactory.CompilationCache);
-            var compilationEngine = compilationFactory.CreateEngine(
-                new CompilationEngineContext(
-                    _applicationHostContext.LibraryManager,
-                    new ProjectGraphProvider(),
-                    NoopWatcher.Instance,
-                    _targetFramework,
-                    _configuration,
-                    GetBuildLoadContext(project, compilationFactory.CompilationCache)));
+            _applicationHostContext = GetApplicationHostContext(project, targetFramework, compilationEngine.CompilationCache);
 
             _libraryExporter = compilationEngine.CreateProjectExporter(
                 _project, _targetFramework, _configuration);
@@ -218,18 +200,6 @@ namespace Microsoft.Dnx.Tooling
                                                                         targetFramework: targetFramework);
 
                 return applicationHostContext;
-            });
-        }
-
-        private IAssemblyLoadContext GetBuildLoadContext(Runtime.Project project, CompilationCache cache)
-        {
-            var cacheKey = Tuple.Create("RuntimeLoadContext", project.Name, _appEnv.RuntimeFramework);
-
-            return cache.Cache.Get<IAssemblyLoadContext>(cacheKey, ctx =>
-            {
-                var appHostContext = GetApplicationHostContext(project, _appEnv.RuntimeFramework, cache);
-
-                return new PackageLoadContext(appHostContext.LibraryManager, _defaultLoadContext);
             });
         }
 

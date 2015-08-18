@@ -13,6 +13,7 @@ using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
+using Microsoft.Dnx.Runtime.Compilation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -59,8 +60,11 @@ namespace Microsoft.Dnx.DesignTimeHost
         private async Task OpenChannel(int port, string hostId)
         {
             var contexts = new Dictionary<int, ApplicationContext>();
-            var services = new ServiceProvider(_services);
             var protocolManager = new ProtocolManager(maxVersion: 2);
+
+            var applicationEnvironment = (IApplicationEnvironment)_services.GetService(typeof(IApplicationEnvironment));
+            var loadContextAccessor = (IAssemblyLoadContextAccessor)_services.GetService(typeof(IAssemblyLoadContextAccessor));
+            var compilationEngine = new CompilationEngine(new CompilationCache(), new CompilationEngineContext(applicationEnvironment, loadContextAccessor.Default));
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
             var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -80,9 +84,12 @@ namespace Microsoft.Dnx.DesignTimeHost
                 var queue = new ProcessingQueue(stream);
                 var connection = new ConnectionContext(
                     contexts,
-                    services,
+                    _services,
+                    applicationEnvironment,
+                    loadContextAccessor,
                     queue,
                     protocolManager,
+                    compilationEngine,
                     hostId);
 
                 queue.OnReceive += message =>
