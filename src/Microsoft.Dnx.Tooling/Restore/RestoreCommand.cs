@@ -81,6 +81,8 @@ namespace Microsoft.Dnx.Tooling
 
             summary.DisplaySummary(Reports);
 
+            Console.WriteLine("Contention Count: " + Runtime.Internal.ConcurrencyUtilities.ContentionCount);
+
             return success;
         }
 

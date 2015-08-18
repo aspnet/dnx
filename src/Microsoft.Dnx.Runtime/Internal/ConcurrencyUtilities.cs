@@ -10,6 +10,8 @@ namespace Microsoft.Dnx.Runtime.Internal
 {
     public static class ConcurrencyUtilities
     {
+        public static int ContentionCount = 0;
+
         internal static string FilePathToLockName(string filePath)
         {
             // If we use a file path directly as the name of a semaphore,
@@ -42,6 +44,7 @@ namespace Microsoft.Dnx.Runtime.Internal
                     // If this lock is already acquired by another process, wait until we can acquire it
                     if (!createdNew)
                     {
+                        Interlocked.Increment(ref ContentionCount);
                         var signaled = fileLock.WaitOne(TimeSpan.FromSeconds(5));
                         if (!signaled)
                         {
