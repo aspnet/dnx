@@ -55,7 +55,7 @@ namespace NuGet
         internal const string PackageRelationshipNamespace = "http://schemas.microsoft.com/packaging/2010/07/";
 
         // Starting from nuget 2.0, we use a file with the special name '_._' to represent an empty folder.
-        internal const string PackageEmptyFileName = "_._";
+        public const string PackageEmptyFileName = "_._";
 
         // This is temporary until we fix the gallery to have proper first class support for this.
         // The magic unpublished date is 1900-01-01T00:00:00
@@ -68,6 +68,6 @@ namespace NuGet
         public static readonly ICollection<string> AssemblyReferencesExtensions 
             = new ReadOnlyCollection<string>(new string[] { ".dll", ".exe", ".winmd" });
 
-        public static readonly Version NuGetVersion = typeof(IPackage).GetTypeInfo().Assembly.GetName().Version;
+        // public static readonly Version NuGetVersion = typeof(IPackage).GetTypeInfo().Assembly.GetName().Version;
     }
 }

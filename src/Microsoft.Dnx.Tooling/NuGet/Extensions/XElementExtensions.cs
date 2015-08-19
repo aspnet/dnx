@@ -12,7 +12,7 @@ using System.Xml.Linq;
 
 namespace NuGet
 {
-    internal static class XElementExtensions
+    public static class XElementExtensions
     {
         public static string GetOptionalAttributeValue(this XElement element, string localName, string namespaceName = null)
         {
