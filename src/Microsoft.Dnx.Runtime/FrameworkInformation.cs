@@ -32,6 +32,8 @@ namespace Microsoft.Dnx.Runtime
 
         public string Path { get; set; }
 
+        public IEnumerable<string> SearchPaths { get; set; }
+
         public string RedistListPath { get; set; }
 
         public IDictionary<string, AssemblyEntry> Assemblies { get; private set; }

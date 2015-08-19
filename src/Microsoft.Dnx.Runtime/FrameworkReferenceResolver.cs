@@ -2,9 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 using NuGet;
@@ -59,7 +60,7 @@ namespace Microsoft.Dnx.Runtime
                 {
                     if (string.IsNullOrEmpty(entry.Path))
                     {
-                        entry.Path = GetAssemblyPath(information.Path, name);
+                        entry.Path = GetAssemblyPath(information.SearchPaths, name);
                     }
 
                     if (!string.IsNullOrEmpty(entry.Path) && entry.Version == null)
@@ -106,15 +107,15 @@ namespace Microsoft.Dnx.Runtime
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
-            if (information == null)
+            if (information == null) 
             {
-                return targetFramework.ToString();
+                return SynthesizeFrameworkFriendlyName(targetFramework);
             }
 
             return information.Name;
         }
 
-        public string GetFrameworkPath(FrameworkName targetFramework)
+        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
@@ -122,8 +123,7 @@ namespace Microsoft.Dnx.Runtime
             {
                 return null;
             }
-
-            return information.Path;
+            return information.SearchPaths.Select(s => Path.Combine(s, "{name}.dll"));
         }
 
         public string GetFrameworkRedistListPath(FrameworkName targetFramework)
@@ -214,6 +214,12 @@ namespace Microsoft.Dnx.Runtime
 
         private static FrameworkInformation GetFrameworkInformation(FrameworkName targetFramework, string referenceAssembliesPath)
         {
+            // Check for legacy frameworks
+            if (targetFramework.Identifier.Equals(VersionUtility.NetFrameworkIdentifier, StringComparison.Ordinal) && targetFramework.Version <= Constants.Version35)
+            {
+                return GetLegacyFrameworkInformation(targetFramework, referenceAssembliesPath);
+            }
+
             var basePath = Path.Combine(referenceAssembliesPath,
                                         targetFramework.Identifier,
                                         "v" + targetFramework.Version);
@@ -232,12 +238,105 @@ namespace Microsoft.Dnx.Runtime
             return GetFrameworkInformation(version, targetFramework);
         }
 
+        private static FrameworkInformation GetLegacyFrameworkInformation(FrameworkName targetFramework, string referenceAssembliesPath)
+        {
+            var frameworkInfo = new FrameworkInformation();
+            if (!RuntimeEnvironmentHelper.IsMono)
+            {
+                // Always grab .NET 2.0 data
+                var searchPaths = new List<string>();
+                var net20Dir = Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v2.0.50727");
+
+                if (!Directory.Exists(net20Dir))
+                {
+                    return null;
+                }
+
+                // Grab reference assemblies first, if present for this framework
+                if (targetFramework.Version.Major == 3)
+                {
+                    // Most specific first (i.e. 3.5)
+                    if (targetFramework.Version.Minor == 5)
+                    {
+                        var refAsms35Dir = Path.Combine(referenceAssembliesPath, "v3.5");
+                        if (Directory.Exists(refAsms35Dir))
+                        {
+                            searchPaths.Add(refAsms35Dir);
+                        }
+                    }
+
+                    // Always search the 3.0 reference assemblies
+                    var refAsms30Dir = Path.Combine(referenceAssembliesPath, "v3.0");
+                    if (Directory.Exists(refAsms30Dir))
+                    {
+                        searchPaths.Add(refAsms30Dir);
+                    }
+                }
+
+                // .NET 2.0 reference assemblies go last
+                searchPaths.Add(net20Dir);
+
+                frameworkInfo.Exists = true;
+                frameworkInfo.Path = searchPaths.First();
+                frameworkInfo.SearchPaths = searchPaths;
+
+                // Load the redist list in reverse order (most general -> most specific)
+                for (int i = searchPaths.Count - 1; i >= 0; i--)
+                {
+                    var dir = new DirectoryInfo(searchPaths[i]);
+                    if (dir.Exists)
+                    {
+                        PopulateFromRedistList(dir, frameworkInfo);
+                    }
+                }
+            }
+            else
+            {
+                // We don't support building for net20-net35 on Mono
+                frameworkInfo.Exists = false;
+            }
+
+            if (string.IsNullOrEmpty(frameworkInfo.Name))
+            {
+                frameworkInfo.Name = SynthesizeFrameworkFriendlyName(targetFramework);
+            }
+            return frameworkInfo;
+        }
+
+        private static string SynthesizeFrameworkFriendlyName(FrameworkName targetFramework)
+        {
+            // Names are not present in the RedistList.xml file for older frameworks or on Mono
+            // We do some custom version string rendering to match how net40 is rendered (.NET Framework 4)
+            if (targetFramework.Identifier.Equals(VersionUtility.NetFrameworkIdentifier))
+            {
+                string versionString = targetFramework.Version.Minor == 0 ?
+                    targetFramework.Version.Major.ToString() :
+                    targetFramework.Version.ToString();
+                return ".NET Framework " + versionString;
+            }
+            return targetFramework.ToString();
+        }
+
         private static FrameworkInformation GetFrameworkInformation(DirectoryInfo directory, FrameworkName targetFramework)
         {
             var frameworkInfo = new FrameworkInformation();
             frameworkInfo.Exists = true;
             frameworkInfo.Path = directory.FullName;
+            frameworkInfo.SearchPaths = new[] {
+                frameworkInfo.Path,
+                Path.Combine(frameworkInfo.Path, "Facades")
+            };
 
+            PopulateFromRedistList(directory, frameworkInfo);
+            if (string.IsNullOrEmpty(frameworkInfo.Name))
+            {
+                frameworkInfo.Name = SynthesizeFrameworkFriendlyName(targetFramework);
+            }
+            return frameworkInfo;
+        }
+
+        private static void PopulateFromRedistList(DirectoryInfo directory, FrameworkInformation frameworkInfo)
+        {
             // The redist list contains the list of assemblies for this target framework
             string redistList = Path.Combine(directory.FullName, "RedistList", "FrameworkList.xml");
 
@@ -277,7 +376,7 @@ namespace Microsoft.Dnx.Runtime
 
                             var entry = new AssemblyEntry();
                             entry.Version = version != null ? Version.Parse(version) : null;
-                            frameworkInfo.Assemblies.Add(assemblyName, entry);
+                            frameworkInfo.Assemblies[assemblyName] = entry;
                         }
                     }
 
@@ -286,8 +385,6 @@ namespace Microsoft.Dnx.Runtime
                     frameworkInfo.Name = nameAttribute == null ? null : nameAttribute.Value;
                 }
             }
-
-            return frameworkInfo;
         }
 
         private static void PopulateAssemblies(IDictionary<string, AssemblyEntry> assemblies, string path)
@@ -306,20 +403,16 @@ namespace Microsoft.Dnx.Runtime
             }
         }
 
-        private static string GetAssemblyPath(string basePath, string assemblyName)
+        private static string GetAssemblyPath(IEnumerable<string> basePaths, string assemblyName)
         {
-            var assemblyPath = Path.Combine(basePath, assemblyName + ".dll");
-
-            if (File.Exists(assemblyPath))
+            foreach (var basePath in basePaths)
             {
-                return assemblyPath;
-            }
+                var assemblyPath = Path.Combine(basePath, assemblyName + ".dll");
 
-            var facadePath = Path.Combine(basePath, "Facades", assemblyName + ".dll");
-
-            if (File.Exists(facadePath))
-            {
-                return facadePath;
+                if (File.Exists(assemblyPath))
+                {
+                    return assemblyPath;
+                }
             }
 
             return null;

@@ -24,7 +24,7 @@ namespace Microsoft.Dnx.Runtime
                 return Enumerable.Empty<string>();
             }
 
-            return GetGacSearchPaths().Select(p => Path.Combine(p, "{name}", "{version}", "{name}.dll"));
+            return GetGacSearchPaths(targetFramework).Select(p => Path.Combine(p, "{name}", "{version}", "{name}.dll"));
         }
 
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
@@ -48,7 +48,7 @@ namespace Microsoft.Dnx.Runtime
             var version = libraryRange.VersionRange?.MinVersion;
 
             string path;
-            if (!TryResolvePartialName(libraryRange.GetReferenceAssemblyName(), version, out path))
+            if (!TryResolvePartialName(libraryRange.GetReferenceAssemblyName(), version, targetFramework, out path))
             {
                 return null;
             }
@@ -63,9 +63,9 @@ namespace Microsoft.Dnx.Runtime
                 framework: null);
         }
 
-        private bool TryResolvePartialName(string name, SemanticVersion version, out string assemblyLocation)
+        private bool TryResolvePartialName(string name, SemanticVersion version, FrameworkName targetFramework, out string assemblyLocation)
         {
-            foreach (var gacPath in GetGacSearchPaths())
+            foreach (var gacPath in GetGacSearchPaths(targetFramework))
             {
                 var di = new DirectoryInfo(Path.Combine(gacPath, name));
 
@@ -94,18 +94,27 @@ namespace Microsoft.Dnx.Runtime
             return false;
         }
 
-        private static IEnumerable<string> GetGacSearchPaths()
+        private static IEnumerable<string> GetGacSearchPaths(FrameworkName targetFramework)
         {
             var gacFolders = new[] { "GAC_32", "GAC_64", "GAC_MSIL" };
 
             string windowsFolder = Environment.GetEnvironmentVariable("WINDIR");
 
+            string gacRoot;
+            if (targetFramework.Version.Major < 4)
+            {
+                // Old GAC root
+                gacRoot = Path.Combine(windowsFolder, "assembly");
+            }
+            else
+            {
+                // New GAC root
+                gacRoot = Path.Combine(windowsFolder, "Microsoft.NET", "assembly");
+            }
+
             foreach (var folder in gacFolders)
             {
-                yield return Path.Combine(windowsFolder,
-                                          "Microsoft.NET",
-                                          "assembly",
-                                          folder);
+                yield return Path.Combine(gacRoot, folder);
             }
         }
     }
