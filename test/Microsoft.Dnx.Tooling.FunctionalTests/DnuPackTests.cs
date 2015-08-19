@@ -365,5 +365,54 @@ public class TestClass : BaseClass {
                 Assert.Equal(1, unresolvedDependencyErrorCount);
             }
         }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_ResourcesNoArgs(string flavor, string os, string architecture)
+        {
+            string stdOut;
+            string stdError;
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            int exitCode;
+            string netFlavorFolder = "dnx451";
+            if (flavor != "clr")
+            {
+                netFlavorFolder = "dnxcore50";
+            }
+            const string testApp = @"ResourcesTestProjects\ReadFromResources";
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
+            {
+                using (var tempDir = TestUtils.CreateTempDir())
+                {
+                    System.Console.WriteLine(tempDir);
+                    var appPath = Path.Combine(tempDir, testApp);
+                    System.Console.WriteLine(appPath);
+                    TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), testApp), appPath);
+                    var workingDir = Path.Combine(appPath, "src", "ReadFromResources");
+
+                    var environment = new Dictionary<string, string> { { "DNX_TRACE", "0" } };
+                    DnuTestUtils.ExecDnu(
+                        runtimeHomeDir,
+                        "restore", "",
+                        out stdOut,
+                        out stdError,
+                        environment: null,
+                        workingDir: workingDir);
+                    exitCode = DnuTestUtils.ExecDnu(
+                        runtimeHomeDir,
+                        "pack",
+                        "",
+                        out stdOut,
+                        out stdError,
+                        environment,
+                        workingDir);
+
+                    Assert.Empty(stdError);
+                    Assert.Equal(0, exitCode);
+                    Assert.True(Directory.Exists($"{workingDir}/bin"));
+                    Assert.True(File.Exists($"{workingDir}/bin/Debug/" + netFlavorFolder + "/fr-FR/ReadFromResources.resources.dll"));
+                }
+            }
+        }
     }
 }

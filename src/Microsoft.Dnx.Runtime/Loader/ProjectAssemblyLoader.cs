@@ -53,9 +53,6 @@ namespace Microsoft.Dnx.Runtime.Loader
             ProjectDescription project;
             if (!_projects.TryGetValue(name, out project))
 
-
-
-
             {
                 return null;
             }

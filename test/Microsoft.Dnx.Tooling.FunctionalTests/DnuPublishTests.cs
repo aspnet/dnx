@@ -2265,6 +2265,49 @@ string expectedAppLockFile = @"{
             }
         }
 
+        [Theory]
+        [MemberData("RuntimeComponents")]
+        public void PublishWithNoSourceOption_AppHasResourceFile(string flavor, string os, string architecture)
+        {
+            const string testApp = @"ResourcesTestProjects/ReadFromResources";
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var tempDir = TestUtils.CreateTempDir())
+            {
+                var publishOutputPath = Path.Combine(tempDir, "output");
+                var appPath = Path.Combine(tempDir, testApp);
+                TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), testApp), appPath);
+                var workingDir = Path.Combine(appPath, "src", "ReadFromResources");
+
+                //Restore the application
+                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", appPath);
+                Assert.Equal(0, exitCode);
+
+                //Pack ResourcesLibrary project which will be used in publish below
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "pack",
+                    arguments: "",
+                    environment: null,
+                    workingDir: Path.Combine(appPath, "src", "ResourcesLibrary"));
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: string.Format("--no-source --out {0}", publishOutputPath),
+                    environment: null,
+                    workingDir: workingDir);
+
+                Assert.Equal(0, exitCode);
+
+                Assert.True(File.Exists(Path.Combine(publishOutputPath,
+                    "approot", "packages", "ReadFromResources", "1.0.0", "lib", "dnx451","fr-FR", "ReadFromResources.resources.dll")));
+                Assert.True(File.Exists(Path.Combine(publishOutputPath,
+                    "approot", "packages", "ReadFromResources", "1.0.0", "lib", "dnxcore50", "fr-FR", "ReadFromResources.resources.dll")));
+            }
+        }
+
         private string BuildLongPath(string baseDir)
         {
             const int maxPath = 248;
