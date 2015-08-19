@@ -10,6 +10,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 using NuGet.Resources;
+using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Tooling;
 
 namespace NuGet
@@ -774,7 +775,23 @@ namespace NuGet
             var fileName = _fileSystem.GetFullPath(_fileName);
 
             // Global: ensure mutex is honored across TS sessions 
-            using (var mutex = new Mutex(false, "Global\\" + EncryptionUtility.GenerateUniqueToken(fileName)))
+            var mutexName = $"Global\\{EncryptionUtility.GenerateUniqueToken(fileName)}";
+            Mutex mutex = null;
+#if DNXCORE50
+            if (RuntimeEnvironmentHelper.IsWindows)
+            {
+                mutex = new Mutex(false, mutexName);
+            }
+            else
+            {
+                // However, named mutex is not supported on cross-plat CoreCLR
+                // so we fall back to process-local synchronization
+                mutex = new Mutex(false);
+            }
+#else
+            mutex = new Mutex(false, mutexName);
+#endif
+            using (mutex)
             {
                 var owner = false;
                 try
