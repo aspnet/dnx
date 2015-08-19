@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Bootstrapper.FunctionalTests;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
@@ -1993,6 +1994,63 @@ string expectedAppLockFile = @"{
 
                 Assert.True(DirTree.CreateFromJson(expectedOutputStructure)
                     .MatchDirectoryOnDisk(publishOutputPath, compareFileContents: false));
+            }
+        }
+
+        [ConditionalTheory]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        public void CanPublishWrappedProjectReference(string flavor, string os, string architecture)
+        {
+            // ConsoleAppReferencingWrappedProject references Net45Library in its project.json
+            const string testAppName = "ConsoleAppReferencingWrappedProject";
+            const string referenceProjectName = "Net45Library";
+
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var tempDir = TestUtils.CreateTempDir())
+            {
+                var outputPath = Path.Combine(tempDir, "output");
+                var solutionRootPath = Path.Combine(tempDir, testAppName);
+                var mainProjectPath = Path.Combine(solutionRootPath, "src", testAppName);
+                var referenceProjectFilePath = Path.Combine(
+                    solutionRootPath,
+                    "src",
+                    referenceProjectName,
+                    $"{referenceProjectName}.csproj");
+                TestUtils.CopyFolder(TestUtils.GetDnuPublishTestAppPath(testAppName), solutionRootPath);
+
+                // First generate assemblies that will be referenced by wrapper project
+                var exitCode = TestUtils.BuildCsProject(referenceProjectFilePath);
+                Assert.Equal(0, exitCode);
+
+                // "dnu wrap" the csproj to generate wrapper project
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "wrap", referenceProjectFilePath);
+                Assert.Equal(0, exitCode);
+
+                // Generate lock file before publishing the main project
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", mainProjectPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: $"publish {mainProjectPath}",
+                    arguments: $"--out {outputPath}");
+                Assert.Equal(0, exitCode);
+
+                // The wrapper project should be packed to a nupkg
+                Assert.False(Directory.Exists(Path.Combine(outputPath, "approot", "src", referenceProjectName)));
+                Assert.True(Directory.Exists(Path.Combine(outputPath, "approot", "packages", referenceProjectName)));
+
+                // The output bundled app should be runnable
+                var outputMainAppPath = Path.Combine(outputPath, "approot", "src", testAppName);
+                string stdOut, stdErr;
+                exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                    runtimeHomeDir,
+                    arguments: $"-p {outputMainAppPath} run",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr);
+                Assert.Equal(0, exitCode);
             }
         }
 

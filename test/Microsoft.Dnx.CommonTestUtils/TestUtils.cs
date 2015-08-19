@@ -228,6 +228,12 @@ namespace Microsoft.Dnx.CommonTestUtils
             return Path.Combine(rootDir, "misc", "XreTestApps", name);
         }
 
+        public static string GetDnuPublishTestAppPath(string name)
+        {
+            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            return Path.Combine(rootDir, "misc", "DnuPublishTestApps", name);
+        }
+
         public static string GetSamplesFolder()
         {
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
@@ -354,6 +360,12 @@ namespace Microsoft.Dnx.CommonTestUtils
             }
 
             Directory.Delete(folder, recursive: false);
+        }
+
+        public static int BuildCsProject(string csProjectPath)
+        {
+            var msbuildPath = ResolveMSBuildPath();
+            return Exec(msbuildPath, csProjectPath);
         }
 
         public static string ResolveMSBuildPath()
