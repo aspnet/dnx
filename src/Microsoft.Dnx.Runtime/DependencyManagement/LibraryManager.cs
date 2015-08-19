@@ -23,10 +23,12 @@ namespace Microsoft.Dnx.Runtime
         private Dictionary<string, Tuple<Library, LibraryDescription>> _graph;
         private bool _initialized;
         private readonly string _projectPath;
+        private readonly FrameworkName _targetFramework;
 
-        public LibraryManager(string projectPath, IList<LibraryDescription> libraries)
+        public LibraryManager(string projectPath, FrameworkName targetFramework, IList<LibraryDescription> libraries)
         {
             _projectPath = projectPath;
+            _targetFramework = targetFramework;
             _libraries = libraries;
         }
 

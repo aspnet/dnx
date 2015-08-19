@@ -106,7 +106,7 @@ namespace Microsoft.Dnx.Runtime
 
             dependencyWalker.Walk(context.Project.Name, context.Project.Version, context.TargetFramework);
 
-            context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, dependencyWalker.Libraries);
+            context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, dependencyWalker.Libraries);
 
             if (!validLockFile)
             {

@@ -22,6 +22,58 @@ namespace Microsoft.Dnx.Tooling
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_P2PDifferentFrameworks(string flavor, string os, string architecture)
+        {
+            string stdOut;
+            string stdError;
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
+            {
+                var p1 = Path.Combine(testEnv.RootDir, "P1");
+                var p2 = Path.Combine(testEnv.RootDir, "P2");
+
+                Directory.CreateDirectory(p1);
+                Directory.CreateDirectory(p2);
+
+                File.WriteAllText($"{p1}/project.json",
+                @"{
+                    ""dependencies"": {
+                        ""System.Runtime"":""4.0.20-*""
+                    },
+                    ""frameworks"": {
+                        ""dotnet"": {}
+                    }
+                  }");
+
+                File.WriteAllText($"{p1}/BaseClass.cs", @"
+public class BaseClass {
+    public virtual void Test() { }
+}");
+
+                File.WriteAllText($"{p2}/project.json",
+                @"{
+                    ""dependencies"": {
+                        ""P1"":""""
+                    },
+                    ""frameworks"": {
+                        ""dnxcore50"": {}
+                    }
+                  }");
+                File.WriteAllText($"{p2}/TestClass.cs", @"
+public class TestClass : BaseClass {
+    public override void Test() { }
+}");
+
+                var environment = new Dictionary<string, string> { { "DNX_TRACE", "0" } };
+                DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", "", out stdOut, out stdError, environment: null, workingDir: testEnv.RootDir);
+                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", "", out stdOut, out stdError, environment, p2);
+                Assert.Equal(0, exitCode);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_NoArgs(string flavor, string os, string architecture)
         {
             string expectedDNX =

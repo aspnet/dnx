@@ -55,7 +55,7 @@ namespace Microsoft.Dnx.Compilation
 
             var loadContext = new RuntimeLoadContext(runtimeLibraryManager, this, _context.DefaultLoadContext);
 
-            return new LibraryExporter(libraryManager, loadContext, this, targetFramework, configuration);
+            return new LibraryExporter(libraryManager, loadContext, this, configuration);
         }
 
         public IProjectCompiler GetCompiler(TypeInformation provider, IAssemblyLoadContext loadContext)
