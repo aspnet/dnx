@@ -5,6 +5,8 @@ using System;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Runtime.Common.DependencyInjection;
+using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
 
@@ -50,7 +52,17 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 // Add a cache dependency on restore complete to reevaluate dependencies
                 ctx.Monitor(_compilationFactory.CompilationCache.NamedCacheDependencyProvider.GetNamedDependency(_project.Name + "_Dependencies"));
-                
+
+                // Create compilation engine and add it to the services
+                var compilationEngine = _compilationFactory.CreateEngine(new CompilationEngineContext(
+                    applicationHostContext.LibraryManager,
+                    applicationHostContext.ProjectGraphProvider,
+                    NoopWatcher.Instance,
+                    applicationHostContext.ServiceProvider,
+                    _appEnv.RuntimeFramework,
+                    _appEnv.Configuration));
+                applicationHostContext.AddService(typeof(ICompilationEngine), compilationEngine);
+
                 return applicationHostContext;
             });
 
