@@ -142,9 +142,11 @@ namespace Microsoft.Dnx.Tooling
 
         public void AddLibs(PackageBuilder packageBuilder, string pattern, bool recursiveSearch)
         {
+            // Look for .dll,.xml files in top directory
             var searchOption = SearchOption.TopDirectoryOnly;
             if (recursiveSearch)
             {
+                //for .resources.dll, search all directories
                 searchOption = SearchOption.AllDirectories;
             }
             // Add everything in the output folder to the lib path

@@ -69,64 +69,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                                      .ToList();
         }
 
-        private IEnumerable<ResourceDescriptor> GetResourcesForCulture(string cultureName)
-        {
-            var resourcesByCultureName = CompilationContext.Resources
-                .GroupBy(GetResourceCultureName, StringComparer.OrdinalIgnoreCase);
-
-            return resourcesByCultureName
-                .SingleOrDefault(grouping => string.Equals(grouping.Key, cultureName, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private string GetResourceCultureName(ResourceDescriptor res)
-        {
-            var resourceBaseName = Path.GetFileNameWithoutExtension(res.FileName);
-            var cultureName = Path.GetExtension(resourceBaseName);
-            if (string.IsNullOrEmpty(cultureName) || cultureName.Length < 3)
-            {
-                return string.Empty;
-            }
-            bool previousCharWasDash = false;
-            for (var index = 1; index != cultureName.Length; ++index)
-            {
-                var ch = cultureName[index];
-                var isDash = ch == '-';
-                var isAlpha = !isDash && ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
-                var isDigit = !isDash && !isAlpha && (ch >= '0' && ch <= '9');
-
-                if (isDash && previousCharWasDash)
-                {
-                    // two '-' in a row is not valid
-                    return string.Empty;
-                }
-
-                if (index < 3)
-                {
-                    if (!isAlpha)
-                    {
-                        // first characters at [1] and [2] must be alpha
-                        return string.Empty;
-                    }
-                }
-                else
-                {
-                    if (!isAlpha && !isDigit && !isDash)
-                    {
-                        // not an allowed character
-                        return string.Empty;
-                    }
-                }
-
-                previousCharWasDash = isDash;
-            }
-            if (previousCharWasDash)
-            {
-                // trailing '-' is not valid
-                return string.Empty;
-            }
-            return cultureName.Substring(1);
-        }
-
         EmitResult EmitResourceAssembly(
             AssemblyName assemblyName,
             IEnumerable<ResourceDescriptor> resourceDescriptors,
@@ -176,7 +118,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 if (!string.IsNullOrEmpty(assemblyName.CultureName))
                 {
-                    var resourcesForCulture = GetResourcesForCulture(assemblyName.CultureName ?? string.Empty);
+                    var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
                     if (resourcesForCulture == null)
                     {
                         return null;
@@ -186,7 +128,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 }
                 else
                 {
-                    var resourcesForCulture = GetResourcesForCulture(assemblyName.CultureName ?? string.Empty);
+                    var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
                     if (resourcesForCulture == null)
                     {
                         // No resources is fine for a main assembly
@@ -263,7 +205,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             IEnumerable<ResourceDescription> resources = Enumerable.Empty<ResourceDescription>();
 
             foreach (var resourceGrouping in CompilationContext.Resources
-                .GroupBy(GetResourceCultureName, StringComparer.OrdinalIgnoreCase))
+                .GroupBy(ResourcesForCulture.GetResourceCultureName, StringComparer.OrdinalIgnoreCase))
             {
                 if (resourceGrouping.Key == string.Empty)
                 {

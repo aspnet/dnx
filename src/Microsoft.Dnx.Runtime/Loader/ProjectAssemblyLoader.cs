@@ -55,10 +55,6 @@ namespace Microsoft.Dnx.Runtime.Loader
             var library = _libraryManager.GetLibraryDescription(name) as ProjectDescription;
 
             if (library == null)
-
-
-
-
             {
                 return null;
             }

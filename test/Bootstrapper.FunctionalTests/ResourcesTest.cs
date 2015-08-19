@@ -28,13 +28,11 @@ namespace Bootstrapper.FunctionalTests
             }
         }
 
-        [Fact]
-        public void ReadResourcesFromProjectNugetPackageAndClassLibrary()
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void ReadResourcesFromProjectNugetPackageAndClassLibrary(string flavor, string os, string architecture)
         {
-            string flavor = "clr";
-            string os = "win";
-            string architecture = "x86";
-            const string testApp = @"ResourcesTestProjects\ReadFromResources\src\ReadFromResources";
+            const string testApp = @"ResourcesTestProjects\ReadFromResources";
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var tempDir = TestUtils.CreateTempDir())
@@ -42,7 +40,7 @@ namespace Bootstrapper.FunctionalTests
                 System.Console.WriteLine(tempDir);
                 var appPath = Path.Combine(tempDir, testApp);
                 System.Console.WriteLine(appPath);
-                TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), testApp), appPath);
+                TestUtils.CreateDisposableTestProject(runtimeHomeDir, Path.Combine(tempDir, "ResourcesTestProjects"), Path.Combine(TestUtils.GetMiscProjectsFolder(), testApp));
 
                 string stdOut;
                 string stdErr;
@@ -52,17 +50,14 @@ namespace Bootstrapper.FunctionalTests
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
-                    workingDir: appPath);
+                    workingDir: Path.Combine(appPath, "src", "ReadFromResources"));
 
                 Assert.Equal(0, exitCode);
                 Assert.Equal(@"Hello World!
-Hello, code!
-I
-can
-customize
-the
-default
-command
+Bonjour Monde!
+Bienvenue
+The name '{0}' is ambiguous.
+Le nom '{0}' est ambigu.
 ", stdOut);
             }
         }
