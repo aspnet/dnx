@@ -60,7 +60,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             var mainProject = Projects.Single(project => project.Library.Name == _project.Name);
 
             // Emit all package dependencies in parallel
-            Task.WaitAll(Packages.Select(p => p.Emit(this)).ToArray());
+            Parallel.ForEach(Packages, package => package.Emit(this));
 
             var success = true;
 

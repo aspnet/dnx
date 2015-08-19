@@ -21,7 +21,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         public string TargetPath { get; private set; }
 
-        public async Task Emit(PublishRoot root)
+        public void Emit(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _package.Type, Library);
 
@@ -34,7 +34,10 @@ namespace Microsoft.Dnx.Tooling.Publish
                 _package.Identity.Name,
                 _package.Identity.Version);
 
-            await Task.Run(() => root.Operations.Copy(srcPackageDir, targetPackageDir));
+            root.Reports.Quiet.WriteLine("    Source {0}", srcPackageDir.Bold());
+            root.Reports.Quiet.WriteLine("    Target {0}", targetPackageDir);
+
+            root.Operations.Copy(srcPackageDir, targetPackageDir);
         }
     }
 }

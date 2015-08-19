@@ -348,7 +348,7 @@ namespace Microsoft.Dnx.Tooling
 
         private LockFileItem ReadFileItem(string property, JToken json)
         {
-            var item = new LockFileItem { Path = property };
+            var item = new LockFileItem { Path = PathUtility.GetPathWithDirectorySeparator(property) };
             foreach (var subProperty in json.OfType<JProperty>())
             {
                 item.Properties[subProperty.Name] = subProperty.Value.Value<string>();
