@@ -10,6 +10,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 using NuGet.Resources;
+using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Tooling;
 
 namespace NuGet
@@ -766,15 +767,53 @@ namespace NuGet
             }
         }
 
+#if DNXCORE50
+        private static Mutex _globalMutex = new Mutex(initiallyOwned: false);
+
         /// <summary>
         /// Wrap all IO operations on setting files with this function to avoid file-in-use errors
         /// </summary>
         private void ExecuteSynchronized(Action ioOperation)
         {
+            if (RuntimeEnvironmentHelper.IsWindows)
+            {
+                ExecuteSynchronizedCore(ioOperation);
+                return;
+            }
+            else
+            {
+                // Cross-plat CoreCLR doesn't support named lock, so we fall back to
+                // process-local synchronization in this case
+                var owner = false;
+                try
+                {
+                    owner = _globalMutex.WaitOne(TimeSpan.FromMinutes(1));
+                    ioOperation();
+                }
+                finally
+                {
+                    if (owner)
+                    {
+                        _globalMutex.ReleaseMutex();
+                    }
+                }
+            }
+        }
+#else
+        /// <summary>
+        /// Wrap all IO operations on setting files with this function to avoid file-in-use errors
+        /// </summary>
+        private void ExecuteSynchronized(Action ioOperation)
+        {
+            ExecuteSynchronizedCore(ioOperation);
+        }
+#endif
+        private void ExecuteSynchronizedCore(Action ioOperation)
+        {
             var fileName = _fileSystem.GetFullPath(_fileName);
 
             // Global: ensure mutex is honored across TS sessions 
-            using (var mutex = new Mutex(false, "Global\\" + EncryptionUtility.GenerateUniqueToken(fileName)))
+            using (var mutex = new Mutex(false, $"Global\\{EncryptionUtility.GenerateUniqueToken(fileName)}"))
             {
                 var owner = false;
                 try
@@ -795,7 +834,6 @@ namespace NuGet
                     }
                 }
             }
-
         }
     }
 }
