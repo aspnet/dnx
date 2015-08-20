@@ -67,7 +67,7 @@ namespace Microsoft.Dnx.Tooling
 
             var packageFullPath = Path.Combine(
                 _commandsRepository.PackagesRoot.Root,
-                _commandsRepository.PathResolver.GetPackageDirectory(packageId, new SemanticVersion(packageVersion)));
+                _commandsRepository.PathResolver.GetPackageDirectory(packageId, SemanticVersion.Create(packageVersion)));
 
             if (OverwriteCommands)
             {

@@ -15,7 +15,7 @@ namespace Microsoft.Dnx.Tooling
     public class DnuPackagesAddTests
     {
         private static readonly string ProjectName = "HelloWorld";
-        private static readonly SemanticVersion ProjectVersion = new SemanticVersion("0.1-beta");
+        private static readonly SemanticVersion ProjectVersion = SemanticVersion.Create("0.1-beta");
         private static readonly string Configuration = "Release";
         private static readonly string PackagesDirName = "packages";
         private static readonly string OutputDirName = "output";

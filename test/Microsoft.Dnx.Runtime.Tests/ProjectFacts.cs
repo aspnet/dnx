@@ -27,7 +27,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         {
             var project = ProjectUtilities.GetProject(@"{ ""version"": ""1.2.3"" }", @"foo", @"C:\Foo\Project.json");
 
-            Assert.Equal(new SemanticVersion("1.2.3"), project.Version);
+            Assert.Equal(SemanticVersion.Create("1.2.3"), project.Version);
         }
 
         [Fact]
@@ -270,17 +270,17 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.Equal("A", d1.Name);
             Assert.Null(d1.LibraryRange.VersionRange);
             Assert.Equal("B", d2.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0-alpha"), d2.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("1.0-alpha"), d2.LibraryRange.VersionRange.MinVersion);
             Assert.True(d2.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
             Assert.Equal("C", d3.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("1.0.0"), d3.LibraryRange.VersionRange.MinVersion);
             Assert.False(d3.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
             Assert.Equal("D", d4.Name);
-            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("2.0.0"), d4.LibraryRange.VersionRange.MinVersion);
             Assert.False(d4.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
             Assert.Equal("E", d5.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0.0"), d5.LibraryRange.VersionRange.MinVersion);
-            Assert.Equal(SemanticVersion.Parse("1.1.0"), d5.LibraryRange.VersionRange.MaxVersion);
+            Assert.Equal(SemanticVersion.Create("1.0.0"), d5.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("1.1.0"), d5.LibraryRange.VersionRange.MaxVersion);
             Assert.False(d5.LibraryRange.VersionRange.IsMaxInclusive);
             Assert.Equal("F", d6.Name);
             Assert.Null(d6.LibraryRange.VersionRange);
@@ -316,13 +316,13 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.Equal("A", d1.Name);
             Assert.Null(d1.LibraryRange.VersionRange);
             Assert.Equal("B", d2.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0-alpha"), d2.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("1.0-alpha"), d2.LibraryRange.VersionRange.MinVersion);
             Assert.True(d2.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
             Assert.Equal("C", d3.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("1.0.0"), d3.LibraryRange.VersionRange.MinVersion);
             Assert.False(d3.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
             Assert.Equal("D", d4.Name);
-            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("2.0.0"), d4.LibraryRange.VersionRange.MinVersion);
             Assert.False(d4.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
         }
 
@@ -356,15 +356,15 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.Null(d1.LibraryRange.VersionRange);
             Assert.True(d1.LibraryRange.IsGacOrFrameworkReference);
             Assert.Equal("fx/B", d2.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0-alpha"), d2.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("1.0-alpha"), d2.LibraryRange.VersionRange.MinVersion);
             Assert.True(d2.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
             Assert.True(d2.LibraryRange.IsGacOrFrameworkReference);
             Assert.Equal("fx/C", d3.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("1.0.0"), d3.LibraryRange.VersionRange.MinVersion);
             Assert.False(d3.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
             Assert.True(d3.LibraryRange.IsGacOrFrameworkReference);
             Assert.Equal("fx/D", d4.Name);
-            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.LibraryRange.VersionRange.MinVersion);
+            Assert.Equal(SemanticVersion.Create("2.0.0"), d4.LibraryRange.VersionRange.MinVersion);
             Assert.False(d4.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.Prerelease);
             Assert.True(d4.LibraryRange.IsGacOrFrameworkReference);
         }

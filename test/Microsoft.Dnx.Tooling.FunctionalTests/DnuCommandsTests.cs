@@ -164,7 +164,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                     new LockFilePackageLibrary
                     {
                         Name = libName,
-                        Version = new SemanticVersion(version),
+                        Version = SemanticVersion.Create(version),
                         Sha512 = "TestSha"
                     }
                 }

@@ -330,7 +330,7 @@ namespace NuGet
             // When matching by pattern, we will always have a version token. Packages without versions would be matched early on by the version-less path resolver 
             // when doing an exact match.
             return name.Length > packageId.Length &&
-                   SemanticVersion.TryParse(name.Substring(packageId.Length + 1), out parsedVersion) &&
+                   SemanticVersion.TryCreate(name.Substring(packageId.Length + 1), out parsedVersion) &&
                    parsedVersion == version;
         }
 

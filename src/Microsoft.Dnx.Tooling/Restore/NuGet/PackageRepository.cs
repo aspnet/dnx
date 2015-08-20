@@ -78,7 +78,7 @@ namespace NuGet
 
                     // Get the version part and parse it
                     SemanticVersion version;
-                    if (!SemanticVersion.TryParse(versionPart, out version))
+                    if (!SemanticVersion.TryCreate(versionPart, out version))
                     {
                         continue;
                     }

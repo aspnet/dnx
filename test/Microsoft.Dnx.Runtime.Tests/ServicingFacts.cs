@@ -28,7 +28,7 @@ nupkg|NonExisting|1.0.0|lib/dnxcore50/NonExisting.dll=patches/NonExisting/1.0.0-
 
                 bool foundReplacement = index.TryGetReplacement(
                     "NonExistingPatch",
-                    new SemanticVersion("1.0.0"),
+                    SemanticVersion.Create("1.0.0"),
                     @"lib\dnxcore50\NonExistingPatch.dll",
                     out replacementPath);
 
@@ -51,7 +51,7 @@ nupkg|PatchedLib|1.0.2|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.2-pat
                 bool foundReplacement = index.TryGetReplacement(
                     "PatchedLib",
                     // The version here doesn't match any patch
-                    new SemanticVersion("1.1.0"),
+                    SemanticVersion.Create("1.1.0"),
                     @"lib\dnxcore50\PatchedLib.dll",
                     out replacementPath);
 
@@ -72,7 +72,7 @@ nupkg|PatchedLib|1.0.0|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-pat
 
                 bool foundReplacement = index.TryGetReplacement(
                     "PatchedLib",
-                    new SemanticVersion("1.0.0"),
+                    SemanticVersion.Create("1.0.0"),
                     @"lib\dnxcore50\PatchedLib.dll",
                     out replacementPath);
 
@@ -99,7 +99,7 @@ nupkg|PatchedLib|1.0.1|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.1-pat
 
                 bool foundReplacement = index.TryGetReplacement(
                     "PatchedLib",
-                    new SemanticVersion("1.0.0"),
+                    SemanticVersion.Create("1.0.0"),
                     @"lib\dnxcore50\PatchedLib.dll",
                     out replacementPath);
 

@@ -364,7 +364,7 @@ namespace NuGet
 
             // First, try to parse it as a plain version string
             SemanticVersion version;
-            if (SemanticVersion.TryParse(value, out version))
+            if (SemanticVersion.TryCreate(value, out version))
             {
                 // A plain version is treated as an inclusive minimum range
                 result = new VersionSpec
@@ -466,7 +466,7 @@ namespace NuGet
             {
                 IsMinInclusive = true,
                 MinVersion = version,
-                MaxVersion = new SemanticVersion(new Version(version.Version.Major, version.Version.Minor + 1))
+                MaxVersion = SemanticVersion.Create(new Version(version.Version.Major, version.Version.Minor + 1))
             };
         }
 
@@ -729,7 +729,7 @@ namespace NuGet
                 // Find exact matching items in expansion order.
                 foreach (var activeFramework in Expand(internalProjectFramework))
                 {
-                    var matchingGroups = frameworkGroups.Where(g => 
+                    var matchingGroups = frameworkGroups.Where(g =>
                         string.Equals(g.Key?.Identifier, activeFramework.Identifier, StringComparison.OrdinalIgnoreCase) &&
                         string.Equals(g.Key?.Profile, activeFramework.Profile, StringComparison.OrdinalIgnoreCase)).ToList();
                     var bestGroup = matchingGroups
@@ -829,16 +829,16 @@ namespace NuGet
             // Trim the version so things like 1.0.0.0 end up being 1.0
             Version version = TrimVersion(semVer.Version);
 
-            yield return new SemanticVersion(version, semVer.SpecialVersion);
+            yield return SemanticVersion.Create(version, semVer.SpecialVersion);
 
             if (version.Build == -1 && version.Revision == -1)
             {
-                yield return new SemanticVersion(new Version(version.Major, version.Minor, 0), semVer.SpecialVersion);
-                yield return new SemanticVersion(new Version(version.Major, version.Minor, 0, 0), semVer.SpecialVersion);
+                yield return SemanticVersion.Create(new Version(version.Major, version.Minor, 0), semVer.SpecialVersion);
+                yield return SemanticVersion.Create(new Version(version.Major, version.Minor, 0, 0), semVer.SpecialVersion);
             }
             else if (version.Revision == -1)
             {
-                yield return new SemanticVersion(new Version(version.Major, version.Minor, version.Build, 0), semVer.SpecialVersion);
+                yield return SemanticVersion.Create(new Version(version.Major, version.Minor, version.Build, 0), semVer.SpecialVersion);
             }
         }
 
@@ -1193,13 +1193,13 @@ namespace NuGet
         private static bool TryParseVersion(string versionString, out SemanticVersion version)
         {
             version = null;
-            if (!SemanticVersion.TryParse(versionString, out version))
+            if (!SemanticVersion.TryCreate(versionString, out version))
             {
                 // Support integer version numbers (i.e. 1 -> 1.0)
                 int versionNumber;
                 if (Int32.TryParse(versionString, out versionNumber) && versionNumber > 0)
                 {
-                    version = new SemanticVersion(new Version(versionNumber, 0));
+                    version = SemanticVersion.Create(new Version(versionNumber, 0));
                 }
             }
             return version != null;
@@ -1276,9 +1276,9 @@ namespace NuGet
         internal static SemanticVersion GetAssemblyVersion(string path)
         {
 #if DNX451
-            return new SemanticVersion(AssemblyName.GetAssemblyName(path).Version);
+            return SemanticVersion.Create(AssemblyName.GetAssemblyName(path).Version);
 #else
-            return new SemanticVersion(System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version);
+            return SemanticVersion.Create(System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version);
 #endif
         }
 

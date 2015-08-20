@@ -64,7 +64,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.Equal(1, lockFile.Targets.Count);
             var library = lockFile.Targets[0].Libraries[0];
             Assert.Equal("WindowsAzure.ServiceBus", library.Name);
-            Assert.Equal(SemanticVersion.Parse("2.6.7"), library.Version);
+            Assert.Equal(SemanticVersion.Create("2.6.7"), library.Version);
             Assert.Equal(1, library.Dependencies.Count);
             var dependency = library.Dependencies[0];
             Assert.Equal(dependency.Id, "Microsoft.WindowsAzure.ConfigurationManager");

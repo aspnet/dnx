@@ -173,7 +173,7 @@ namespace Microsoft.Dnx.Runtime
             var version = rawProject.Value("version") as JsonString;
             if (version == null)
             {
-                project.Version = new SemanticVersion("1.0.0");
+                project.Version = SemanticVersion.Create("1.0.0");
             }
             else
             {
@@ -325,7 +325,7 @@ namespace Microsoft.Dnx.Runtime
                 }
             }
 
-            return new SemanticVersion(version);
+            return SemanticVersion.Create(version);
         }
 
         private static void PopulateDependencies(

@@ -46,7 +46,7 @@ namespace Microsoft.Dnx.Runtime
             {
                 return new LibraryDescription(
                     libraryRange,
-                    new LibraryIdentity(libraryRange.Name, new SemanticVersion(assemblyVersion), isGacOrFrameworkReference: true),
+                    new LibraryIdentity(libraryRange.Name, SemanticVersion.Create(assemblyVersion), isGacOrFrameworkReference: true),
                     path,
                     LibraryTypes.ReferenceAssembly,
                     Enumerable.Empty<LibraryDependency>(),

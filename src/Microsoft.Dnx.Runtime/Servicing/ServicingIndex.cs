@@ -69,7 +69,7 @@ namespace Microsoft.Dnx.Runtime.Servicing
                             continue;
                         }
                         SemanticVersion version;
-                        if (!SemanticVersion.TryParseStrict(fields[2], out version))
+                        if (!SemanticVersion.TryParse(fields[2], strict: true, result: out version))
                         {
                             Logger.TraceInformation("[{0}]. Line {1}: malformed servicing version ", GetType().Name, lineNumber);
                             continue;

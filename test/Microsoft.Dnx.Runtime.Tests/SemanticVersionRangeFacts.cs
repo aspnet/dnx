@@ -14,8 +14,8 @@ namespace Microsoft.Dnx.Runtime.Tests
         {
             var range = new SemanticVersionRange
             {
-                MinVersion = new SemanticVersion("1.0.0-beta"),
-                MaxVersion = new SemanticVersion("1.0.0-beta")
+                MinVersion = SemanticVersion.Create("1.0.0-beta"),
+                MaxVersion = SemanticVersion.Create("1.0.0-beta")
             };
 
             Assert.Equal("1.0.0-beta", range.ToString());

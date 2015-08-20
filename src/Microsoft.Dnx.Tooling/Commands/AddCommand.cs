@@ -29,7 +29,7 @@ namespace Microsoft.Dnx.Tooling
             }
 
             // Only for version validation
-            SemanticVersion.Parse(Version);
+            SemanticVersion.Create(Version);
 
             ProjectDir = ProjectDir ?? Directory.GetCurrentDirectory();
 
