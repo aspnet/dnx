@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,11 +75,12 @@ namespace Microsoft.Dnx.Runtime.Internal
 #if DNXCORE50
             private static ConcurrentDictionary<string, SemaphoreWrapper> _nameWrapper =
                 new ConcurrentDictionary<string, SemaphoreWrapper>();
-            private static ConcurrentDictionary<string, object> _nameRefCountLock =
-                new ConcurrentDictionary<string, object>();
+            private static ConcurrentDictionary<string, Mutex> _nameRefCountLock =
+                new ConcurrentDictionary<string, Mutex>();
+            private static object _globalLock = new object();
 
-            private string _name;
-            private int _refCount = 0;
+            private readonly string _name;
+            private volatile int _refCount = 0;
 #endif
 
             private readonly Semaphore _semaphore;
@@ -92,20 +94,36 @@ namespace Microsoft.Dnx.Runtime.Internal
                 }
                 else
                 {
-                    var refCountLock = _nameRefCountLock.GetOrAdd(name, x => new object());
-                    lock (refCountLock)
+                    var createdNewLocal = false;
+                    Mutex refCountLock;
+
+                    // This global lock ensures the following operations are grouped as one atomic operation:
+                    // 1. Get or add a ref count lock
+                    // 2. Lock the ref count lock
+                    lock (_globalLock)
                     {
-                        var createdNewLocal = false;
+                        refCountLock = _nameRefCountLock.GetOrAdd(name, x => new Mutex());
+
+                        // This ref count lock ensures the following operations are grouped as one atomic operation:
+                        // 1. Get or add a wrapper
+                        // 2. Increment ref count of the wrapper
+                        refCountLock.WaitOne();
+                    }
+
+                    using (refCountLock)
+                    {
                         var wrapper = _nameWrapper.GetOrAdd(
                             name,
                             _ =>
                             {
                                 createdNewLocal = true;
-                                return new SemaphoreWrapper(new Semaphore(initialCount, maximumCount));
+                                return new SemaphoreWrapper(new Semaphore(initialCount, maximumCount), name);
                             });
-                        createdNew = createdNewLocal;
                         wrapper._refCount++;
-                        wrapper._name = name;
+
+                        refCountLock.ReleaseMutex();
+
+                        createdNew = createdNewLocal;
                         return wrapper;
                     }
                 }
@@ -115,9 +133,12 @@ namespace Microsoft.Dnx.Runtime.Internal
 #endif
             }
 
-            private SemaphoreWrapper(Semaphore semaphore)
+            private SemaphoreWrapper(Semaphore semaphore, string name = null)
             {
                 _semaphore = semaphore;
+#if DNXCORE50
+                _name = name;
+#endif
             }
 
             public bool WaitOne(TimeSpan timeout)
@@ -139,18 +160,32 @@ namespace Microsoft.Dnx.Runtime.Internal
                 }
                 else
                 {
-                    object refCountLock;
-                    if (!_nameRefCountLock.TryGetValue(_name, out refCountLock))
+                    Mutex refCountLock;
+
+                    // This global lock ensures the following operations are grouped as one atomic operation:
+                    // 1. Get a ref count lock
+                    // 2. Lock the ref count lock
+                    lock (_globalLock)
                     {
-                        throw new InvalidOperationException("Race condition detected!");
+                        if (!_nameRefCountLock.TryGetValue(_name, out refCountLock))
+                        {
+                            throw new InvalidOperationException("Race condition detected!");
+                        }
+
+                        // This ref count lock ensures the following operations are grouped as one atomic operation:
+                        // 1. Get a wrapper
+                        // 2. Decrement ref count of the wrapper
+                        // 3. If the ref count is zero, do cleanup
+                        refCountLock.WaitOne();
                     }
-                    lock (refCountLock)
+
+                    using (refCountLock)
                     {
                         _refCount--;
                         if (_refCount == 0)
                         {
                             SemaphoreWrapper removedWrapper;
-                            object removedRefCountLock;
+                            Mutex removedRefCountLock;
 
                             if (!_nameWrapper.TryRemove(_name, out removedWrapper))
                             {
@@ -162,6 +197,7 @@ namespace Microsoft.Dnx.Runtime.Internal
                                 throw new InvalidOperationException("Race condition detected!");
                             }
 
+                            refCountLock.ReleaseMutex();
                             _semaphore.Dispose();
                         }
                     }
@@ -171,8 +207,5 @@ namespace Microsoft.Dnx.Runtime.Internal
 #endif
             }
         }
-#if DNXCORE50
-#endif
-
     }
 }
