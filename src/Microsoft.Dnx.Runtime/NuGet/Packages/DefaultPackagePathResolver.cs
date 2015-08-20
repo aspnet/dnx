@@ -8,37 +8,16 @@ namespace NuGet
 {
     public class DefaultPackagePathResolver : IPackagePathResolver
     {
-        private readonly IFileSystem _fileSystem;
-        private readonly bool _useSideBySidePaths;
+        private readonly string _path;
 
         public DefaultPackagePathResolver(string path)
-            : this(new PhysicalFileSystem(path))
         {
-        }
-
-        public DefaultPackagePathResolver(IFileSystem fileSystem)
-            : this(fileSystem, useSideBySidePaths: true)
-        {
-        }
-
-        public DefaultPackagePathResolver(string path, bool useSideBySidePaths)
-            : this(new PhysicalFileSystem(path), useSideBySidePaths)
-        {
-        }
-
-        public DefaultPackagePathResolver(IFileSystem fileSystem, bool useSideBySidePaths)
-        {
-            _useSideBySidePaths = useSideBySidePaths;
-            if (fileSystem == null)
-            {
-                throw new ArgumentNullException(nameof(fileSystem));
-            }
-            _fileSystem = fileSystem;
+            _path = path;
         }
 
         public virtual string GetInstallPath(string packageId, SemanticVersion version)
         {
-            return Path.Combine(_fileSystem.Root, GetPackageDirectory(packageId, version));
+            return Path.Combine(_path, GetPackageDirectory(packageId, version));
         }
 
         public string GetPackageFilePath(string packageId, SemanticVersion version)
@@ -61,22 +40,12 @@ namespace NuGet
 
         public virtual string GetPackageDirectory(string packageId, SemanticVersion version)
         {
-            string directory = packageId;
-            if (_useSideBySidePaths)
-            {
-                directory = Path.Combine(directory, version.GetNormalizedVersionString());
-            }
-            return directory;
+            return Path.Combine(packageId, version.GetNormalizedVersionString());
         }
 
         public virtual string GetPackageFileName(string packageId, SemanticVersion version)
         {
-            string fileNameBase = packageId;
-            if (_useSideBySidePaths)
-            {
-                fileNameBase += "." + version.GetNormalizedVersionString();
-            }
-            return fileNameBase + Constants.PackageExtension;
+            return $"{packageId}.{version.GetNormalizedVersionString()}{Constants.PackageExtension}";
         }
 
         public virtual string GetManifestFileName(string packageId, SemanticVersion version)

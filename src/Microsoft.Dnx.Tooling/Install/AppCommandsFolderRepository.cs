@@ -21,7 +21,7 @@ namespace Microsoft.Dnx.Tooling
         public AppCommandsFolderRepository(string commandsFolder)
         {
             _commandsFolder = new NuGet.PhysicalFileSystem(commandsFolder);
-            _pathResolver = new DefaultPackagePathResolver(_commandsFolder);
+            _pathResolver = new DefaultPackagePathResolver(commandsFolder);
         }
 
         public IPackagePathResolver PathResolver

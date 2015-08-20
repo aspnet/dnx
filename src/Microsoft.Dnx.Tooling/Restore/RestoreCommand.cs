@@ -145,7 +145,7 @@ namespace Microsoft.Dnx.Tooling
                 }
 
                 var packagesFolderFileSystem = CreateFileSystem(packagesDirectory);
-                var pathResolver = new DefaultPackagePathResolver(packagesFolderFileSystem, useSideBySidePaths: true);
+                var pathResolver = new DefaultPackagePathResolver(packagesDirectory);
 
                 int restoreCount = 0;
                 int successCount = 0;
@@ -779,7 +779,7 @@ namespace Microsoft.Dnx.Tooling
                                    IProjectResolver projectResolver,
                                    IEnumerable<TargetContext> contexts)
         {
-            var resolver = new DefaultPackagePathResolver(repository.RepositoryRoot);
+            var resolver = new DefaultPackagePathResolver(repository.RepositoryRoot.Root);
             var previousProjectLibraries = previousLockFile?.ProjectLibraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
             var previousPackageLibraries = previousLockFile?.PackageLibraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
 

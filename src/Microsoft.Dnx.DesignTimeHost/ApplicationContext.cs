@@ -109,7 +109,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 lock (_inbox)
                 {
-                    if (_inbox.IsEmpty())
+                    if (!_inbox.Any())
                     {
                         return;
                     }
@@ -224,7 +224,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             lock (_inbox)
             {
-                if (_inbox.IsEmpty())
+                if (!_inbox.Any())
                 {
                     return false;
                 }
@@ -743,7 +743,7 @@ namespace Microsoft.Dnx.DesignTimeHost
         {
             Logger.TraceInformation($"[{nameof(ApplicationContext)}]: SendDiagnostics, {allDiagnostics.Count()} diagnostics, {_waitingForDiagnostics.Count()} waiting for diagnostics.");
 
-            if (allDiagnostics.IsEmpty())
+            if (!allDiagnostics.Any())
             {
                 return;
             }

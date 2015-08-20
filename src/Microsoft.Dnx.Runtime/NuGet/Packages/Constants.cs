@@ -67,7 +67,5 @@ namespace NuGet
             Justification="The type is immutable.")]
         public static readonly ICollection<string> AssemblyReferencesExtensions 
             = new ReadOnlyCollection<string>(new string[] { ".dll", ".exe", ".winmd" });
-
-        // public static readonly Version NuGetVersion = typeof(IPackage).GetTypeInfo().Assembly.GetName().Version;
     }
 }

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Xml;
+using System.Xml.Linq;
 using Microsoft.Dnx.Runtime;
 
 namespace NuGet
@@ -143,7 +144,7 @@ namespace NuGet
         {
             try
             {
-                var document = XmlUtility.LoadSafe(stream);
+                var document = XDocument.Load(stream);
                 var root = document.Root;
                 if (root.Name.LocalName.Equals("Framework", StringComparison.Ordinal))
                 {

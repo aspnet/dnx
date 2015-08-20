@@ -29,7 +29,7 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             // Turn on the flag to get package ids in accurate casing
             _repository = new PackageRepository(physicalPath, caseSensitivePackagesName: true);
             _fileSystem = new PhysicalFileSystem(physicalPath);
-            _pathResolver = new DefaultPackagePathResolver(_fileSystem);
+            _pathResolver = new DefaultPackagePathResolver(physicalPath);
             _reports = reports;
             Source = physicalPath;
             _ignored = false;
