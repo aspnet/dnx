@@ -11,11 +11,6 @@ namespace Microsoft.Dnx.Runtime.Internal
 {
     public static class ConcurrencyUtilities
     {
-#if DNXCORE50
-        private static ConcurrentDictionary<string, System.Threading.Semaphore> _nameSemaphore =
-            new ConcurrentDictionary<string, System.Threading.Semaphore>();
-#endif
-
         internal static string FilePathToLockName(string filePath)
         {
             // If we use a file path directly as the name of a semaphore,
@@ -41,29 +36,31 @@ namespace Microsoft.Dnx.Runtime.Internal
             while (!completed)
             {
                 var createdNew = false;
-                var fileLock = new Semaphore(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),
-                    createdNew: out createdNew);
-                try
+                using (var fileLock = new Semaphore(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),
+                    createdNew: out createdNew))
                 {
-                    // If this lock is already acquired by another process, wait until we can acquire it
-                    if (!createdNew)
+                    try
                     {
-                        var signaled = fileLock.WaitOne(TimeSpan.FromSeconds(5));
-                        if (!signaled)
+                        // If this lock is already acquired by another process, wait until we can acquire it
+                        if (!createdNew)
                         {
-                            // Timeout and retry
-                            continue;
+                            var signaled = fileLock.WaitOne(TimeSpan.FromSeconds(5));
+                            if (!signaled)
+                            {
+                                // Timeout and retry
+                                continue;
+                            }
                         }
-                    }
 
-                    completed = true;
-                    return await action(createdNew);
-                }
-                finally
-                {
-                    if (completed)
+                        completed = true;
+                        return await action(createdNew);
+                    }
+                    finally
                     {
-                        fileLock.Release();
+                        if (completed)
+                        {
+                            fileLock.Release();
+                        }
                     }
                 }
             }
@@ -73,9 +70,14 @@ namespace Microsoft.Dnx.Runtime.Internal
         }
 
 #if DNXCORE50
-        private class Semaphore
+        private class Semaphore : IDisposable
         {
+            private static ConcurrentDictionary<string, System.Threading.Semaphore> _nameSemaphore =
+                new ConcurrentDictionary<string, System.Threading.Semaphore>();
+
+            private readonly string _name;
             private readonly System.Threading.Semaphore _semaphore;
+
             public Semaphore(int initialCount, int maximumCount, string name, out bool createdNew)
             {
                 if (RuntimeEnvironmentHelper.IsWindows)
@@ -84,9 +86,10 @@ namespace Microsoft.Dnx.Runtime.Internal
                 }
                 else
                 {
+                    _name = name;
                     var createdNewLocal = false;
                     _semaphore = _nameSemaphore.GetOrAdd(
-                        name,
+                        _name,
                         valueFactory: _ =>
                         {
                             createdNewLocal = true;
@@ -106,6 +109,17 @@ namespace Microsoft.Dnx.Runtime.Internal
             public int Release()
             {
                 return _semaphore.Release();
+            }
+
+            public void Dispose()
+            {
+                if (!RuntimeEnvironmentHelper.IsWindows)
+                {
+                    System.Threading.Semaphore value = null;
+                    _nameSemaphore.TryRemove(_name, out value);
+                }
+
+                _semaphore.Dispose();
             }
         }
 #endif
