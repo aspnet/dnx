@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -24,8 +25,8 @@ namespace Microsoft.Dnx.Host
         public Assembly Load(AssemblyName assemblyName)
         {
             // searchPaths could be in the following patterns
-            // C:\HelloWorld\bin\HelloWorld.dll or 
-            // C:\HelloWorld\bin\HelloWorld.exe 
+            // C:\HelloWorld\bin\HelloWorld.dll or
+            // C:\HelloWorld\bin\HelloWorld.exe
             // C:\HelloWorld\bin\fr-FR\HelloWorld.resources.dll
             // C:\HelloWorld\bin\fr-FR\HelloWorld.resources.exe
             foreach (var searchPath in _searchPaths)
@@ -48,6 +49,11 @@ namespace Microsoft.Dnx.Host
             }
 
             return null;
+        }
+
+        public IntPtr LoadUnmanagedLibrary(string name)
+        {
+            return IntPtr.Zero;
         }
     }
 }

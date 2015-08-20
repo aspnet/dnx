@@ -26,7 +26,7 @@ namespace Microsoft.Dnx.Runtime.Loader
             var assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraries);
 
             _projectAssemblyLoader = new ProjectAssemblyLoader(loadContextAccessor: null, compilationEngine: compilationEngine, projects: projects);
-            _packageAssemblyLoader = new PackageAssemblyLoader(loadContextAccessor: null, assemblies: assemblies);
+            _packageAssemblyLoader = new PackageAssemblyLoader(loadContextAccessor: null, assemblies: assemblies, libraryDescriptions: libraries);
             _defaultContext = defaultContext;
         }
 

@@ -182,7 +182,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Configure Assembly loaders
             _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects.Values));
-            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, assemblies));
+            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, assemblies, libraries));
 
             var compilerOptionsProvider = new CompilerOptionsProvider(projects);
 
@@ -195,6 +195,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                         )
                 );
 
+#if DNX451
+            PackageDependencyProvider.EnableLoadingNativeLibraries(libraries);
+#endif
             AddBreadcrumbs(libraries);
         }
 

@@ -79,5 +79,10 @@ namespace Microsoft.Dnx.Runtime.Loader
             public Project Project { get; }
             public FrameworkName Framework { get; }
         }
+
+        public IntPtr LoadUnmanagedLibrary(string name)
+        {
+            return IntPtr.Zero;
+        }
     }
 }

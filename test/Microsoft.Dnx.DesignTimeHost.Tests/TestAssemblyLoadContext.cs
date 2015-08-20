@@ -36,5 +36,15 @@ namespace Microsoft.Dnx.DesignTimeHost
         {
             throw new NotImplementedException();
         }
+
+        public IntPtr LoadUnmanagedLibrary(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IntPtr LoadUnmanagedLibraryFromPath(string path)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

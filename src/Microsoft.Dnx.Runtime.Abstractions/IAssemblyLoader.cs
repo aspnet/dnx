@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Reflection;
 
 namespace Microsoft.Dnx.Runtime
@@ -16,5 +17,12 @@ namespace Microsoft.Dnx.Runtime
         /// <param name="assemblyName">The name of the assembly.</param>
         /// <returns>The loaded assembly.</returns>
         Assembly Load(AssemblyName assemblyName);
+
+        /// <summary>
+        /// Loads an unmanaged library by name.
+        /// </summary>
+        /// <param name="name">The name of the library to load.</param>
+        /// <returns>A handle to the unmanaged library or <c>IntPtr.Zero</c> if the library cannot be loaded.</returns>
+        IntPtr LoadUnmanagedLibrary(string name);
     }
 }

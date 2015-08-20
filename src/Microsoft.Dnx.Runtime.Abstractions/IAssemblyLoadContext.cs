@@ -30,5 +30,19 @@ namespace Microsoft.Dnx.Runtime
         /// <param name="assemblySymbols">The stream representing the symbols.</param>
         /// <returns>The loaded assembly.</returns>
         Assembly LoadStream(Stream assemblyStream, Stream assemblySymbols);
+
+        /// <summary>
+        /// Loads an unmanaged library by name.
+        /// </summary>
+        /// <param name="path">The name of the unmanaged library to load.</param>
+        /// <returns>A handle to the unmanaged library or <c>IntPtr.Zero</c> if the library cannot be loaded.</returns>
+        IntPtr LoadUnmanagedLibrary(string name);
+
+        /// <summary>
+        /// Loads an unmanaged library from the provided path.
+        /// </summary>
+        /// <param name="path">The path to load the unmanaged library from.</param>
+        /// <returns>A handle to the unmanaged library or <c>IntPtr.Zero</c> if the library cannot be loaded.</returns>
+        IntPtr LoadUnmanagedLibraryFromPath(string path);
     }
 }

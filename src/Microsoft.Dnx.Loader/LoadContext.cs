@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using Microsoft.Dnx.Runtime.Infrastructure;
 #if DNXCORE50
 using System.Runtime.Loader;
 #endif
@@ -60,6 +60,16 @@ namespace Microsoft.Dnx.Runtime.Loader
             return LoadFromStream(assembly, assemblySymbols);
         }
 
+        public virtual IntPtr LoadUnmanagedLibrary(string name)
+        {
+            return IntPtr.Zero;
+        }
+
+        public IntPtr LoadUnmanagedLibraryFromPath(string path)
+        {
+            return LoadUnmanagedDllFromPath(path);
+        }
+
         public static void InitializeDefaultContext(LoadContext loadContext)
         {
             AssemblyLoadContext.InitializeDefaultContext(loadContext);
@@ -90,9 +100,23 @@ namespace Microsoft.Dnx.Runtime.Loader
             return null;
         }
 
+        protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
+        {
+            if (Path.GetFileNameWithoutExtension(unmanagedDllName) == "kernel32"||
+                Path.GetFileNameWithoutExtension(unmanagedDllName) == "libdl")
+            {
+                return IntPtr.Zero;
+            }
+
+            var handle = LoadUnmanagedLibrary(unmanagedDllName);
+
+            return handle != IntPtr.Zero
+                ? handle
+                : base.LoadUnmanagedDll(unmanagedDllName);
+        }
+
         public virtual void Dispose()
         {
-
         }
     }
 #else
@@ -273,6 +297,16 @@ namespace Microsoft.Dnx.Runtime.Loader
             assembly = context.LoadAssemblyImpl(assemblyName);
 
             return assembly != null;
+        }
+
+        public virtual IntPtr LoadUnmanagedLibrary(string name)
+        {
+            return IntPtr.Zero;
+        }
+
+        public IntPtr LoadUnmanagedLibraryFromPath(string path)
+        {
+            return IntPtr.Zero;
         }
     }
 #endif

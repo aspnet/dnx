@@ -46,6 +46,25 @@ namespace Microsoft.Dnx.Host
             return null;
         }
 
+        public IntPtr LoadUnmanagedLibrary(string name)
+        {
+            Logger.TraceInformation("[{0}]: Load unmanaged library name={1}", GetType().Name, name);
+            var sw = Stopwatch.StartNew();
+
+            foreach (var loader in _loaders.Reverse())
+            {
+                var handle = loader.LoadUnmanagedLibrary(name);
+                if (handle != IntPtr.Zero)
+                {
+                    Logger.TraceInformation("[{0}]: Loaded unmanaged library={1} in {2}ms", loader.GetType().Name, name, sw.ElapsedMilliseconds);
+
+                    return handle;
+                }
+            }
+
+            return IntPtr.Zero;
+        }
+
         private class DisposableAction : IDisposable
         {
             private readonly Action _action;
