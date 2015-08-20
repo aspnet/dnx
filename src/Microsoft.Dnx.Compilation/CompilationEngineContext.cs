@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
@@ -19,8 +18,17 @@ namespace Microsoft.Dnx.Compilation
 
         public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
                                         IAssemblyLoadContext defaultLoadContext,
+                                        CompilationCache cache,
+                                        IProjectGraphProvider projectGraphProvider) :
+            this(applicationEnvironment, defaultLoadContext, cache, NoopWatcher.Instance, projectGraphProvider)
+        {
+
+        }
+
+        public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
+                                        IAssemblyLoadContext defaultLoadContext,
                                         CompilationCache cache) :
-            this(applicationEnvironment, defaultLoadContext, cache, NoopWatcher.Instance)
+            this(applicationEnvironment, defaultLoadContext, cache, NoopWatcher.Instance, new ProjectGraphProvider())
         {
 
         }
@@ -28,11 +36,12 @@ namespace Microsoft.Dnx.Compilation
         public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
                                         IAssemblyLoadContext defaultLoadContext,
                                         CompilationCache cache,
-                                        IFileWatcher fileWatcher)
+                                        IFileWatcher fileWatcher,
+                                        IProjectGraphProvider projectGraphProvider)
         {
             ApplicationEnvironment = applicationEnvironment;
             DefaultLoadContext = defaultLoadContext;
-            ProjectGraphProvider = new ProjectGraphProvider();
+            ProjectGraphProvider = projectGraphProvider;
             CompilationCache = cache;
             FileWatcher = fileWatcher;
 

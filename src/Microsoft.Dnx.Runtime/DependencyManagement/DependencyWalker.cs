@@ -1,7 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Versioning;
@@ -9,43 +8,34 @@ using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class DependencyWalker
+    internal static class DependencyWalker
     {
-        private readonly IEnumerable<IDependencyProvider> _dependencyProviders;
-        private readonly List<LibraryDescription> _libraries = new List<LibraryDescription>();
-
-        public DependencyWalker(IEnumerable<IDependencyProvider> dependencyProviders)
+        public static IList<LibraryDescription> Walk(IList<IDependencyProvider> providers, string name, SemanticVersion version, FrameworkName targetFramework)
         {
-            _dependencyProviders = dependencyProviders;
-        }
+            var libraries = new List<LibraryDescription>();
 
-        public IList<LibraryDescription> Libraries
-        {
-            get { return _libraries; }
-        }
-
-        public void Walk(string name, SemanticVersion version, FrameworkName targetFramework)
-        {
             var sw = Stopwatch.StartNew();
-            Logger.TraceInformation("[{0}]: Walking dependency graph for '{1} {2}'.", GetType().Name, name, targetFramework);
+            Logger.TraceInformation($"[{nameof(DependencyWalker)}]: Walking dependency graph for '{name} {targetFramework}'.");
 
             var context = new WalkContext();
 
             var walkSw = Stopwatch.StartNew();
 
             context.Walk(
-                _dependencyProviders,
+                providers,
                 name,
                 version,
                 targetFramework);
 
             walkSw.Stop();
-            Logger.TraceInformation("[{0}]: Graph walk took {1}ms.", GetType().Name, walkSw.ElapsedMilliseconds);
+            Logger.TraceInformation($"[{nameof(DependencyWalker)}]: Graph walk took {walkSw.ElapsedMilliseconds}ms.");
 
-            context.Populate(targetFramework, Libraries);
+            context.Populate(targetFramework, libraries);
 
             sw.Stop();
-            Logger.TraceInformation("[{0}]: Resolved dependencies for {1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            Logger.TraceInformation($"$[{ nameof(DependencyWalker)}]: Resolved dependencies for {name} in { sw.ElapsedMilliseconds}ms");
+
+            return libraries;
         }
     }
 }

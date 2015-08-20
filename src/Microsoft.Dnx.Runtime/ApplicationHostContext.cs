@@ -2,9 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
-using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -44,7 +44,7 @@ namespace Microsoft.Dnx.Runtime
             var projectDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
 
-            DependencyWalker dependencyWalker = null;
+            IList<IDependencyProvider> dependencyProviders = null;
             LockFileLookup lockFileLookup = null;
 
             if (context.Project == null)
@@ -82,31 +82,31 @@ namespace Microsoft.Dnx.Runtime
                     lockFileLookup = new LockFileLookup(lockFile);
                     var packageDependencyProvider = new PackageDependencyProvider(context.PackagesDirectory, lockFileLookup);
 
-                    dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
+                    dependencyProviders = new IDependencyProvider[] {
                         projectDependencyProvider,
                         packageDependencyProvider,
                         referenceAssemblyDependencyResolver,
                         gacDependencyResolver,
                         unresolvedDependencyProvider
-                    });
+                    };
                 }
             }
 
             if ((!validLockFile && !skipLockFileValidation) || !lockFileExists)
             {
-                // We don't add NuGetDependencyProvider to DependencyWalker
+                // We don't add the PackageDependencyProvider to DependencyWalker
                 // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
-                dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
+                dependencyProviders = new IDependencyProvider[] {
                     projectDependencyProvider,
                     referenceAssemblyDependencyResolver,
                     gacDependencyResolver,
                     unresolvedDependencyProvider
-                });
+                };
             }
 
-            dependencyWalker.Walk(context.Project.Name, context.Project.Version, context.TargetFramework);
+            var libraries = DependencyWalker.Walk(dependencyProviders, context.Project.Name, context.Project.Version, context.TargetFramework);
 
-            context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, dependencyWalker.Libraries);
+            context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, libraries);
 
             if (!validLockFile)
             {

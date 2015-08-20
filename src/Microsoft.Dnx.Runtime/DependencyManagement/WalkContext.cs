@@ -15,7 +15,7 @@ namespace Microsoft.Dnx.Runtime
         private readonly IDictionary<string, Item> _usedItems = new Dictionary<string, Item>();
 
         public void Walk(
-            IEnumerable<IDependencyProvider> dependencyResolvers,
+            IList<IDependencyProvider> dependencyResolvers,
             string name,
             SemanticVersion version,
             FrameworkName frameworkName)
@@ -28,7 +28,7 @@ namespace Microsoft.Dnx.Runtime
                 }
             };
 
-            var resolvers = dependencyResolvers as IDependencyProvider[] ?? dependencyResolvers.ToArray();
+            var resolvers = dependencyResolvers;
             var resolvedItems = new Dictionary<LibraryRange, Item>();
 
             var buildTreeSw = Stopwatch.StartNew();
@@ -209,7 +209,7 @@ namespace Microsoft.Dnx.Runtime
             {
                 var library = item.Description;
                 library.Dependencies = library.Dependencies.SelectMany(CorrectDependencyVersion).ToList();
-                library.Framework = library.Framework ?? frameworkName; 
+                library.Framework = library.Framework ?? frameworkName;
                 libraries.Add(library);
             }
 

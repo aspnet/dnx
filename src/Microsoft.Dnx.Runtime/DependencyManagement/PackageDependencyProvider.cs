@@ -101,7 +101,7 @@ namespace Microsoft.Dnx.Runtime
             }
         }
 
-        public void Initialize(PackageDescription package)
+        private void Initialize(PackageDescription package)
         {
             string packagePath = ResolvePackagePath(package);
 
@@ -165,7 +165,7 @@ namespace Microsoft.Dnx.Runtime
                         var assemblyName = new AssemblyName(name);
 
                         string replacementPath;
-                        if (Servicing.ServicingTable.TryGetReplacement(
+                        if (ServicingTable.TryGetReplacement(
                             library.Identity.Name,
                             library.Identity.Version,
                             assemblyPath,

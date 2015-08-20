@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using NuGet;
@@ -74,21 +73,21 @@ namespace Microsoft.Dnx.Compilation
             string aspect,
             Func<LibraryDescription, bool> libraryFilter)
         {
-            var library = LibraryManager.GetLibraryDescription(name);
-            if (library == null)
+            var project = LibraryManager.GetLibraryDescription(name) as ProjectDescription;
+            if (project == null)
             {
                 return null;
             }
-            return GetAllExports(library, aspect, libraryFilter);
+            return GetAllExports(project, aspect, libraryFilter);
         }
 
         private LibraryExport GetAllExports(
-            LibraryDescription projectLibrary,
+            ProjectDescription project,
             string aspect,
             Func<LibraryDescription, bool> include)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
-            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: Resolving references for '{projectLibrary.Identity.Name}' {aspect}");
+            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: Resolving references for '{project.Identity.Name}' {aspect}");
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
             var sourceReferences = new Dictionary<string, ISourceReference>(StringComparer.OrdinalIgnoreCase);
@@ -99,7 +98,7 @@ namespace Microsoft.Dnx.Compilation
 
             var rootNode = new Node
             {
-                Library = LibraryManager.GetLibraryDescription(projectLibrary.Identity.Name)
+                Library = project
             };
 
             queue.Enqueue(rootNode);
@@ -116,7 +115,18 @@ namespace Microsoft.Dnx.Compilation
 
                 if (include(node.Library))
                 {
-                    var libraryExport = GetExport(node.Library, aspect: null);
+                    LibraryExport libraryExport = null;
+
+                    if (node.Library == project)
+                    {
+                        // We know it's a project so skip the lookup
+                        libraryExport = ExportProject(project, aspect: null, exporter: this);
+                    }
+                    else
+                    {
+                        libraryExport = GetExport(node.Library, aspect: null);
+                    }
+
                     if (libraryExport != null)
                     {
                         if (node.Parent == rootNode)
@@ -145,7 +155,7 @@ namespace Microsoft.Dnx.Compilation
             }
 
             dependencyStopWatch.Stop();
-            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: Resolved {references.Count} references for '{projectLibrary.Identity.Name}' in {dependencyStopWatch.ElapsedMilliseconds}ms");
+            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: Resolved {references.Count} references for '{project.Identity.Name}' in {dependencyStopWatch.ElapsedMilliseconds}ms");
 
             return new LibraryExport(
                 references.Values.ToList(),
@@ -186,7 +196,7 @@ namespace Microsoft.Dnx.Compilation
             }
             else if (string.Equals(LibraryTypes.Project, library.Type, StringComparison.Ordinal))
             {
-                return ExportProject((ProjectDescription)library, aspect);
+                return ExportProject((ProjectDescription)library, aspect, exporter: null);
             }
             else
             {
@@ -210,7 +220,7 @@ namespace Microsoft.Dnx.Compilation
             return new LibraryExport(references.Values.ToList(), sourceReferences);
         }
 
-        private LibraryExport ExportProject(ProjectDescription project, string aspect)
+        private LibraryExport ExportProject(ProjectDescription project, string aspect, LibraryExporter exporter)
         {
             Logger.TraceInformation($"[{nameof(LibraryExporter)}]: {nameof(ExportProject)}({project.Identity.Name}, {aspect}, {project.Framework}, {_configuration})");
 
@@ -239,7 +249,7 @@ namespace Microsoft.Dnx.Compilation
                     var compilerTypeInfo = project.Project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
 
                     // Create the project exporter
-                    var exporter = _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration);
+                    exporter = exporter ?? _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration);
 
                     // Get the exports for the project dependencies
                     var projectDependenciesExport = new Lazy<LibraryExport>(() => exporter.GetAllDependencies(project.Identity.Name, aspect));
