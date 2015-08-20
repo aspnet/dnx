@@ -15,10 +15,11 @@ namespace Microsoft.Dnx.Runtime.Tests
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
         [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
 
+        // NOTE(anurse): Disabled the tests that use frameworks less than .NET 4.0 because the CI doesn't have them installed :(
         // mscorlib
-        [InlineData("net20", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
-        [InlineData("net30", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
-        [InlineData("net35", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
+        //[InlineData("net20", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
+        //[InlineData("net30", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
+        //[InlineData("net35", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
         [InlineData("net40", "mscorlib", @"REFASMSROOT\.NETFramework\v4.0\mscorlib.dll", "4.0.0.0")]
         [InlineData("net45", "mscorlib", @"REFASMSROOT\.NETFramework\v4.5\mscorlib.dll", "4.0.0.0")]
         [InlineData("net451", "mscorlib", @"REFASMSROOT\.NETFramework\v4.5.1\mscorlib.dll", "4.0.0.0")]
@@ -26,8 +27,8 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("net46", "mscorlib", @"REFASMSROOT\.NETFramework\v4.6\mscorlib.dll", "4.0.0.0")]
 
         // System.Printing (added in 3.0)
-        [InlineData("net30", "System.Printing", @"REFASMSROOT\v3.0\System.Printing.dll", "3.0.0.0")]
-        [InlineData("net35", "System.Printing", @"REFASMSROOT\v3.0\System.Printing.dll", "3.0.0.0")]
+        //[InlineData("net30", "System.Printing", @"REFASMSROOT\v3.0\System.Printing.dll", "3.0.0.0")]
+        //[InlineData("net35", "System.Printing", @"REFASMSROOT\v3.0\System.Printing.dll", "3.0.0.0")]
         [InlineData("net40", "System.Printing", @"REFASMSROOT\.NETFramework\v4.0\System.Printing.dll", "4.0.0.0")]
         [InlineData("net45", "System.Printing", @"REFASMSROOT\.NETFramework\v4.5\System.Printing.dll", "4.0.0.0")]
         [InlineData("net451", "System.Printing", @"REFASMSROOT\.NETFramework\v4.5.1\System.Printing.dll", "4.0.0.0")]
@@ -35,7 +36,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("net46", "System.Printing", @"REFASMSROOT\.NETFramework\v4.6\System.Printing.dll", "4.0.0.0")]
 
         // System.Core (added in 3.5)
-        [InlineData("net35", "System.Core", @"REFASMSROOT\v3.5\System.Core.dll", "3.5.0.0")]
+        //[InlineData("net35", "System.Core", @"REFASMSROOT\v3.5\System.Core.dll", "3.5.0.0")]
         [InlineData("net40", "System.Core", @"REFASMSROOT\.NETFramework\v4.0\System.Core.dll", "4.0.0.0")]
         [InlineData("net45", "System.Core", @"REFASMSROOT\.NETFramework\v4.5\System.Core.dll", "4.0.0.0")]
         [InlineData("net451", "System.Core", @"REFASMSROOT\.NETFramework\v4.5.1\System.Core.dll", "4.0.0.0")]
@@ -50,9 +51,9 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("net46", "Microsoft.CSharp", @"REFASMSROOT\.NETFramework\v4.6\Microsoft.CSharp.dll", "4.0.0.0")]
 
         // Microsoft.Build.Engine (in 2.0, but overridden in 3.5)
-        [InlineData("net20", "Microsoft.Build.Engine", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\Microsoft.Build.Engine.dll", "2.0.0.0")]
-        [InlineData("net30", "Microsoft.Build.Engine", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\Microsoft.Build.Engine.dll", "2.0.0.0")]
-        [InlineData("net35", "Microsoft.Build.Engine", @"REFASMSROOT\v3.5\Microsoft.Build.Engine.dll", "3.5.0.0")]
+        //[InlineData("net20", "Microsoft.Build.Engine", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\Microsoft.Build.Engine.dll", "2.0.0.0")]
+        //[InlineData("net30", "Microsoft.Build.Engine", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\Microsoft.Build.Engine.dll", "2.0.0.0")]
+        //[InlineData("net35", "Microsoft.Build.Engine", @"REFASMSROOT\v3.5\Microsoft.Build.Engine.dll", "3.5.0.0")]
 
         public void FrameworkResolverResolvesCorrectPaths(string shortFrameworkName, string assemblyName, string expectedPath, string expectedVersion)
         {
