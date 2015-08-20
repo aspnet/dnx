@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.Runtime.Internal
             while (!completed)
             {
                 var createdNew = false;
-                using (var fileLock = new Semaphore(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),
+                using (var fileLock = SemaphoreWrapper.Create(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),
                     createdNew: out createdNew))
                 {
                     try
@@ -69,36 +69,55 @@ namespace Microsoft.Dnx.Runtime.Internal
             throw new TaskCanceledException($"Failed to acquire semaphore for file: {filePath}");
         }
 
-#if DNXCORE50
-        private class Semaphore : IDisposable
+        private class SemaphoreWrapper : IDisposable
         {
-            private static ConcurrentDictionary<string, System.Threading.Semaphore> _nameSemaphore =
-                new ConcurrentDictionary<string, System.Threading.Semaphore>();
+#if DNXCORE50
+            private static ConcurrentDictionary<string, SemaphoreWrapper> _nameWrapper =
+                new ConcurrentDictionary<string, SemaphoreWrapper>();
+            private static ConcurrentDictionary<string, object> _nameRefCountLock =
+                new ConcurrentDictionary<string, object>();
 
-            private readonly string _name;
-            private readonly System.Threading.Semaphore _semaphore;
+            private string _name;
+            private int _refCount = 0;
+#endif
 
-            public Semaphore(int initialCount, int maximumCount, string name, out bool createdNew)
+            private readonly Semaphore _semaphore;
+
+            public static SemaphoreWrapper Create(int initialCount, int maximumCount, string name, out bool createdNew)
             {
+#if DNXCORE50
                 if (RuntimeEnvironmentHelper.IsWindows)
                 {
-                    _semaphore = new System.Threading.Semaphore(initialCount, maximumCount, name, out createdNew);
+                    return new SemaphoreWrapper(new Semaphore(initialCount, maximumCount, name, out createdNew));
                 }
                 else
                 {
-                    _name = name;
-                    var createdNewLocal = false;
-                    _semaphore = _nameSemaphore.GetOrAdd(
-                        _name,
-                        valueFactory: _ =>
-                        {
-                            createdNewLocal = true;
-                            return new System.Threading.Semaphore(initialCount, maximumCount);
-                        });
-
-                    // C# doesn't allow assigning value to an out parameter directly in lambda expression
-                    createdNew = createdNewLocal;
+                    var refCountLock = _nameRefCountLock.GetOrAdd(name, x => new object());
+                    lock (refCountLock)
+                    {
+                        var createdNewLocal = false;
+                        var wrapper = _nameWrapper.GetOrAdd(
+                            name,
+                            _ =>
+                            {
+                                createdNewLocal = true;
+                                return new SemaphoreWrapper(new Semaphore(initialCount, maximumCount));
+                            });
+                        createdNew = createdNewLocal;
+                        wrapper._refCount++;
+                        wrapper._name = name;
+                        return wrapper;
+                    }
                 }
+#else
+
+                return new SemaphoreWrapper(new Semaphore(initialCount, maximumCount, name, out createdNew));
+#endif
+            }
+
+            private SemaphoreWrapper(Semaphore semaphore)
+            {
+                _semaphore = semaphore;
             }
 
             public bool WaitOne(TimeSpan timeout)
@@ -113,15 +132,47 @@ namespace Microsoft.Dnx.Runtime.Internal
 
             public void Dispose()
             {
-                if (!RuntimeEnvironmentHelper.IsWindows)
+#if DNXCORE50
+                if (RuntimeEnvironmentHelper.IsWindows)
                 {
-                    System.Threading.Semaphore value = null;
-                    _nameSemaphore.TryRemove(_name, out value);
+                    _semaphore.Dispose();
                 }
+                else
+                {
+                    object refCountLock;
+                    if (!_nameRefCountLock.TryGetValue(_name, out refCountLock))
+                    {
+                        throw new InvalidOperationException("Race condition detected!");
+                    }
+                    lock (refCountLock)
+                    {
+                        _refCount--;
+                        if (_refCount == 0)
+                        {
+                            SemaphoreWrapper removedWrapper;
+                            object removedRefCountLock;
 
+                            if (!_nameWrapper.TryRemove(_name, out removedWrapper))
+                            {
+                                throw new InvalidOperationException("Race condition detected!");
+                            }
+
+                            if (!_nameRefCountLock.TryRemove(_name, out removedRefCountLock))
+                            {
+                                throw new InvalidOperationException("Race condition detected!");
+                            }
+
+                            _semaphore.Dispose();
+                        }
+                    }
+                }
+#else
                 _semaphore.Dispose();
+#endif
             }
         }
+#if DNXCORE50
 #endif
+
     }
 }
