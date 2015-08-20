@@ -536,6 +536,11 @@ namespace Microsoft.Dnx.Tooling
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
+#if DNXCORE50
+            System.Console.WriteLine("########################################################");
+            System.Console.WriteLine($"Global map entry #: {Microsoft.Dnx.Runtime.Internal.ConcurrencyUtilities.SemaphoreWrapper._nameWrapper.Count}");
+            System.Console.WriteLine("########################################################");
+#endif
             return success;
         }
 

@@ -69,10 +69,10 @@ namespace Microsoft.Dnx.Runtime.Internal
             throw new TaskCanceledException($"Failed to acquire semaphore for file: {filePath}");
         }
 
-        private class SemaphoreWrapper : IDisposable
+        public class SemaphoreWrapper : IDisposable
         {
 #if DNXCORE50
-            private static ConcurrentDictionary<string, SemaphoreWrapper> _nameWrapper =
+            public static ConcurrentDictionary<string, SemaphoreWrapper> _nameWrapper =
                 new ConcurrentDictionary<string, SemaphoreWrapper>();
 
             private readonly string _name;
