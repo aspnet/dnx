@@ -113,11 +113,6 @@ namespace Microsoft.Dnx.Runtime
 
             package.Path = packagePath;
 
-            if (Breadcrumbs.Instance.IsPackageServiceable(package))
-            {
-                Breadcrumbs.Instance.AddBreadcrumb(package.Identity.Name, package.Identity.Version);
-            }
-
             var assemblies = new List<string>();
 
             foreach (var runtimeAssemblyPath in package.Target.RuntimeAssemblies)

@@ -68,7 +68,7 @@ namespace Microsoft.Dnx.ApplicationHost
                 return null;
             }
 
-            Initialize();
+            AddBreadcrumbs();
 
             var unresolvedLibs = _libraryManager.GetLibraryDescriptions().Where(l => !l.Resolved);
 
@@ -101,13 +101,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             }
 
             return _loadContextAccessor.Default.Load(applicationName);
-        }
-
-        public void Initialize()
-        {
-            AddRuntimeServiceBreadcrumb();
-
-            Breadcrumbs.Instance.WriteAllBreadcrumbs(background: true);
         }
 
         public IDisposable AddLoaders(IAssemblyLoaderContainer container)
@@ -193,6 +186,31 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 _libraryManager));
 
             _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, _libraryManager));
+        }
+
+        private void AddBreadcrumbs()
+        {
+            AddRuntimeServiceBreadcrumb();
+
+            AddPackagesBreadcrumb();
+
+            Breadcrumbs.Instance.WriteAllBreadcrumbs(background: true);
+        }
+
+        private void AddPackagesBreadcrumb()
+        {
+            foreach (var library in _libraryManager.GetLibraryDescriptions())
+            {
+                if (library.Type == LibraryTypes.Package)
+                {
+                    var package = (PackageDescription)library;
+
+                    if (Breadcrumbs.Instance.IsPackageServiceable(package))
+                    {
+                        Breadcrumbs.Instance.AddBreadcrumb(package.Identity.Name, package.Identity.Version);
+                    }
+                }
+            }
         }
 
         private void AddRuntimeServiceBreadcrumb()
