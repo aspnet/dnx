@@ -70,8 +70,8 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             }
 
             var env = RuntimeEnvironmentHelper.RuntimeEnvironment;
-            var userAgentHeader = $"{UserAgentName}/{env.RuntimeVersion} ({env.OperatingSystem} {env.OperatingSystemVersion})";
-            _client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgentHeader);
+            var userAgentHeader = $"{UserAgentName}/{env.RuntimeVersion}({env.OperatingSystem}{env.OperatingSystemVersion})";
+            _client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgentHeader);
         }
 
         public string BaseUri
