@@ -12,17 +12,30 @@ namespace Microsoft.Dnx.Runtime.Tests
 {
     public class GacDependencyResolverFacts
     {
-        // NOTE(anurse): Disabling tests for frameworks < .NET 4.0 because the CI doesn't have them installed :(
         [ConditionalTheory]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
         [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
         [InlineData("mscorlib", "4.0.0.0", "dnx451", @"%Windir%\Microsoft.NET\assembly\GAC_32\mscorlib\v4.0_4.0.0.0__b77a5c561934e089\mscorlib.dll", true)]
-        //[InlineData("mscorlib", "2.0.0.0", "net20", @"%Windir%\assembly\GAC_32\mscorlib\2.0.0.0__b77a5c561934e089\mscorlib.dll", true)]
         [InlineData("mscorlib", "4.0.0.0", "net20", "", false)]
         [InlineData("mscorlib", "2.0.0.0", "dnx451", "", false)]
         [InlineData("mscorlib", "1.0.0.0", "dnx451", "", false)]
         [InlineData("mscorlib", "4.0.0.0", "dnxcore50", "", false)]
         public void GetDescriptionReturnsCorrectResults(string name, string version, string framework, string path, bool found)
+        {
+            GetDescriptionReturnsCorrectResultsImpl(name, version, framework, path, found);
+        }
+
+        [ConditionalTheory]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
+        [SkipIfReferenceAssembliesMissingAttribute(@"%WINDIR%\assembly")]
+        [InlineData("mscorlib", "2.0.0.0", "net20", @"%Windir%\assembly\GAC_32\mscorlib\2.0.0.0__b77a5c561934e089\mscorlib.dll", true)]
+        public void GetDescriptionReturnsCorrectResults_LegacyFxs(string name, string version, string framework, string path, bool found)
+        {
+            GetDescriptionReturnsCorrectResultsImpl(name, version, framework, path, found);
+        }
+
+        private void GetDescriptionReturnsCorrectResultsImpl(string name, string version, string framework, string path, bool found)
         {
             var libraryRange = new LibraryRange(name, frameworkReference: true)
             {
