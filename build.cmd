@@ -17,7 +17,7 @@ copy %CACHED_NUGET% .nuget\nuget.exe > nul
 :restore
 IF EXIST packages\KoreBuild goto run
 .nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
-.nuget\NuGet.exe install Sake -version 0.2 -o packages -ExcludeVersion
+.nuget\NuGet.exe install Sake -ExcludeVersion -Source https://www.nuget.org/api/v2/ -Out packages
 
 IF "%1" == "rebuild-package" goto run
 
