@@ -389,10 +389,10 @@ namespace Microsoft.Dnx.CommonTestUtils
             Directory.Delete(folder, recursive: false);
         }
 
-        public static int BuildCsProject(string csProjectPath)
+        public static int BuildCsProject(string csProjectPath, string configuration = "Debug")
         {
             var msbuildPath = ResolveMSBuildPath();
-            return Exec(msbuildPath, csProjectPath);
+            return Exec(msbuildPath, $"/p:Configuration={configuration} \"{csProjectPath}\"");
         }
 
         public static string ResolveMSBuildPath()

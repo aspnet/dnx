@@ -2004,6 +2004,7 @@ string expectedAppLockFile = @"{
             // ConsoleAppReferencingWrappedProject references Net45Library in its project.json
             const string testAppName = "ConsoleAppReferencingWrappedProject";
             const string referenceProjectName = "Net45Library";
+            const string configuration = "Debug";
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -2020,7 +2021,7 @@ string expectedAppLockFile = @"{
                 TestUtils.CopyFolder(TestUtils.GetDnuPublishTestAppPath(testAppName), solutionRootPath);
 
                 // First generate assemblies that will be referenced by wrapper project
-                var exitCode = TestUtils.BuildCsProject(referenceProjectFilePath);
+                var exitCode = TestUtils.BuildCsProject(referenceProjectFilePath, configuration);
                 Assert.Equal(0, exitCode);
 
                 // "dnu wrap" the csproj to generate wrapper project
@@ -2034,7 +2035,7 @@ string expectedAppLockFile = @"{
                 exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: $"publish {mainProjectPath}",
-                    arguments: $"--out {outputPath}");
+                    arguments: $"--out {outputPath} --configuration {configuration}");
                 Assert.Equal(0, exitCode);
 
                 // The wrapper project should be packed to a nupkg
