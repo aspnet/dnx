@@ -10,37 +10,23 @@ using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class ProjectReferenceDependencyProvider : IDependencyProvider
+    public class ProjectDependencyProvider
     {
-        private readonly IProjectResolver _projectResolver;
-
-        public ProjectReferenceDependencyProvider(IProjectResolver projectResolver)
+        public ProjectDescription GetDescription(FrameworkName targetFramework, LockFileProjectLibrary projectLibrary, LockFileTargetLibrary targetLibrary)
         {
-            _projectResolver = projectResolver;
-        }
-
-        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
-        {
-            return _projectResolver.SearchPaths.Select(p => Path.Combine(p, "{name}", "project.json"));
-        }
-
-        public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
-        {
-            if (libraryRange.IsGacOrFrameworkReference)
-            {
-                return null;
-            }
-
-            string name = libraryRange.Name;
-
             Project project;
 
             // Can't find a project file with the name so bail
-            if (!_projectResolver.TryResolveProject(name, out project))
+            if (!Project.TryGetProject(projectLibrary.Path, out project))
             {
                 return null;
             }
 
+            return GetDescription(targetFramework, project);
+        }
+
+        public ProjectDescription GetDescription(FrameworkName targetFramework, Project project)
+        {
             // This never returns null
             var targetFrameworkInfo = project.GetTargetFramework(targetFramework);
             var targetFrameworkDependencies = new List<LibraryDependency>(targetFrameworkInfo.Dependencies);
@@ -89,7 +75,7 @@ namespace Microsoft.Dnx.Runtime
                               project.GetTargetFrameworks().Any();
 
             return new ProjectDescription(
-                libraryRange,
+                new LibraryRange(project.Name, frameworkReference: false),
                 project,
                 dependencies,
                 loadableAssemblies,

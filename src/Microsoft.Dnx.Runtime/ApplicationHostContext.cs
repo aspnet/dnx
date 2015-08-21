@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 
 namespace Microsoft.Dnx.Runtime
@@ -35,17 +36,10 @@ namespace Microsoft.Dnx.Runtime
 
             context.ProjectDirectory = context.Project?.ProjectDirectory ?? context.ProjectDirectory;
             context.RootDirectory = context.RootDirectory ?? ProjectResolver.ResolveRootDirectory(context.ProjectDirectory);
-            var projectResolver = new ProjectResolver(context.ProjectDirectory, context.RootDirectory);
-            var frameworkReferenceResolver = context.FrameworkResolver ?? new FrameworkReferenceResolver();
             context.PackagesDirectory = context.PackagesDirectory ?? PackageDependencyProvider.ResolveRepositoryPath(context.RootDirectory);
 
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(frameworkReferenceResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-            var projectDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
-            var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
-
-            IList<IDependencyProvider> dependencyProviders = null;
             LockFileLookup lockFileLookup = null;
+            LockFile lockFile = null;
 
             if (context.Project == null)
             {
@@ -69,7 +63,7 @@ namespace Microsoft.Dnx.Runtime
             if (lockFileExists)
             {
                 var lockFileReader = new LockFileReader();
-                var lockFile = lockFileReader.Read(projectLockJsonPath);
+                lockFile = lockFileReader.Read(projectLockJsonPath);
                 validLockFile = lockFile.IsValidForProject(context.Project, out lockFileValidationMessage);
 
                 // When the only invalid part of a lock file is version number,
@@ -80,31 +74,92 @@ namespace Microsoft.Dnx.Runtime
                 if (validLockFile || skipLockFileValidation)
                 {
                     lockFileLookup = new LockFileLookup(lockFile);
-                    var packageDependencyProvider = new PackageDependencyProvider(context.PackagesDirectory, lockFileLookup);
-
-                    dependencyProviders = new IDependencyProvider[] {
-                        projectDependencyProvider,
-                        packageDependencyProvider,
-                        referenceAssemblyDependencyResolver,
-                        gacDependencyResolver,
-                        unresolvedDependencyProvider
-                    };
                 }
             }
 
-            if ((!validLockFile && !skipLockFileValidation) || !lockFileExists)
+            var libraries = new List<LibraryDescription>();
+            var lookup = new Dictionary<string, LibraryDescription>();
+
+            var packageResolver = new PackageDependencyProvider(context.PackagesDirectory);
+            var projectResolver = new ProjectDependencyProvider();
+
+            var mainProjectDescription = projectResolver.GetDescription(context.TargetFramework, context.Project);
+
+            // Add the main project
+            libraries.Add(mainProjectDescription);
+            lookup[context.Project.Name] = mainProjectDescription;
+
+            if (lockFileLookup != null)
             {
-                // We don't add the PackageDependencyProvider to DependencyWalker
-                // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
-                dependencyProviders = new IDependencyProvider[] {
-                    projectDependencyProvider,
-                    referenceAssemblyDependencyResolver,
-                    gacDependencyResolver,
-                    unresolvedDependencyProvider
-                };
+                foreach (var target in lockFile.Targets)
+                {
+                    if (target.TargetFramework != context.TargetFramework)
+                    {
+                        continue;
+                    }
+
+                    foreach (var library in target.Libraries)
+                    {
+                        // REVIEW: Do we fallback to looking for projects on disk?
+                        if (string.Equals(library.Type, "project"))
+                        {
+                            var projectLibrary = lockFileLookup.GetProject(library.Name);
+
+                            var projectDescription = projectResolver.GetDescription(context.TargetFramework, projectLibrary, library);
+
+                            lookup[library.Name] = projectDescription;
+                        }
+                        else
+                        {
+                            var packageEntry = lockFileLookup.GetPackage(library.Name, library.Version);
+
+                            var packageDescription = packageResolver.GetDescription(packageEntry, library);
+
+                            lookup[library.Name] = packageDescription;
+                        }
+                    }
+                }
             }
 
-            var libraries = DependencyWalker.Walk(dependencyProviders, context.Project.Name, context.Project.Version, context.TargetFramework);
+            var frameworkReferenceResolver = context.FrameworkResolver ?? new FrameworkReferenceResolver();
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(frameworkReferenceResolver);
+            var gacDependencyResolver = new GacDependencyResolver();
+            var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
+
+            // REVIEW: This can be done lazily
+            // Fix up dependencies
+            foreach (var library in lookup.Values.ToList())
+            {
+                library.Framework = library.Framework ?? context.TargetFramework;
+                foreach (var dependency in library.Dependencies)
+                {
+                    LibraryDescription dep;
+                    if (lookup.TryGetValue(dependency.Name, out dep))
+                    {
+                        // REVIEW: This isn't quite correct but there's a many to one relationship here.
+                        // Different ranges can resolve to this dependency but only one wins
+                        dep.RequestedRange = dependency.LibraryRange;
+                        dependency.Library = dep.Identity;
+                    }
+                    else if (dependency.LibraryRange.IsGacOrFrameworkReference)
+                    {
+                        var fxReference = referenceAssemblyDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
+                                          gacDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
+                                          unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
+
+                        fxReference.RequestedRange = dependency.LibraryRange;
+                        dependency.Library = fxReference.Identity;
+
+                        lookup[dependency.Name] = fxReference;
+                    }
+                    else
+                    {
+                        lookup[dependency.Name] = unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
+                    }
+                }
+            }
+
+            libraries = lookup.Values.ToList();
 
             context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, libraries);
 
@@ -127,7 +182,7 @@ namespace Microsoft.Dnx.Runtime
             // Clear all the temporary memory aggressively here if we don't care about reuse
             // e.g. runtime scenarios
             lockFileLookup?.Clear();
-            projectResolver.Clear();
+            lookup.Clear();
         }
     }
 }

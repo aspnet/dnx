@@ -10,23 +10,8 @@ using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class GacDependencyResolver : IDependencyProvider
+    public class GacDependencyResolver
     {
-        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
-        {
-            if (RuntimeEnvironmentHelper.IsMono || !RuntimeEnvironmentHelper.IsWindows)
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            if (!VersionUtility.IsDesktop(targetFramework))
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            return GetGacSearchPaths(targetFramework).Select(p => Path.Combine(p, "{name}", "{version}", "{name}.dll"));
-        }
-
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
             if (!libraryRange.IsGacOrFrameworkReference)

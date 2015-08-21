@@ -21,7 +21,6 @@ namespace Microsoft.Dnx.Runtime
         private readonly object _initializeLock = new object();
         private Dictionary<string, IEnumerable<Library>> _inverse;
         private Dictionary<string, Tuple<Library, LibraryDescription>> _graph;
-        private bool _initialized;
         private readonly string _projectPath;
         private readonly FrameworkName _targetFramework;
 
@@ -46,7 +45,7 @@ namespace Microsoft.Dnx.Runtime
         {
             get
             {
-                EnsureInitialized();
+                EnsureGraph();
                 return _graph;
             }
         }
@@ -55,7 +54,7 @@ namespace Microsoft.Dnx.Runtime
         {
             get
             {
-                EnsureInitialized();
+                EnsureInverseGraph();
                 return _inverse;
             }
         }
@@ -95,13 +94,13 @@ namespace Microsoft.Dnx.Runtime
 
         public IEnumerable<Library> GetLibraries()
         {
-            EnsureInitialized();
+            EnsureGraph();
             return _graph.Values.Select(l => l.Item1);
         }
 
         public IEnumerable<LibraryDescription> GetLibraryDescriptions()
         {
-            EnsureInitialized();
+            EnsureGraph();
             return _graph.Values.Select(l => l.Item2);
         }
 
@@ -205,16 +204,26 @@ namespace Microsoft.Dnx.Runtime
             return sb.ToString();
         }
 
-        private void EnsureInitialized()
+        private void EnsureGraph()
         {
             lock (_initializeLock)
             {
-                if (!_initialized)
+                if (_graph == null)
                 {
-                    _initialized = true;
                     _graph = _libraries.ToDictionary(l => l.Identity.Name, l => Tuple.Create(l.ToLibrary(), l), StringComparer.Ordinal);
                     _libraries = null;
+                }
+            }
+        }
 
+        private void EnsureInverseGraph()
+        {
+            EnsureGraph();
+
+            lock (_initializeLock)
+            {
+                if (_inverse == null)
+                {
                     BuildInverseGraph();
                 }
             }

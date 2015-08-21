@@ -1,103 +1,77 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime.Servicing;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class PackageDependencyProvider : IDependencyProvider
+    public class PackageDependencyProvider
     {
         private readonly string _packagesPath;
-        private readonly LockFileLookup _lockFileLookup;
 
         private readonly IEnumerable<IPackagePathResolver> _cacheResolvers;
         private readonly IPackagePathResolver _packagePathResolver;
 
-        public PackageDependencyProvider(string packagesPath, LockFileLookup lockFileLookup)
+        public PackageDependencyProvider(string packagesPath)
         {
             _packagesPath = packagesPath;
             _cacheResolvers = GetCacheResolvers();
             _packagePathResolver = new DefaultPackagePathResolver(packagesPath);
-
-            _lockFileLookup = lockFileLookup;
         }
 
-        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
+        public PackageDescription GetDescription(LockFilePackageLibrary package, LockFileTargetLibrary targetLibrary)
         {
-            return new[]
-            {
-                Path.Combine(_packagesPath, "{name}", "{version}")
-            };
+            // If a NuGet dependency is supposed to provide assemblies but there is no assembly compatible with
+            // current target framework, we should mark this dependency as unresolved
+            var containsAssembly = package.Files
+                .Any(x => x.StartsWith($"ref{Path.DirectorySeparatorChar}") ||
+                    x.StartsWith($"lib{Path.DirectorySeparatorChar}"));
+
+            var compatible = targetLibrary.FrameworkAssemblies.Any() ||
+                targetLibrary.CompileTimeAssemblies.Any() ||
+                targetLibrary.RuntimeAssemblies.Any() ||
+                !containsAssembly;
+
+            var resolved = compatible;
+            var dependencies = new List<LibraryDependency>(targetLibrary.Dependencies.Count + targetLibrary.FrameworkAssemblies.Count);
+            var packageDescription = new PackageDescription(
+                new LibraryRange(package.Name, frameworkReference: false)
+                {
+                    VersionRange = new SemanticVersionRange(package.Version)
+                },
+                package,
+                targetLibrary,
+                dependencies,
+                resolved,
+                compatible);
+
+            Initialize(packageDescription);
+
+            return packageDescription;
         }
 
-        public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
-        {
-            if (libraryRange.IsGacOrFrameworkReference)
-            {
-                return null;
-            }
-
-            LockFileTargetLibrary targetLibrary = _lockFileLookup.GetTargetLibrary(targetFramework, libraryRange.Name);
-
-            if (targetLibrary != null)
-            {
-                var package = _lockFileLookup.GetPackage(targetLibrary.Name, targetLibrary.Version);
-
-                Debug.Assert(package != null);
-
-                // If a NuGet dependency is supposed to provide assemblies but there is no assembly compatible with
-                // current target framework, we should mark this dependency as unresolved
-                var containsAssembly = package.Files
-                    .Any(x => x.StartsWith($"ref{Path.DirectorySeparatorChar}") ||
-                        x.StartsWith($"lib{Path.DirectorySeparatorChar}"));
-
-                var compatible = targetLibrary.FrameworkAssemblies.Any() ||
-                    targetLibrary.CompileTimeAssemblies.Any() ||
-                    targetLibrary.RuntimeAssemblies.Any() ||
-                    !containsAssembly;
-
-                var resolved = compatible;
-
-                var packageDescription = new PackageDescription(
-                    libraryRange,
-                    package,
-                    targetLibrary,
-                    GetDependencies(targetLibrary),
-                    resolved,
-                    compatible);
-
-                Initialize(packageDescription);
-
-                return packageDescription;
-            }
-
-            return null;
-        }
-
-        private IEnumerable<LibraryDependency> GetDependencies(LockFileTargetLibrary targetLibrary)
+        private void PopulateDependencies(List<LibraryDependency> dependencies, LockFileTargetLibrary targetLibrary)
         {
             foreach (var d in targetLibrary.Dependencies)
             {
-                yield return new LibraryDependency
+                dependencies.Add(new LibraryDependency
                 {
                     LibraryRange = new LibraryRange(d.Id, frameworkReference: false)
                     {
                         VersionRange = d.VersionSpec == null ? null : new SemanticVersionRange(d.VersionSpec)
                     }
-                };
+                });
             }
 
             foreach (var frameworkAssembly in targetLibrary.FrameworkAssemblies)
             {
-                yield return new LibraryDependency
+                dependencies.Add(new LibraryDependency
                 {
                     LibraryRange = new LibraryRange(frameworkAssembly, frameworkReference: true)
-                };
+                });
             }
         }
 

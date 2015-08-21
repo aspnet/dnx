@@ -7,7 +7,7 @@ using System.Runtime.Versioning;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class UnresolvedDependencyProvider : IDependencyProvider
+    public class UnresolvedDependencyProvider
     {
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {

@@ -37,7 +37,6 @@ namespace Microsoft.Dnx.Runtime
                                            string projectDirectory,
                                            string projectFilePath,
                                            string name,
-                                           string legacyName,
                                            IEnumerable<string> fallbackIncluding = null,
                                            IEnumerable<string> additionalIncluding = null,
                                            IEnumerable<string> additionalExcluding = null,
@@ -45,24 +44,6 @@ namespace Microsoft.Dnx.Runtime
                                            ICollection<DiagnosticMessage> warnings = null)
         {
             string includePropertyName = name;
-
-            if (!rawProject.Keys.Contains(name) &&
-                legacyName != null &&
-                rawProject.Keys.Contains(legacyName))
-            {
-                includePropertyName = legacyName;
-                if (warnings != null)
-                {
-                    var legacyToken = rawProject.Value(legacyName);
-                    warnings.Add(new DiagnosticMessage(
-                        $"Property \"{legacyName}\" is deprecated. It is replaced by \"{name}\".",
-                        projectFilePath,
-                        DiagnosticMessageSeverity.Warning,
-                        legacyToken.Line,
-                        legacyToken.Column));
-                }
-            }
-
             additionalIncluding = additionalIncluding ?? Enumerable.Empty<string>();
             var includePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, includePropertyName, defaultPatterns: fallbackIncluding)
                                                           .Concat(additionalIncluding)

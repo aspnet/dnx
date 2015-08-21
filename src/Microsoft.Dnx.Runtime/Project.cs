@@ -234,10 +234,7 @@ namespace Microsoft.Dnx.Runtime
             project.Dependencies = new List<LibraryDependency>();
 
             // Project files
-            project.Files = new ProjectFilesCollection(rawProject,
-                                                       project.ProjectDirectory,
-                                                       project.ProjectFilePath,
-                                                       diagnostics);
+            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath);
 
             var compilerInfo = rawProject.ValueAsJsonObject("compiler");
             if (compilerInfo != null)
@@ -358,10 +355,11 @@ namespace Microsoft.Dnx.Runtime
                         var dependencyValueAsObject = (JsonObject)dependencyValue;
                         dependencyVersionAsString = dependencyValueAsObject.ValueAsString("version");
 
-                        IEnumerable<string> strings;
-                        if (TryGetStringEnumerable(dependencyValueAsObject, "type", out strings))
+                        // Remove support for flags (we only support build and nothing right now)
+                        var type = dependencyValueAsObject.ValueAsString("type");
+                        if (type != null)
                         {
-                            dependencyTypeValue = LibraryDependencyType.Parse(strings);
+                            dependencyTypeValue = LibraryDependencyType.Parse(type.Value);
                         }
                     }
                     else if (dependencyValue is JsonString)

@@ -2,15 +2,13 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class ReferenceAssemblyDependencyResolver : IDependencyProvider
+    public class ReferenceAssemblyDependencyResolver
     {
         public ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver frameworkReferenceResolver)
         {
@@ -18,11 +16,6 @@ namespace Microsoft.Dnx.Runtime
         }
 
         private FrameworkReferenceResolver FrameworkResolver { get; set; }
-
-        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
-        {
-            return FrameworkResolver.GetAttemptedPaths(targetFramework);
-        }
 
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {

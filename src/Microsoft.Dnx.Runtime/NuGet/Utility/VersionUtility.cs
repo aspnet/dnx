@@ -152,6 +152,22 @@ namespace NuGet
                 throw new ArgumentNullException(nameof(frameworkName));
             }
 
+            // TODO: Intern these frameworks
+            // Fast path for runtime code path, these 3 short names are the runnable tfms
+            // We fall back to regular parsing in other scenarios (build/dth)
+            if (frameworkName == FrameworkNames.ShortNames.Dnx451)
+            {
+                return new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 1));
+            }
+            else if (frameworkName == FrameworkNames.ShortNames.Dnx46)
+            {
+                return new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 6));
+            }
+            else if (frameworkName == FrameworkNames.ShortNames.DnxCore50)
+            {
+                return new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
+            }
+
             // {Identifier}{Version}-{Profile}
 
             // Split the framework name into 3 parts, identifier, version and profile.

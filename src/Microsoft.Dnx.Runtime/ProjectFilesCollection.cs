@@ -18,91 +18,82 @@ namespace Microsoft.Dnx.Runtime
 
         public static readonly string[] DefaultBuiltInExcludePatterns = new[] { "bin/**", "obj/**", "**/*.xproj" };
 
-        private readonly PatternGroup _sharedPatternsGroup;
-        private readonly PatternGroup _resourcePatternsGroup;
-        private readonly PatternGroup _preprocessPatternsGroup;
-        private readonly PatternGroup _compilePatternsGroup;
-        private readonly PatternGroup _contentPatternsGroup;
-        private readonly IDictionary<string, string> _namedResources;
+        private PatternGroup _sharedPatternsGroup;
+        private PatternGroup _resourcePatternsGroup;
+        private PatternGroup _preprocessPatternsGroup;
+        private PatternGroup _compilePatternsGroup;
+        private PatternGroup _contentPatternsGroup;
+        private IDictionary<string, string> _namedResources;
+        private IEnumerable<string> _publishExcludePatterns;
 
         private readonly string _projectDirectory;
         private readonly string _projectFilePath;
 
-        private readonly IEnumerable<string> _publishExcludePatterns;
+        private readonly JsonObject _rawProject;
+        private bool _initialized;
 
-        internal ProjectFilesCollection(JsonObject rawProject,
-                                        string projectDirectory,
-                                        string projectFilePath,
-                                        ICollection<DiagnosticMessage> warnings = null)
+        internal ProjectFilesCollection(JsonObject rawProject, string projectDirectory, string projectFilePath)
         {
             _projectDirectory = projectDirectory;
             _projectFilePath = projectFilePath;
+            _rawProject = rawProject;
+        }
 
-            var excludeBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "excludeBuiltIn", DefaultBuiltInExcludePatterns);
-            var excludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "exclude")
+        internal void EnsureInitialized()
+        {
+            if (_initialized)
+            {
+                return;
+            }
+
+            var excludeBuiltIns = PatternsCollectionHelper.GetPatternsCollection(_rawProject, _projectDirectory, _projectFilePath, "excludeBuiltIn", DefaultBuiltInExcludePatterns);
+            var excludePatterns = PatternsCollectionHelper.GetPatternsCollection(_rawProject, _projectDirectory, _projectFilePath, "exclude")
                                                           .Concat(excludeBuiltIns);
-            var contentBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "contentBuiltIn", DefaultContentsBuiltInPatterns);
-            var compileBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "compileBuiltIn", DefaultCompileBuiltInPatterns);
-            var resourceBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "resourceBuiltIn", DefaultResourcesBuiltInPatterns);
+            var contentBuiltIns = PatternsCollectionHelper.GetPatternsCollection(_rawProject, _projectDirectory, _projectFilePath, "contentBuiltIn", DefaultContentsBuiltInPatterns);
+            var compileBuiltIns = PatternsCollectionHelper.GetPatternsCollection(_rawProject, _projectDirectory, _projectFilePath, "compileBuiltIn", DefaultCompileBuiltInPatterns);
+            var resourceBuiltIns = PatternsCollectionHelper.GetPatternsCollection(_rawProject, _projectDirectory, _projectFilePath, "resourceBuiltIn", DefaultResourcesBuiltInPatterns);
 
-            // TODO: The legacy names will be retired in the future.
-            var legacyPublishExcludePatternName = "bundleExclude";
-            var legacyPublishExcludePatternToken = rawProject.ValueAsJsonObject(legacyPublishExcludePatternName);
-            if (legacyPublishExcludePatternToken != null)
-            {
-                _publishExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, legacyPublishExcludePatternName, DefaultPublishExcludePatterns);
-                if (warnings != null)
-                {
-                    warnings.Add(new DiagnosticMessage(
-                        string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyPublishExcludePatternName, "publishExclude"),
-                        projectFilePath,
-                        DiagnosticMessageSeverity.Warning,
-                        legacyPublishExcludePatternToken.Line,
-                        legacyPublishExcludePatternToken.Column));
-                }
-            }
-            else
-            {
-                _publishExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "publishExclude", DefaultPublishExcludePatterns);
-            }
+            _publishExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(_rawProject, _projectDirectory, _projectFilePath, "publishExclude", DefaultPublishExcludePatterns);
 
-            _sharedPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "shared", legacyName: null, warnings: warnings, fallbackIncluding: DefaultSharedPatterns, additionalExcluding: excludePatterns);
+            _sharedPatternsGroup = PatternGroup.Build(_rawProject, _projectDirectory, _projectFilePath, "shared", fallbackIncluding: DefaultSharedPatterns, additionalExcluding: excludePatterns);
 
-            _resourcePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "resource", "resources", warnings: warnings, additionalIncluding: resourceBuiltIns, additionalExcluding: excludePatterns);
+            _resourcePatternsGroup = PatternGroup.Build(_rawProject, _projectDirectory, _projectFilePath, "resource", additionalIncluding: resourceBuiltIns, additionalExcluding: excludePatterns);
 
-            _preprocessPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "preprocess", legacyName: null, warnings: warnings, fallbackIncluding: DefaultPreprocessPatterns, additionalExcluding: excludePatterns)
+            _preprocessPatternsGroup = PatternGroup.Build(_rawProject, _projectDirectory, _projectFilePath, "preprocess", fallbackIncluding: DefaultPreprocessPatterns, additionalExcluding: excludePatterns)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _compilePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "compile", "code", warnings: warnings, additionalIncluding: compileBuiltIns, additionalExcluding: excludePatterns)
+            _compilePatternsGroup = PatternGroup.Build(_rawProject, _projectDirectory, _projectFilePath, "compile", additionalIncluding: compileBuiltIns, additionalExcluding: excludePatterns)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", warnings: warnings, additionalIncluding: contentBuiltIns, additionalExcluding: excludePatterns.Concat(_publishExcludePatterns))
+            _contentPatternsGroup = PatternGroup.Build(_rawProject, _projectDirectory, _projectFilePath, "content", additionalIncluding: contentBuiltIns, additionalExcluding: excludePatterns.Concat(_publishExcludePatterns))
                 .ExcludeGroup(_compilePatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _namedResources = NamedResourceReader.ReadNamedResources(rawProject, projectFilePath);
+            _namedResources = NamedResourceReader.ReadNamedResources(_rawProject, _projectFilePath);
+
+            _initialized = true;
         }
 
         public IEnumerable<string> SourceFiles
         {
-            get { return _compilePatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
+            get { return CompilePatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
         }
 
         public IEnumerable<string> PreprocessSourceFiles
         {
-            get { return _preprocessPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
+            get { return PreprocessPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
         }
 
         public IDictionary<string, string> ResourceFiles
         {
             get
             {
-                var resources = _resourcePatternsGroup
+                var resources = ResourcePatternsGroup
                     .SearchFiles(_projectDirectory)
                     .Distinct()
                     .ToDictionary(res => res, res => (string)null);
@@ -115,7 +106,7 @@ namespace Microsoft.Dnx.Runtime
 
         public IEnumerable<string> SharedFiles
         {
-            get { return _sharedPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
+            get { return SharedPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
         }
 
         public IEnumerable<string> GetFilesForBundling(bool includeSource, IEnumerable<string> additionalExcludePatterns)
@@ -134,14 +125,49 @@ namespace Microsoft.Dnx.Runtime
             return patternGroup.SearchFiles(_projectDirectory);
         }
 
-        internal PatternGroup CompilePatternsGroup { get { return _compilePatternsGroup; } }
+        internal PatternGroup CompilePatternsGroup
+        {
+            get
+            {
+                EnsureInitialized();
+                return _compilePatternsGroup;
+            }
+        }
 
-        internal PatternGroup SharedPatternsGroup { get { return _sharedPatternsGroup; } }
+        internal PatternGroup SharedPatternsGroup
+        {
+            get
+            {
+                EnsureInitialized();
+                return _sharedPatternsGroup;
+            }
+        }
 
-        internal PatternGroup ResourcePatternsGroup { get { return _resourcePatternsGroup; } }
+        internal PatternGroup ResourcePatternsGroup
+        {
+            get
+            {
+                EnsureInitialized();
+                return _resourcePatternsGroup;
+            }
+        }
 
-        internal PatternGroup PreprocessPatternsGroup { get { return _preprocessPatternsGroup; } }
+        internal PatternGroup PreprocessPatternsGroup
+        {
+            get
+            {
+                EnsureInitialized();
+                return _preprocessPatternsGroup;
+            }
+        }
 
-        internal PatternGroup ContentPatternsGroup { get { return _contentPatternsGroup; } }
+        internal PatternGroup ContentPatternsGroup
+        {
+            get
+            {
+                EnsureInitialized();
+                return _contentPatternsGroup;
+            }
+        }
     }
 }

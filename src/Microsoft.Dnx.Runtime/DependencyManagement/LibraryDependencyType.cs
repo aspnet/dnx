@@ -2,60 +2,45 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 
 namespace Microsoft.Dnx.Runtime
 {
     public class LibraryDependencyType
     {
-        private readonly LibraryDependencyTypeFlag[] _keywords;
+        private readonly LibraryDependencyTypeFlag _flags;
 
-        public static LibraryDependencyType Default;
+        public static LibraryDependencyType Default = Parse("default");
 
-        static LibraryDependencyType()
+        private LibraryDependencyType(LibraryDependencyTypeFlag flags)
         {
-            Default = Parse(new[] { "default" });
+            _flags = flags;
         }
 
-        public LibraryDependencyType()
+        public static LibraryDependencyType Parse(string keyword)
         {
-            _keywords = new LibraryDependencyTypeFlag[0];
-        }
+            if (string.Equals(keyword, "default", StringComparison.OrdinalIgnoreCase))
+            {
+                return new LibraryDependencyType(
+                       LibraryDependencyTypeFlag.MainReference |
+                       LibraryDependencyTypeFlag.MainSource |
+                       LibraryDependencyTypeFlag.MainExport |
+                       LibraryDependencyTypeFlag.RuntimeComponent |
+                       LibraryDependencyTypeFlag.BecomesNupkgDependency);
+            }
 
-        private LibraryDependencyType(LibraryDependencyTypeFlag[] flags)
-        {
-            _keywords = flags;
+            if (string.Equals(keyword, "build", StringComparison.OrdinalIgnoreCase))
+            {
+                return new LibraryDependencyType(
+                    LibraryDependencyTypeFlag.MainSource |
+                    LibraryDependencyTypeFlag.PreprocessComponent);
+            }
+
+            throw new InvalidOperationException(string.Format("unknown keyword {0}", keyword));
         }
 
         public bool Contains(LibraryDependencyTypeFlag flag)
         {
-            return _keywords.Contains(flag);
-        }
-
-        public static LibraryDependencyType Parse(IEnumerable<string> keywords)
-        {
-            var type = new LibraryDependencyType();
-            foreach (var keyword in keywords.Select(LibraryDependencyTypeKeyword.Parse))
-            {
-                type = type.Combine(keyword.FlagsToAdd, keyword.FlagsToRemove);
-            }
-            return type;
-        }
-
-        public LibraryDependencyType Combine(
-            IEnumerable<LibraryDependencyTypeFlag> add,
-            IEnumerable<LibraryDependencyTypeFlag> remove)
-        {
-            return new LibraryDependencyType(
-                _keywords.Except(remove).Union(add).ToArray());
-        }
-
-        public override string ToString()
-        {
-            return string.Join(",", _keywords.Select(kw => kw.ToString()));
+            return (_flags & flag) != 0;
         }
     }
 }

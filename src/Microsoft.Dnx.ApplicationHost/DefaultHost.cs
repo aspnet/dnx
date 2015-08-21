@@ -167,7 +167,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _serviceProvider.Add(typeof(ILibraryManager), _libraryManager);
 
             // TODO: Make this lazy
-            _serviceProvider.Add(typeof(ILibraryExporter), compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration));
+            _serviceProvider.Add(typeof(ILibraryExporter), new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration)));
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
             _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_libraryManager));
 

@@ -31,7 +31,7 @@ namespace Microsoft.Dnx.Runtime
             Framework = framework;
         }
 
-        public LibraryRange RequestedRange { get; }
+        public LibraryRange RequestedRange { get; set; }
         public LibraryIdentity Identity { get; }
 
         public string Type { get; }

@@ -44,25 +44,5 @@ namespace Microsoft.Dnx.Runtime.Tests
                 Assert.Null(library);
             }
         }
-
-        [ConditionalTheory]
-        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
-        [InlineData("net20", @"%WinDir%\assembly\GAC_32\{name}\{version}\{name}.dll,%WinDir%\assembly\GAC_64\{name}\{version}\{name}.dll,%WinDir%\assembly\GAC_MSIL\{name}\{version}\{name}.dll")]
-        [InlineData("net30", @"%WinDir%\assembly\GAC_32\{name}\{version}\{name}.dll,%WinDir%\assembly\GAC_64\{name}\{version}\{name}.dll,%WinDir%\assembly\GAC_MSIL\{name}\{version}\{name}.dll")]
-        [InlineData("net35", @"%WinDir%\assembly\GAC_32\{name}\{version}\{name}.dll,%WinDir%\assembly\GAC_64\{name}\{version}\{name}.dll,%WinDir%\assembly\GAC_MSIL\{name}\{version}\{name}.dll")]
-        [InlineData("net40", @"%WinDir%\Microsoft.NET\assembly\GAC_32\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_64\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_MSIL\{name}\{version}\{name}.dll")]
-        [InlineData("net45", @"%WinDir%\Microsoft.NET\assembly\GAC_32\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_64\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_MSIL\{name}\{version}\{name}.dll")]
-        [InlineData("net451", @"%WinDir%\Microsoft.NET\assembly\GAC_32\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_64\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_MSIL\{name}\{version}\{name}.dll")]
-        [InlineData("net452", @"%WinDir%\Microsoft.NET\assembly\GAC_32\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_64\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_MSIL\{name}\{version}\{name}.dll")]
-        [InlineData("net46", @"%WinDir%\Microsoft.NET\assembly\GAC_32\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_64\{name}\{version}\{name}.dll,%WinDir%\Microsoft.NET\assembly\GAC_MSIL\{name}\{version}\{name}.dll")]
-        public void GetAttemptedPathsReportsExpectedPaths(string framework, string expectedPaths)
-        {
-            var resolver = new GacDependencyResolver();
-            var paths = resolver.GetAttemptedPaths(VersionUtility.ParseFrameworkName(framework));
-            Assert.Equal(
-                expectedPaths.Split(',').Select(s => Environment.ExpandEnvironmentVariables(s)).ToArray(),
-                paths.ToArray());
-        }
     }
 }

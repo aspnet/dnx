@@ -1,8 +1,10 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
 using Xunit;
@@ -133,10 +135,15 @@ namespace Microsoft.Dnx.Runtime.Tests
                 }
             };
 
-            var resolver = new PackageDependencyProvider("/path/to/packages", new LockFileLookup(lockFile));
+            var resolver = new PackageDependencyProvider("/path/to/packages");
+            var lockFileLookup = new LockFileLookup(lockFile);
 
-            var libToLookup = new LibraryRange(packageName, frameworkReference: false);
-            var description = resolver.GetDescription(libToLookup, new FrameworkName(framework));
+            var targetFramework = new FrameworkName(framework);
+            var libToLookup = lockFile.Targets.First(t => t.TargetFramework == targetFramework)
+                                              .Libraries
+                                              .First(l => l.Name == packageName);
+
+            var description = resolver.GetDescription(lockFileLookup.GetPackage(libToLookup.Name, libToLookup.Version), libToLookup);
             Assert.Equal(resolved, description.Compatible);
             Assert.NotNull(description);
         }
