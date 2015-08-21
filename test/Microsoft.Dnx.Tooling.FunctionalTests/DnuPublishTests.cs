@@ -2041,16 +2041,6 @@ string expectedAppLockFile = @"{
                 // The wrapper project should be packed to a nupkg
                 Assert.False(Directory.Exists(Path.Combine(outputPath, "approot", "src", referenceProjectName)));
                 Assert.True(Directory.Exists(Path.Combine(outputPath, "approot", "packages", referenceProjectName)));
-
-                // The output bundled app should be runnable
-                var outputMainAppPath = Path.Combine(outputPath, "approot", "src", testAppName);
-                string stdOut, stdErr;
-                exitCode = TestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: $"-p {outputMainAppPath} run",
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
-                Assert.Equal(0, exitCode);
             }
         }
 
