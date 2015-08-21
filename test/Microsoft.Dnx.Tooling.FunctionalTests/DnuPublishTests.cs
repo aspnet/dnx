@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Bootstrapper.FunctionalTests;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
@@ -2045,7 +2044,7 @@ string expectedAppLockFile = @"{
                 // The output bundled app should be runnable
                 var outputMainAppPath = Path.Combine(outputPath, "approot", "src", testAppName);
                 string stdOut, stdErr;
-                exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: $"-p {outputMainAppPath} run",
                     stdOut: out stdOut,

@@ -83,7 +83,7 @@ namespace ConfigTest
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+            var exitCode = TestUtils.ExecBootstrapper(
                 runtimeHomeDir,
                 arguments: string.Empty,
                 stdOut: out stdOut,
@@ -99,7 +99,7 @@ namespace ConfigTest
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+            var exitCode = TestUtils.ExecBootstrapper(
                 runtimeHomeDir,
                 arguments: "--help",
                 stdOut: out stdOut,
@@ -115,7 +115,7 @@ namespace ConfigTest
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+            var exitCode = TestUtils.ExecBootstrapper(
                 runtimeHomeDir,
                 arguments: "--version",
                 stdOut: out stdOut,
@@ -137,7 +137,7 @@ namespace ConfigTest
                 var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
 
                 string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: $"--appbase {testAppPath} Microsoft.Dnx.ApplicationHost run",
                     stdOut: out stdOut,
@@ -168,7 +168,7 @@ command
                 var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
 
                 string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: "run",
                     stdOut: out stdOut,
@@ -202,7 +202,7 @@ command
                 var testAppProjectFile = Path.Combine(testAppPath, Project.ProjectFileName);
 
                 string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: $"-p {testAppProjectFile} run",
                     stdOut: out stdOut,
@@ -248,7 +248,7 @@ command
                     Console.WriteLine(stdErr);
                 }
 
-                exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: Path.Combine(tempDir, "Release", outputFolder, "HelloWorld.dll"),
                     stdOut: out stdOut,
@@ -306,7 +306,7 @@ Hello, code!
 
                 string stdOut;
                 string stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: "-p . run",
                     stdOut: out stdOut,
@@ -364,7 +364,7 @@ Hello, code!
 
                 string stdOut;
                 string stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: "--project . run",
                     stdOut: out stdOut,
@@ -424,7 +424,7 @@ Hello, code!
 
                 string stdOut;
                 string stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: "-p . run",
                     stdOut: out stdOut,
@@ -509,7 +509,7 @@ Hello, code!
 
                 string stdOut;
                 string stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: $"--framework {requestedFramework} run",
                     stdOut: out stdOut,
@@ -560,7 +560,7 @@ Hello, code!
 
                 string stdOut;
                 string stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: $"run",
                     stdOut: out stdOut,

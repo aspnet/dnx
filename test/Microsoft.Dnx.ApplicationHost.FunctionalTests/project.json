@@ -1,6 +1,5 @@
 {
     "dependencies": {
-        "Bootstrapper.FunctionalTests": "1.0.0-*",
         "Microsoft.Dnx.CommonTestUtils": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
         "xunit.runner.aspnet": "2.0.0-aspnet-*"

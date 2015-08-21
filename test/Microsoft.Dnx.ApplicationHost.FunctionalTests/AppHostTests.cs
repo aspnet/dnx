@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
-using Bootstrapper.FunctionalTests;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Tooling;
 using Microsoft.Dnx.Runtime;
@@ -39,7 +38,7 @@ namespace Microsoft.Dnx.ApplicationHost
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+            var exitCode = TestUtils.ExecBootstrapper(
                 runtimeHomeDir,
                 arguments: string.Empty,
                 stdOut: out stdOut,
@@ -55,7 +54,7 @@ namespace Microsoft.Dnx.ApplicationHost
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+            var exitCode = TestUtils.ExecBootstrapper(
                 runtimeHomeDir,
                 arguments: "--help",
                 stdOut: out stdOut,
@@ -71,7 +70,7 @@ namespace Microsoft.Dnx.ApplicationHost
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+            var exitCode = TestUtils.ExecBootstrapper(
                 runtimeHomeDir,
                 arguments: "--version",
                 stdOut: out stdOut,
@@ -90,7 +89,7 @@ namespace Microsoft.Dnx.ApplicationHost
             using (var emptyFolder = TestUtils.CreateTempDir())
             {
                 string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: "run",
                     stdOut: out stdOut,
@@ -116,7 +115,7 @@ namespace Microsoft.Dnx.ApplicationHost
                 DirTree.CreateFromJson(projectStructure).WriteTo(projectPath);
 
                 string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: "invalid",
                     stdOut: out stdOut,
@@ -153,7 +152,7 @@ namespace Microsoft.Dnx.ApplicationHost
                 File.WriteAllText(projectJsonPath, projectJsonContents);
 
                 string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: $"run",
                     stdOut: out stdOut,
@@ -286,7 +285,7 @@ $@"{{
 
                 string output;
                 string error;
-                exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomePath,
                     arguments: $@" { command } extra",
                     stdOut: out output,
