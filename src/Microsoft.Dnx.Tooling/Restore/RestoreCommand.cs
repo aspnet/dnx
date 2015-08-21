@@ -81,6 +81,12 @@ namespace Microsoft.Dnx.Tooling
 
             summary.DisplaySummary(Reports);
 
+#if DNXCORE50
+            Console.WriteLine("################################################");
+            Console.WriteLine($"Global dictionary entry number: {Microsoft.Dnx.Runtime.Internal.ConcurrencyUtilities.SemaphoreWrapper._nameWrapper.Count}");
+            Console.WriteLine("################################################");
+#endif
+
             return success;
         }
 
