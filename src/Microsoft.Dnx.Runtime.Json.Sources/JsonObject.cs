@@ -97,5 +97,10 @@ namespace Microsoft.Dnx.Runtime.Json
 
             return result;
         }
+
+        internal object ValueAsJsonObject(object packIncludePropertyName)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

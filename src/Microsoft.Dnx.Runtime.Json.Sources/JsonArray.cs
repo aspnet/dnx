@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 
 namespace Microsoft.Dnx.Runtime.Json
 {
@@ -20,14 +21,8 @@ namespace Microsoft.Dnx.Runtime.Json
             _array = array;
         }
 
-        public int Length
-        {
-            get { return _array.Length; }
-        }
-
-        public JsonValue this[int index]
-        {
-            get { return _array[index]; }
-        }
+        public int Length => _array.Length;
+        public IEnumerable<JsonValue> Values => _array;
+        public JsonValue this[int index] => _array[index];
     }
 }

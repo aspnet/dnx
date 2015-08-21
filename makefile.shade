@@ -64,6 +64,7 @@ var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.P
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 var VS_REDIST_ROOT = '${Path.Combine(PROGRAM_FILES_X86, @"Microsoft Visual Studio 14.0\VC\redist")}'
 var WIN10_SDK_LIB = '${Path.Combine(PROGRAM_FILES_X86, @"Windows Kits\10\Lib")}'
+var VS_ONECORE_ROOT = '${Path.Combine(PROGRAM_FILES_X86, @"Microsoft Visual Studio 14.0\VC\lib\onecore")}'
 var CLANG = '${SearchForClang()}'
 
 var MANAGED_PROJECTS = '${FindAllProjects(
@@ -93,7 +94,7 @@ var WIN_MANAGED_PROJECTS = '${FindAllProjects(
 
 var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
-var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles(WIN10_SDK_LIB, "onecore.lib", SearchOption.AllDirectories).Any()}'
+var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFiles(VS_ONECORE_ROOT, "vcruntime.lib", SearchOption.AllDirectories).Any() && Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles(WIN10_SDK_LIB, "onecore.lib", SearchOption.AllDirectories).Any()}'
 
 @{
     // Always build mono

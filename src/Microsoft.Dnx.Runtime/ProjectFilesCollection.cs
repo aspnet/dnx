@@ -1,8 +1,10 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.Dnx.Runtime.Json;
 
 namespace Microsoft.Dnx.Runtime
@@ -18,6 +20,8 @@ namespace Microsoft.Dnx.Runtime
 
         public static readonly string[] DefaultBuiltInExcludePatterns = new[] { "bin/**", "obj/**", "**/*.xproj" };
 
+        public static readonly string PackIncludePropertyName = "packInclude";
+
         private PatternGroup _sharedPatternsGroup;
         private PatternGroup _resourcePatternsGroup;
         private PatternGroup _preprocessPatternsGroup;
@@ -25,6 +29,7 @@ namespace Microsoft.Dnx.Runtime
         private PatternGroup _contentPatternsGroup;
         private IDictionary<string, string> _namedResources;
         private IEnumerable<string> _publishExcludePatterns;
+        private IEnumerable<PackIncludeEntry> _packInclude;
 
         private readonly string _projectDirectory;
         private readonly string _projectFilePath;
@@ -76,8 +81,31 @@ namespace Microsoft.Dnx.Runtime
 
             _namedResources = NamedResourceReader.ReadNamedResources(_rawProject, _projectFilePath);
 
+            // Files to be packed along with the project
+            var packIncludeJson = _rawProject.ValueAsJsonObject(PackIncludePropertyName);
+            if (packIncludeJson != null)
+            {
+                _packInclude = packIncludeJson
+                    .Keys
+                    .Select(k => new PackIncludeEntry(k, packIncludeJson.Value(k)))
+                    .ToList();
+            }
+            else
+            {
+                _packInclude = new List<PackIncludeEntry>();
+            }
+
             _initialized = true;
             _rawProject = null;
+        }
+
+        public IEnumerable<PackIncludeEntry> PackInclude
+        {
+            get
+            {
+                EnsureInitialized();
+                return _packInclude;
+            }
         }
 
         public IEnumerable<string> SourceFiles

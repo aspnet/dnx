@@ -19,6 +19,7 @@
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.HashCodeCombiner.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*"
     },
     "frameworks": {

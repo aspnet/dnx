@@ -51,7 +51,7 @@ namespace Microsoft.Dnx.Tooling
 
             // Resolve all the project names
             var projectFilesToBuild = new List<string>();
-            foreach(var pattern in _buildOptions.ProjectPatterns)
+            foreach (var pattern in _buildOptions.ProjectPatterns)
             {
                 if (pattern.Contains("*"))
                 {
@@ -67,7 +67,7 @@ namespace Microsoft.Dnx.Tooling
             var rootDirectory = Directory.GetCurrentDirectory();
             var patternSearchFolder = new DirectoryInfoWrapper(new DirectoryInfo(rootDirectory));
             var globbingProjects = projectFilesFinder.Execute(patternSearchFolder).Files.Select(file =>
-                Path.Combine(rootDirectory, file));
+                Path.Combine(rootDirectory, file.Path));
             projectFilesToBuild.AddRange(globbingProjects);
 
             var sw = Stopwatch.StartNew();
@@ -225,6 +225,7 @@ namespace Microsoft.Dnx.Tooling
 
                     if (configurationSuccess)
                     {
+                        var packDiagnostics = new List<DiagnosticMessage>();
                         foreach (var sharedFile in _currentProject.Files.SharedFiles)
                         {
                             var file = new PhysicalPackageFile();
@@ -235,6 +236,12 @@ namespace Microsoft.Dnx.Tooling
 
                         var root = _currentProject.ProjectDirectory;
 
+                        if (_currentProject.Files.PackInclude != null && _currentProject.Files.PackInclude.Any())
+                        {
+                            AddPackageFiles(_currentProject.ProjectDirectory, _currentProject.Files.PackInclude, packageBuilder, packDiagnostics);
+                        }
+                        success &= !packDiagnostics.HasErrors();
+
                         foreach (var path in _currentProject.Files.SourceFiles)
                         {
                             var srcFile = new PhysicalPackageFile();
@@ -243,40 +250,45 @@ namespace Microsoft.Dnx.Tooling
                             symbolPackageBuilder.Files.Add(srcFile);
                         }
 
-                        using (var fs = File.Create(nupkg))
+                        // Write the packages as long as we're still in a success state.
+                        if (success)
                         {
-                            packageBuilder.Save(fs);
-                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(nupkg));
-                        }
-
-                        if (symbolPackageBuilder.Files.Any())
-                        {
-                            using (var fs = File.Create(symbolsNupkg))
+                            using (var fs = File.Create(nupkg))
                             {
-                                symbolPackageBuilder.Save(fs);
-                                _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(symbolsNupkg));
+                                packageBuilder.Save(fs);
+                                _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(nupkg));
+                            }
+
+                            if (symbolPackageBuilder.Files.Any())
+                            {
+                                using (var fs = File.Create(symbolsNupkg))
+                                {
+                                    symbolPackageBuilder.Save(fs);
+                                    _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(symbolsNupkg));
+                                }
                             }
                         }
+
+                        WriteDiagnostics(packDiagnostics);
                     }
                 }
             }
 
-            if (!success)
+            // Run post-build steps
+            if (success)
             {
-                return false;
-            }
+                if (!ScriptExecutor.Execute(_currentProject, "postbuild", GetScriptVariable))
+                {
+                    LogError(ScriptExecutor.ErrorMessage);
+                    success = false;
+                }
 
-            if (!ScriptExecutor.Execute(_currentProject, "postbuild", GetScriptVariable))
-            {
-                LogError(ScriptExecutor.ErrorMessage);
-                return false;
-            }
-
-            if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(_currentProject, "postpack", GetScriptVariable))
-            {
-                LogError(ScriptExecutor.ErrorMessage);
-                return false;
+                if (_buildOptions.GeneratePackages &&
+                    !ScriptExecutor.Execute(_currentProject, "postpack", GetScriptVariable))
+                {
+                    LogError(ScriptExecutor.ErrorMessage);
+                    success = false;
+                }
             }
 
             sw.Stop();
@@ -294,6 +306,97 @@ namespace Microsoft.Dnx.Tooling
 
             _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
+        }
+
+        private void AddPackageFiles(string projectDirectory, IEnumerable<PackIncludeEntry> packageFiles, PackageBuilder packageBuilder, IList<DiagnosticMessage> diagnostics)
+        {
+            var rootDirectory = new DirectoryInfoWrapper(new DirectoryInfo(projectDirectory));
+
+            foreach (var match in CollectAdditionalFiles(rootDirectory, packageFiles, _currentProject.ProjectFilePath, diagnostics))
+            {
+                packageBuilder.Files.Add(match);
+            }
+        }
+
+        internal static IEnumerable<PhysicalPackageFile> CollectAdditionalFiles(DirectoryInfoBase rootDirectory, IEnumerable<PackIncludeEntry> projectFileGlobs, string projectFilePath, IList<DiagnosticMessage> diagnostics)
+        {
+            foreach (var entry in projectFileGlobs)
+            {
+                // Evaluate the globs on the right
+                var matcher = new Matcher();
+                matcher.AddIncludePatterns(entry.SourceGlobs);
+                var results = matcher.Execute(rootDirectory);
+                var files = results.Files.ToList();
+
+                // Check for illegal characters
+                if (string.IsNullOrEmpty(entry.Target))
+                {
+                    diagnostics.Add(new DiagnosticMessage(
+                        $"Invalid '{ProjectFilesCollection.PackIncludePropertyName}' section. The target '{entry.Target}' is invalid, " +
+                        "targets must either be a file name or a directory suffixed with '/'. " +
+                        "The root directory of the package can be specified by using a single '/' character.",
+                        projectFilePath,
+                        DiagnosticMessageSeverity.Error,
+                        entry.Line,
+                        entry.Column));
+                    continue;
+                }
+
+                if (entry.Target.Split('/').Any(s => s.Equals(".") || s.Equals("..")))
+                {
+                    diagnostics.Add(new DiagnosticMessage(
+                        $"Invalid '{ProjectFilesCollection.PackIncludePropertyName}' section. " +
+                        $"The target '{entry.Target}' contains path-traversal characters ('.' or '..'). " +
+                        "These characters are not permitted in target paths.",
+                        projectFilePath,
+                        DiagnosticMessageSeverity.Error,
+                        entry.Line,
+                        entry.Column));
+                    continue;
+                }
+
+                // Check the arity of the left
+                if (entry.Target.EndsWith("/"))
+                {
+                    var dir = entry.Target.Substring(0, entry.Target.Length - 1).Replace('/', Path.DirectorySeparatorChar);
+
+                    foreach (var file in files)
+                    {
+                        yield return new PhysicalPackageFile()
+                        {
+                            SourcePath = PathUtility.GetPathWithDirectorySeparator(file.Path),
+                            TargetPath = Path.Combine(dir, PathUtility.GetPathWithDirectorySeparator(file.Stem))
+                        };
+                    }
+                }
+                else
+                {
+                    // It's a file. If the glob matched multiple things, we're sad :(
+                    if (files.Count > 1)
+                    {
+                        // Arity mismatch!
+                        string sourceValue = entry.SourceGlobs.Length == 1 ?
+                            $"\"{entry.SourceGlobs[0]}\"" :
+                            ("[" + string.Join(",", entry.SourceGlobs.Select(v => $"\"{v}\"")) + "]");
+                        diagnostics.Add(new DiagnosticMessage(
+                            $"Invalid '{ProjectFilesCollection.PackIncludePropertyName}' section. " +
+                            $"The target '{entry.Target}' refers to a single file, but the pattern {sourceValue} " +
+                            "produces multiple files. To mark the target as a directory, suffix it with '/'.",
+                            projectFilePath,
+                            DiagnosticMessageSeverity.Error,
+                            entry.Line,
+                            entry.Column));
+                    }
+                    else
+                    {
+                        yield return new PhysicalPackageFile()
+                        {
+                            SourcePath = files[0].Path,
+                            TargetPath = PathUtility.GetPathWithDirectorySeparator(entry.Target)
+                        };
+                    }
+                }
+            }
         }
 
         private string GetScriptVariable(string key)
