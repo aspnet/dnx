@@ -9,6 +9,7 @@
                 "System.Collections": "4.0.11-beta-*",
                 "System.Runtime": "4.0.21-beta-*"
             }
-        }
+        },
+        "net45": { }
     }
 }

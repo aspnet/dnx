@@ -4,7 +4,7 @@
 using System;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Infrastructure;
-#if DNX451
+#if DNX451 || NET45
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Remoting;
 #else
@@ -15,7 +15,7 @@ namespace Microsoft.Dnx.Host
 {
     internal class ServiceProviderLocator : IServiceProviderLocator
     {
-#if DNX451
+#if DNX451 || NET45
         private const string ServiceProviderDataName = Constants.BootstrapperHostName + ".ServiceProviderLocator.ServiceProvider";
 
         public IServiceProvider ServiceProvider
