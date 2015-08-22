@@ -49,13 +49,11 @@ namespace Microsoft.Dnx.Runtime
             var lookup = context._libraries.ToDictionary(l => l.Identity.Name);
             context._libraries = null;
 
-            // REVIEW: Do we need these if we aren't resolving reference assemblies?
             var frameworkReferenceResolver = context.FrameworkResolver ?? new FrameworkReferenceResolver();
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(frameworkReferenceResolver);
             var gacDependencyResolver = new GacDependencyResolver();
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
 
-            // REVIEW: This can be done lazily
             // Fix up dependencies
             foreach (var library in lookup.Values.ToList())
             {
@@ -68,7 +66,7 @@ namespace Microsoft.Dnx.Runtime
                         // REVIEW: This isn't quite correct but there's a many to one relationship here.
                         // Different ranges can resolve to this dependency but only one wins
                         dep.RequestedRange = dependency.LibraryRange;
-                        dependency.Library = dep.Identity;
+                        dependency.Library = dep;
                     }
                     else if (dependency.LibraryRange.IsGacOrFrameworkReference)
                     {
@@ -78,7 +76,7 @@ namespace Microsoft.Dnx.Runtime
 
                         fxReference.Framework = context.TargetFramework;
                         fxReference.RequestedRange = dependency.LibraryRange;
-                        dependency.Library = fxReference.Identity;
+                        dependency.Library = fxReference;
 
                         lookup[dependency.Name] = fxReference;
                     }

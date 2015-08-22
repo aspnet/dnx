@@ -11,7 +11,7 @@ namespace Microsoft.Dnx.Runtime
 
         public LibraryDependencyType Type { get; set; } = LibraryDependencyType.Default;
 
-        public LibraryIdentity Library { get; set; }
+        public LibraryDescription Library { get; set; }
 
         public string Name
         {
@@ -29,7 +29,7 @@ namespace Microsoft.Dnx.Runtime
 
             if (Library != null)
             {
-                sb.Append("(" + Library + ")");
+                sb.Append("(" + Library.Identity + ")");
                 sb.Append(" ");
             }
 

@@ -30,7 +30,7 @@ namespace Microsoft.Dnx.Tooling.List
                 {
                     if (node.Resolved)
                     {
-                        return node.Dependencies.Select(dependency => libDictionary[dependency.Library]);
+                        return node.Dependencies.Select(dependency => libDictionary[dependency.Library.Identity]);
                     }
                     else
                     {

@@ -70,7 +70,14 @@ namespace Microsoft.Dnx.Runtime.Tests
                 LibraryTypes.Package,
                 dependencies.Select(d => new LibraryDependency()
                 {
-                    Library = new LibraryIdentity(d, version, isGacOrFrameworkReference: false),
+                    Library = new LibraryDescription(
+                        new LibraryRange(d, frameworkReference: false),
+                        new LibraryIdentity(d, version, isGacOrFrameworkReference: false),
+                        path: $"/{d}",
+                        type: LibraryTypes.Package,
+                        dependencies: Enumerable.Empty<LibraryDependency>(),
+                        assemblies: Enumerable.Empty<string>(),
+                        framework: null),
                     LibraryRange = new LibraryRange(d, frameworkReference: false)
                 }),
                 assemblies: Enumerable.Empty<string>(),

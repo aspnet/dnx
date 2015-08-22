@@ -1245,7 +1245,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                 Dependencies = library.Dependencies.Select(dependency => new DependencyItem
                 {
                     Name = dependency.Name,
-                    Version = dependency.Library?.Version?.ToString()
+                    Version = dependency.Library?.Identity?.Version?.ToString()
                 })
             };
         }
