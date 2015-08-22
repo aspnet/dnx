@@ -120,6 +120,7 @@ namespace Microsoft.Dnx.Runtime.Tests.FileGlobbing
             var exception = Assert.Throws<FileFormatException>(() =>
             {
                 var target = new ProjectFilesCollection(rawProject, string.Empty, string.Empty);
+                target.EnsureInitialized();
             });
 
             Assert.Equal(
