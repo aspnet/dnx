@@ -11,6 +11,11 @@ namespace Microsoft.Dnx.Runtime
 {
     public class ApplicationHostContext
     {
+        private List<LibraryDescription> _libraries;
+        private bool _validLockFile;
+        private bool _lockFileExists;
+        private string _lockFileValidationMessage;
+
         public Project Project { get; set; }
 
         public FrameworkName TargetFramework { get; set; }
@@ -27,7 +32,75 @@ namespace Microsoft.Dnx.Runtime
 
         public LibraryManager LibraryManager { get; private set; }
 
+        public static void InitializeForRuntime(ApplicationHostContext context)
+        {
+            InitializeCore(context);
+
+            context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, context._libraries);
+
+            AddLockFileDiagnostics(context);
+        }
+
         public static void Initialize(ApplicationHostContext context)
+        {
+            InitializeCore(context);
+
+            // Map dependencies
+            var lookup = context._libraries.ToDictionary(l => l.Identity.Name);
+            context._libraries = null;
+
+            // REVIEW: Do we need these if we aren't resolving reference assemblies?
+            var frameworkReferenceResolver = context.FrameworkResolver ?? new FrameworkReferenceResolver();
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(frameworkReferenceResolver);
+            var gacDependencyResolver = new GacDependencyResolver();
+            var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
+
+            // REVIEW: This can be done lazily
+            // Fix up dependencies
+            foreach (var library in lookup.Values.ToList())
+            {
+                library.Framework = library.Framework ?? context.TargetFramework;
+                foreach (var dependency in library.Dependencies)
+                {
+                    LibraryDescription dep;
+                    if (lookup.TryGetValue(dependency.Name, out dep))
+                    {
+                        // REVIEW: This isn't quite correct but there's a many to one relationship here.
+                        // Different ranges can resolve to this dependency but only one wins
+                        dep.RequestedRange = dependency.LibraryRange;
+                        dependency.Library = dep.Identity;
+                    }
+                    else if (dependency.LibraryRange.IsGacOrFrameworkReference)
+                    {
+                        var fxReference = referenceAssemblyDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
+                                          gacDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
+                                          unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
+
+                        fxReference.Framework = context.TargetFramework;
+                        fxReference.RequestedRange = dependency.LibraryRange;
+                        dependency.Library = fxReference.Identity;
+
+                        lookup[dependency.Name] = fxReference;
+                    }
+                    else
+                    {
+                        lookup[dependency.Name] = unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
+                    }
+                }
+            }
+
+            var libraries = lookup.Values.ToList();
+
+            context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, libraries);
+
+            AddLockFileDiagnostics(context);
+
+            // Clear all the temporary memory aggressively here if we don't care about reuse
+            // e.g. runtime scenarios
+            lookup.Clear();
+        }
+
+        private static void InitializeCore(ApplicationHostContext context)
         {
             if (context == null)
             {
@@ -78,8 +151,6 @@ namespace Microsoft.Dnx.Runtime
             }
 
             var libraries = new List<LibraryDescription>();
-            var lookup = new Dictionary<string, LibraryDescription>();
-
             var packageResolver = new PackageDependencyProvider(context.PackagesDirectory);
             var projectResolver = new ProjectDependencyProvider();
 
@@ -87,7 +158,6 @@ namespace Microsoft.Dnx.Runtime
 
             // Add the main project
             libraries.Add(mainProjectDescription);
-            lookup[context.Project.Name] = mainProjectDescription;
 
             if (lockFileLookup != null)
             {
@@ -100,7 +170,6 @@ namespace Microsoft.Dnx.Runtime
 
                     foreach (var library in target.Libraries)
                     {
-                        // REVIEW: Do we fallback to looking for projects on disk?
                         if (string.Equals(library.Type, "project"))
                         {
                             var projectLibrary = lockFileLookup.GetProject(library.Name);
@@ -109,7 +178,7 @@ namespace Microsoft.Dnx.Runtime
 
                             var projectDescription = projectResolver.GetDescription(context.TargetFramework, path, library);
 
-                            lookup[library.Name] = projectDescription;
+                            libraries.Add(projectDescription);
                         }
                         else
                         {
@@ -117,75 +186,37 @@ namespace Microsoft.Dnx.Runtime
 
                             var packageDescription = packageResolver.GetDescription(packageEntry, library);
 
-                            lookup[library.Name] = packageDescription;
+                            libraries.Add(packageDescription);
                         }
                     }
                 }
             }
 
-            var frameworkReferenceResolver = context.FrameworkResolver ?? new FrameworkReferenceResolver();
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(frameworkReferenceResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-            var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
+            context._libraries = libraries;
+            context._validLockFile = validLockFile;
+            context._lockFileExists = lockFileExists;
+            context._lockFileValidationMessage = lockFileValidationMessage;
 
-            // REVIEW: This can be done lazily
-            // Fix up dependencies
-            foreach (var library in lookup.Values.ToList())
-            {
-                library.Framework = library.Framework ?? context.TargetFramework;
-                foreach (var dependency in library.Dependencies)
-                {
-                    LibraryDescription dep;
-                    if (lookup.TryGetValue(dependency.Name, out dep))
-                    {
-                        // REVIEW: This isn't quite correct but there's a many to one relationship here.
-                        // Different ranges can resolve to this dependency but only one wins
-                        dep.RequestedRange = dependency.LibraryRange;
-                        dependency.Library = dep.Identity;
-                    }
-                    else if (dependency.LibraryRange.IsGacOrFrameworkReference)
-                    {
-                        var fxReference = referenceAssemblyDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
-                                          gacDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
-                                          unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
+            lockFileLookup?.Clear();
+        }
 
-                        fxReference.Framework = context.TargetFramework;
-                        fxReference.RequestedRange = dependency.LibraryRange;
-                        dependency.Library = fxReference.Identity;
-
-                        lookup[dependency.Name] = fxReference;
-                    }
-                    else
-                    {
-                        lookup[dependency.Name] = unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
-                    }
-                }
-            }
-
-            libraries = lookup.Values.ToList();
-
-            context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, libraries);
-
-            if (!validLockFile)
+        private static void AddLockFileDiagnostics(ApplicationHostContext context)
+        {
+            if (!context._validLockFile)
             {
                 context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
-                    $"{lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.",
+                    $"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.",
                     Path.Combine(context.Project.ProjectDirectory, LockFileReader.LockFileName),
                     DiagnosticMessageSeverity.Error));
             }
 
-            if (!lockFileExists)
+            if (!context._lockFileExists)
             {
                 context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
                     $"The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.",
                     Path.Combine(context.Project.ProjectDirectory, LockFileReader.LockFileName),
                     DiagnosticMessageSeverity.Error));
             }
-
-            // Clear all the temporary memory aggressively here if we don't care about reuse
-            // e.g. runtime scenarios
-            lockFileLookup?.Clear();
-            lookup.Clear();
         }
     }
 }

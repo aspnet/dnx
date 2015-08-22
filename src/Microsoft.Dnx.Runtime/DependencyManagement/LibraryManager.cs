@@ -100,8 +100,7 @@ namespace Microsoft.Dnx.Runtime
 
         public IEnumerable<LibraryDescription> GetLibraryDescriptions()
         {
-            EnsureGraph();
-            return _graph.Values.Select(l => l.Item2);
+            return _libraries;
         }
 
         public IList<DiagnosticMessage> GetGlobalDiagnostics()
@@ -211,7 +210,6 @@ namespace Microsoft.Dnx.Runtime
                 if (_graph == null)
                 {
                     _graph = _libraries.ToDictionary(l => l.Identity.Name, l => Tuple.Create(l.ToLibrary(), l), StringComparer.Ordinal);
-                    _libraries = null;
                 }
             }
         }

@@ -51,7 +51,16 @@ namespace Microsoft.Dnx.Compilation
 
             // This library manager represents the graph that will be used to *load* the compiler and other
             // build time related dependencies
-            var runtimeLibraryManager = _context.ProjectGraphProvider.GetProjectGraph(project, _context.ApplicationEnvironment.RuntimeFramework);
+
+            var context = new ApplicationHostContext
+            {
+                Project = project,
+                TargetFramework = targetFramework
+            };
+
+            ApplicationHostContext.InitializeForRuntime(context);
+
+            var runtimeLibraryManager = context.LibraryManager;
 
             var loadContext = new RuntimeLoadContext(runtimeLibraryManager, this, _context.DefaultLoadContext);
 
