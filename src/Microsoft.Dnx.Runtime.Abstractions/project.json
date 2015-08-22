@@ -22,7 +22,8 @@
                 "System.Runtime.Extensions": "4.0.11-beta-*",
                 "System.Threading.Tasks": "4.0.11-beta-*"
             }
-        }
+        },
+        "net45": { }
     },
     "scripts": {
         "postbuild": [
