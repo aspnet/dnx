@@ -61,29 +61,28 @@ namespace Microsoft.Dnx.Runtime
                 foreach (var dependency in library.Dependencies)
                 {
                     LibraryDescription dep;
-                    if (lookup.TryGetValue(dependency.Name, out dep))
+                    if (!lookup.TryGetValue(dependency.Name, out dep))
                     {
-                        // REVIEW: This isn't quite correct but there's a many to one relationship here.
-                        // Different ranges can resolve to this dependency but only one wins
-                        dep.RequestedRange = dependency.LibraryRange;
-                        dependency.Library = dep;
-                    }
-                    else if (dependency.LibraryRange.IsGacOrFrameworkReference)
-                    {
-                        var fxReference = referenceAssemblyDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
-                                          gacDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
-                                          unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
+                        if (dependency.LibraryRange.IsGacOrFrameworkReference)
+                        {
+                            dep = referenceAssemblyDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
+                                  gacDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
+                                  unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
 
-                        fxReference.Framework = context.TargetFramework;
-                        fxReference.RequestedRange = dependency.LibraryRange;
-                        dependency.Library = fxReference;
+                            dep.Framework = context.TargetFramework;
+                            lookup[dependency.Name] = dep;
+                        }
+                        else
+                        {
+                            dep = unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
+                            lookup[dependency.Name] = dep;
+                        }
+                    }
 
-                        lookup[dependency.Name] = fxReference;
-                    }
-                    else
-                    {
-                        lookup[dependency.Name] = unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
-                    }
+                    // REVIEW: This isn't quite correct but there's a many to one relationship here.
+                    // Different ranges can resolve to this dependency but only one wins
+                    dep.RequestedRange = dependency.LibraryRange;
+                    dependency.Library = dep;
                 }
             }
 

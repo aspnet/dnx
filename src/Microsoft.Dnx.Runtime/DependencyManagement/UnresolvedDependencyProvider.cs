@@ -18,15 +18,10 @@ namespace Microsoft.Dnx.Runtime
                 type: LibraryTypes.Unresolved,
                 dependencies: Enumerable.Empty<LibraryDependency>(),
                 assemblies: Enumerable.Empty<string>(),
-                framework: null)
+                framework: targetFramework)
             {
                 Resolved = false
             };
-        }
-
-        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
-        {
-            return Enumerable.Empty<string>();
         }
     }
 }

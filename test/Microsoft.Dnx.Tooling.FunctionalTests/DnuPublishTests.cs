@@ -514,6 +514,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 }")
                     .WriteTo(solutionDir);
 
+                DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: $"",
+                    workingDir: solutionDir);
+
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",

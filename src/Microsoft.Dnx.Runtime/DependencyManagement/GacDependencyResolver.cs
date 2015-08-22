@@ -45,7 +45,7 @@ namespace Microsoft.Dnx.Runtime
                 LibraryTypes.GlobalAssemblyCache,
                 Enumerable.Empty<LibraryDependency>(),
                 new[] { libraryRange.GetReferenceAssemblyName() },
-                framework: null);
+                framework: targetFramework);
         }
 
         private bool TryResolvePartialName(string name, SemanticVersion version, FrameworkName targetFramework, out string assemblyLocation)

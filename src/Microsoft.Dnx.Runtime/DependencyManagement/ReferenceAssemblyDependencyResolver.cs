@@ -44,7 +44,7 @@ namespace Microsoft.Dnx.Runtime
                     LibraryTypes.ReferenceAssembly,
                     Enumerable.Empty<LibraryDependency>(),
                     new[] { name },
-                    framework: null);
+                    framework: targetFramework);
             }
 
             return null;

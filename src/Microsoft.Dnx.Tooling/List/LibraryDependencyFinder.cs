@@ -15,10 +15,9 @@ namespace Microsoft.Dnx.Tooling.List
         public static IGraphNode<LibraryDescription> Build([NotNull] IEnumerable<LibraryDescription> libraries, 
                                                            [NotNull]Runtime.Project project)
         {
-            var libDictionary = libraries.ToDictionary(desc => desc.Identity);
+            var root = libraries.FirstOrDefault(p => string.Equals(p.Identity.Name, project.Name));
 
-            LibraryDescription root;
-            if (!libDictionary.TryGetValue(new LibraryIdentity(project.Name, project.Version, isGacOrFrameworkReference: false), out root))
+            if (root == null)
             {
                 throw new InvalidOperationException(string.Format("Failed to retrieve {0} of project {1} - {2}", typeof(LibraryDependency).Name, project.Name, project.Version));
             }
@@ -30,7 +29,7 @@ namespace Microsoft.Dnx.Tooling.List
                 {
                     if (node.Resolved)
                     {
-                        return node.Dependencies.Select(dependency => libDictionary[dependency.Library.Identity]);
+                        return node.Dependencies.Select(dependency => dependency.Library);
                     }
                     else
                     {
