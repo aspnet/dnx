@@ -50,7 +50,7 @@ namespace Microsoft.Dnx.Runtime.Sources.Impl
             }
         }
 
-#if DNX451
+#if DNX451 || NET45
         private object GetDataCore(string name)
         {
             return AppDomain.CurrentDomain.GetData(name);

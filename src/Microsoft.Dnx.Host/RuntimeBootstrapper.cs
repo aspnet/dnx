@@ -81,7 +81,7 @@ namespace Microsoft.Dnx.Host
                 CommandOptionType.MultipleValue);
             var optionDebug = app.Option("--debug", "Waits for the debugger to attach before beginning execution.",
                 CommandOptionType.NoValue);
-#if DNX451
+#if DNX451 || NET45
             var optionFramework = app.Option("--framework <FRAMEWORK_ID>", "Set the framework version to use when running (i.e. dnx451, dnx452, dnx46, ...)", CommandOptionType.SingleValue);
 #endif
 

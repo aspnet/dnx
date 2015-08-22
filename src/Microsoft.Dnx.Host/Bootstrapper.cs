@@ -47,7 +47,7 @@ namespace Microsoft.Dnx.Host
                     return Task.FromResult(-1);
                 }
 
-#if DNX451
+#if DNX451 || NET45
                 string applicationBaseDirectory = Environment.GetEnvironmentVariable(EnvironmentNames.AppBase);
 
                 if (string.IsNullOrEmpty(applicationBaseDirectory))
@@ -75,7 +75,7 @@ namespace Microsoft.Dnx.Host
                 serviceProvider.Add(typeof(IRuntimeEnvironment), env);
 
                 CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
-#if DNX451
+#if DNX451 || NET45
                 if (RuntimeEnvironmentHelper.IsMono)
                 {
                     // Setting this value because of a Execution Context bug in older versions of Mono
