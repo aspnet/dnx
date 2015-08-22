@@ -4,12 +4,12 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.Tooling
 {
     public interface IProjectResolver
     {
         IEnumerable<string> SearchPaths { get; }
 
-        bool TryResolveProject(string name, out Project project);
+        bool TryResolveProject(string name, out Runtime.Project project);
     }
 }
