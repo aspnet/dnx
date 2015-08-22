@@ -2006,6 +2006,15 @@ string expectedAppLockFile = @"{
             const string referenceProjectName = "Net45Library";
             const string configuration = "Debug";
 
+            // To run a published bundle, we should use its own packages folder, which is specified in global.json
+            // However, some environment variables can override packages folder location
+            // We need to erase those envrionment variables before running the output app
+            var env = new Dictionary<string, string>
+            {
+                { EnvironmentNames.Packages, null },
+                { EnvironmentNames.DnxPackages, null }
+            };
+
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var tempDir = TestUtils.CreateTempDir())
@@ -2041,6 +2050,17 @@ string expectedAppLockFile = @"{
                 // The wrapper project should be packed to a nupkg
                 Assert.False(Directory.Exists(Path.Combine(outputPath, "approot", "src", referenceProjectName)));
                 Assert.True(Directory.Exists(Path.Combine(outputPath, "approot", "packages", referenceProjectName)));
+
+                // The output bundled app should be runnable
+                var outputMainAppPath = Path.Combine(outputPath, "approot", "src", testAppName);
+                string stdOut, stdErr;
+                exitCode = TestUtils.ExecBootstrapper(
+                    runtimeHomeDir,
+                    arguments: $"-p {outputMainAppPath} run",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: env);
+                Assert.Equal(0, exitCode);
             }
         }
 
