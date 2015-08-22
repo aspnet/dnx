@@ -12,12 +12,12 @@ namespace Microsoft.Dnx.Runtime
 {
     public class ProjectDependencyProvider
     {
-        public ProjectDescription GetDescription(FrameworkName targetFramework, LockFileProjectLibrary projectLibrary, LockFileTargetLibrary targetLibrary)
+        public ProjectDescription GetDescription(FrameworkName targetFramework, string path, LockFileTargetLibrary targetLibrary)
         {
             Project project;
 
             // Can't find a project file with the name so bail
-            if (!Project.TryGetProject(projectLibrary.Path, out project))
+            if (!Project.TryGetProject(path, out project))
             {
                 return null;
             }

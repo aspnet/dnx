@@ -105,7 +105,9 @@ namespace Microsoft.Dnx.Runtime
                         {
                             var projectLibrary = lockFileLookup.GetProject(library.Name);
 
-                            var projectDescription = projectResolver.GetDescription(context.TargetFramework, projectLibrary, library);
+                            var path = Path.GetFullPath(Path.Combine(context.ProjectDirectory, projectLibrary.Path));
+
+                            var projectDescription = projectResolver.GetDescription(context.TargetFramework, path, library);
 
                             lookup[library.Name] = projectDescription;
                         }
