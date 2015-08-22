@@ -169,22 +169,6 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ProjectFileGlobbing
         }
 
         [Fact]
-        public void IncludeCodesUpperLevelWithSlashLegacy()
-        {
-            var testFilesCollection = CreateFilesCollection(@"
-{
-    ""compileBuiltIn"": """",
-    ""code"": ""../../lib/**/*.cs""
-}
-", @"src\project");
-
-            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
-                @"src\project\..\..\lib\source6.cs",
-                @"src\project\..\..\lib\sub3\source7.cs",
-                @"src\project\..\..\lib\sub4\source8.cs");
-        }
-
-        [Fact]
         public void IncludeCodesUpperLevel()
         {
             var testFilesCollection = CreateFilesCollection(@"
@@ -207,27 +191,6 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ProjectFileGlobbing
 {
     ""compileBuiltIn"": """",
     ""compile"": ""**\\*.cs;..\\..\\lib\\**\\*.cs""
-}
-", @"src\project");
-
-            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
-                @"src\project\..\..\lib\source6.cs",
-                @"src\project\..\..\lib\sub3\source7.cs",
-                @"src\project\..\..\lib\sub4\source8.cs",
-                @"src\project\source1.cs",
-                @"src\project\sub\source2.cs",
-                @"src\project\sub\source3.cs",
-                @"src\project\sub2\source4.cs",
-                @"src\project\sub2\source5.cs");
-        }
-
-        [Fact]
-        public void IncludeCodesUsingUpperLevelAndRecursiveLegacy()
-        {
-            var testFilesCollection = CreateFilesCollection(@"
-{
-    ""compileBuiltIn"": """",
-    ""code"": ""**\\*.cs;..\\..\\lib\\**\\*.cs""
 }
 ", @"src\project");
 
@@ -386,14 +349,15 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ProjectFileGlobbing
         }
 
         [Fact]
-        public void ThrowForAbosolutePath()
+        public void ThrowForAbsolutePath()
         {
             var absolutePath = Path.Combine(Root.DirPath, @"source5.cs");
             var projectJsonContent = @"{""compile"": """ + absolutePath.Replace("\\", "\\\\") + @"""}";
 
             var exception = Assert.Throws<FileFormatException>(() =>
             {
-                CreateFilesCollection(projectJsonContent, @"src\project");
+                var filesCollection = CreateFilesCollection(projectJsonContent, @"src\project");
+                filesCollection.EnsureInitialized();
             });
 
             Assert.Equal(exception.Message, "The 'compile' property cannot be a rooted path.");
@@ -441,7 +405,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ProjectFileGlobbing
     ""compileBuiltIn"": """",
     ""compile"": ""..\\project2\\"",
     ""exclude"": ""..\\project2\\compiler\\**\\*.txt"",
-    ""resources"": ""..\\project2\\compiler\\resources\\**\\*.*""
+    ""resource"": ""..\\project2\\compiler\\resources\\**\\*.*""
 }
 ", @"src\project");
 

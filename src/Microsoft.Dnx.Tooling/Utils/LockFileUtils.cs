@@ -76,14 +76,7 @@ namespace Microsoft.Dnx.Tooling.Utils
                 Version = library.Version
             };
 
-            if (previousLibrary?.Name == library.Name && previousLibrary?.Version == library.Version)
-            {
-                result.Path = previousLibrary.Path;
-            }
-            else
-            {
-                result.Path = PathUtility.GetRelativePath(project.ProjectFilePath, library.ProjectFilePath, '/');
-            }
+            result.Path = PathUtility.GetRelativePath(project.ProjectFilePath, library.ProjectFilePath, '/');
 
             return result;
         }
