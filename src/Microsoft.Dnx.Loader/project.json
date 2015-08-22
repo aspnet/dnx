@@ -19,7 +19,8 @@
                 "System.AppContext": "4.0.1-beta-*",
                 "System.Threading": "4.0.11-beta-*"
             }
-        }
+        },
+        "net45": { }
     },
 
     "scripts": {
