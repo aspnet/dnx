@@ -149,6 +149,7 @@ namespace Microsoft.Dnx.Runtime
                                           gacDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
                                           unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
 
+                        fxReference.Framework = context.TargetFramework;
                         fxReference.RequestedRange = dependency.LibraryRange;
                         dependency.Library = fxReference.Identity;
 

@@ -37,6 +37,8 @@ namespace Microsoft.Dnx.Runtime
 
             var resolved = compatible;
             var dependencies = new List<LibraryDependency>(targetLibrary.Dependencies.Count + targetLibrary.FrameworkAssemblies.Count);
+            PopulateDependencies(dependencies, targetLibrary);
+
             var packageDescription = new PackageDescription(
                 new LibraryRange(package.Name, frameworkReference: false)
                 {

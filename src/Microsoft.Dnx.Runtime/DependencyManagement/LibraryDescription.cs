@@ -17,8 +17,8 @@ namespace Microsoft.Dnx.Runtime
             LibraryRange requestedRange,
             LibraryIdentity identity,
             string path,
-            string type, 
-            IEnumerable<LibraryDependency> dependencies, 
+            string type,
+            IEnumerable<LibraryDependency> dependencies,
             IEnumerable<string> assemblies,
             FrameworkName framework)
         {
@@ -52,6 +52,11 @@ namespace Microsoft.Dnx.Runtime
                 Type,
                 Dependencies.Select(d => d.Name),
                 Assemblies.Select(a => new AssemblyName(a)));
+        }
+
+        public override string ToString()
+        {
+            return $"{Identity} ({Type}) = {Path}";
         }
     }
 }

@@ -21,7 +21,7 @@ namespace Microsoft.Dnx.Runtime
         public const string BootstrapperHostName = RuntimeShortName + ".host";
         public const string BootstrapperClrName = RuntimeShortName + ".clr";
 
-        public const int LockFileVersion = 1;
+        public const int LockFileVersion = 2;
 
         public static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(10);
         public static readonly string AppConfigurationFileName = "app.config";
