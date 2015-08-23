@@ -110,10 +110,15 @@ namespace Microsoft.Dnx.Runtime.Servicing
 
             if (background)
             {
-                ThreadPool.QueueUserWorkItem(_ =>
+#if DNX451
+                ThreadPool.UnsafeQueueUserWorkItem(state =>
+#else
+                ThreadPool.QueueUserWorkItem(state =>
+#endif
                 {
-                    WriteAllBreadcrumbsInternal();
-                });
+                    ((Breadcrumbs)state).WriteAllBreadcrumbsInternal();
+                },
+                this);
             }
             else
             {
