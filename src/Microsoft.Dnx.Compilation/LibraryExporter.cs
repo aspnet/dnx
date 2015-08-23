@@ -146,7 +146,7 @@ namespace Microsoft.Dnx.Compilation
                 {
                     var childNode = new Node
                     {
-                        Library = LibraryManager.GetLibraryDescription(dependency.Name),
+                        Library =  dependency.Library,
                         Parent = node
                     };
 
