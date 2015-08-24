@@ -22,7 +22,7 @@ namespace Microsoft.Dnx.ApplicationHost
 {
     public class DefaultHost
     {
-        private LibraryManager _libraryManager;
+        private ApplicationHostContext _applicationHostContext;
 
         private readonly string _projectDirectory;
         private readonly FrameworkName _targetFramework;
@@ -70,10 +70,7 @@ namespace Microsoft.Dnx.ApplicationHost
 
             AddBreadcrumbs();
 
-            var unresolvedLibs = _libraryManager.GetLibraryDescriptions().Where(l => !l.Resolved);
-
-            // If there's any unresolved dependencies then complain
-            if (unresolvedLibs.Any())
+            if (!_applicationHostContext.MainProject.Resolved)
             {
                 var targetFrameworkShortName = VersionUtility.GetShortFrameworkName(_targetFramework);
                 var runtimeFrameworkInfo = $@"Current runtime target framework: '{_targetFramework} ({targetFrameworkShortName})'
@@ -82,21 +79,10 @@ namespace Microsoft.Dnx.ApplicationHost
 
                 // If the main project cannot be resolved, it means the app doesn't support current target framework
                 // (i.e. project.json doesn't contain a framework that is compatible with target framework of current runtime)
-                if (unresolvedLibs.Any(l => string.Equals(l.Identity.Name, Project.Name)))
-                {
-                    exceptionMsg = $@"The current runtime target framework is not compatible with '{Project.Name}'.
 
+                exceptionMsg = $@"The current runtime target framework is not compatible with '{Project.Name}'.
 {runtimeFrameworkInfo}
 Please make sure the runtime matches a framework specified in {Project.ProjectFileName}";
-                }
-                else
-                {
-                    var globalDiagnosticsErrorMessage = string.Join(string.Empty,
-                        _libraryManager.GetGlobalDiagnostics().Select(x => $"{Environment.NewLine}{x.FormattedMessage}"));
-                    exceptionMsg = $@"{_libraryManager.GetMissingDependenciesWarning(_targetFramework)}{globalDiagnosticsErrorMessage}
-{runtimeFrameworkInfo}";
-                }
-
                 throw new InvalidOperationException(exceptionMsg);
             }
 
@@ -135,7 +121,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             Logger.TraceInformation("[{0}]: Project configuration: {1}", GetType().Name, options.Configuration);
             Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, applicationHostContext.PackagesDirectory);
 
-            _libraryManager = applicationHostContext.LibraryManager;
+            _applicationHostContext = applicationHostContext;
 
             _project = applicationHostContext.Project;
 
@@ -164,12 +150,12 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            _serviceProvider.Add(typeof(ILibraryManager), _libraryManager);
+            _serviceProvider.Add(typeof(ILibraryManager), _applicationHostContext.LibraryManager);
 
             // TODO: Make this lazy
             _serviceProvider.Add(typeof(ILibraryExporter), new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration)));
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
-            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_libraryManager));
+            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_applicationHostContext.LibraryManager));
 
             if (options.CompilationServerPort.HasValue)
             {
@@ -183,9 +169,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _loaders.Add(new ProjectAssemblyLoader(
                 loadContextAccessor,
                 compilationEngine,
-                _libraryManager));
+                _applicationHostContext.LibraryManager));
 
-            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, _libraryManager));
+            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, _applicationHostContext.LibraryManager));
         }
 
         private void AddBreadcrumbs()
@@ -199,7 +185,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         private void AddPackagesBreadcrumb()
         {
-            foreach (var library in _libraryManager.GetLibraryDescriptions())
+            foreach (var library in _applicationHostContext.LibraryManager.GetLibraryDescriptions())
             {
                 if (library.Type == LibraryTypes.Package)
                 {

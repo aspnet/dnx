@@ -31,6 +31,11 @@ namespace Microsoft.Dnx.Compilation
             // Export the project
             var export = exporter.GetExport(project.Name, aspect);
 
+            if (export == null)
+            {
+                return null;
+            }
+
             // Load the metadata reference
             foreach (var projectReference in export.MetadataReferences.OfType<IMetadataProjectReference>())
             {

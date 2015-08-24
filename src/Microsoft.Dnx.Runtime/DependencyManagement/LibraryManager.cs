@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using System.Text;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
@@ -103,11 +102,6 @@ namespace Microsoft.Dnx.Runtime
             return _libraries;
         }
 
-        public IList<DiagnosticMessage> GetGlobalDiagnostics()
-        {
-            return _diagnostics;
-        }
-
         public IList<DiagnosticMessage> GetAllDiagnostics()
         {
             var messages = new List<DiagnosticMessage>();
@@ -179,28 +173,6 @@ namespace Microsoft.Dnx.Runtime
             }
 
             return messages;
-        }
-
-        public string GetMissingDependenciesWarning(FrameworkName targetFramework)
-        {
-            var sb = new StringBuilder();
-
-            // TODO: Localize messages
-
-            sb.AppendFormat("Failed to resolve the following dependencies for target framework '{0}':", targetFramework.ToString());
-            sb.AppendLine();
-
-            foreach (var d in GetLibraryDescriptions().Where(d => !d.Resolved).OrderBy(d => d.Identity.Name))
-            {
-                sb.Append("   " + d.Identity);
-                if (!d.Compatible)
-                {
-                    sb.Append(" (incompatible)");
-                }
-                sb.AppendLine();
-            }
-
-            return sb.ToString();
         }
 
         private void EnsureGraph()

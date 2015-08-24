@@ -18,6 +18,9 @@ namespace Microsoft.Dnx.Runtime
 
         public Project Project { get; set; }
 
+        // TODO: Remove this, it's kinda hacky
+        public ProjectDescription MainProject { get; set; }
+
         public FrameworkName TargetFramework { get; set; }
 
         public string RootDirectory { get; set; }
@@ -38,7 +41,15 @@ namespace Microsoft.Dnx.Runtime
 
             context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, context._libraries);
 
-            AddLockFileDiagnostics(context);
+            if (!context._validLockFile)
+            {
+                throw new InvalidOperationException($"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.");
+            }
+
+            if (!context._lockFileExists)
+            {
+                throw new InvalidOperationException("The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.");
+            }
         }
 
         public static void Initialize(ApplicationHostContext context)
@@ -151,10 +162,10 @@ namespace Microsoft.Dnx.Runtime
             var packageResolver = new PackageDependencyProvider(context.PackagesDirectory);
             var projectResolver = new ProjectDependencyProvider();
 
-            var mainProjectDescription = projectResolver.GetDescription(context.TargetFramework, context.Project);
+            context.MainProject = projectResolver.GetDescription(context.TargetFramework, context.Project); ;
 
             // Add the main project
-            libraries.Add(mainProjectDescription);
+            libraries.Add(context.MainProject);
 
             if (lockFileLookup != null)
             {
