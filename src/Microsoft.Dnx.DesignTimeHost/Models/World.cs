@@ -42,5 +42,6 @@ namespace Microsoft.Dnx.DesignTimeHost.Models
         public DiagnosticsListMessage DependencyDiagnostics { get; set; }
         public DiagnosticsListMessage CompilationDiagnostics { get; set; }
         public OutputsMessage Outputs { get; set; }
+        public IList<string> Resources { get; set; }
     }
 }

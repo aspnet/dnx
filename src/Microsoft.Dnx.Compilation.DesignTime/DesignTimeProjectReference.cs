@@ -49,18 +49,41 @@ namespace Microsoft.Dnx.Compilation.DesignTime
                 throw new DesignTimeCompilationException(_response.Diagnostics);
             }
 
-            if (_response.AssemblyPath != null)
+            byte[] assemblyBytes = null;
+            byte[] pdbBytes = null;
+            var resourceExtension = Path.GetExtension(assemblyName.Name);
+
+            if (!string.IsNullOrEmpty(resourceExtension))
             {
-                return loadContext.LoadFile(_response.AssemblyPath);
+                if (!string.IsNullOrEmpty(assemblyName.CultureName))
+                {
+                    _response.ResourcesBytes.TryGetValue(assemblyName.CultureName, out assemblyBytes);
+                    _response.ResourcesBytes.TryGetValue(assemblyName.CultureName, out pdbBytes);
+                }
+            }
+            else
+            {
+                if (_response.AssemblyPath != null)
+                {
+                    return loadContext.LoadFile(_response.AssemblyPath);
+                }
+
+                assemblyBytes = _response.AssemblyBytes;
+                pdbBytes = _response.PdbBytes;
             }
 
-            if (_response.PdbBytes == null)
+            if (assemblyBytes == null)
             {
-                return loadContext.LoadStream(new MemoryStream(_response.AssemblyBytes), assemblySymbols: null);
+                return null;
             }
 
-            return loadContext.LoadStream(new MemoryStream(_response.AssemblyBytes),
-                                           new MemoryStream(_response.PdbBytes));
+            if (pdbBytes == null)
+            {
+                 return loadContext.LoadStream(new MemoryStream(assemblyBytes), assemblySymbols: null);
+            }
+
+            return loadContext.LoadStream(new MemoryStream(assemblyBytes),
+                                           new MemoryStream(pdbBytes));
         }
 
         public void EmitReferenceAssembly(Stream stream)

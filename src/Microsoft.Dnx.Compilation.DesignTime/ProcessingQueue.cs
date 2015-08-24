@@ -83,6 +83,26 @@ namespace Microsoft.Dnx.Compilation.DesignTime
                             var pdbBytesLength = _reader.ReadInt32();
                             compileResponse.PdbBytes = _reader.ReadBytes(pdbBytesLength);
 
+                            var resourcesBytesCount = _reader.ReadInt32();
+                            compileResponse.ResourcesBytes = new Dictionary<string, byte[]>();
+                            for (int i = 0; i < resourcesBytesCount; i++)
+                            {
+                                var key = _reader.ReadString();
+                                int valueLength = _reader.ReadInt32();
+                                var value = _reader.ReadBytes(valueLength);
+                                compileResponse.ResourcesBytes[key] = value;
+                            }
+
+                            var resourcesPdbBytesCount = _reader.ReadInt32();
+                            compileResponse.ResourcesPdbBytes = new Dictionary<string, byte[]>();
+                            for (int i = 0; i < resourcesPdbBytesCount; i++)
+                            {
+                                var key = _reader.ReadString();
+                                int valueLength = _reader.ReadInt32();
+                                var value = _reader.ReadBytes(valueLength);
+                                compileResponse.ResourcesPdbBytes[key] = value;
+                            }
+
                             // Skip over blobs that aren't understood
                             for (int i = 0; i < blobs - 2; i++)
                             {

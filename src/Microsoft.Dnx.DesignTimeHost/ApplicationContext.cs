@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -52,7 +53,11 @@ namespace Microsoft.Dnx.DesignTimeHost
         private readonly ProtocolManager _protocolManager;
         private readonly CompilationEngine _compilationEngine;
         private int? _contextProtocolVersion;
-
+#if DNX451
+        StreamWriter logFile = new StreamWriter(@"C:\\ProjectK\\test.txt");
+#else
+        StreamWriter logFile = new StreamWriter(new MemoryStream());
+#endif
         public ApplicationContext(IServiceProvider services,
                                   IApplicationEnvironment applicationEnvironment,
                                   IAssemblyLoadContextAccessor loadContextAccessor,
@@ -386,7 +391,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                 // Trigger that the project outputs changes in case the runtime process
                 // hasn't died yet
                 TriggerProjectOutputsChanged();
-
+                
                 state = DoInitialWork(_appPath.Value, _configuration.Value, triggerBuildOutputs, triggerDependencies);
             }
 
@@ -418,6 +423,20 @@ namespace Microsoft.Dnx.DesignTimeHost
             foreach (var project in state.Projects)
             {
                 var frameworkData = project.TargetFramework;
+                var resourceLocales = new List<string>();
+                logFile.WriteLine("project.Resources  " + project.Resources);
+                foreach (var resource in project.Resources)
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(resource.FileName);
+                    logFile.WriteLine("resx fileName " + fileName);
+                    var locale = Path.GetExtension(fileName).Replace(".", ""); ;
+                    if (!string.IsNullOrEmpty(locale))
+                    {
+                        Console.WriteLine("Locale  " + locale);
+                        logFile.WriteLine("Locale  " + locale);
+                        resourceLocales.Add(locale);
+                    }
+                }
 
                 var projectWorld = new ProjectWorld
                 {
@@ -447,7 +466,8 @@ namespace Microsoft.Dnx.DesignTimeHost
                         FileReferences = project.DependencyInfo.References,
                         RawReferences = project.DependencyInfo.RawReferences
                     },
-                    DependencyDiagnostics = new DiagnosticsListMessage(project.Diagnostics, frameworkData)
+                    DependencyDiagnostics = new DiagnosticsListMessage(project.Diagnostics, frameworkData),
+                    Resources = resourceLocales
                 };
 
                 _local.Projects[project.FrameworkName] = projectWorld;
@@ -507,10 +527,43 @@ namespace Microsoft.Dnx.DesignTimeHost
                         var engine = new NonLoadingLoadContext();
 
                         compilation.ProjectReference.Load(new AssemblyName(_local.ProjectInformation.Name), engine);
+                        Console.WriteLine(_local.ProjectInformation.Name + " successful");
+                        logFile.WriteLine(_local.ProjectInformation.Name + " successful");
+                        logFile.Flush();
 
                         compilation.AssemblyBytes = engine.AssemblyBytes ?? new byte[0];
                         compilation.PdbBytes = engine.PdbBytes ?? new byte[0];
                         compilation.AssemblyPath = engine.AssemblyPath;
+
+                        foreach(var resourceLocale in project.Resources)
+                        {
+                            engine = new NonLoadingLoadContext();
+
+                            var assemblyName = new AssemblyName(_local.ProjectInformation.Name + ".resources");
+#if DNXCORE50
+                            assemblyName.CultureName = resourceLocale;
+#elif DNX451
+                            assemblyName.CultureInfo = new CultureInfo(resourceLocale);
+#else
+#error Unhandled target framework
+#endif
+                            Console.WriteLine(_local.ProjectInformation.Name + ".resources " + assemblyName.CultureName);
+                            logFile.WriteLine(_local.ProjectInformation.Name + ".resources " + assemblyName.CultureName);
+                            compilation.ProjectReference.Load(assemblyName, engine);
+                            Console.WriteLine(_local.ProjectInformation.Name + ".resources" + " successful " + assemblyName.CultureName);
+                            logFile.WriteLine(_local.ProjectInformation.Name + ".resources " + assemblyName.CultureName);
+                            logFile.Flush();
+                            compilation.ResourcesBytes = new Dictionary<string, byte[]>();
+                            compilation.ResourcesPdbBytes = new Dictionary<string, byte[]>();
+                            compilation.ResourcesBytes.Add(resourceLocale, engine.AssemblyBytes ?? new byte[0]);
+                            Console.WriteLine("Resource bytes length " + engine.AssemblyBytes.Length);
+                            logFile.WriteLine("Resource bytes length " + engine.AssemblyBytes.Length);
+                            logFile.Flush();
+                            compilation.ResourcesPdbBytes.Add(resourceLocale, engine.PdbBytes ?? new byte[0]);
+                            //Console.WriteLine("Resource pdb bytes length " + engine.PdbBytes.Length);
+                            //logFile.WriteLine("Resource pdb bytes length " + engine.PdbBytes.Length);
+                            //logFile.Flush();
+                        }
                     }
 
                     project.Outputs = new OutputsMessage
@@ -519,7 +572,9 @@ namespace Microsoft.Dnx.DesignTimeHost
                         AssemblyBytes = compilation.AssemblyBytes ?? new byte[0],
                         PdbBytes = compilation.PdbBytes ?? new byte[0],
                         AssemblyPath = compilation.AssemblyPath,
-                        EmbeddedReferences = compilation.EmbeddedReferences
+                        EmbeddedReferences = compilation.EmbeddedReferences,
+                        ResourcesBytes = compilation.ResourcesBytes,
+                        ResourcesPdbBytes  = compilation.ResourcesPdbBytes
                     };
 
                     if (project.CompilationDiagnostics == null)
@@ -963,6 +1018,20 @@ namespace Microsoft.Dnx.DesignTimeHost
             writer.Write(project.Outputs.AssemblyBytes);
             writer.Write(project.Outputs.PdbBytes.Length);
             writer.Write(project.Outputs.PdbBytes);
+            writer.Write(project.Outputs.ResourcesBytes.Count);
+            foreach (var pair in project.Outputs.ResourcesBytes)
+            {
+                writer.Write(pair.Key);
+                writer.Write(pair.Value.Length);
+                writer.Write(pair.Value);
+            }
+            writer.Write(project.Outputs.ResourcesPdbBytes.Count);
+            foreach (var pair in project.Outputs.ResourcesPdbBytes)
+            {
+                writer.Write(pair.Key);
+                writer.Write(pair.Value.Length);
+                writer.Write(pair.Value);
+            }
         }
 
         private bool IsDifferent<T>(T local, T remote) where T : class
@@ -1047,6 +1116,14 @@ namespace Microsoft.Dnx.DesignTimeHost
                     dependencySources.AddRange(reference.Project.Files.SharedFiles);
                 }
 
+                var resources = CompositeResourceProvider.Default.GetResources(project);
+                foreach (var res in resources)
+                {
+                    Console.WriteLine(res.FileName);
+                    logFile.WriteLine("ResFileName " + res.FileName);
+                    logFile.Flush();
+                }
+
                 var projectInfo = new ProjectInfo()
                 {
                     Path = appPath,
@@ -1058,7 +1135,8 @@ namespace Microsoft.Dnx.DesignTimeHost
                                                  .ToCompilationSettings(frameworkName),
                     SourceFiles = dependencySources,
                     Diagnostics = dependencyInfo.HostContext.LibraryManager.GetAllDiagnostics().ToList(),
-                    DependencyInfo = dependencyInfo
+                    DependencyInfo = dependencyInfo,
+                    Resources = resources
                 };
 
                 state.Projects.Add(projectInfo);
@@ -1326,6 +1404,8 @@ namespace Microsoft.Dnx.DesignTimeHost
             public IList<DiagnosticMessage> Diagnostics { get; set; }
 
             public DependencyInfo DependencyInfo { get; set; }
+
+            public IList<ResourceDescriptor> Resources { get; set; }
         }
 
         private class DependencyInfo
@@ -1368,6 +1448,10 @@ namespace Microsoft.Dnx.DesignTimeHost
             public byte[] PdbBytes { get; set; }
 
             public string AssemblyPath { get; set; }
+
+            public IDictionary<string, byte[]> ResourcesBytes { get; set; }
+
+            public IDictionary<string, byte[]> ResourcesPdbBytes { get; set; }
         }
 
         private class CompiledAssemblyState

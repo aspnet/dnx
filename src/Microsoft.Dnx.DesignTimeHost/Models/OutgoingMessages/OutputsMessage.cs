@@ -16,5 +16,9 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
         public byte[] PdbBytes { get; set; }
 
         public string AssemblyPath { get; set; }
+
+        public IDictionary<string, byte[]> ResourcesBytes { get; set; }
+
+        public IDictionary<string, byte[]> ResourcesPdbBytes { get; set; }
     }
 }
