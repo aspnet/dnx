@@ -29,7 +29,7 @@ namespace Microsoft.Dnx.Runtime
         private readonly string _projectDirectory;
         private readonly string _projectFilePath;
 
-        private readonly JsonObject _rawProject;
+        private JsonObject _rawProject;
         private bool _initialized;
 
         internal ProjectFilesCollection(JsonObject rawProject, string projectDirectory, string projectFilePath)
@@ -77,6 +77,7 @@ namespace Microsoft.Dnx.Runtime
             _namedResources = NamedResourceReader.ReadNamedResources(_rawProject, _projectFilePath);
 
             _initialized = true;
+            _rawProject = null;
         }
 
         public IEnumerable<string> SourceFiles
