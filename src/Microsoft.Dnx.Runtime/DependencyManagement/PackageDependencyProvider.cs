@@ -79,15 +79,7 @@ namespace Microsoft.Dnx.Runtime
 
         private void Initialize(PackageDescription package)
         {
-            string packagePath = ResolvePackagePath(package);
-
-            // If the package path doesn't exist then mark this dependency as unresolved
-            if (!Directory.Exists(packagePath))
-            {
-                package.Resolved = false;
-            }
-
-            package.Path = packagePath;
+            package.Path = ResolvePackagePath(package);
 
             var assemblies = new List<string>();
 

@@ -68,6 +68,13 @@ namespace Microsoft.Dnx.Runtime
             // Fix up dependencies
             foreach (var library in lookup.Values.ToList())
             {
+                if (string.Equals(library.Type, LibraryTypes.Package) &&
+                    !Directory.Exists(library.Path))
+                {
+                    // If the package path doesn't exist then mark this dependency as unresolved
+                    library.Resolved = false;
+                }
+
                 library.Framework = library.Framework ?? context.TargetFramework;
                 foreach (var dependency in library.Dependencies)
                 {
