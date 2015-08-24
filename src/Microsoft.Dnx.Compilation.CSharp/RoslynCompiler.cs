@@ -185,7 +185,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 Environment.GetEnvironmentVariable(EnvironmentNames.BuildKeyFile) ??
                 compilationContext.Compilation.Options.CryptoKeyFile;
 
-            if(!string.IsNullOrEmpty(keyFile) && !RuntimeEnvironmentHelper.IsMono)
+            if (!string.IsNullOrEmpty(keyFile) && !RuntimeEnvironmentHelper.IsMono)
             {
 #if DNX451
                 var delaySignString = Environment.GetEnvironmentVariable(EnvironmentNames.BuildDelaySign);
@@ -441,7 +441,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 }
             });
 
-            return metadata.GetReference();
+            return metadata.GetReference(filePath: path);
         }
 
         private class CompilationModules
