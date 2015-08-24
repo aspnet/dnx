@@ -41,14 +41,14 @@ namespace Microsoft.Dnx.Runtime
 
             context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, context._libraries);
 
-            if (!context._validLockFile)
-            {
-                throw new InvalidOperationException($"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.");
-            }
-
             if (!context._lockFileExists)
             {
                 throw new InvalidOperationException("The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.");
+            }
+
+            if (!context._validLockFile)
+            {
+                throw new InvalidOperationException($"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.");
             }
         }
 
@@ -144,7 +144,7 @@ namespace Microsoft.Dnx.Runtime
 
             var projectLockJsonPath = Path.Combine(context.ProjectDirectory, LockFileReader.LockFileName);
             var lockFileExists = File.Exists(projectLockJsonPath);
-            var validLockFile = false;
+            var validLockFile = true;
             var skipLockFileValidation = context.SkipLockfileValidation;
             string lockFileValidationMessage = null;
 
@@ -217,18 +217,18 @@ namespace Microsoft.Dnx.Runtime
 
         private static void AddLockFileDiagnostics(ApplicationHostContext context)
         {
-            if (!context._validLockFile)
-            {
-                context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
-                    $"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.",
-                    Path.Combine(context.Project.ProjectDirectory, LockFileReader.LockFileName),
-                    DiagnosticMessageSeverity.Error));
-            }
-
             if (!context._lockFileExists)
             {
                 context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
                     $"The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.",
+                    Path.Combine(context.Project.ProjectDirectory, LockFileReader.LockFileName),
+                    DiagnosticMessageSeverity.Error));
+            }
+
+            if (!context._validLockFile)
+            {
+                context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
+                    $"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.",
                     Path.Combine(context.Project.ProjectDirectory, LockFileReader.LockFileName),
                     DiagnosticMessageSeverity.Error));
             }
