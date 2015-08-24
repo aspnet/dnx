@@ -37,18 +37,21 @@ namespace Microsoft.Dnx.Runtime
 
         public static void InitializeForRuntime(ApplicationHostContext context)
         {
+            InitializeForRuntime(context, throwOnInvalidLockFile: false);
+        }
+
+        public static void InitializeForRuntime(ApplicationHostContext context, bool throwOnInvalidLockFile)
+        {
             InitializeCore(context);
 
             context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, context._libraries);
 
-            if (!context._lockFileExists)
+            if (throwOnInvalidLockFile)
             {
-                throw new InvalidOperationException("The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.");
-            }
-
-            if (!context._validLockFile)
-            {
-                throw new InvalidOperationException($"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.");
+                if (!context._validLockFile)
+                {
+                    throw new InvalidOperationException($"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.");
+                }
             }
         }
 

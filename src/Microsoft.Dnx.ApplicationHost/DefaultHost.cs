@@ -114,7 +114,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 TargetFramework = _targetFramework
             };
 
-            ApplicationHostContext.InitializeForRuntime(applicationHostContext);
+            ApplicationHostContext.InitializeForRuntime(applicationHostContext, throwOnInvalidLockFile: true);
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, applicationHostContext.ProjectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, applicationHostContext.RootDirectory);
