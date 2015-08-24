@@ -229,6 +229,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 var modules = new List<ICompileModule>();
 
                 var preprocessAssembly = _loadContext.Load(new AssemblyName(target.Name + "!preprocess"));
+
                 foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                 {
                     if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))

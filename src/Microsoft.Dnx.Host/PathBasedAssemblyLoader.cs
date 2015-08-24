@@ -23,10 +23,11 @@ namespace Microsoft.Dnx.Host
 
         public Assembly Load(AssemblyName assemblyName)
         {
-            // searchPaths could be in the following pattern
+            // searchPaths could be in the following patterns
             // C:\HelloWorld\bin\HelloWorld.dll or 
             // C:\HelloWorld\bin\HelloWorld.exe 
             // C:\HelloWorld\bin\fr-FR\HelloWorld.resources.dll
+            // C:\HelloWorld\bin\fr-FR\HelloWorld.resources.exe
             foreach (var searchPath in _searchPaths)
             {
                 var path = searchPath;

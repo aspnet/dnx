@@ -2269,14 +2269,13 @@ string expectedAppLockFile = @"{
         [MemberData(nameof(RuntimeComponents))]
         public void PublishWithNoSourceOption_AppHasResourceFile(string flavor, string os, string architecture)
         {
-            const string testApp = @"ResourcesTestProjects/ReadFromResources";
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var tempDir = TestUtils.CreateTempDir())
             {
                 var publishOutputPath = Path.Combine(tempDir, "output");
-                var appPath = Path.Combine(tempDir, testApp);
-                TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), testApp), appPath);
+                var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "ReadFromResources");
+                TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "ReadFromResources"), appPath);
                 var workingDir = Path.Combine(appPath, "src", "ReadFromResources");
 
                 //Restore the application
@@ -2301,10 +2300,13 @@ string expectedAppLockFile = @"{
 
                 Assert.Equal(0, exitCode);
 
-                Assert.True(File.Exists(Path.Combine(publishOutputPath,
-                    "approot", "packages", "ReadFromResources", "1.0.0", "lib", "dnx451","fr-FR", "ReadFromResources.resources.dll")));
-                Assert.True(File.Exists(Path.Combine(publishOutputPath,
-                    "approot", "packages", "ReadFromResources", "1.0.0", "lib", "dnxcore50", "fr-FR", "ReadFromResources.resources.dll")));
+                var appOutputPath = Path.Combine(publishOutputPath, "approot", "packages", "ReadFromResources");
+                var versionDir = new DirectoryInfo(appOutputPath).GetDirectories().First().FullName;
+
+                Assert.True(File.Exists(Path.Combine(versionDir,
+                    "lib", "dnx451", "fr-FR", "ReadFromResources.resources.dll")), "Resources assembly did not get published for dnx451");
+                Assert.True(File.Exists(Path.Combine(versionDir,
+                    "lib", "dnxcore50", "fr-FR", "ReadFromResources.resources.dll")), "Resources assembly did not get published for dnxcore50");
             }
         }
 

@@ -42,7 +42,7 @@ namespace Bootstrapper.FunctionalTests
 
                 string stdOut;
                 string stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                var exitCode = TestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: "-p . run",
                     stdOut: out stdOut,

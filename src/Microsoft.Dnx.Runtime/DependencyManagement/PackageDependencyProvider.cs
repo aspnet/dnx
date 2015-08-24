@@ -147,6 +147,7 @@ namespace Microsoft.Dnx.Runtime
                             onResolveAssembly(packageDescription, assemblyName, path);
                         }
                     }
+
                     foreach (var runtimeAssemblyPath in packageDescription.Target.ResourceAssemblies)
                     {
                         var assemblyPath = runtimeAssemblyPath.Path;
@@ -157,16 +158,16 @@ namespace Microsoft.Dnx.Runtime
                         if (runtimeAssemblyPath.Properties.TryGetValue("locale", out locale))
                         {
 #if DNXCORE50
-                        assemblyName.CultureName = locale;
+                            assemblyName.CultureName = locale;
 #elif DNX451
-                        assemblyName.CultureInfo = new CultureInfo(locale);
+                            assemblyName.CultureInfo = new CultureInfo(locale);
 #else
 #error Unhandled target framework
 #endif
                         }
 
                         string replacementPath;
-                        if (Servicing.ServicingTable.TryGetReplacement(
+                        if (ServicingTable.TryGetReplacement(
                             library.Identity.Name,
                             library.Identity.Version,
                             assemblyPath,

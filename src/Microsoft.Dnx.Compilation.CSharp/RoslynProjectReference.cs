@@ -69,7 +69,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                                      .ToList();
         }
 
-        EmitResult EmitResourceAssembly(
+        public EmitResult EmitResourceAssembly(
             AssemblyName assemblyName,
             IEnumerable<ResourceDescriptor> resourceDescriptors,
             AfterCompileContext afterCompileContext)
@@ -205,69 +205,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
         public DiagnosticResult EmitAssembly(string outputPath)
         {
-            IEnumerable<ResourceDescription> resources = Enumerable.Empty<ResourceDescription>();
-
-            foreach (var resourceGrouping in CompilationContext.Resources
-                .GroupBy(ResourcesForCulture.GetResourceCultureName, StringComparer.OrdinalIgnoreCase))
-            {
-                if (resourceGrouping.Key == string.Empty)
-                {
-                    resources = resourceGrouping
-                        .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true))
-                        .ToList();
-                }
-                else
-                {
-                    using (var resourceAssemblyStream = new MemoryStream())
-                    {
-                        var resourceAfterCompileContext = new AfterCompileContext
-                        {
-                            ProjectContext = CompilationContext.ProjectContext,
-                            Compilation = CompilationContext.Compilation,
-                            AssemblyStream = resourceAssemblyStream,
-                        };
-                        var resourceAssemblyName = new AssemblyName(Name);
-                        var emitResult = EmitResourceAssembly(
-                            resourceAssemblyName,
-                            resourceGrouping,
-                            resourceAfterCompileContext);
-
-                        resourceAfterCompileContext.Diagnostics = new List<Diagnostic>(emitResult.Diagnostics);
-
-                        foreach (var m in CompilationContext.Modules)
-                        {
-                            m.AfterCompile(resourceAfterCompileContext);
-                        }
-
-                        if (!emitResult.Success ||
-                            resourceAfterCompileContext.Diagnostics.Any(RoslynDiagnosticUtilities.IsError))
-                        {
-                            return CreateDiagnosticResult(
-                                emitResult.Success,
-                                resourceAfterCompileContext.Diagnostics,
-                                CompilationContext.ProjectContext.TargetFramework);
-                        }
-
-                        // Ensure there's an output directory
-                        Directory.CreateDirectory(Path.Combine(
-                            outputPath,
-                            resourceGrouping.Key));
-
-                        if (resourceAfterCompileContext.AssemblyStream != null)
-                        {
-                            resourceAfterCompileContext.AssemblyStream.Position = 0;
-
-                            using (var assemblyFileStream = File.Create(Path.Combine(
-                                outputPath,
-                                resourceGrouping.Key,
-                                Name + ".resources.dll")))
-                            {
-                                resourceAfterCompileContext.AssemblyStream.CopyTo(assemblyFileStream);
-                            }
-                        }
-                    }
-                }
-            }
+            var resources = Enumerable.Empty<ResourceDescription>();
+            EmitResources(outputPath, out resources);
 
             var assemblyPath = Path.Combine(outputPath, Name + ".dll");
             var pdbPath = Path.Combine(outputPath, Name + ".pdb");
@@ -381,6 +320,75 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 return CreateDiagnosticResult(emitResult.Success, afterCompileContext.Diagnostics,
                         CompilationContext.ProjectContext.TargetFramework);
             }
+        }
+
+        private DiagnosticResult EmitResources(string outputPath, out IEnumerable<ResourceDescription> resources)
+        {
+            resources = Enumerable.Empty<ResourceDescription>();
+
+            foreach (var resourceGrouping in CompilationContext.Resources
+                .GroupBy(ResourcesForCulture.GetResourceCultureName, StringComparer.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrEmpty(resourceGrouping.Key))
+                {
+                    resources = resourceGrouping
+                        .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true))
+                        .ToList();
+                }
+                else
+                {
+                    using (var resourceAssemblyStream = new MemoryStream())
+                    {
+                        var resourceAfterCompileContext = new AfterCompileContext
+                        {
+                            ProjectContext = CompilationContext.ProjectContext,
+                            Compilation = CompilationContext.Compilation,
+                            AssemblyStream = resourceAssemblyStream,
+                        };
+                        var resourceAssemblyName = new AssemblyName(Name);
+                        var emitResult = EmitResourceAssembly(
+                            resourceAssemblyName,
+                            resourceGrouping,
+                            resourceAfterCompileContext);
+
+                        resourceAfterCompileContext.Diagnostics = new List<Diagnostic>(emitResult.Diagnostics);
+
+                        foreach (var m in CompilationContext.Modules)
+                        {
+                            m.AfterCompile(resourceAfterCompileContext);
+                        }
+
+                        if (!emitResult.Success ||
+                            resourceAfterCompileContext.Diagnostics.Any(RoslynDiagnosticUtilities.IsError))
+                        {
+                            return CreateDiagnosticResult(
+                                emitResult.Success,
+                                resourceAfterCompileContext.Diagnostics,
+                                CompilationContext.ProjectContext.TargetFramework);
+                        }
+
+                        // Ensure there's an output directory
+                        Directory.CreateDirectory(Path.Combine(
+                            outputPath,
+                            resourceGrouping.Key));
+
+                        if (resourceAfterCompileContext.AssemblyStream != null)
+                        {
+                            resourceAfterCompileContext.AssemblyStream.Position = 0;
+
+                            using (var assemblyFileStream = File.Create(Path.Combine(
+                                outputPath,
+                                resourceGrouping.Key,
+                                Name + ".resources.dll")))
+                            {
+                                resourceAfterCompileContext.AssemblyStream.CopyTo(assemblyFileStream);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         private static DiagnosticResult CreateDiagnosticResult(
