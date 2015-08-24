@@ -31,7 +31,7 @@ namespace Microsoft.Dnx.Runtime.Tests.NuGet
         [MemberData(nameof(NormalizedVersionStringTestData))]
         public void TestGetNormalizeVersionString(SemanticVersion version, string expectation)
         {
-            Assert.Equal(expectation, version.GetNormalizedVersionString());
+            Assert.Equal(expectation, version.ToString());
         }
     }
 }

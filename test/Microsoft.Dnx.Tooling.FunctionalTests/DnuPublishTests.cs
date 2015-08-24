@@ -453,6 +453,122 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
+        public void DnuPublishConsoleAppWithNoSourceOptionNormalizesVersionNumberWithRevisionNumberOfZero(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            var projectStructure = @"{
+  '.': ['project.json', 'Config.json', 'Program.cs'],
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'approot': {
+    'global.json': '',
+    'packages': {
+      'PROJECT_NAME': {
+        '1.0.0': {
+          '.': ['PROJECT_NAME.1.0.0.nupkg', 'PROJECT_NAME.1.0.0.nupkg.sha512', 'PROJECT_NAME.nuspec'],
+          'root': ['Config.json', 'project.json', 'project.lock.json'],
+          'lib': {
+            'dnx451': ['PROJECT_NAME.dll', 'PROJECT_NAME.xml']
+          }
+        }
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""version"": ""1.0.0.0"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: $"--no-source --out {testEnv.PublishOutputDirPath}",
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure);
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
+                    compareFileContents: false));
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPublishConsoleAppWithNoSourceOptionNormalizesVersionNumberWithNoBuildNumber(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            var projectStructure = @"{
+  '.': ['project.json', 'Config.json', 'Program.cs'],
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'approot': {
+    'global.json': '',
+    'packages': {
+      'PROJECT_NAME': {
+        '1.0.0-beta': {
+          '.': ['PROJECT_NAME.1.0.0-beta.nupkg', 'PROJECT_NAME.1.0.0-beta.nupkg.sha512', 'PROJECT_NAME.nuspec'],
+          'root': ['Config.json', 'project.json', 'project.lock.json'],
+          'lib': {
+            'dnx451': ['PROJECT_NAME.dll', 'PROJECT_NAME.xml']
+          }
+        }
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""version"": ""1.0-beta"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: $"--no-source --out {testEnv.PublishOutputDirPath}",
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure);
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
+                    compareFileContents: false));
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPublishCopiesAllProjectsToOneSrcFolder(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);

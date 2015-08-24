@@ -202,6 +202,87 @@ public class TestClass : BaseClass {
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_NormalizesVersionNumberWithRevisionNumberOfZero(string flavor, string os, string architecture)
+        {
+            int exitCode;
+            var projectName = "TestProject";
+            var projectStructure = @"{
+  '.': ['project.json']
+}";
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, projectName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""version"": ""1.0.0.0"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir, 
+                    subcommand: "restore",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "pack",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0.nupkg")));
+                Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0.symbols.nupkg")));
+            }
+        }
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_NormalizesVersionNumberWithNoBuildNumber(string flavor, string os, string architecture)
+        {
+            int exitCode;
+            var projectName = "TestProject";
+            var projectStructure = @"{
+  '.': ['project.json']
+}";
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, projectName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""version"": ""1.0-beta"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "pack",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+                
+                Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0-beta.nupkg")));
+                Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0-beta.symbols.nupkg")));
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_DoesNotExecutePostBuildScriptWhenBuildFails(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);

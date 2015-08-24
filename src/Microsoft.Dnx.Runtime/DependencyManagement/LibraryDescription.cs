@@ -47,7 +47,7 @@ namespace Microsoft.Dnx.Runtime
         {
             return new Library(
                 Identity.Name,
-                Identity.Version?.GetNormalizedVersionString(),
+                Identity.Version?.ToString(),
                 Path,
                 Type,
                 Dependencies.Select(d => d.Name),
