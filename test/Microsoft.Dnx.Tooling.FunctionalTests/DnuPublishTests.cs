@@ -2266,7 +2266,7 @@ string expectedAppLockFile = @"{
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void PublishWithNoSourceOption_AppHasResourceFile(string flavor, string os, string architecture)
         {
             const string testApp = @"ResourcesTestProjects/ReadFromResources";

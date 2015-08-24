@@ -89,7 +89,7 @@ namespace NuGet
                    select(IPackageAssemblyReference)new PhysicalPackageAssemblyReference(file);
         }
 
-    private void EnsurePackageFiles()
+        private void EnsurePackageFiles()
         {
             if (_files != null)
             {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -158,7 +159,7 @@ namespace Microsoft.Dnx.Runtime
 #if DNXCORE50
                         assemblyName.CultureName = locale;
 #elif DNX451
-                        assemblyName.CultureInfo = new System.Globalization.CultureInfo(locale);
+                        assemblyName.CultureInfo = new CultureInfo(locale);
 #else
 #error Unhandled target framework
 #endif

@@ -105,7 +105,7 @@ namespace NuGet
                     select(IPackageAssemblyReference)new ZipPackageAssemblyReference(file)).ToList();
         }
 
-    protected override IEnumerable<IPackageFile> GetFilesBase()
+        protected override IEnumerable<IPackageFile> GetFilesBase()
         {
             return GetFilesNoCache();
         }

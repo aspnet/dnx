@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Bootstrapper.FunctionalTests
 {
-    [Collection("BootstrapperTestCollection")]
+    [Collection(nameof(BootstrapperTestCollection))]
     public class ResourcesTest
     {
         private readonly DnxRuntimeFixture _fixture;
@@ -37,9 +37,7 @@ namespace Bootstrapper.FunctionalTests
 
             using (var tempDir = TestUtils.CreateTempDir())
             {
-                System.Console.WriteLine(tempDir);
                 var appPath = Path.Combine(tempDir, testApp);
-                System.Console.WriteLine(appPath);
                 TestUtils.CreateDisposableTestProject(runtimeHomeDir, Path.Combine(tempDir, "ResourcesTestProjects"), Path.Combine(TestUtils.GetMiscProjectsFolder(), testApp));
 
                 string stdOut;

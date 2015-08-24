@@ -180,7 +180,7 @@ namespace NuGet
                    select(IPackageAssemblyReference)new PhysicalPackageAssemblyReference(file);
         }
 
-    public override IEnumerable<FrameworkName> GetSupportedFrameworks()
+        public override IEnumerable<FrameworkName> GetSupportedFrameworks()
         {
             EnsurePackageFiles();
 

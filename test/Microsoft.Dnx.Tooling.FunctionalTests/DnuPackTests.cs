@@ -379,15 +379,13 @@ public class TestClass : BaseClass {
             {
                 netFlavorFolder = "dnxcore50";
             }
-            const string testApp = @"ResourcesTestProjects\ReadFromResources";
+
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
             {
                 using (var tempDir = TestUtils.CreateTempDir())
                 {
-                    System.Console.WriteLine(tempDir);
-                    var appPath = Path.Combine(tempDir, testApp);
-                    System.Console.WriteLine(appPath);
-                    TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), testApp), appPath);
+                    var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "ReadFromResources");
+                    TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "ReadFromResources"), appPath);
                     var workingDir = Path.Combine(appPath, "src", "ReadFromResources");
 
                     var environment = new Dictionary<string, string> { { "DNX_TRACE", "0" } };

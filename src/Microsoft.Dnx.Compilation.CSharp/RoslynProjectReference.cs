@@ -158,9 +158,12 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
                 }
 
-                foreach (var m in CompilationContext.Modules)
+                if (!Path.GetExtension(assemblyName.Name).Contains("resources"))
                 {
-                    m.AfterCompile(afterCompileContext);
+                    foreach (var m in CompilationContext.Modules)
+                    {
+                        m.AfterCompile(afterCompileContext);
+                    }
                 }
 
                 if (!emitResult.Success ||
