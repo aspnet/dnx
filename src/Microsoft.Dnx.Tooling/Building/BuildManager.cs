@@ -413,7 +413,7 @@ namespace Microsoft.Dnx.Tooling
 
         private static string GetPackagePath(Runtime.Project project, string outputPath, bool symbols = false)
         {
-            string fileName = project.Name + "." + project.Version + (symbols ? ".symbols" : "") + ".nupkg";
+            string fileName = project.Name + "." + project.Version.GetNormalizedVersionString() + (symbols ? ".symbols" : "") + ".nupkg";
             return Path.Combine(outputPath, fileName);
         }
 
