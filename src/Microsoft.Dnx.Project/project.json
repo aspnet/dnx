@@ -36,5 +36,14 @@
                 "System.Threading.Tasks": "4.0.11-beta-*"
             }
         }
+    },
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin/lib/Microsoft.Dnx.Project",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin/lib/Microsoft.Dnx.Project",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin/lib/Microsoft.Dnx.Project",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin/lib/Microsoft.Dnx.Project",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.Project"
+        ]
     }
 }
