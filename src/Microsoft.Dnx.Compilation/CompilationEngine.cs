@@ -54,9 +54,6 @@ namespace Microsoft.Dnx.Compilation
             // references (compiler /r in csc terms)
             var libraryManager = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework);
 
-            // This library manager represents the graph that will be used to *load* the compiler and other
-            // build time related dependencies
-
             var context = new ApplicationHostContext
             {
                 Project = project,
@@ -65,6 +62,8 @@ namespace Microsoft.Dnx.Compilation
 
             ApplicationHostContext.InitializeForRuntime(context);
 
+            // This library manager represents the graph that will be used to *load* the compiler and other
+            // build time related dependencies
             var runtimeLibraryManager = context.LibraryManager;
 
             var loadContext = new RuntimeLoadContext(runtimeLibraryManager, this, _context.DefaultLoadContext);
