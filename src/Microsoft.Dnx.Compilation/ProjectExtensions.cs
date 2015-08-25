@@ -11,7 +11,7 @@ namespace Microsoft.Dnx.Compilation
                 new CompilationTarget(self.Name, frameworkName, configuration, aspect),
                 self.ProjectDirectory,
                 self.ProjectFilePath,
-                self.Version.GetNormalizedVersionString(),
+                self.Version.ToString(),
                 self.AssemblyFileVersion,
                 self.EmbedInteropTypes,
                 new CompilationFiles(

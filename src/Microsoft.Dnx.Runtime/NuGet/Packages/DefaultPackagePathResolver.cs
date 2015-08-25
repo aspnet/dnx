@@ -35,17 +35,17 @@ namespace NuGet
         public string GetHashPath(string packageId, SemanticVersion version)
         {
             return Path.Combine(GetInstallPath(packageId, version),
-                                $"{packageId}.{version.GetNormalizedVersionString()}{Constants.HashFileExtension}");
+                                $"{packageId}.{version}{Constants.HashFileExtension}");
         }
 
         public virtual string GetPackageDirectory(string packageId, SemanticVersion version)
         {
-            return Path.Combine(packageId, version.GetNormalizedVersionString());
+            return Path.Combine(packageId, version.ToString());
         }
 
         public virtual string GetPackageFileName(string packageId, SemanticVersion version)
         {
-            return $"{packageId}.{version.GetNormalizedVersionString()}{Constants.PackageExtension}";
+            return $"{packageId}.{version}{Constants.PackageExtension}";
         }
 
         public virtual string GetManifestFileName(string packageId, SemanticVersion version)

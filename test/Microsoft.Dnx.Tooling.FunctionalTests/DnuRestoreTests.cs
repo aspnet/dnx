@@ -189,51 +189,5 @@ $@"{{
                 Assert.True(File.Exists(nuspecPath));
             }
         }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DnuRestore_ReinstallsPackageWithNormalizedVersion(string flavor, string os, string architecture)
-        {
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var tempDir = new DisposableDir())
-            {
-                var projectDir = Path.Combine(tempDir, "project");
-                var packagesDir = Path.Combine(tempDir, "packages");
-                var projectJson = Path.Combine(projectDir, Runtime.Project.ProjectFileName);
-
-                Directory.CreateDirectory(projectDir);
-                File.WriteAllText(projectJson, @"
-{
-  ""dependencies"": {
-    ""alpha"": ""0.1.0""
-  }
-}");
-                DnuTestUtils.ExecDnu(
-                    runtimeHomePath,
-                    subcommand: "restore",
-                    arguments: $"{projectDir} -s {_fixture.PackageSource} --packages {packagesDir}");
-
-                // rename package folder to an unnormalized string
-                Directory.Move(Path.Combine(packagesDir, "alpha", "0.1.0"),
-                               Path.Combine(packagesDir, "alpha", "0.1.0.0"));
-
-                // ensure the directory is renamed
-                Assert.False(Directory.Exists(Path.Combine(packagesDir, "alpha", "0.1.0")));
-
-                string stdOut, stdErr;
-                var exitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomePath,
-                    subcommand: "restore",
-                    arguments: $"{projectDir} -s {_fixture.PackageSource} --packages {packagesDir}",
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
-
-                Assert.Equal(0, exitCode);
-                Assert.Empty(stdErr);
-                Assert.Contains($"Installing alpha.0.1.0", stdOut);
-                Assert.True(Directory.Exists(Path.Combine(packagesDir, "alpha", "0.1.0")));
-                Assert.True(File.Exists(Path.Combine(packagesDir, "alpha", "0.1.0", $"alpha{Constants.ManifestExtension}")));
-            }
-        }
     }
 }

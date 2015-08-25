@@ -16,9 +16,6 @@ namespace NuGet
         public SemanticVersion(string version)
             : this(Parse(version))
         {
-            // The constructor normalizes the version string so that it we do not need to normalize it every time we need to operate on it. 
-            // The original string represents the original form in which the version is represented to be used when printing.
-            OriginalString = version;
         }
 
         public SemanticVersion(int major, int minor, int build, int revision)
@@ -37,11 +34,6 @@ namespace NuGet
         }
 
         public SemanticVersion(Version version, string specialVersion)
-            : this(version, specialVersion, null)
-        {
-        }
-
-        private SemanticVersion(Version version, string specialVersion, string originalString)
         {
             if (version == null)
             {
@@ -49,12 +41,10 @@ namespace NuGet
             }
             Version = NormalizeVersionValue(version);
             SpecialVersion = specialVersion ?? string.Empty;
-            OriginalString = string.IsNullOrEmpty(originalString) ? version.ToString() + (!string.IsNullOrEmpty(specialVersion) ? '-' + specialVersion : null) : originalString;
         }
 
         internal SemanticVersion(SemanticVersion semVer)
         {
-            OriginalString = semVer.ToString();
             Version = semVer.Version;
             SpecialVersion = semVer.SpecialVersion;
         }
@@ -75,43 +65,6 @@ namespace NuGet
         {
             get;
             private set;
-        }
-
-        public string OriginalString { get; }
-
-        public string GetNormalizedVersionString()
-        {
-            var revision = Version.Revision > 0 ? ("." + Version.Revision.ToString(CultureInfo.InvariantCulture)) : string.Empty;
-            var specialVer = !string.IsNullOrEmpty(SpecialVersion) ? ("-" + SpecialVersion) : string.Empty;
-
-            // SemanticVersion normalizes the missing components to 0.
-            return $"{Version.Major}.{Version.Minor}.{Version.Build}{revision}{specialVer}";
-        }
-
-        public string[] GetOriginalVersionComponents()
-        {
-            if (!string.IsNullOrEmpty(OriginalString))
-            {
-                string original;
-
-                // search the start of the SpecialVersion part, if any
-                int dashIndex = OriginalString.IndexOf('-');
-                if (dashIndex != -1)
-                {
-                    // remove the SpecialVersion part
-                    original = OriginalString.Substring(0, dashIndex);
-                }
-                else
-                {
-                    original = OriginalString;
-                }
-
-                return SplitAndPadVersionString(original);
-            }
-            else
-            {
-                return SplitAndPadVersionString(Version.ToString());
-            }
         }
 
         private static string[] SplitAndPadVersionString(string version)
@@ -207,7 +160,7 @@ namespace NuGet
                 }
             }
 
-            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), specialVersion, version.Replace(" ", ""));
+            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), specialVersion);
             return true;
         }
 
@@ -319,7 +272,11 @@ namespace NuGet
 
         public override string ToString()
         {
-            return OriginalString;
+            var revision = Version.Revision > 0 ? ("." + Version.Revision.ToString(CultureInfo.InvariantCulture)) : string.Empty;
+            var specialVer = !string.IsNullOrEmpty(SpecialVersion) ? ("-" + SpecialVersion) : string.Empty;
+
+            // SemanticVersion normalizes the missing components to 0.
+            return $"{Version.Major}.{Version.Minor}.{Version.Build}{revision}{specialVer}";
         }
 
         public bool Equals(SemanticVersion other)

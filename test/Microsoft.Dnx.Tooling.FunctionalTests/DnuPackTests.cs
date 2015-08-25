@@ -202,6 +202,40 @@ public class TestClass : BaseClass {
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_NormalizesVersionNumber(string flavor, string os, string architecture)
+        {
+            string expectedNupkg =
+            @"{0} -> {1}/bin/Debug/{0}.1.0.0.nupkg".Replace('/', Path.DirectorySeparatorChar);
+            string expectedSymbol =
+            @"{0} -> {1}/bin/Debug/{0}.1.0.0.symbols.nupkg".Replace('/', Path.DirectorySeparatorChar);
+            string stdOut;
+            string stdErr;
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            int exitCode;
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
+            {
+                File.WriteAllText($"{testEnv.RootDir}/project.json",
+@"{
+  ""version"": ""1.0.0.0"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}");
+
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", "", out stdOut, out stdErr, workingDir: testEnv.RootDir);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", "", out stdOut, out stdErr, workingDir: testEnv.RootDir);
+                Assert.Empty(stdErr);
+                Assert.Contains(string.Format(expectedNupkg, Path.GetFileName(testEnv.RootDir), testEnv.RootDir), stdOut);
+                Assert.Contains(string.Format(expectedSymbol, Path.GetFileName(testEnv.RootDir), testEnv.RootDir), stdOut);
+                Assert.Equal(0, exitCode);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_DoesNotExecutePostBuildScriptWhenBuildFails(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);

@@ -468,9 +468,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
       'PROJECT_NAME': {
         '1.0.0': {
           '.': ['PROJECT_NAME.1.0.0.nupkg', 'PROJECT_NAME.1.0.0.nupkg.sha512', 'PROJECT_NAME.nuspec'],
-          'root': {
-            '.': ['Config.json', 'project.json', 'project.lock.json']
-          },
+          'root': ['Config.json', 'project.json', 'project.lock.json'],
           'lib': {
             'dnx451': ['PROJECT_NAME.dll', 'PROJECT_NAME.xml']
           }
@@ -494,15 +492,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "restore",
-                    arguments: "",
+                    arguments: string.Empty,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
                 exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
-                    arguments: string.Format("--no-source --out {0}",
-                        testEnv.PublishOutputDirPath),
+                    arguments: $"--no-source --out {testEnv.PublishOutputDirPath}",
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 

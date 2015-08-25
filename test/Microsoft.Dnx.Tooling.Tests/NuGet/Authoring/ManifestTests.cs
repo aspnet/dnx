@@ -66,7 +66,7 @@ namespace Microsoft.Dnx.Runtime.Tests.NuGet.Authoring
 
                 var xElemVersion = xElemMetadata.Element(ns + "version");
                 Assert.NotNull(xElemVersion);
-                Assert.Equal(version.OriginalString, xElemVersion.Value);
+                Assert.Equal(version.ToString(), xElemVersion.Value);
 
                 var xElemRequireLicense = xElemMetadata.Element(ns + "requireLicenseAcceptance");
                 Assert.NotNull(xElemRequireLicense);

@@ -29,7 +29,7 @@ namespace NuGet.Xml
             }
 
             elem.Add(new XElement(ns + "id", metadata.Id));
-            elem.Add(new XElement(ns + "version", metadata.Version.OriginalString));
+            elem.Add(new XElement(ns + "version", metadata.Version.ToString()));
             AddElementIfNotNull(elem, ns, "title", metadata.Title);
             elem.Add(new XElement(ns + "requireLicenseAcceptance", metadata.RequireLicenseAcceptance));
             AddElementIfNotNull(elem, ns, "authors", metadata.Authors, authors => string.Join(",", authors));
