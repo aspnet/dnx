@@ -284,7 +284,7 @@ Hello, code!
 }";
             const string lockFile = @"{
   ""locked"": false,
-  ""version"": 1,
+  ""version"": 2,
   ""targets"": {
     ""DNX,Version=v4.5.1"": {}
   },
@@ -340,9 +340,9 @@ Hello, code!
 }";
             const string lockFile = @"{
   ""locked"": false,
-  ""version"": 1,
+  ""version"": 2,
   ""targets"": {
-    ""DNX,Version=v4.5.1"": {}
+    ""DNX,Version=v4.5.1"": {},
     ""DNX,Version=v4.5.2"": {}
   },
   ""libraries"": {},
@@ -400,9 +400,9 @@ Hello, code!
 }";
             const string lockFile = @"{
   ""locked"": false,
-  ""version"": 1,
+  ""version"": 2,
   ""targets"": {
-    ""DNX,Version=v4.6"": {}
+    ""DNX,Version=v4.6"": {},
     ""DNX,Version=v4.5.1"": {}
   },
   ""libraries"": {},
@@ -483,17 +483,17 @@ Hello, code!
 }";
             const string lockFile = @"{
   ""locked"": false,
-  ""version"": 1,
+  ""version"": 2,
   ""targets"": {
-    ""DNX,Version=v4.5.1"": {}
-    ""DNX,Version=v4.5.2"": {}
+    ""DNX,Version=v4.5.1"": {},
+    ""DNX,Version=v4.5.2"": {},
     ""DNX,Version=v4.6"": {}
   },
   ""libraries"": {},
   ""projectFileDependencyGroups"": {
     """": [],
-    ""DNX,Version=v4.5.1"": []
-    ""DNX,Version=v4.5.2"": []
+    ""DNX,Version=v4.5.1"": [],
+    ""DNX,Version=v4.5.2"": [],
     ""DNX,Version=v4.6"": []
   }
 }";
