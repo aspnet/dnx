@@ -202,10 +202,17 @@ namespace Microsoft.Dnx.Runtime
         public static string ResolveRepositoryPath(string rootDirectory)
         {
             // Order
-            // 1. EnvironmentNames.Packages environment variable
-            // 2. global.json { "packages": "..." }
+            // 1. global.json { "packages": "..." }
+            // 2. EnvironmentNames.Packages environment variable
             // 3. NuGet.config repositoryPath (maybe)?
             // 4. {DefaultLocalRuntimeHomeDir}\packages
+
+            GlobalSettings settings;
+            if (GlobalSettings.TryGetGlobalSettings(rootDirectory, out settings) &&
+                !string.IsNullOrEmpty(settings.PackagesPath))
+            {
+                return Path.Combine(rootDirectory, settings.PackagesPath);
+            }
 
             var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
 
@@ -217,13 +224,6 @@ namespace Microsoft.Dnx.Runtime
             if (!string.IsNullOrEmpty(runtimePackages))
             {
                 return runtimePackages;
-            }
-
-            GlobalSettings settings;
-            if (GlobalSettings.TryGetGlobalSettings(rootDirectory, out settings) &&
-                !string.IsNullOrEmpty(settings.PackagesPath))
-            {
-                return Path.Combine(rootDirectory, settings.PackagesPath);
             }
 
             var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
