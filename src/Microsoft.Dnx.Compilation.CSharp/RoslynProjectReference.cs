@@ -69,38 +69,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                                      .ToList();
         }
 
-        public EmitResult EmitResourceAssembly(
-            AssemblyName assemblyName,
-            IEnumerable<ResourceDescriptor> resourceDescriptors,
-            AfterCompileContext afterCompileContext)
-        {
-            var resources = resourceDescriptors
-                .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true));
-
-            var mainCompilation = afterCompileContext.Compilation;
-            afterCompileContext.Compilation = CSharpCompilation.Create(
-                assemblyName.Name,
-                options: mainCompilation.Options);
-
-            Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
-
-            var sw = Stopwatch.StartNew();
-
-            var emitResult = afterCompileContext.Compilation.Emit(
-                    afterCompileContext.AssemblyStream,
-                    manifestResources: resources);
-
-            sw.Stop();
-
-            Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
-
-            afterCompileContext.Diagnostics = CompilationContext.Diagnostics
-                .Concat(emitResult.Diagnostics)
-                .ToList();
-
-            return emitResult;
-        }
-
         public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
             using (var pdbStream = new MemoryStream())
@@ -320,6 +288,38 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 return CreateDiagnosticResult(emitResult.Success, afterCompileContext.Diagnostics,
                         CompilationContext.ProjectContext.TargetFramework);
             }
+        }
+
+        private EmitResult EmitResourceAssembly(
+            AssemblyName assemblyName,
+            IEnumerable<ResourceDescriptor> resourceDescriptors,
+            AfterCompileContext afterCompileContext)
+        {
+            var resources = resourceDescriptors
+                .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true));
+
+            var mainCompilation = afterCompileContext.Compilation;
+            var compilation = CSharpCompilation.Create(
+                assemblyName.Name,
+                options: mainCompilation.Options);
+
+            Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
+
+            var sw = Stopwatch.StartNew();
+
+            var emitResult = compilation.Emit(
+                    afterCompileContext.AssemblyStream,
+                    manifestResources: resources);
+
+            sw.Stop();
+
+            Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+
+            afterCompileContext.Diagnostics = CompilationContext.Diagnostics
+                .Concat(emitResult.Diagnostics)
+                .ToList();
+
+            return emitResult;
         }
 
         private DiagnosticResult EmitResources(string outputPath, out IEnumerable<ResourceDescription> resources)

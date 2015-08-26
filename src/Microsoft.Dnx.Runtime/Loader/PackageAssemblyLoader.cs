@@ -28,7 +28,19 @@ namespace Microsoft.Dnx.Runtime.Loader
         {
             // TODO: preserve name and culture info (we don't need to look at any other information)
             string path;
-            if (_assemblies.TryGetValue(assemblyName, out path))
+            var newAssemblyName = new AssemblyName(assemblyName.Name);
+
+#if DNXCORE50
+            newAssemblyName.CultureName = assemblyName.CultureName;
+#elif DNX451
+            if (assemblyName.CultureInfo != null && assemblyName.CultureName != "neutral")
+            {
+                 newAssemblyName.CultureInfo = assemblyName.CultureInfo;
+            }
+#else
+#error Unhandled framework error
+#endif
+            if (_assemblies.TryGetValue(newAssemblyName, out path))
             {
                 return loadContext.LoadFile(path);
             }
