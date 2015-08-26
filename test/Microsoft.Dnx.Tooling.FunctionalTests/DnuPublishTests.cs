@@ -600,6 +600,14 @@ string expectedAppLockFile = @"{
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: "",
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+                
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
                     subcommand: "publish",
                     arguments: string.Format("--out {0}",
                         testEnv.PublishOutputDirPath),

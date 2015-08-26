@@ -348,7 +348,7 @@ Hello, code!
   ""libraries"": {},
   ""projectFileDependencyGroups"": {
     """": [],
-    ""DNX,Version=v4.5.1"": []
+    ""DNX,Version=v4.5.1"": [],
     ""DNX,Version=v4.5.2"": []
   }
 }";
@@ -408,7 +408,7 @@ Hello, code!
   ""libraries"": {},
   ""projectFileDependencyGroups"": {
     """": [],
-    ""DNX,Version=v4.6"": []
+    ""DNX,Version=v4.6"": [],
     ""DNX,Version=v4.5.1"": []
   }
 }";
