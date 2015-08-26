@@ -3,14 +3,13 @@
 
 using System;
 using System.Runtime.Serialization;
+using Microsoft.Framework.Internal;
 
 namespace NuGet
 {
     [DataContract]
     public class PackageSource : IEquatable<PackageSource>
     {
-        private readonly int _hashCode;
-
         [DataMember]
         public string Name { get; private set; }
 
@@ -72,7 +71,6 @@ namespace NuGet
             IsEnabled = isEnabled;
             IsOfficial = isOfficial;
             Origin = origin;
-            _hashCode = Name.ToUpperInvariant().GetHashCode() * 3137 + Source.ToUpperInvariant().GetHashCode();
         }
 
         public bool Equals(PackageSource other)
@@ -82,8 +80,10 @@ namespace NuGet
                 return false;
             }
 
-            return Name.Equals(other.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                Source.Equals(other.Source, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(Source, other.Source, StringComparison.Ordinal) &&
+                string.Equals(UserName, other.UserName, StringComparison.Ordinal) &&
+                string.Equals(Password, other.Password, StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)
@@ -103,7 +103,11 @@ namespace NuGet
 
         public override int GetHashCode()
         {
-            return _hashCode;
+            return HashCodeCombiner.Start()
+                .Add(Name, StringComparer.OrdinalIgnoreCase)
+                .Add(Source, StringComparer.Ordinal)
+                .Add(UserName, StringComparer.Ordinal)
+                .Add(Password, StringComparer.Ordinal);
         }
 
         public PackageSource Clone()

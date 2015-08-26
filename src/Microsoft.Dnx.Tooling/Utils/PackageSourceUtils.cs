@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Tooling.Restore.NuGet;
 using Microsoft.Dnx.Runtime;
@@ -35,53 +34,6 @@ namespace Microsoft.Dnx.Tooling
                 value => allSources.FirstOrDefault(source => CorrectName(value, source)) ?? new PackageSource(value));
 
             return enabledSources.Concat(addedSources).Distinct().ToList();
-        }
-
-        public static IPackageFeed CreatePackageFeed(PackageSource source, bool noCache, bool ignoreFailedSources,
-            Reports reports)
-        {
-            // Check if the feed is a URL
-            if (source.IsLocalFileSystem())
-            {
-                return PackageFolderFactory.CreatePackageFolderFromPath(source.Source, ignoreFailedSources, reports);
-            }
-            else
-            {
-                var httpSource = new HttpSource(
-                    source.Source,
-                    source.UserName,
-                    source.Password,
-                    reports);
-
-                Uri packageBaseAddress;
-                if (NuGetv3Feed.DetectNuGetV3(httpSource, noCache, out packageBaseAddress))
-                {
-                    if (packageBaseAddress == null)
-                    {
-                        reports.Information.WriteLine(
-                            $"Ignoring NuGet v3 feed {source.Source.Yellow().Bold()}, which doesn't provide PackageBaseAddress resource.");
-                        return null;
-                    }
-
-                    httpSource = new HttpSource(
-                        packageBaseAddress.AbsoluteUri,
-                        source.UserName,
-                        source.Password,
-                        reports);
-
-                    return new NuGetv3Feed(
-                        httpSource,
-                        noCache,
-                        reports,
-                        ignoreFailedSources);
-                }
-
-                return new NuGetv2Feed(
-                    httpSource,
-                    noCache,
-                    reports,
-                    ignoreFailedSources);
-            }
         }
 
         public static async Task<PackageInfo> FindLatestPackage(IEnumerable<IPackageFeed> packageFeeds, string packageName)
