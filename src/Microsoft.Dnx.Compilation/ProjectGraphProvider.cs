@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
+using Microsoft.Dnx.Runtime;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.Compilation
 {
     public class ProjectGraphProvider : IProjectGraphProvider
     {

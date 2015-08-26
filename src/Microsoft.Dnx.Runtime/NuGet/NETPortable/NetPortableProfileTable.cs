@@ -81,7 +81,10 @@ namespace NuGet
                     foreach (string versionDir in Directory.EnumerateDirectories(portableRootDirectory, "v*", SearchOption.TopDirectoryOnly))
                     {
                         string profileFilesPath = Path.Combine(versionDir, "Profile");
-                        profileCollection.AddRange(LoadProfilesFromFramework(versionDir, profileFilesPath));
+                        foreach (var profile in LoadProfilesFromFramework(versionDir, profileFilesPath))
+                        {
+                            profileCollection.Add(profile);
+                        }
                     }
                 }
             }
