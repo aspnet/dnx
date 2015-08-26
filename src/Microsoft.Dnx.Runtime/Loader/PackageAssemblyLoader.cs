@@ -9,14 +9,14 @@ namespace Microsoft.Dnx.Runtime.Loader
 {
     public class PackageAssemblyLoader : IAssemblyLoader
     {
-        private readonly Dictionary<AssemblyName, string> _assemblies;
+        private readonly IDictionary<AssemblyName, string> _assemblies;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
         public PackageAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
-                                     LibraryManager libraryManager)
+                                     IDictionary<AssemblyName, string> assemblies)
         {
             _loadContextAccessor = loadContextAccessor;
-            _assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraryManager);
+            _assemblies = assemblies;
         }
 
         public Assembly Load(AssemblyName assemblyName)

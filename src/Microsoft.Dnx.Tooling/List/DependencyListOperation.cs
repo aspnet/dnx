@@ -33,7 +33,7 @@ namespace Microsoft.Dnx.Tooling.List
                 return true;
             }
 
-            var assemblyPaths = PackageDependencyProvider.ResolvePackageAssemblyPaths(_libraryManager);
+            var assemblyPaths = PackageDependencyProvider.ResolvePackageAssemblyPaths(_libraryManager.GetLibraryDescriptions());
 
             // 2. Walk the local dependencies and print the assemblies list
             var assemblyWalker = new AssemblyWalker(_framework,

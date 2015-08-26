@@ -11,11 +11,6 @@ namespace Microsoft.Dnx.Runtime
 {
     public class ApplicationHostContext
     {
-        private List<LibraryDescription> _libraries;
-        private bool _validLockFile;
-        private bool _lockFileExists;
-        private string _lockFileValidationMessage;
-
         public Project Project { get; set; }
 
         // TODO: Remove this, it's kinda hacky
@@ -35,33 +30,32 @@ namespace Microsoft.Dnx.Runtime
 
         public LibraryManager LibraryManager { get; private set; }
 
-        public static void InitializeForRuntime(ApplicationHostContext context)
+        public static IList<LibraryDescription> GetRuntimeLibraries(ApplicationHostContext context)
         {
-            InitializeForRuntime(context, throwOnInvalidLockFile: false);
+            return GetRuntimeLibraries(context, throwOnInvalidLockFile: false);
         }
 
-        public static void InitializeForRuntime(ApplicationHostContext context, bool throwOnInvalidLockFile)
+        public static IList<LibraryDescription> GetRuntimeLibraries(ApplicationHostContext context, bool throwOnInvalidLockFile)
         {
-            InitializeCore(context);
-
-            context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, context._libraries);
+            var result = InitializeCore(context);
 
             if (throwOnInvalidLockFile)
             {
-                if (!context._validLockFile)
+                if (!result.ValidLockFile)
                 {
-                    throw new InvalidOperationException($"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.");
+                    throw new InvalidOperationException($"{result.LockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.");
                 }
             }
+
+            return result.Libraries;
         }
 
         public static void Initialize(ApplicationHostContext context)
         {
-            InitializeCore(context);
+            var result = InitializeCore(context);
 
             // Map dependencies
-            var lookup = context._libraries.ToDictionary(l => l.Identity.Name);
-            context._libraries = null;
+            var lookup = result.Libraries.ToDictionary(l => l.Identity.Name);
 
             var frameworkReferenceResolver = context.FrameworkResolver ?? new FrameworkReferenceResolver();
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(frameworkReferenceResolver);
@@ -111,14 +105,14 @@ namespace Microsoft.Dnx.Runtime
 
             context.LibraryManager = new LibraryManager(context.Project.ProjectFilePath, context.TargetFramework, libraries);
 
-            AddLockFileDiagnostics(context);
+            AddLockFileDiagnostics(context, result);
 
             // Clear all the temporary memory aggressively here if we don't care about reuse
             // e.g. runtime scenarios
             lookup.Clear();
         }
 
-        private static void InitializeCore(ApplicationHostContext context)
+        private static Result InitializeCore(ApplicationHostContext context)
         {
             if (context == null)
             {
@@ -210,17 +204,14 @@ namespace Microsoft.Dnx.Runtime
                 }
             }
 
-            context._libraries = libraries;
-            context._validLockFile = validLockFile;
-            context._lockFileExists = lockFileExists;
-            context._lockFileValidationMessage = lockFileValidationMessage;
-
             lockFileLookup?.Clear();
+
+            return new Result(libraries, lockFileExists, validLockFile, lockFileValidationMessage);
         }
 
-        private static void AddLockFileDiagnostics(ApplicationHostContext context)
+        private static void AddLockFileDiagnostics(ApplicationHostContext context, Result result)
         {
-            if (!context._lockFileExists)
+            if (!result.LockFileExists)
             {
                 context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
                     $"The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.",
@@ -228,12 +219,28 @@ namespace Microsoft.Dnx.Runtime
                     DiagnosticMessageSeverity.Error));
             }
 
-            if (!context._validLockFile)
+            if (!result.ValidLockFile)
             {
                 context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
-                    $"{context._lockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.",
+                    $"{result.LockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.",
                     Path.Combine(context.Project.ProjectDirectory, LockFileReader.LockFileName),
                     DiagnosticMessageSeverity.Error));
+            }
+        }
+
+        private struct Result
+        {
+            public List<LibraryDescription> Libraries { get; }
+            public string LockFileValidationMessage { get; }
+            public bool LockFileExists { get; }
+            public bool ValidLockFile { get; }
+
+            public Result(List<LibraryDescription> libraries, bool lockFileExists, bool validLockFile, string lockFileValidationMessage)
+            {
+                Libraries = libraries;
+                LockFileExists = lockFileExists;
+                ValidLockFile = validLockFile;
+                LockFileValidationMessage = lockFileValidationMessage;
             }
         }
     }

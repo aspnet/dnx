@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Dnx.Runtime.Compilation;
 
@@ -10,15 +11,15 @@ namespace Microsoft.Dnx.Runtime.Loader
     {
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly ICompilationEngine _compilationEngine;
-        private readonly LibraryManager _libraryManager;
+        private readonly IDictionary<string, ProjectDescription> _projects;
 
         public ProjectAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
                                      ICompilationEngine compilationEngine,
-                                     LibraryManager libraryManager)
+                                     IDictionary<string, ProjectDescription> projects)
         {
             _loadContextAccessor = loadContextAccessor;
             _compilationEngine = compilationEngine;
-            _libraryManager = libraryManager;
+            _projects = projects;
         }
 
         public Assembly Load(AssemblyName assemblyName)
@@ -44,16 +45,15 @@ namespace Microsoft.Dnx.Runtime.Loader
                 aspect = parts[1];
             }
 
-            var library = _libraryManager.GetLibraryDescription(name) as ProjectDescription;
-
-            if (library == null)
+            ProjectDescription project;
+            if (!_projects.TryGetValue(name, out project))
             {
                 return null;
             }
 
             return _compilationEngine.LoadProject(
-                library.Project, 
-                aspect, 
+                project.Project,
+                aspect,
                 loadContext);
         }
     }

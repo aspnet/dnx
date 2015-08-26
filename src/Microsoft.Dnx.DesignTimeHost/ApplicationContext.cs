@@ -560,7 +560,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var appHostContext = GetApplicationHostContext(project, _applicationEnvironment.RuntimeFramework);
 
-                return new RuntimeLoadContext(appHostContext.LibraryManager, _compilationEngine, _defaultLoadContext);
+                return new RuntimeLoadContext(appHostContext.LibraryManager.GetLibraryDescriptions(), _compilationEngine, _defaultLoadContext);
             });
         }
 

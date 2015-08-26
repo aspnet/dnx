@@ -68,8 +68,6 @@ namespace Microsoft.Dnx.ApplicationHost
                 return null;
             }
 
-            AddBreadcrumbs();
-
             if (!_applicationHostContext.MainProject.Resolved)
             {
                 var targetFrameworkShortName = VersionUtility.GetShortFrameworkName(_targetFramework);
@@ -114,7 +112,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 TargetFramework = _targetFramework
             };
 
-            ApplicationHostContext.InitializeForRuntime(applicationHostContext, throwOnInvalidLockFile: true);
+            var libraries = ApplicationHostContext.GetRuntimeLibraries(applicationHostContext, throwOnInvalidLockFile: true);
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, applicationHostContext.ProjectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, applicationHostContext.RootDirectory);
@@ -150,11 +148,10 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            _serviceProvider.Add(typeof(ILibraryManager), _applicationHostContext.LibraryManager);
+            _serviceProvider.Add(typeof(ILibraryManager), new RuntimeLibraryManager(applicationHostContext));
 
             _serviceProvider.Add(typeof(ILibraryExporter), new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration)));
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
-            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(_applicationHostContext.LibraryManager));
 
             if (options.CompilationServerPort.HasValue)
             {
@@ -164,27 +161,33 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
 
-            // Configure Assembly loaders
-            _loaders.Add(new ProjectAssemblyLoader(
-                loadContextAccessor,
-                compilationEngine,
-                _applicationHostContext.LibraryManager));
+            // TODO: Dedupe this logic in the RuntimeLoadContext
+            var projects = libraries.Where(p => p.Type == LibraryTypes.Project)
+                                    .ToDictionary(p => p.Identity.Name, p => (ProjectDescription)p);
 
-            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, _applicationHostContext.LibraryManager));
+            var assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraries);
+
+            // Configure Assembly loaders
+            _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects));
+            _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, assemblies));
+
+            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(projects));
+
+            AddBreadcrumbs(libraries);
         }
 
-        private void AddBreadcrumbs()
+        private void AddBreadcrumbs(IEnumerable<LibraryDescription> libraries)
         {
             AddRuntimeServiceBreadcrumb();
 
-            AddPackagesBreadcrumb();
+            AddPackagesBreadcrumb(libraries);
 
             Breadcrumbs.Instance.WriteAllBreadcrumbs(background: true);
         }
 
-        private void AddPackagesBreadcrumb()
+        private void AddPackagesBreadcrumb(IEnumerable<LibraryDescription> libraries)
         {
-            foreach (var library in _applicationHostContext.LibraryManager.GetLibraryDescriptions())
+            foreach (var library in libraries)
             {
                 if (library.Type == LibraryTypes.Package)
                 {

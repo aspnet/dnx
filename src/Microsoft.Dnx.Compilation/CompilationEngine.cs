@@ -60,13 +60,11 @@ namespace Microsoft.Dnx.Compilation
                 TargetFramework = targetFramework
             };
 
-            ApplicationHostContext.InitializeForRuntime(context);
+            var libraries = ApplicationHostContext.GetRuntimeLibraries(context);
 
-            // This library manager represents the graph that will be used to *load* the compiler and other
+            // This load context represents the graph that will be used to *load* the compiler and other
             // build time related dependencies
-            var runtimeLibraryManager = context.LibraryManager;
-
-            var loadContext = new RuntimeLoadContext(runtimeLibraryManager, this, _context.DefaultLoadContext);
+            var loadContext = new RuntimeLoadContext(libraries, this, _context.DefaultLoadContext);
 
             return new LibraryExporter(libraryManager, loadContext, this, configuration);
         }

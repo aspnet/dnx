@@ -117,9 +117,9 @@ namespace Microsoft.Dnx.Runtime
         }
 
         // REVIEW: Should this be here? Is there a better place for this static
-        public static void ResolvePackageAssemblyPaths(LibraryManager libraryManager, Action<PackageDescription, AssemblyName, string> onResolveAssembly)
+        public static void ResolvePackageAssemblyPaths(IEnumerable<LibraryDescription> libraries, Action<PackageDescription, AssemblyName, string> onResolveAssembly)
         {
-            foreach (var library in libraryManager.GetLibraryDescriptions())
+            foreach (var library in libraries)
             {
                 if (library.Type == LibraryTypes.Package)
                 {
@@ -150,11 +150,11 @@ namespace Microsoft.Dnx.Runtime
             }
         }
 
-        public static Dictionary<AssemblyName, string> ResolvePackageAssemblyPaths(LibraryManager libraryManager)
+        public static Dictionary<AssemblyName, string> ResolvePackageAssemblyPaths(IEnumerable<LibraryDescription> libraries)
         {
             var assemblies = new Dictionary<AssemblyName, string>(AssemblyNameComparer.OrdinalIgnoreCase);
 
-            ResolvePackageAssemblyPaths(libraryManager, (package, assemblyName, path) =>
+            ResolvePackageAssemblyPaths(libraries, (package, assemblyName, path) =>
             {
                 assemblies[assemblyName] = path;
             });
