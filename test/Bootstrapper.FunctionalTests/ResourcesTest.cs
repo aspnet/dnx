@@ -32,13 +32,12 @@ namespace Bootstrapper.FunctionalTests
         [MemberData(nameof(RuntimeComponents))]
         public void ReadResourcesFromProjectNugetPackageAndClassLibrary(string flavor, string os, string architecture)
         {
-            const string testApp = @"ResourcesTestProjects\ReadFromResources";
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var tempDir = TestUtils.CreateTempDir())
             {
-                var appPath = Path.Combine(tempDir, testApp);
-                TestUtils.CreateDisposableTestProject(runtimeHomeDir, Path.Combine(tempDir, "ResourcesTestProjects"), Path.Combine(TestUtils.GetMiscProjectsFolder(), testApp));
+                var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "ReadFromResources");
+                TestUtils.CreateDisposableTestProject(runtimeHomeDir, Path.Combine(tempDir, "ResourcesTestProjects"), Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "ReadFromResources"));
 
                 string stdOut;
                 string stdErr;
