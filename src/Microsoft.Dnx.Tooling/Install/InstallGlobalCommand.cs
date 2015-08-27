@@ -152,7 +152,8 @@ namespace Microsoft.Dnx.Tooling
                 var rootDirectory = ProjectResolver.ResolveRootDirectory(_commandsRepository.Root.Root);
                 var config = NuGetConfig.ForSolution(rootDirectory, RestoreCommand.FileSystem);
 
-                var packageFeeds = new List<IPackageFeed>();
+                var packageFeeds = new PackageFeedCache();
+                var feeds = new List<IPackageFeed>();
 
                 var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
                     config.Sources,
@@ -161,18 +162,18 @@ namespace Microsoft.Dnx.Tooling
 
                 foreach (var source in effectiveSources)
                 {
-                    var feed = PackageSourceUtils.CreatePackageFeed(
+                    var feed = packageFeeds.GetPackageFeed(
                         source,
                         FeedOptions.NoCache,
                         FeedOptions.IgnoreFailedSources,
                         Reports);
                     if (feed != null)
                     {
-                        packageFeeds.Add(feed);
+                        feeds.Add(feed);
                     }
                 }
 
-                var package = await PackageSourceUtils.FindLatestPackage(packageFeeds, packageId);
+                var package = await PackageSourceUtils.FindLatestPackage(feeds, packageId);
 
                 if (package == null)
                 {

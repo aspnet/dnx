@@ -53,18 +53,19 @@ namespace Microsoft.Dnx.Tooling
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(sourceProvider,
                 _restoreCommand.FeedOptions.Sources, _restoreCommand.FeedOptions.FallbackSources);
 
-            var packageFeeds = new List<IPackageFeed>();
+            var packageFeeds = new PackageFeedCache();
+            var feeds = new List<IPackageFeed>();
 
             foreach (var source in effectiveSources)
             {
-                var feed = PackageSourceUtils.CreatePackageFeed(
+                var feed = packageFeeds.GetPackageFeed(
                     source,
                     _restoreCommand.FeedOptions.NoCache,
                     _restoreCommand.FeedOptions.IgnoreFailedSources,
                     Reports);
                 if (feed != null)
                 {
-                    packageFeeds.Add(feed);
+                    feeds.Add(feed);
                 }
             }
 
@@ -72,11 +73,11 @@ namespace Microsoft.Dnx.Tooling
 
             if (version == null)
             {
-                result = await PackageSourceUtils.FindLatestPackage(packageFeeds, _addCommand.Name);
+                result = await PackageSourceUtils.FindLatestPackage(feeds, _addCommand.Name);
             }
             else
             {
-                result = await PackageSourceUtils.FindBestMatchPackage(packageFeeds, _addCommand.Name, new SemanticVersionRange(version));
+                result = await PackageSourceUtils.FindBestMatchPackage(feeds, _addCommand.Name, new SemanticVersionRange(version));
             }
 
             if (result == null)

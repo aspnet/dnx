@@ -72,11 +72,11 @@ namespace Microsoft.Dnx.Tooling
             }
 
             var summary = new SummaryContext();
-
+            var packageFeeds = new PackageFeedCache();
             bool success = true;
             foreach (var dir in effectiveRestoreDirs.Select(Path.GetFullPath).Distinct())
             {
-                success &= await Execute(dir, summary);
+                success &= await Execute(dir, packageFeeds, summary);
             }
 
             summary.DisplaySummary(Reports);
@@ -84,7 +84,7 @@ namespace Microsoft.Dnx.Tooling
             return success;
         }
 
-        private async Task<bool> Execute(string restoreDirectory, SummaryContext summary)
+        private async Task<bool> Execute(string restoreDirectory, PackageFeedCache packageFeeds, SummaryContext summary)
         {
             try
             {
@@ -147,13 +147,21 @@ namespace Microsoft.Dnx.Tooling
                 var packagesFolderFileSystem = CreateFileSystem(packagesDirectory);
                 var pathResolver = new DefaultPackagePathResolver(packagesDirectory);
 
+                var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
+                    Config.Sources,
+                    FeedOptions.Sources,
+                    FeedOptions.FallbackSources);
+
+                var remoteProviders = new List<IWalkProvider>();
+                AddRemoteProvidersFromSources(remoteProviders, effectiveSources, packageFeeds, summary);
+
                 int restoreCount = 0;
                 int successCount = 0;
 
                 Func<string, Task> restorePackage = async projectJsonPath =>
                 {
                     Interlocked.Increment(ref restoreCount);
-                    var success = await RestoreForProject(projectJsonPath, rootDirectory, packagesDirectory, summary);
+                    var success = await RestoreForProject(projectJsonPath, rootDirectory, packagesDirectory, remoteProviders, summary);
                     if (success)
                     {
                         Interlocked.Increment(ref successCount);
@@ -199,7 +207,7 @@ namespace Microsoft.Dnx.Tooling
             }
         }
 
-        private async Task<bool> RestoreForProject(string projectJsonPath, string rootDirectory, string packagesDirectory, SummaryContext summary)
+        private async Task<bool> RestoreForProject(string projectJsonPath, string rootDirectory, string packagesDirectory, IList<IWalkProvider> remoteProviders, SummaryContext summary)
         {
             var success = true;
 
@@ -270,7 +278,6 @@ namespace Microsoft.Dnx.Tooling
             var restoreOperations = new RestoreOperations(Reports.Verbose);
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
-            var remoteProviders = new List<IWalkProvider>();
             var contexts = new List<RestoreContext>();
             var cache = new Dictionary<LibraryRange, Task<WalkProviderMatch>>();
 
@@ -282,13 +289,6 @@ namespace Microsoft.Dnx.Tooling
             localProviders.Add(
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(packageRepository)));
-
-            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
-                Config.Sources,
-                FeedOptions.Sources,
-                FeedOptions.FallbackSources);
-
-            AddRemoteProvidersFromSources(remoteProviders, effectiveSources, summary);
 
             var tasks = new List<Task<TargetContext>>();
 
@@ -890,11 +890,11 @@ namespace Microsoft.Dnx.Tooling
             lockFileFormat.Write(projectLockFilePath, lockFile);
         }
 
-        private void AddRemoteProvidersFromSources(List<IWalkProvider> remoteProviders, List<PackageSource> effectiveSources, SummaryContext summary)
+        private void AddRemoteProvidersFromSources(List<IWalkProvider> remoteProviders, List<PackageSource> effectiveSources, PackageFeedCache packageFeeds, SummaryContext summary)
         {
             foreach (var source in effectiveSources)
             {
-                var feed = PackageSourceUtils.CreatePackageFeed(
+                var feed = packageFeeds.GetPackageFeed(
                     source,
                     FeedOptions.NoCache,
                     FeedOptions.IgnoreFailedSources,
