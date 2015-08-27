@@ -31,7 +31,7 @@ namespace Microsoft.Dnx.Host
             foreach (var searchPath in _searchPaths)
             {
                 var path = searchPath;
-                if (!string.IsNullOrEmpty(assemblyName.CultureName))
+                if (!string.IsNullOrEmpty(assemblyName.CultureName) && !assemblyName.CultureName.Equals("neutral"))
                 {
                     path = Path.Combine(path, assemblyName.CultureName);
                 }
