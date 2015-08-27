@@ -15,6 +15,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
             var resourcesByCultureName = resources
                 .GroupBy(GetResourceCultureName, StringComparer.OrdinalIgnoreCase);
 
+            if (cultureName.Equals("neutral"))
+            {
+                cultureName = string.Empty;
+            }
+
             return resourcesByCultureName
                 .SingleOrDefault(grouping => string.Equals(grouping.Key, cultureName, StringComparison.OrdinalIgnoreCase));
         }
