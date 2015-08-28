@@ -209,15 +209,6 @@ public class TestClass : BaseClass {
             var projectStructure = @"{
   '.': ['project.json']
 }";
-            var expectedOutputStructure = @"{
-  '.': ['project.json', 'project.lock.json'],
-  'bin': {
-    'Debug': {
-      '.': ['PROJECT_NAME.1.0.0.nupkg', 'PROJECT_NAME.1.0.0.symbols.nupkg'],
-      'dnx451': ['PROJECT_NAME.dll', 'PROJECT_NAME.pdb', 'PROJECT_NAME.xml']
-    }
-  }
-}".Replace("PROJECT_NAME", projectName);
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, projectName))
@@ -245,8 +236,8 @@ public class TestClass : BaseClass {
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure);
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.ProjectPath, compareFileContents: false));
+                Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0.nupkg")));
+                Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0.symbols.nupkg")));
             }
         }
         [Theory]
@@ -258,15 +249,6 @@ public class TestClass : BaseClass {
             var projectStructure = @"{
   '.': ['project.json']
 }";
-            var expectedOutputStructure = @"{
-  '.': ['project.json', 'project.lock.json'],
-  'bin': {
-    'Debug': {
-      '.': ['PROJECT_NAME.1.0.0-beta.nupkg', 'PROJECT_NAME.1.0.0-beta.symbols.nupkg'],
-      'dnx451': ['PROJECT_NAME.dll', 'PROJECT_NAME.pdb', 'PROJECT_NAME.xml']
-    }
-  }
-}".Replace("PROJECT_NAME", projectName);
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, projectName))
@@ -293,9 +275,9 @@ public class TestClass : BaseClass {
                     arguments: "",
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
-
-                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure);
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.ProjectPath, compareFileContents: false));
+                
+                Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0-beta.nupkg")));
+                Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0-beta.symbols.nupkg")));
             }
         }
 
