@@ -32,22 +32,22 @@ namespace Microsoft.Dnx.Runtime.Tests
                     new LockFileTargetLibrary
                     {
                         Name = "MetaPackage",
-                        Version = SemanticVersion.Parse("1.0.0"),
+                        Version = SemanticVersion.Create("1.0.0"),
                     },
                     new LockFileTargetLibrary
                     {
                         Name = "Net451LibPackage",
-                        Version = SemanticVersion.Parse("1.0.0"),
+                        Version = SemanticVersion.Create("1.0.0"),
                     },
                     new LockFileTargetLibrary
                     {
                         Name = "Net451RefPackage",
-                        Version = SemanticVersion.Parse("1.0.0"),
+                        Version = SemanticVersion.Create("1.0.0"),
                     },
                     new LockFileTargetLibrary
                     {
                         Name = "AssemblyPlaceholderPackage",
-                        Version = SemanticVersion.Parse("1.0.0"),
+                        Version = SemanticVersion.Create("1.0.0"),
                         CompileTimeAssemblies = new List<LockFileItem> { Path.Combine("ref", "net45", "_._") },
                         RuntimeAssemblies = new List<LockFileItem> { Path.Combine("lib", "net45", "_._") }
                     }
@@ -62,25 +62,25 @@ namespace Microsoft.Dnx.Runtime.Tests
                     new LockFileTargetLibrary
                     {
                         Name = "MetaPackage",
-                        Version = SemanticVersion.Parse("1.0.0")
+                        Version = SemanticVersion.Create("1.0.0")
                     },
                     new LockFileTargetLibrary
                     {
                         Name = "Net451LibPackage",
-                        Version = SemanticVersion.Parse("1.0.0"),
+                        Version = SemanticVersion.Create("1.0.0"),
                         CompileTimeAssemblies = new List<LockFileItem> { Path.Combine("lib", "net451", "Net451LibPackage.dll") },
                         RuntimeAssemblies = new List<LockFileItem> { Path.Combine("lib", "net451", "Net451LibPackage.dll") }
                     },
                     new LockFileTargetLibrary
                     {
                         Name = "Net451RefPackage",
-                        Version = SemanticVersion.Parse("1.0.0"),
+                        Version = SemanticVersion.Create("1.0.0"),
                         CompileTimeAssemblies = new List<LockFileItem> { Path.Combine("ref", "net451", "Net451LibPackage.dll") }
                     },
                     new LockFileTargetLibrary
                     {
                         Name = "AssemblyPlaceholderPackage",
-                        Version = SemanticVersion.Parse("1.0.0")
+                        Version = SemanticVersion.Create("1.0.0")
                     }
                 }
             };
@@ -88,13 +88,13 @@ namespace Microsoft.Dnx.Runtime.Tests
             var metaPackageLibrary = new LockFilePackageLibrary
             {
                 Name = "MetaPackage",
-                Version = SemanticVersion.Parse("1.0.0")
+                Version = SemanticVersion.Create("1.0.0")
             };
 
             var net451LibPackageLibrary = new LockFilePackageLibrary
             {
                 Name = "Net451LibPackage",
-                Version = SemanticVersion.Parse("1.0.0"),
+                Version = SemanticVersion.Create("1.0.0"),
                 Files = new List<string>
                 {
                     Path.Combine("lib", "net451", "Net451LibPackage.dll"),
@@ -105,7 +105,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             var net451RefPackageLibrary = new LockFilePackageLibrary
             {
                 Name = "Net451RefPackage",
-                Version = SemanticVersion.Parse("1.0.0"),
+                Version = SemanticVersion.Create("1.0.0"),
                 Files = new List<string>
                 {
                     Path.Combine("ref", "net451", "Net451LibPackage.dll")
@@ -115,7 +115,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             var assemblyPlaceholderPackageLibrary = new LockFilePackageLibrary
             {
                 Name = "AssemblyPlaceholderPackage",
-                Version = SemanticVersion.Parse("1.0.0"),
+                Version = SemanticVersion.Create("1.0.0"),
                 Files = new List<string>
                 {
                     Path.Combine("lib", "net45", "_._"),

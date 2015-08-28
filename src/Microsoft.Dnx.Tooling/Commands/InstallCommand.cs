@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.Tooling
             SemanticVersion version = null;
             if (!string.IsNullOrEmpty(_addCommand.Version))
             {
-                version = SemanticVersion.Parse(_addCommand.Version);
+                version = SemanticVersion.Create(_addCommand.Version);
             }
 
             // Create source provider from solution settings

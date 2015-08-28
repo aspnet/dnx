@@ -210,7 +210,7 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 // Otherwise, use the value of 'title' if it exist
                 // Use the given Id as final fallback if all elements above don't exist
                 Id = id,
-                Version = SemanticVersion.Parse(version),
+                Version = SemanticVersion.Create(version),
                 ContentUri = $"{_baseUri}{lowerInvariantId}/{lowerInvariantVersion}/{lowerInvariantId}.{lowerInvariantVersion}{Constants.PackageExtension}",
 
                 // v3 feed doesn't indicate if listed?

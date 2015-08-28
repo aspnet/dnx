@@ -73,7 +73,7 @@ namespace NuGet
                     manifestMetadata.Id = value;
                     break;
                 case "version":
-                    manifestMetadata.Version = new SemanticVersion(value);
+                    manifestMetadata.Version = SemanticVersion.Create(value);
                     break;
                 case "authors":
                     manifestMetadata.Authors = value?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);

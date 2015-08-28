@@ -34,7 +34,7 @@ namespace Microsoft.Dnx.Runtime.Tests.NuGet.Authoring
         public void Save()
         {
             var id = "TestId";
-            var version = new SemanticVersion("0.1.0");
+            var version = SemanticVersion.Create("0.1.0");
             var authors = new string[] { "Alice", "Bob" };
 
             var manifest = new Manifest(new ManifestMetadata

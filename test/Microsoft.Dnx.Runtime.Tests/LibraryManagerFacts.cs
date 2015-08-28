@@ -62,7 +62,7 @@ namespace Microsoft.Dnx.Runtime.Tests
 
         private static LibraryDescription CreateRuntimeLibrary(string name, IEnumerable<string> dependencies)
         {
-            var version = new SemanticVersion("1.0.0");
+            var version = SemanticVersion.Create("1.0.0");
             return new LibraryDescription(
                 new LibraryRange(name, frameworkReference: false),
                 new LibraryIdentity(name, version, isGacOrFrameworkReference: false),

@@ -102,7 +102,7 @@ namespace Microsoft.Dnx.Tooling
 
                 var packageId = pathParts[2];
                 SemanticVersion packageVersion;
-                if (!SemanticVersion.TryParse(pathParts[3], out packageVersion))
+                if (!SemanticVersion.TryCreate(pathParts[3], out packageVersion))
                 {
                     continue;
                 }

@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             if (found)
             {
                 Assert.NotNull(library);
-                Assert.Equal(SemanticVersion.Parse(version), library.Identity.Version);
+                Assert.Equal(SemanticVersion.Create(version), library.Identity.Version);
                 Assert.Equal(Environment.ExpandEnvironmentVariables(path), library.Path);
             }
             else

@@ -152,7 +152,7 @@ namespace Microsoft.Dnx.Tooling
 
                 var parts = property.Key.Split(new[] { '/' }, 2);
                 var name = parts[0];
-                var version = parts.Length == 2 ? SemanticVersion.Parse(parts[1]) : null;
+                var version = parts.Length == 2 ? SemanticVersion.Create(parts[1]) : null;
 
                 var type = value["type"]?.Value<string>();
 
@@ -243,7 +243,7 @@ namespace Microsoft.Dnx.Tooling
             library.Name = parts[0];
             if (parts.Length == 2)
             {
-                library.Version = SemanticVersion.Parse(parts[1]);
+                library.Version = SemanticVersion.Create(parts[1]);
             }
 
             var type = json["type"];
@@ -513,7 +513,7 @@ namespace Microsoft.Dnx.Tooling
             {
                 throw new Exception(string.Format("TODO: lock file missing required property {0}", property));
             }
-            return SemanticVersion.Parse(valueToken.Value<string>());
+            return SemanticVersion.Create(valueToken.Value<string>());
         }
 
         private void WriteBool(JToken token, string property, bool value)

@@ -12,20 +12,37 @@ using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Common.DependencyInjection;
-using Microsoft.Dnx.Runtime.Compilation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NuGet;
 
 namespace Microsoft.Dnx.DesignTimeHost
 {
     public class Program
     {
         private readonly IServiceProvider _services;
+        private readonly Dictionary<string, SemanticVersion> _versionsCache;
 
         public Program(IServiceProvider services)
         {
             _services = services;
+            _versionsCache = new Dictionary<string, SemanticVersion>();
+            SemanticVersion.Factory = versionInString =>
+            {
+                SemanticVersion result;
+                if (_versionsCache.TryGetValue(versionInString, out result))
+                {
+                    return result;
+                }
+                else
+                {
+                    result = SemanticVersion.Parse(versionInString);
+
+                    _versionsCache[versionInString] = result;
+
+                    return result;
+                }
+            };
         }
 
         public void Main(string[] args)
@@ -76,7 +93,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             Console.WriteLine($"Process ID {Process.GetCurrentProcess().Id}");
             Console.WriteLine("Listening on port {0}", port);
 
-            for (; ;)
+            for (;;)
             {
                 var acceptSocket = await AcceptAsync(listenSocket);
 

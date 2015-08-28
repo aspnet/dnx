@@ -119,7 +119,7 @@ namespace Microsoft.Dnx.Runtime
 
                 var parts = key.Split(new[] { '/' }, 2);
                 var name = parts[0];
-                var version = parts.Length == 2 ? SemanticVersion.Parse(parts[1]) : null;
+                var version = parts.Length == 2 ? SemanticVersion.Create(parts[1]) : null;
 
                 var type = value.ValueAsString("type")?.Value;
 
@@ -181,7 +181,7 @@ namespace Microsoft.Dnx.Runtime
             library.Name = parts[0];
             if (parts.Length == 2)
             {
-                library.Version = SemanticVersion.Parse(parts[1]);
+                library.Version = SemanticVersion.Create(parts[1]);
             }
 
             library.Type = jobject.ValueAsString("type");

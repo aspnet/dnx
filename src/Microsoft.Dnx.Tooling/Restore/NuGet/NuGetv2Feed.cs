@@ -211,7 +211,7 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 // Otherwise, use the value of 'title' if it exist
                 // Use the given Id as final fallback if all elements above don't exist
                 Id = idElement?.Value ?? titleElement?.Value ?? id,
-                Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
+                Version = SemanticVersion.Create(properties.Element(_xnameVersion).Value),
                 ContentUri = element.Element(_xnameContent).Attribute("src").Value,
                 Listed = listed
             };

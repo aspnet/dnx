@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using NuGet.Resources;
 
@@ -9,75 +10,73 @@ namespace NuGet
 {
     /// <summary>
     /// A hybrid implementation of SemVer that supports semantic versioning as described at http://semver.org while not strictly enforcing it to 
-    /// allow older 4-digit versioning schemes to continue working.
+    /// allow older 4-digit versioning schemes to continue wokring.
     /// </summary>
     public sealed class SemanticVersion : IComparable, IComparable<SemanticVersion>, IEquatable<SemanticVersion>
     {
-        public SemanticVersion(string version)
-            : this(Parse(version))
+        public static Func<string, SemanticVersion> Factory { get; set; } = version => Parse(version);
+
+        public static SemanticVersion Create(string version)
         {
-            // The constructor normalizes the version string so that it we do not need to normalize it every time we need to operate on it. 
-            // The original string represents the original form in which the version is represented to be used when printing.
-            OriginalString = version;
+            if (string.IsNullOrEmpty(version))
+            {
+                throw new ArgumentNullException(nameof(version));
+            }
+
+            return Factory(version);
         }
 
-        public SemanticVersion(int major, int minor, int build, int revision)
-            : this(new Version(major, minor, build, revision))
+        public static SemanticVersion Create(Version version)
         {
+            return Create(version, string.Empty);
         }
 
-        public SemanticVersion(int major, int minor, int build, string specialVersion)
-            : this(new Version(major, minor, build), specialVersion)
-        {
-        }
-
-        public SemanticVersion(Version version)
-            : this(version, string.Empty)
-        {
-        }
-
-        public SemanticVersion(Version version, string specialVersion)
-            : this(version, specialVersion, null)
-        {
-        }
-
-        private SemanticVersion(Version version, string specialVersion, string originalString)
+        public static SemanticVersion Create(Version version, string specialVersion)
         {
             if (version == null)
             {
                 throw new ArgumentNullException(nameof(version));
             }
-            Version = NormalizeVersionValue(version);
-            SpecialVersion = specialVersion ?? string.Empty;
-            OriginalString = string.IsNullOrEmpty(originalString) ? version.ToString() + (!string.IsNullOrEmpty(specialVersion) ? '-' + specialVersion : null) : originalString;
+
+            var normalizedVersion = NormalizeVersionValue(version);
+            var key = version.ToString();
+            if (!string.IsNullOrEmpty(specialVersion))
+            {
+                key += "-" + specialVersion;
+            }
+
+            return Factory(key);
         }
 
-        internal SemanticVersion(SemanticVersion semVer)
+        public static bool TryCreate(string version, out SemanticVersion result)
         {
-            OriginalString = semVer.ToString();
-            Version = semVer.Version;
-            SpecialVersion = semVer.SpecialVersion;
+            try
+            {
+                result = Factory(version);
+                return true;
+            }
+            catch
+            {
+                result = null;
+                return false;
+            }
+        }
+
+        private SemanticVersion()
+        {
         }
 
         /// <summary>
         /// Gets the normalized version portion.
         /// </summary>
-        public Version Version
-        {
-            get;
-            private set;
-        }
+        public Version Version { get; private set; }
 
         /// <summary>
         /// Gets the optional special version.
         /// </summary>
-        public string SpecialVersion
-        {
-            get;
-            private set;
-        }
+        public string SpecialVersion { get; private set; }
 
-        public string OriginalString { get; }
+        public string OriginalString { get; private set; }
 
         public string GetNormalizedVersionString()
         {
@@ -136,38 +135,28 @@ namespace NuGet
         /// </summary>
         public static SemanticVersion Parse(string version)
         {
-            if (string.IsNullOrEmpty(version))
-            {
-                throw new ArgumentNullException(nameof(version));
-            }
-
             SemanticVersion semVer;
-            if (!TryParse(version, out semVer))
+            if (!TryParse(version, strict: false, result: out semVer))
             {
                 throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, NuGetResources.InvalidVersionString, version), nameof(version));
             }
+
             return semVer;
         }
 
         /// <summary>
-        /// Parses a version string using loose semantic versioning rules that allows 2-4 version components followed by an optional special version.
+        /// Try parse a version string.
+        /// 
+        /// Under loose mode loose semantic versioning rule is used. It allows 2-4 version components followed by an optional special version.
+        /// Under strict mode exactly 3 components are allowed with an optional special version.
         /// </summary>
-        public static bool TryParse(string version, out SemanticVersion value)
+        /// <param name="version">version in string</param>
+        /// <param name="strict">true if run under strick mode</param>
+        /// <param name="result">result in SemanticVersion</param>
+        /// <returns></returns>
+        public static bool TryParse(string version, bool strict, out SemanticVersion result)
         {
-            return TryParseInternal(version, strict: false, semVer: out value);
-        }
-
-        /// <summary>
-        /// Parses a version string using strict semantic versioning rules that allows exactly 3 components and an optional special version.
-        /// </summary>
-        public static bool TryParseStrict(string version, out SemanticVersion value)
-        {
-            return TryParseInternal(version, strict: true, semVer: out value);
-        }
-
-        private static bool TryParseInternal(string version, bool strict, out SemanticVersion semVer)
-        {
-            semVer = null;
+            result = null;
             if (string.IsNullOrEmpty(version))
             {
                 return false;
@@ -207,19 +196,14 @@ namespace NuGet
                 }
             }
 
-            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), specialVersion, version.Replace(" ", ""));
-            return true;
-        }
+            result = new SemanticVersion
+            {
+                Version = NormalizeVersionValue(versionValue),
+                SpecialVersion = specialVersion,
+                OriginalString = version.Replace(" ", "")
+            };
 
-        /// <summary>
-        /// Attempts to parse the version token as a SemanticVersion.
-        /// </summary>
-        /// <returns>An instance of SemanticVersion if it parses correctly, null otherwise.</returns>
-        public static SemanticVersion ParseOptionalVersion(string version)
-        {
-            SemanticVersion semVer;
-            TryParse(version, out semVer);
-            return semVer;
+            return true;
         }
 
         private static Version NormalizeVersionValue(Version version)
