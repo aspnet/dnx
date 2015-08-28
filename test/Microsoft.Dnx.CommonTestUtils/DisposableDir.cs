@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.CommonTestUtils
 {
@@ -61,6 +62,16 @@ namespace Microsoft.Dnx.CommonTestUtils
         {
             string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Directory.CreateDirectory(tempDirectory);
+
+            if (string.Equals(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem, "Darwin"))
+            {
+                // Resolves issues on Mac where GetTempPath gives /var and GetCurrentDirectory gives /private/var
+                var currentDirectory = Directory.GetCurrentDirectory();
+                Directory.SetCurrentDirectory(tempDirectory);
+                tempDirectory = Directory.GetCurrentDirectory();
+                Directory.SetCurrentDirectory(currentDirectory);
+            }
+
             return tempDirectory;
         }
     }
