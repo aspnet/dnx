@@ -3,6 +3,7 @@
 
 using System;
 using System.Globalization;
+using System.Text;
 using NuGet.Resources;
 
 namespace NuGet
@@ -13,6 +14,8 @@ namespace NuGet
     /// </summary>
     public sealed class SemanticVersion : IComparable, IComparable<SemanticVersion>, IEquatable<SemanticVersion>
     {
+        private string _normalizedVersionString;
+
         public SemanticVersion(string version)
             : this(Parse(version))
         {
@@ -272,11 +275,33 @@ namespace NuGet
 
         public override string ToString()
         {
-            var revision = Version.Revision > 0 ? ("." + Version.Revision.ToString(CultureInfo.InvariantCulture)) : string.Empty;
-            var specialVer = !string.IsNullOrEmpty(SpecialVersion) ? ("-" + SpecialVersion) : string.Empty;
+            if (_normalizedVersionString == null)
+            {
+                var builder = new StringBuilder();
+                builder
+                    .Append(Version.Major)
+                    .Append('.')
+                    .Append(Version.Minor)
+                    .Append('.')
+                    .Append(Math.Max(0, Version.Build));
 
-            // SemanticVersion normalizes the missing components to 0.
-            return $"{Version.Major}.{Version.Minor}.{Version.Build}{revision}{specialVer}";
+                if (Version.Revision > 0)
+                {
+                    builder
+                        .Append('.')
+                        .Append(Version.Revision);
+                }
+
+                if (!string.IsNullOrEmpty(SpecialVersion))
+                {
+                    builder
+                        .Append('-')
+                        .Append(SpecialVersion);
+                }
+                
+                _normalizedVersionString = builder.ToString();
+            }
+            return _normalizedVersionString;
         }
 
         public bool Equals(SemanticVersion other)

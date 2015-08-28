@@ -202,35 +202,100 @@ public class TestClass : BaseClass {
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
-        public void DnuPack_NormalizesVersionNumber(string flavor, string os, string architecture)
+        public void DnuPack_NormalizesVersionNumberWithRevisionNumberOfZero(string flavor, string os, string architecture)
         {
-            string expectedNupkg =
-            @"{0} -> {1}/bin/Debug/{0}.1.0.0.nupkg".Replace('/', Path.DirectorySeparatorChar);
-            string expectedSymbol =
-            @"{0} -> {1}/bin/Debug/{0}.1.0.0.symbols.nupkg".Replace('/', Path.DirectorySeparatorChar);
-            string stdOut;
-            string stdErr;
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
             int exitCode;
+            var projectName = "TestProject";
+            var projectStructure = @"{
+  '.': ['project.json']
+}";
+            var expectedOutputStructure = @"{
+  '.': ['project.json', 'project.lock.json'],
+  'bin': {
+    'Debug': {
+      '.': ['PROJECT_NAME.1.0.0.nupkg', 'PROJECT_NAME.1.0.0.symbols.nupkg'],
+      'dnx451': ['PROJECT_NAME.dll', 'PROJECT_NAME.pdb', 'PROJECT_NAME.xml']
+    }
+  }
+}".Replace("PROJECT_NAME", projectName);
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, projectName))
             {
-                File.WriteAllText($"{testEnv.RootDir}/project.json",
-@"{
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
   ""version"": ""1.0.0.0"",
   ""frameworks"": {
     ""dnx451"": {}
   }
-}");
+}")
+                    .WriteTo(testEnv.ProjectPath);
 
-                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", "", out stdOut, out stdErr, workingDir: testEnv.RootDir);
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir, 
+                    subcommand: "restore",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", "", out stdOut, out stdErr, workingDir: testEnv.RootDir);
-                Assert.Empty(stdErr);
-                Assert.Contains(string.Format(expectedNupkg, Path.GetFileName(testEnv.RootDir), testEnv.RootDir), stdOut);
-                Assert.Contains(string.Format(expectedSymbol, Path.GetFileName(testEnv.RootDir), testEnv.RootDir), stdOut);
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "pack",
+                    arguments: "",
+                    workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure);
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.ProjectPath, compareFileContents: false));
+            }
+        }
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_NormalizesVersionNumberWithNoBuildNumber(string flavor, string os, string architecture)
+        {
+            int exitCode;
+            var projectName = "TestProject";
+            var projectStructure = @"{
+  '.': ['project.json']
+}";
+            var expectedOutputStructure = @"{
+  '.': ['project.json', 'project.lock.json'],
+  'bin': {
+    'Debug': {
+      '.': ['PROJECT_NAME.1.0.0-beta.nupkg', 'PROJECT_NAME.1.0.0-beta.symbols.nupkg'],
+      'dnx451': ['PROJECT_NAME.dll', 'PROJECT_NAME.pdb', 'PROJECT_NAME.xml']
+    }
+  }
+}".Replace("PROJECT_NAME", projectName);
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, projectName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""version"": ""1.0-beta"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "pack",
+                    arguments: "",
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure);
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.ProjectPath, compareFileContents: false));
             }
         }
 
