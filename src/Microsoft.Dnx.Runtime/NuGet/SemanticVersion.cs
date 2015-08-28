@@ -301,6 +301,7 @@ namespace NuGet
                 
                 _normalizedVersionString = builder.ToString();
             }
+
             return _normalizedVersionString;
         }
 

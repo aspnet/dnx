@@ -232,7 +232,7 @@ public class TestClass : BaseClass {
                 exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "pack",
-                    arguments: "",
+                    arguments: string.Empty,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
@@ -272,7 +272,7 @@ public class TestClass : BaseClass {
                 exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "pack",
-                    arguments: "",
+                    arguments: string.Empty,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
                 
