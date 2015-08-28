@@ -33,7 +33,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
             Assert.Equal(compilation, target.Compilation);
         }
 
-		[Fact]
+        [Fact]
         public void ConstructorWithParameters()
         {
             var compilation = CSharpCompilation.Create("nothing");

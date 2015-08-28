@@ -84,7 +84,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 EmitResult emitResult = null;
 
-                if (!string.IsNullOrEmpty(assemblyName.CultureName) && !assemblyName.CultureName.Equals("neutral"))
+                if (!ResourcesForCulture.IsResourceNeutralCulture(assemblyName))
                 {
                     var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
                     if (resourcesForCulture == null)
@@ -92,7 +92,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                         return null;
                     }
                     afterCompileContext.SymbolStream = null;
-                    emitResult = EmitResourceAssembly(assemblyName, resourcesForCulture, afterCompileContext);
+                    emitResult = EmitResourceAssembly(assemblyName, resourcesForCulture, afterCompileContext.Compilation.Options, afterCompileContext.AssemblyStream);
                 }
                 else
                 {
@@ -119,12 +119,12 @@ namespace Microsoft.Dnx.Compilation.CSharp
                         emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
                     }
 
-                    afterCompileContext.Diagnostics = CompilationContext.Diagnostics.Concat(emitResult.Diagnostics).ToList();
-
                     sw.Stop();
 
                     Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
                 }
+
+                afterCompileContext.Diagnostics = CompilationContext.Diagnostics.Concat(emitResult.Diagnostics).ToList();
 
                 if (!Path.GetExtension(assemblyName.Name).Contains("resources"))
                 {
@@ -134,8 +134,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     }
                 }
 
-                if (!emitResult.Success ||
-                    afterCompileContext.Diagnostics.Any(RoslynDiagnosticUtilities.IsError))
+                if (!emitResult.Success || afterCompileContext.Diagnostics.Any(RoslynDiagnosticUtilities.IsError))
                 {
                     throw new RoslynCompilationException(afterCompileContext.Diagnostics, CompilationContext.ProjectContext.TargetFramework);
                 }
@@ -174,7 +173,12 @@ namespace Microsoft.Dnx.Compilation.CSharp
         public DiagnosticResult EmitAssembly(string outputPath)
         {
             var resources = Enumerable.Empty<ResourceDescription>();
-            EmitResources(outputPath, out resources);
+            var diagnosticsResult = EmitResources(outputPath, out resources);
+
+            if (diagnosticsResult != null)
+            {
+                return diagnosticsResult;
+            }
 
             var assemblyPath = Path.Combine(outputPath, Name + ".dll");
             var pdbPath = Path.Combine(outputPath, Name + ".pdb");
@@ -293,31 +297,27 @@ namespace Microsoft.Dnx.Compilation.CSharp
         private EmitResult EmitResourceAssembly(
             AssemblyName assemblyName,
             IEnumerable<ResourceDescriptor> resourceDescriptors,
-            AfterCompileContext afterCompileContext)
+            CSharpCompilationOptions compilationOptions,
+            Stream assemblyStream)
         {
             var resources = resourceDescriptors
                 .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true));
 
-            var mainCompilation = afterCompileContext.Compilation;
             var compilation = CSharpCompilation.Create(
                 assemblyName.Name,
-                options: mainCompilation.Options);
+                options: compilationOptions);
 
             Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
 
             var sw = Stopwatch.StartNew();
 
             var emitResult = compilation.Emit(
-                    afterCompileContext.AssemblyStream,
+                    assemblyStream,
                     manifestResources: resources);
 
             sw.Stop();
 
             Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
-
-            afterCompileContext.Diagnostics = CompilationContext.Diagnostics
-                .Concat(emitResult.Diagnostics)
-                .ToList();
 
             return emitResult;
         }
@@ -339,31 +339,22 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 {
                     using (var resourceAssemblyStream = new MemoryStream())
                     {
-                        var resourceAfterCompileContext = new AfterCompileContext
-                        {
-                            ProjectContext = CompilationContext.ProjectContext,
-                            Compilation = CompilationContext.Compilation,
-                            AssemblyStream = resourceAssemblyStream,
-                        };
                         var resourceAssemblyName = new AssemblyName(Name);
                         var emitResult = EmitResourceAssembly(
                             resourceAssemblyName,
                             resourceGrouping,
-                            resourceAfterCompileContext);
+                            CompilationContext.Compilation.Options,
+                            resourceAssemblyStream);
 
-                        resourceAfterCompileContext.Diagnostics = new List<Diagnostic>(emitResult.Diagnostics);
+                        var diagnostics = CompilationContext.Diagnostics
+                        .Concat(emitResult.Diagnostics)
+                        .ToList();
 
-                        foreach (var m in CompilationContext.Modules)
-                        {
-                            m.AfterCompile(resourceAfterCompileContext);
-                        }
-
-                        if (!emitResult.Success ||
-                            resourceAfterCompileContext.Diagnostics.Any(RoslynDiagnosticUtilities.IsError))
+                        if (!emitResult.Success || diagnostics.Any(RoslynDiagnosticUtilities.IsError))
                         {
                             return CreateDiagnosticResult(
                                 emitResult.Success,
-                                resourceAfterCompileContext.Diagnostics,
+                                diagnostics,
                                 CompilationContext.ProjectContext.TargetFramework);
                         }
 
@@ -372,16 +363,16 @@ namespace Microsoft.Dnx.Compilation.CSharp
                             outputPath,
                             resourceGrouping.Key));
 
-                        if (resourceAfterCompileContext.AssemblyStream != null)
+                        if (resourceAssemblyStream != null)
                         {
-                            resourceAfterCompileContext.AssemblyStream.Position = 0;
+                            resourceAssemblyStream.Position = 0;
 
                             using (var assemblyFileStream = File.Create(Path.Combine(
                                 outputPath,
                                 resourceGrouping.Key,
                                 Name + ".resources.dll")))
                             {
-                                resourceAfterCompileContext.AssemblyStream.CopyTo(assemblyFileStream);
+                                resourceAssemblyStream.CopyTo(assemblyFileStream);
                             }
                         }
                     }

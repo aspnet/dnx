@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Dnx.Compilation.CSharp;
 
 namespace Microsoft.Dnx.Runtime.Loader
 {
@@ -33,7 +34,8 @@ namespace Microsoft.Dnx.Runtime.Loader
 #if DNXCORE50
             newAssemblyName.CultureName = assemblyName.CultureName;
 #elif DNX451
-            if (assemblyName.CultureInfo != null && assemblyName.CultureName != "neutral")
+            // Assigning empty CultureInfo makes the new assembly culture as neutral which won't match the entries in _assemblies dictionary. Hence this check.
+            if (assemblyName.CultureInfo != null && !ResourcesForCulture.IsResourceNeutralCulture(assemblyName))
             {
                  newAssemblyName.CultureInfo = assemblyName.CultureInfo;
             }
