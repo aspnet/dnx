@@ -6,7 +6,7 @@ using Microsoft.Dnx.Runtime;
 
 namespace NuGet
 {
-    public static class VersionExtensions
+    public static class SemanticVersionRangeExtensions
     {
         public static bool EqualsFloating(this SemanticVersionRange versionRange, SemanticVersion version)
         {

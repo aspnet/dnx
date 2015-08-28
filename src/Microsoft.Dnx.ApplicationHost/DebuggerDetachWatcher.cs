@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.ApplicationHost
 {
     public class DebuggerDetachWatcher
     {

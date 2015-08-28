@@ -10,7 +10,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Text.RegularExpressions;
 using Microsoft.Dnx.Runtime;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;
@@ -835,27 +834,6 @@ namespace NuGet
             }
 
             return framework;
-        }
-
-        /// <summary>
-        /// Returns all possible versions for a version. i.e. 1.0 would return 1.0, 1.0.0, 1.0.0.0
-        /// </summary>
-        internal static IEnumerable<SemanticVersion> GetPossibleVersions(SemanticVersion semVer)
-        {
-            // Trim the version so things like 1.0.0.0 end up being 1.0
-            Version version = TrimVersion(semVer.Version);
-
-            yield return new SemanticVersion(version, semVer.SpecialVersion);
-
-            if (version.Build == -1 && version.Revision == -1)
-            {
-                yield return new SemanticVersion(new Version(version.Major, version.Minor, 0), semVer.SpecialVersion);
-                yield return new SemanticVersion(new Version(version.Major, version.Minor, 0, 0), semVer.SpecialVersion);
-            }
-            else if (version.Revision == -1)
-            {
-                yield return new SemanticVersion(new Version(version.Major, version.Minor, version.Build, 0), semVer.SpecialVersion);
-            }
         }
 
         public static bool IsCompatible(FrameworkName frameworkName, IEnumerable<FrameworkName> supportedFrameworks)

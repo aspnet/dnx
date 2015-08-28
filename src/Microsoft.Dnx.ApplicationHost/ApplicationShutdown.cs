@@ -3,8 +3,9 @@
 
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Dnx.Runtime;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.ApplicationHost
 {
     public class ApplicationShutdown : IApplicationShutdown
     {
