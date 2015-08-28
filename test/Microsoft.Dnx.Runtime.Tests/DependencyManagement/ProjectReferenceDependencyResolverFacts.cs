@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.Dnx.Runtime.Internal;
 using NuGet;
 using Xunit;
 
@@ -25,7 +26,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             string projectJson = @"{ ""frameworks"": { """ + shortFrameworkName + @""": {} } }";
             using (var strm = new MemoryStream(Encoding.UTF8.GetBytes(projectJson)))
             {
-                var project = Project.GetProjectFromStream(strm, "TheTestProject", @"C:\TestProject");
+                var project = new ProjectReader().ReadProject(strm, "TheTestProject", @"C:\TestProject", diagnostics: null);
                 var provider = new ProjectDependencyProvider();
                 var expected = expectedNames.Split(',').Select(s => "fx/" + s).ToArray();
                 var actual = provider.GetDescription(VersionUtility.ParseFrameworkName(shortFrameworkName), project)

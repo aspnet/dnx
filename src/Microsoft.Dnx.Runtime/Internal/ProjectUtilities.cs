@@ -19,7 +19,7 @@ namespace Microsoft.Dnx.Runtime.Internal
         {
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
-            var project = Project.GetProjectFromStream(ms, projectName, projectPath, diagnostics);
+            var project = new ProjectReader().ReadProject(ms, projectName, projectPath, diagnostics);
 
             return project;
         }
