@@ -10,10 +10,6 @@ namespace Microsoft.Dnx.Compilation
     {
         LibraryExport GetExport(string name);
 
-        LibraryExport GetExport(string name, string aspect);
-
         LibraryExport GetAllExports(string name);
-
-        LibraryExport GetAllExports(string name, string aspect);
     }
 }
