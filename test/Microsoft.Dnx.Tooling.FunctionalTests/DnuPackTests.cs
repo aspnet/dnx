@@ -279,7 +279,7 @@ public class TestClass : BaseClass {
                 Assert.NotEmpty(stdErr);
                 var unresolvedDependencyErrorCount = stdErr
                     .Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(line => line.Contains("The dependency NonexistentPackages >= 1.0.0 could not be resolved"))
+                    .Where(line => line.Contains("The dependency NonexistentPackage >= 1.0.0 could not be resolved"))
                     .Count();
                 Assert.Equal(1, unresolvedDependencyErrorCount);
             }

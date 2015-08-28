@@ -241,6 +241,7 @@ namespace Microsoft.Dnx.Tooling
                             AddPackageFiles(_currentProject.ProjectDirectory, _currentProject.Files.PackInclude, packageBuilder, packDiagnostics);
                         }
                         success &= !packDiagnostics.HasErrors();
+                        allDiagnostics.AddRange(packDiagnostics);
 
                         foreach (var path in _currentProject.Files.SourceFiles)
                         {
