@@ -384,7 +384,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 commandsBuilder.AppendLine("Commands:");
                 var maxCmdLen = MaxCommandLength(target.Commands);
                 var outputFormat = string.Format("  {{0, -{0}}}{{1}}", maxCmdLen + 2);
-                foreach (var cmd in target.Commands)
+                foreach (var cmd in target.Commands.OrderBy(c => c.Name))
                 {
                     commandsBuilder.AppendFormat(outputFormat, cmd.Name, cmd.Description);
                     commandsBuilder.AppendLine();
