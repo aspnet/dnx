@@ -11,9 +11,9 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Runtime.Common.Impl;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;
-using Microsoft.Dnx.Runtime.Common.Impl;
 
 namespace NuGet
 {
@@ -111,26 +111,6 @@ namespace NuGet
             { new FrameworkName("Windows, Version=v8.0"), new FrameworkName(".NETCore, Version=v4.5") },
             { new FrameworkName("Windows, Version=v8.1"), new FrameworkName(".NETCore, Version=v4.5.1") }
         };
-
-        private static readonly Version MaxVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
-
-        public static Version DefaultTargetFrameworkVersion
-        {
-            get
-            {
-                // We need to parse the version name out from the mscorlib's assembly name since
-                // we can't call GetName() in medium trust
-                return typeof(string).GetTypeInfo().Assembly.GetName().Version;
-            }
-        }
-
-        public static FrameworkName DefaultTargetFramework
-        {
-            get
-            {
-                return new FrameworkName(NetFrameworkIdentifier, DefaultTargetFrameworkVersion);
-            }
-        }
 
         // This method must be kep in sync with CompilerOptionsExtensions.IsDesktop
         public static bool IsDesktop(FrameworkName frameworkName)
@@ -303,28 +283,6 @@ namespace NuGet
             }
         }
 
-        /// <summary>
-        /// Trims trailing zeros in revision and build.
-        /// </summary>
-        public static Version TrimVersion(Version version)
-        {
-            if (version == null)
-            {
-                throw new ArgumentNullException(nameof(version));
-            }
-
-            if (version.Build == 0 && version.Revision == 0)
-            {
-                version = new Version(version.Major, version.Minor);
-            }
-            else if (version.Revision == 0)
-            {
-                version = new Version(version.Major, version.Minor, version.Build);
-            }
-
-            return version;
-        }
-
         public static SemanticVersionRange ParseVersionRange(string value)
         {
             var floatBehavior = SemanticVersionFloatBehavior.None;
@@ -368,7 +326,7 @@ namespace NuGet
             return versionInfo;
         }
 
-        public static bool TryParseVersionSpec(string value, out IVersionSpec result)
+        private static bool TryParseVersionSpec(string value, out IVersionSpec result)
         {
             if (value == null)
             {
@@ -472,20 +430,7 @@ namespace NuGet
             return true;
         }
 
-        /// <summary>
-        /// The safe range is defined as the highest build and revision for a given major and minor version
-        /// </summary>
-        public static IVersionSpec GetSafeRange(SemanticVersion version)
-        {
-            return new VersionSpec
-            {
-                IsMinInclusive = true,
-                MinVersion = version,
-                MaxVersion = new SemanticVersion(new Version(version.Version.Major, version.Version.Minor + 1))
-            };
-        }
-
-        public static string PrettyPrint(IVersionSpec versionSpec)
+        internal static string PrettyPrint(IVersionSpec versionSpec)
         {
             if (versionSpec.MinVersion != null && versionSpec.IsMinInclusive && versionSpec.MaxVersion == null && !versionSpec.IsMaxInclusive)
             {
@@ -654,12 +599,6 @@ namespace NuGet
             return null;
         }
 
-        public static FrameworkName ParseFrameworkFolderName(string path)
-        {
-            string effectivePath;
-            return ParseFrameworkFolderName(path, strictParsing: true, effectivePath: out effectivePath);
-        }
-
         /// <summary>
         /// Parses the specified string into FrameworkName object.
         /// </summary>
@@ -667,7 +606,7 @@ namespace NuGet
         /// <param name="strictParsing">if set to <c>true</c>, parse the first folder of path even if it is unrecognized framework.</param>
         /// <param name="effectivePath">returns the path after the parsed target framework</param>
         /// <returns></returns>
-        public static FrameworkName ParseFrameworkFolderName(string path, bool strictParsing, out string effectivePath)
+        private static FrameworkName ParseFrameworkFolderName(string path, bool strictParsing, out string effectivePath)
         {
             // The path for a reference might look like this for assembly foo.dll:
             // foo.dll
@@ -762,7 +701,7 @@ namespace NuGet
             return TryGetCompatibleItemsCore(out compatibleItems, internalProjectFramework, frameworkGroups);
         }
 
-        public static bool TryGetCompatibleItems<T>(FrameworkName projectFramework, IEnumerable<T> items, out IEnumerable<T> compatibleItems) where T : IFrameworkTargetable
+        private static bool TryGetCompatibleItems<T>(FrameworkName projectFramework, IEnumerable<T> items, out IEnumerable<T> compatibleItems) where T : IFrameworkTargetable
         {
             if (!items.Any())
             {
@@ -834,17 +773,6 @@ namespace NuGet
             }
 
             return framework;
-        }
-
-        public static bool IsCompatible(FrameworkName frameworkName, IEnumerable<FrameworkName> supportedFrameworks)
-        {
-            if (supportedFrameworks.Any())
-            {
-                return supportedFrameworks.Any(supportedFramework => IsCompatible(frameworkName, supportedFramework));
-            }
-
-            // No supported frameworks means that everything is supported.
-            return true;
         }
 
         /// <summary>
