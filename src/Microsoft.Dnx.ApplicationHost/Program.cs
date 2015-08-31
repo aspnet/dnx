@@ -86,12 +86,12 @@ namespace Microsoft.Dnx.ApplicationHost
                 disposable = host.AddLoaders(_container);
 
                 return ExecuteMain(host, options.ApplicationName, programArgs)
-                        .ContinueWith(async (t, state) =>
+                        .ContinueWith((t, state) =>
                         {
                             ((IDisposable)state).Dispose();
-                            return await t;
+                            return t.GetAwaiter().GetResult();
                         },
-                        disposable).Unwrap();
+                        disposable);
             }
             catch
             {

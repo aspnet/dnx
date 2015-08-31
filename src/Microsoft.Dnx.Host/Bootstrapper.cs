@@ -85,13 +85,13 @@ namespace Microsoft.Dnx.Host
 
                 var task = EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
 
-                return task.ContinueWith(async (t, state) =>
+                return task.ContinueWith((t, state) =>
                 {
                     // Dispose the host
                     ((IDisposable)state).Dispose();
 
-                    return await t;
-                }, disposable).Unwrap();
+                    return t.GetAwaiter().GetResult();
+                }, disposable);
             }
             catch
             {
