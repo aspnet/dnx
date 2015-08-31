@@ -134,6 +134,11 @@ namespace Microsoft.Dnx.Runtime
             var projectName = PathUtility.GetDirectoryName(path);
             projectPath = Path.GetFullPath(projectPath);
 
+            if (!File.Exists(projectPath))
+            {
+                return false;
+            }
+
             try
             {
                 using (var stream = File.OpenRead(projectPath))
