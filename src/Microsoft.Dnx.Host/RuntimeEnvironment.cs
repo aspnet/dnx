@@ -17,17 +17,17 @@ namespace Microsoft.Dnx.Runtime
         public RuntimeEnvironment()
         {
 #if DNXCORE50
-            RuntimeType = "CoreCLR";
-            RuntimeArchitecture = IntPtr.Size == 8 ? "x64" : "x86";
+            RuntimeType = RuntimeTypes.CoreCLR;
+            RuntimeArchitecture = IntPtr.Size == 8 ? RuntimeArchitectures.X64 : RuntimeArchitectures.X86;
 #else
-            RuntimeType = Type.GetType("Mono.Runtime") == null ? "CLR" : "Mono";
-            RuntimeArchitecture = Environment.Is64BitProcess ? "x64" : "x86";
+            RuntimeType = Type.GetType("Mono.Runtime") == null ? RuntimeTypes.CLR : RuntimeTypes.Mono;
+            RuntimeArchitecture = Environment.Is64BitProcess ? RuntimeArchitectures.X64 : RuntimeArchitectures.X86;
 #endif
 
             // This is a temporary workaround until we pass a struct with OS information from native code
             if (Environment.GetEnvironmentVariable(EnvironmentNames.DnxIsWindows) == "1")
             {
-                _osName = "Windows";
+                _osName = RuntimeOperatingSystems.Windows;
             }
         }
 
@@ -38,7 +38,7 @@ namespace Microsoft.Dnx.Runtime
                 if (_osName == null)
                 {
                     string uname = NativeMethods.Uname();
-                    _osName = string.IsNullOrEmpty(uname) ? "Windows" : uname;
+                    _osName = string.IsNullOrEmpty(uname) ? RuntimeOperatingSystems.Windows : uname;
                 }
 
                 return _osName;
@@ -49,7 +49,7 @@ namespace Microsoft.Dnx.Runtime
         {
             get
             {
-                if (OperatingSystem != "Windows")
+                if (OperatingSystem != RuntimeOperatingSystems.Windows)
                 {
                     return null;
                 }
