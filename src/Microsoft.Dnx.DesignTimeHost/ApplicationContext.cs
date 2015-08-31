@@ -95,10 +95,10 @@ namespace Microsoft.Dnx.DesignTimeHost
                 _inbox.Enqueue(message);
             }
 
-            ThreadPool.QueueUserWorkItem(ProcessLoop);
+            ThreadPool.QueueUserWorkItem(state => ((ApplicationContext)state).ProcessLoop(), this);
         }
 
-        public void ProcessLoop(object state)
+        public void ProcessLoop()
         {
             if (!Monitor.TryEnter(_processingLock))
             {
