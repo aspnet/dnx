@@ -10,7 +10,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.Impl;
-using Microsoft.Dnx.Compilation;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {

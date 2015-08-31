@@ -12,7 +12,6 @@ using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Compilation;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {

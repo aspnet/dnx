@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.PortableExecutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -28,6 +27,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
         private readonly IFileWatcher _watcher;
         private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _services;
+        private readonly Func<IMetadataFileReference, AssemblyMetadata> _assemblyMetadataFactory;
 
         public RoslynCompiler(ICache cache,
                               ICacheContextAccessor cacheContextAccessor,
@@ -44,6 +44,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
             _watcher = watcher;
             _environment = environment;
             _services = services;
+            _assemblyMetadataFactory = fileReference =>
+            {
+                return _cache.Get<AssemblyMetadata>(fileReference.Path, ctx =>
+                {
+                    ctx.Monitor(new FileWriteTimeCacheDependency(fileReference.Path));
+                    return fileReference.CreateAssemblyMetadata();
+                });
+            };
         }
 
         public CompilationContext CompileProject(
@@ -82,7 +90,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency(projectContext.Target.Name + "_Dependencies"));
             }
 
-            var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
+            var exportedReferences = incomingReferences
+                .Select(reference => reference.ConvertMetadataReference(_assemblyMetadataFactory));
 
             Logger.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
@@ -90,7 +99,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             var compilationSettings = projectContext.CompilerOptions.ToCompilationSettings(
                 projectContext.Target.TargetFramework);
 
-            var sourceFiles = Enumerable.Empty<String>();
+            var sourceFiles = Enumerable.Empty<string>();
             if (isMainAspect)
             {
                 sourceFiles = projectContext.Files.SourceFiles;
@@ -103,15 +112,12 @@ namespace Microsoft.Dnx.Compilation.CSharp
             var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
                                                       preprocessorSymbols: compilationSettings.Defines);
 
-            IList<SyntaxTree> trees = GetSyntaxTrees(
+            var trees = GetSyntaxTrees(
                 projectContext,
                 sourceFiles,
                 incomingSourceReferences,
                 parseOptions,
                 isMainAspect);
-
-            var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
-                                                       .ToDictionary(a => a.Name, ConvertMetadataReference);
 
             var references = new List<MetadataReference>();
             references.AddRange(exportedReferences);
@@ -389,59 +395,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
                 }
             });
-        }
-
-        private MetadataReference ConvertMetadataReference(IMetadataReference metadataReference)
-        {
-            var roslynReference = metadataReference as IRoslynMetadataReference;
-
-            if (roslynReference != null)
-            {
-                return roslynReference.MetadataReference;
-            }
-
-            var embeddedReference = metadataReference as IMetadataEmbeddedReference;
-
-            if (embeddedReference != null)
-            {
-                return MetadataReference.CreateFromImage(embeddedReference.Contents);
-            }
-
-            var fileMetadataReference = metadataReference as IMetadataFileReference;
-
-            if (fileMetadataReference != null)
-            {
-                return GetMetadataReference(fileMetadataReference.Path);
-            }
-
-            var projectReference = metadataReference as IMetadataProjectReference;
-            if (projectReference != null)
-            {
-                using (var ms = new MemoryStream())
-                {
-                    projectReference.EmitReferenceAssembly(ms);
-
-                    return MetadataReference.CreateFromImage(ms.ToArray());
-                }
-            }
-
-            throw new NotSupportedException();
-        }
-
-        private MetadataReference GetMetadataReference(string path)
-        {
-            var metadata = _cache.Get<AssemblyMetadata>(path, ctx =>
-            {
-                ctx.Monitor(new FileWriteTimeCacheDependency(path));
-
-                using (var stream = File.OpenRead(path))
-                {
-                    var moduleMetadata = ModuleMetadata.CreateFromStream(stream, PEStreamOptions.PrefetchMetadata);
-                    return AssemblyMetadata.Create(moduleMetadata);
-                }
-            });
-
-            return metadata.GetReference(filePath: path);
         }
 
         private class CompilationModules
