@@ -84,17 +84,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 EmitResult emitResult = null;
 
-                if (!ResourcesForCulture.IsResourceNeutralCulture(assemblyName))
-                {
-                    var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
-                    if (resourcesForCulture == null)
-                    {
-                        return null;
-                    }
-                    afterCompileContext.SymbolStream = null;
-                    emitResult = EmitResourceAssembly(assemblyName, resourcesForCulture, afterCompileContext.Compilation.Options, afterCompileContext.AssemblyStream);
-                }
-                else
+                if (ResourcesForCulture.IsResourceNeutralCulture(assemblyName))
                 {
                     var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
                     if (resourcesForCulture == null)
@@ -122,6 +112,16 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     sw.Stop();
 
                     Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+                }
+                else
+                {
+                    var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
+                    if (resourcesForCulture == null)
+                    {
+                        return null;
+                    }
+                    afterCompileContext.SymbolStream = null;
+                    emitResult = EmitResourceAssembly(assemblyName, resourcesForCulture, afterCompileContext.Compilation.Options, afterCompileContext.AssemblyStream);
                 }
 
                 afterCompileContext.Diagnostics = CompilationContext.Diagnostics.Concat(emitResult.Diagnostics).ToList();

@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Microsoft.Dnx.Compilation.CSharp;
 using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Host
@@ -31,7 +32,7 @@ namespace Microsoft.Dnx.Host
             foreach (var searchPath in _searchPaths)
             {
                 var path = searchPath;
-                if (!string.IsNullOrEmpty(assemblyName.CultureName) && !assemblyName.CultureName.Equals("neutral"))
+                if (!ResourcesForCulture.IsResourceNeutralCulture(assemblyName))
                 {
                     path = Path.Combine(path, assemblyName.CultureName);
                 }
