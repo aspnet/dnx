@@ -2278,17 +2278,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                 TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "ReadFromResources"), appPath);
                 var workingDir = Path.Combine(appPath, "src", "ReadFromResources");
 
-                //Restore the application
+                // Restore the application
                 var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", appPath);
-                Assert.Equal(0, exitCode);
-
-                //Pack ResourcesLibrary project which will be used in publish below
-                exitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomeDir,
-                    subcommand: "pack",
-                    arguments: "",
-                    environment: null,
-                    workingDir: Path.Combine(appPath, "src", "ResourcesLibrary"));
                 Assert.Equal(0, exitCode);
 
                 exitCode = DnuTestUtils.ExecDnu(
