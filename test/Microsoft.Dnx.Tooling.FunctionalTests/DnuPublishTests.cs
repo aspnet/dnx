@@ -665,7 +665,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
     '.': [ 'global.json' ]
 }";
 
-string expectedAppLockFile = @"{
+            string expectedAppLockFile = @"{
   ""locked"": false,
   ""version"": LOCKFILEFORMAT_VERSION,
   ""targets"": {
@@ -721,7 +721,7 @@ string expectedAppLockFile = @"{
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
-                
+
                 exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
@@ -2307,6 +2307,20 @@ string expectedAppLockFile = @"{
                     "lib", "dnx451", "fr-FR", "ReadFromResources.resources.dll")), "Resources assembly did not get published for dnx451");
                 Assert.True(File.Exists(Path.Combine(versionDir,
                     "lib", "dnxcore50", "fr-FR", "ReadFromResources.resources.dll")), "Resources assembly did not get published for dnxcore50");
+
+                appOutputPath = Path.Combine(publishOutputPath, "approot", "packages", "Microsoft.Data.Edm");
+                versionDir = new DirectoryInfo(appOutputPath).GetDirectories().First().FullName;
+                var edmLocales = new List<string>() {"de", "es", "fr", "it", "ja", "ko", "ru", "zh-Hans", "zh-Hant" };
+                var edmFxs = new List<string>() { "net40", "portable-net45+wp8+win8+wpa" };
+
+                foreach (var fx in edmFxs)
+                {
+                    foreach (var locale in edmLocales)
+                    {
+                        Assert.True(File.Exists(Path.Combine(versionDir, "lib", fx, locale, "Microsoft.Data.Edm.resources.dll")), 
+                            string.Format("Microsoft.Data.Edm {0} resources assembly did not get published for {1}", locale, fx));
+                    }
+                }
             }
         }
 
