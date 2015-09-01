@@ -36,9 +36,14 @@ namespace Microsoft.Dnx.Tooling
             _buildOptions = buildOptions;
 
             _applicationEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            var runtimeEnvironment = (IRuntimeEnvironment)hostServices.GetService(typeof(IRuntimeEnvironment));
             var loadContextAccessor = (IAssemblyLoadContextAccessor)hostServices.GetService(typeof(IAssemblyLoadContextAccessor));
 
-            _compilationEngine = new CompilationEngine(new CompilationEngineContext(_applicationEnvironment, loadContextAccessor.Default, new CompilationCache()));
+            _compilationEngine = new CompilationEngine(new CompilationEngineContext(
+                _applicationEnvironment,
+                runtimeEnvironment,
+                loadContextAccessor.Default,
+                new CompilationCache()));
 
             ScriptExecutor = new ScriptExecutor(buildOptions.Reports.Information);
         }

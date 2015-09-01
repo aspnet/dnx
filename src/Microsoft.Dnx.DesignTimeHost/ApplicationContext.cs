@@ -27,6 +27,7 @@ namespace Microsoft.Dnx.DesignTimeHost
     public class ApplicationContext
     {
         private readonly IApplicationEnvironment _applicationEnvironment;
+        private readonly IRuntimeEnvironment _runtimeEnvironment;
         private readonly IAssemblyLoadContext _defaultLoadContext;
         private readonly FrameworkReferenceResolver _frameworkResolver;
         private readonly Queue<Message> _inbox = new Queue<Message>();
@@ -55,6 +56,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         public ApplicationContext(IServiceProvider services,
                                   IApplicationEnvironment applicationEnvironment,
+                                  IRuntimeEnvironment runtimeEnvironment,
                                   IAssemblyLoadContextAccessor loadContextAccessor,
                                   ProtocolManager protocolManager,
                                   CompilationEngine compilationEngine,
@@ -62,6 +64,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                                   int id)
         {
             _applicationEnvironment = applicationEnvironment;
+            _runtimeEnvironment = runtimeEnvironment;
             _defaultLoadContext = loadContextAccessor.Default;
             _pluginHandler = new PluginHandler(services, SendPluginMessage);
             _protocolManager = protocolManager;
@@ -559,7 +562,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             return _compilationEngine.CompilationCache.Cache.Get<IAssemblyLoadContext>(hostContextKey, ctx =>
             {
-                var appHostContext = GetApplicationHostContext(project, _applicationEnvironment.RuntimeFramework);
+                var appHostContext = CreateApplicationHostContext(ctx, project, _applicationEnvironment.RuntimeFramework, _runtimeEnvironment.GetAllRuntimeIdentifiers());
 
                 return new RuntimeLoadContext(appHostContext.LibraryManager.GetLibraryDescriptions(), _compilationEngine, _defaultLoadContext);
             });
@@ -1097,36 +1100,32 @@ namespace Microsoft.Dnx.DesignTimeHost
             return state;
         }
 
-        private ApplicationHostContext GetApplicationHostContext(Project project, FrameworkName frameworkName)
+        private ApplicationHostContext CreateApplicationHostContext(CacheContext ctx, Project project, FrameworkName frameworkName, IEnumerable<string> runtimeIdentifiers)
         {
-            var cacheKey = Tuple.Create("ApplicationContext", project.Name, frameworkName);
-
-            return _compilationEngine.CompilationCache.Cache.Get<ApplicationHostContext>(cacheKey, ctx =>
+            var applicationHostContext = new ApplicationHostContext
             {
-                var applicationHostContext = new ApplicationHostContext
-                {
-                    Project = project,
-                    TargetFramework = frameworkName,
-                    FrameworkResolver = _frameworkResolver,
-                    SkipLockfileValidation = true
-                };
+                Project = project,
+                TargetFramework = frameworkName,
+                RuntimeIdentifiers = runtimeIdentifiers,
+                FrameworkResolver = _frameworkResolver,
+                SkipLockfileValidation = true
+            };
 
-                ApplicationHostContext.Initialize(applicationHostContext);
+            ApplicationHostContext.Initialize(applicationHostContext);
 
-                // Watch all projects for project.json changes
-                foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
+            // Watch all projects for project.json changes
+            foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
+            {
+                if (string.Equals(library.Type, "Project"))
                 {
-                    if (string.Equals(library.Type, "Project"))
-                    {
-                        ctx.Monitor(new FileWriteTimeCacheDependency(library.Path));
-                    }
+                    ctx.Monitor(new FileWriteTimeCacheDependency(library.Path));
                 }
+            }
 
-                // Add a cache dependency on restore complete to reevaluate dependencies
-                ctx.Monitor(_compilationEngine.CompilationCache.NamedCacheDependencyProvider.GetNamedDependency(project.Name + "_Dependencies"));
+            // Add a cache dependency on restore complete to reevaluate dependencies
+            ctx.Monitor(_compilationEngine.CompilationCache.NamedCacheDependencyProvider.GetNamedDependency(project.Name + "_Dependencies"));
 
-                return applicationHostContext;
-            });
+            return applicationHostContext;
         }
 
         private DependencyInfo ResolveProjectDependencies(Project project, string configuration, FrameworkName frameworkName)
@@ -1135,7 +1134,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             return _compilationEngine.CompilationCache.Cache.Get<DependencyInfo>(cacheKey, ctx =>
             {
-                var applicationHostContext = GetApplicationHostContext(project, frameworkName);
+                var applicationHostContext = CreateApplicationHostContext(ctx, project, frameworkName, Enumerable.Empty<string>());
                 var libraryManager = applicationHostContext.LibraryManager;
 
                 var info = new DependencyInfo

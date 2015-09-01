@@ -9,7 +9,7 @@ namespace Microsoft.Dnx.Tooling
 {
     internal static class RestoreConsoleCommand
     {
-        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IApplicationEnvironment applicationEnvironment)
+        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IApplicationEnvironment applicationEnvironment, IRuntimeEnvironment runtimeEnvironment)
         {
             cmdApp.Command("restore", c =>
             {
@@ -25,6 +25,9 @@ namespace Microsoft.Dnx.Tooling
                 var optUnlock = c.Option("--unlock",
                     "Creates dependencies file with locked property set to false. Overwrites file if it exists.",
                     CommandOptionType.NoValue);
+                var optRuntimes = c.Option("--runtime <RID>",
+                    "List of runtime identifiers to restore for",
+                    CommandOptionType.MultipleValue);
 
                 c.HelpOption("-?|-h|--help");
 
@@ -39,6 +42,8 @@ namespace Microsoft.Dnx.Tooling
                     command.FeedOptions = feedOptions;
                     command.Lock = optLock.HasValue();
                     command.Unlock = optUnlock.HasValue();
+                    command.RequestedRuntimes = optRuntimes.Values;
+                    command.FallbackRuntimes = runtimeEnvironment.GetDefaultRestoreRuntimes();
 
                     if (!string.IsNullOrEmpty(feedOptions.Proxy))
                     {

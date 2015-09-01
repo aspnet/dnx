@@ -3,6 +3,7 @@
     "dependencies": {
         "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime": "1.0.0-*"
     },
 

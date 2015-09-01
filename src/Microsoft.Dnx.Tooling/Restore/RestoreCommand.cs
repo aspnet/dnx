@@ -51,6 +51,8 @@ namespace Microsoft.Dnx.Tooling
 
         public List<FrameworkName> TargetFrameworks { get; set; } = new List<FrameworkName>();
         public FrameworkName FallbackFramework { get; set; }
+        public IEnumerable<string> RequestedRuntimes { get; set; }
+        public IEnumerable<string> FallbackRuntimes { get; set; }
         public IFileSystem FileSystem { get; set; }
         public Reports Reports { get; set; }
         public bool CheckHashFile { get; set; } = true;
@@ -290,6 +292,9 @@ namespace Microsoft.Dnx.Tooling
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(packageRepository)));
 
+            // Add the embedded package provider at the very end of the local providers
+            localProviders.Add(new ImplicitPackagesWalkProvider());
+
             var tasks = new List<Task<TargetContext>>();
 
             if (useLockFile)
@@ -371,9 +376,9 @@ namespace Microsoft.Dnx.Tooling
 
             if (!useLockFile)
             {
-                var runtimeFormatter = new RuntimeFileFormatter();
-                var projectRuntimeFile = runtimeFormatter.ReadRuntimeFile(projectJsonPath);
-                if (projectRuntimeFile.Runtimes.Any())
+                var projectRuntimeFile = RuntimeFile.ParseFromProject(project);
+                var restoreRuntimes = GetRestoreRuntimes(projectRuntimeFile.Runtimes.Keys).ToList();
+                if (restoreRuntimes.Any())
                 {
                     var runtimeTasks = new List<Task<TargetContext>>();
 
@@ -391,14 +396,21 @@ namespace Microsoft.Dnx.Tooling
                         var runtimeFiles = new List<RuntimeFile> { projectRuntimeFile };
                         runtimeFiles.AddRange(libraryRuntimeFiles.Where(file => file != null));
 
-                        foreach (var runtimeName in projectRuntimeFile.Runtimes.Keys)
+                        foreach (var runtimeName in restoreRuntimes)
                         {
+                            Reports.Verbose.WriteLine($"Restoring packages for {pair.context.FrameworkName} on {runtimeName}...");
                             var runtimeSpecs = new List<RuntimeSpec>();
                             FindRuntimeSpecs(
                                 runtimeName,
                                 runtimeFiles,
                                 runtimeSpecs,
                                 _ => false);
+
+                            // If there are no runtime specs in the graph, we still want to restore for the specified runtime, so synthesize one
+                            if (!runtimeSpecs.Any(r => r.Name.Equals(runtimeName)))
+                            {
+                                runtimeSpecs.Add(new RuntimeSpec() { Name = runtimeName });
+                            }
 
                             var runtimeContext = new RestoreContext
                             {
@@ -414,7 +426,6 @@ namespace Microsoft.Dnx.Tooling
                             {
                                 VersionRange = new SemanticVersionRange(project.Version)
                             };
-                            Reports.Information.WriteLine(string.Format("Graph for {0} on {1}", runtimeContext.FrameworkName, runtimeContext.RuntimeName));
                             runtimeTasks.Add(CreateGraphNode(restoreOperations, runtimeContext, projectLibrary, _ => true));
                         }
                     }
@@ -537,6 +548,21 @@ namespace Microsoft.Dnx.Tooling
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
             return success;
+        }
+
+        private IEnumerable<string> GetRestoreRuntimes(IEnumerable<string> projectRuntimes)
+        {
+            var runtimes = Enumerable.Concat(
+                RequestedRuntimes ?? Enumerable.Empty<string>(),
+                projectRuntimes ?? Enumerable.Empty<string>());
+            if (runtimes.Any())
+            {
+                return runtimes;
+            }
+            else
+            {
+                return FallbackRuntimes ?? Enumerable.Empty<string>();
+            }
         }
 
         private async Task<TargetContext> CreateGraphNode(RestoreOperations restoreOperations, RestoreContext context, LibraryRange libraryRange, Func<object, bool> predicate)
@@ -800,6 +826,11 @@ namespace Microsoft.Dnx.Tooling
             // Record all libraries used
             foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
             {
+                if (item.Match.Provider is ImplicitPackagesWalkProvider)
+                {
+                    continue;
+                }
+
                 var library = item.Match.Library;
                 if (library.Name == project.Name)
                 {

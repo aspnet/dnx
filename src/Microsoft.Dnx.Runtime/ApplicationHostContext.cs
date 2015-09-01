@@ -13,10 +13,14 @@ namespace Microsoft.Dnx.Runtime
     {
         public Project Project { get; set; }
 
+        public LockFile LockFile { get; set; }
+
         // TODO: Remove this, it's kinda hacky
         public ProjectDescription MainProject { get; set; }
 
         public FrameworkName TargetFramework { get; set; }
+
+        public IEnumerable<string> RuntimeIdentifiers { get; set; } = Enumerable.Empty<string>();
 
         public string RootDirectory { get; set; }
 
@@ -124,7 +128,6 @@ namespace Microsoft.Dnx.Runtime
             context.PackagesDirectory = context.PackagesDirectory ?? PackageDependencyProvider.ResolveRepositoryPath(context.RootDirectory);
 
             LockFileLookup lockFileLookup = null;
-            LockFile lockFile = null;
 
             if (context.Project == null)
             {
@@ -140,25 +143,29 @@ namespace Microsoft.Dnx.Runtime
             }
 
             var projectLockJsonPath = Path.Combine(context.ProjectDirectory, LockFileReader.LockFileName);
-            var lockFileExists = File.Exists(projectLockJsonPath);
+
+            if (context.LockFile == null && File.Exists(projectLockJsonPath))
+            {
+                var lockFileReader = new LockFileReader();
+                context.LockFile = lockFileReader.Read(projectLockJsonPath);
+            }
+
             var validLockFile = true;
             var skipLockFileValidation = context.SkipLockfileValidation;
             string lockFileValidationMessage = null;
 
-            if (lockFileExists)
+            if (context.LockFile != null)
             {
-                var lockFileReader = new LockFileReader();
-                lockFile = lockFileReader.Read(projectLockJsonPath);
-                validLockFile = lockFile.IsValidForProject(context.Project, out lockFileValidationMessage);
+                validLockFile = context.LockFile.IsValidForProject(context.Project, out lockFileValidationMessage);
 
                 // When the only invalid part of a lock file is version number,
                 // we shouldn't skip lock file validation because we want to leave all dependencies unresolved, so that
                 // VS can be aware of this version mismatch error and automatically do restore
-                skipLockFileValidation = context.SkipLockfileValidation && (lockFile.Version == Constants.LockFileVersion);
+                skipLockFileValidation = context.SkipLockfileValidation && (context.LockFile.Version == Constants.LockFileVersion);
 
                 if (validLockFile || skipLockFileValidation)
                 {
-                    lockFileLookup = new LockFileLookup(lockFile);
+                    lockFileLookup = new LockFileLookup(context.LockFile);
                 }
             }
 
@@ -173,13 +180,11 @@ namespace Microsoft.Dnx.Runtime
 
             if (lockFileLookup != null)
             {
-                foreach (var target in lockFile.Targets)
-                {
-                    if (target.TargetFramework != context.TargetFramework)
-                    {
-                        continue;
-                    }
+                var target = SelectTarget(context, context.LockFile);
 
+                if (target != null)
+                {
+                    Logger.TraceInformation($"[{nameof(ApplicationHostContext)}] Using Lock File Target: {target.TargetFramework}/{target.RuntimeIdentifier}");
                     foreach (var library in target.Libraries)
                     {
                         if (string.Equals(library.Type, "project"))
@@ -206,7 +211,34 @@ namespace Microsoft.Dnx.Runtime
 
             lockFileLookup?.Clear();
 
-            return new Result(libraries, lockFileExists, validLockFile, lockFileValidationMessage);
+            var lockFilePresent = context.LockFile != null;
+            context.LockFile = null; // LockFile is no longer needed
+
+            return new Result(libraries, lockFilePresent, validLockFile, lockFileValidationMessage);
+        }
+
+        private static LockFileTarget SelectTarget(ApplicationHostContext context, LockFile lockFile)
+        {
+            foreach (var runtimeIdentifier in context.RuntimeIdentifiers)
+            {
+                foreach (var scanTarget in lockFile.Targets)
+                {
+                    if (scanTarget.TargetFramework == context.TargetFramework && string.Equals(scanTarget.RuntimeIdentifier, runtimeIdentifier, StringComparison.Ordinal))
+                    {
+                        return scanTarget;
+                    }
+                }
+            }
+
+            foreach (var scanTarget in lockFile.Targets)
+            {
+                if (scanTarget.TargetFramework == context.TargetFramework && string.IsNullOrEmpty(scanTarget.RuntimeIdentifier))
+                {
+                    return scanTarget;
+                }
+            }
+
+            return null;
         }
 
         private static void AddLockFileDiagnostics(ApplicationHostContext context, Result result)

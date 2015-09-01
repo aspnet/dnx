@@ -54,9 +54,11 @@ namespace Microsoft.Dnx.Compilation
             // references (compiler /r in csc terms)
             var libraryManager = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework);
 
+            // Create an application host context to use to drive a Load Context used to load Precompilers
             var context = new ApplicationHostContext
             {
                 Project = project,
+                RuntimeIdentifiers = _context.RuntimeEnvironment.GetAllRuntimeIdentifiers(),
                 TargetFramework = targetFramework
             };
 

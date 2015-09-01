@@ -85,6 +85,30 @@ namespace dnx.hostTests
             Assert.Equal(expectedRid, runtimeEnv.GetRuntimeIdentifier());
         }
 
+        [Theory]
+        [InlineData("Windows", "6.1.1234", "x86", "win7-x86")] // 1234 => We only care about major and minor
+        [InlineData("Windows", "6.1.1234", "x64", "win7-x64")]
+        [InlineData("Windows", "6.2.1234", "x86", "win8-x86,win7-x86")]
+        [InlineData("Windows", "6.2.1234", "x64", "win8-x64,win7-x64")]
+        [InlineData("Windows", "6.3.1234", "x86", "win81-x86,win8-x86,win7-x86")]
+        [InlineData("Windows", "6.3.1234", "x64", "win81-x64,win8-x64,win7-x64")]
+        [InlineData("Windows", "10.0.1234", "x86", "win10-x86,win81-x86,win8-x86,win7-x86")]
+        [InlineData("Windows", "10.0.1234", "x64", "win10-x64,win81-x64,win8-x64,win7-x64")]
+        [InlineData("Linux", "", "x86", "linux-x86")]
+        [InlineData("Linux", "", "x64", "linux-x64")]
+        [InlineData("Darwin", "", "x86", "darwin-x86")]
+        [InlineData("Darwin", "", "x64", "darwin-x64")]
+        public void AllRuntimeIdsAreGeneratedCorrectly(string osName, string version, string architecture, string expectedRids)
+        {
+            var runtimeEnv = new DummyRuntimeEnvironment()
+            {
+                OperatingSystem = osName,
+                OperatingSystemVersion = version,
+                RuntimeArchitecture = architecture
+            };
+            Assert.Equal(expectedRids.Split(','), runtimeEnv.GetAllRuntimeIdentifiers().ToArray());
+        }
+
         // Test live runtime ids
         [ConditionalFact]
         [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]

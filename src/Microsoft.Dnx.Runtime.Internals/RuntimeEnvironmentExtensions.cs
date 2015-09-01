@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Microsoft.Dnx.Runtime
@@ -33,6 +34,46 @@ namespace Microsoft.Dnx.Runtime
 
         public static string GetRuntimeIdentifier(this IRuntimeEnvironment env)
         {
+            return $"{GetRuntimeOsName(env)}-{env.RuntimeArchitecture.ToLower()}";
+        }
+
+        public static IEnumerable<string> GetAllRuntimeIdentifiers(this IRuntimeEnvironment env)
+        {
+            if (!string.Equals(env.OperatingSystem, RuntimeOperatingSystems.Windows, StringComparison.Ordinal))
+            {
+                yield return env.GetRuntimeIdentifier();
+            }
+            else
+            {
+                var arch = env.RuntimeArchitecture.ToLowerInvariant();
+                var parsedVersion = Version.Parse(env.OperatingSystemVersion);
+                if (parsedVersion.Major == 6 && parsedVersion.Minor == 1)
+                {
+                    yield return "win7-" + arch;
+                }
+                else if (parsedVersion.Major == 6 && parsedVersion.Minor == 2)
+                {
+                    yield return "win8-" + arch;
+                    yield return "win7-" + arch;
+                }
+                else if (parsedVersion.Major == 6 && parsedVersion.Minor == 3)
+                {
+                    yield return "win81-" + arch;
+                    yield return "win8-" + arch;
+                    yield return "win7-" + arch;
+                }
+                else if (parsedVersion.Major == 10 && parsedVersion.Minor == 0)
+                {
+                    yield return "win10-" + arch;
+                    yield return "win81-" + arch;
+                    yield return "win8-" + arch;
+                    yield return "win7-" + arch;
+                }
+            }
+        }
+
+        private static string GetRuntimeOsName(this IRuntimeEnvironment env)
+        {
             string os = env.OperatingSystem;
             string ver = env.OperatingSystemVersion;
             if (string.Equals(os, RuntimeOperatingSystems.Windows, StringComparison.Ordinal))
@@ -41,29 +82,28 @@ namespace Microsoft.Dnx.Runtime
 
                 // Convert 6.x to the correct branding version for the RID
                 var parsedVersion = Version.Parse(ver);
-                if(parsedVersion.Major == 6 && parsedVersion.Minor == 1)
+                if (parsedVersion.Major == 6 && parsedVersion.Minor == 1)
                 {
                     ver = "7";
                 }
-                else if(parsedVersion.Major == 6 && parsedVersion.Minor == 2)
+                else if (parsedVersion.Major == 6 && parsedVersion.Minor == 2)
                 {
                     ver = "8";
                 }
-                else if(parsedVersion.Major == 6 && parsedVersion.Minor == 3)
+                else if (parsedVersion.Major == 6 && parsedVersion.Minor == 3)
                 {
                     ver = "81";
                 }
-                else if(parsedVersion.Major == 10 && parsedVersion.Minor == 0)
+                else if (parsedVersion.Major == 10 && parsedVersion.Minor == 0)
                 {
                     ver = "10";
                 }
             }
             else
             {
-                os = os.ToLower(); // Just use the lower-case full name of the OS as the RID OS
+                os = os.ToLowerInvariant(); // Just use the lower-case full name of the OS as the RID OS
             }
-
-            return $"{os}{ver}-{env.RuntimeArchitecture.ToLower()}";
+            return os + ver;
         }
     }
 }

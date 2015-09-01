@@ -19,12 +19,14 @@ namespace Microsoft.Dnx.DesignTimeHost
         private ProcessingQueue _queue;
         private string _hostId;
         private readonly IApplicationEnvironment _applicationEnvironment;
+        private readonly IRuntimeEnvironment _runtimeEnvironment;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private FrameworkReferenceResolver _frameworkResolver;
 
         public ConnectionContext(IDictionary<int, ApplicationContext> contexts,
                                  IServiceProvider services,
                                  IApplicationEnvironment applicationEnvironment,
+                                 IRuntimeEnvironment runtimeEnvironment,
                                  IAssemblyLoadContextAccessor loadContextAccessor,
                                  FrameworkReferenceResolver frameworkResolver,
                                  ProcessingQueue queue,
@@ -35,6 +37,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             _contexts = contexts;
             _services = services;
             _applicationEnvironment = applicationEnvironment;
+            _runtimeEnvironment = runtimeEnvironment;
             _loadContextAccessor = loadContextAccessor;
             _frameworkResolver = frameworkResolver;
             _queue = queue;
@@ -74,6 +77,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                     applicationContext = new ApplicationContext(_services,
                                                                 _applicationEnvironment,
+                                                                _runtimeEnvironment,
                                                                 _loadContextAccessor,
                                                                 _protocolManager,
                                                                 _compilationEngine,

@@ -64,8 +64,9 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             // REVIEW: Should these be on a shared context object that flows?
             var applicationEnvironment = (IApplicationEnvironment)_services.GetService(typeof(IApplicationEnvironment));
+            var runtimeEnvironment = (IRuntimeEnvironment)_services.GetService(typeof(IRuntimeEnvironment));
             var loadContextAccessor = (IAssemblyLoadContextAccessor)_services.GetService(typeof(IAssemblyLoadContextAccessor));
-            var compilationEngine = new CompilationEngine(new CompilationEngineContext(applicationEnvironment, loadContextAccessor.Default, new CompilationCache()));
+            var compilationEngine = new CompilationEngine(new CompilationEngineContext(applicationEnvironment, runtimeEnvironment, loadContextAccessor.Default, new CompilationCache()));
             var frameworkResolver = new FrameworkReferenceResolver();
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
@@ -88,6 +89,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     contexts,
                     _services,
                     applicationEnvironment,
+                    runtimeEnvironment,
                     loadContextAccessor,
                     frameworkResolver,
                     queue,
