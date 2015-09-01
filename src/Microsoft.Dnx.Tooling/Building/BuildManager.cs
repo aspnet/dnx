@@ -365,7 +365,7 @@ namespace Microsoft.Dnx.Tooling
                     {
                         yield return new PhysicalPackageFile()
                         {
-                            SourcePath = PathUtility.GetPathWithDirectorySeparator(file.Path),
+                            SourcePath = Path.Combine(rootDirectory.FullName, PathUtility.GetPathWithDirectorySeparator(file.Path)),
                             TargetPath = Path.Combine(dir, PathUtility.GetPathWithDirectorySeparator(file.Stem))
                         };
                     }
@@ -392,7 +392,7 @@ namespace Microsoft.Dnx.Tooling
                     {
                         yield return new PhysicalPackageFile()
                         {
-                            SourcePath = files[0].Path,
+                            SourcePath = Path.Combine(rootDirectory.FullName, files[0].Path),
                             TargetPath = PathUtility.GetPathWithDirectorySeparator(entry.Target)
                         };
                     }

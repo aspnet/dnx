@@ -384,7 +384,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                     .WriteTo(testEnv.ProjectPath);
 
                 DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", "", workingDir: testEnv.RootDir);
-                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", $"--out {testEnv.PublishOutputDirPath}", out stdOut, out stdErr, workingDir: testEnv.ProjectPath);
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", $"{testEnv.ProjectPath} --out {testEnv.PublishOutputDirPath}", out stdOut, out stdErr, workingDir: testEnv.RootDir);
 
                 var packageOutputPath = Path.Combine(testEnv.PublishOutputDirPath, "Debug", $"{testEnv.ProjectName}.1.0.0.nupkg");
 
