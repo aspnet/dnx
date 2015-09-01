@@ -13,14 +13,7 @@ HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *p
 {
     if (_wcsicmp(AppDomainManagerAssemblyName, pBindInfo->lpReferencedIdentity) == 0)
     {
-        wchar_t default_lib[MAX_PATH] = { 0 };
-        auto result = GetEnvironmentVariable(L"DNX_DEFAULT_LIB", default_lib, MAX_PATH);
-        if (result == 0 || result > MAX_PATH)
-        {
-            return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-        }
-
-        std::wstring path(default_lib);
+        std::wstring path(m_runtimeDirectory);
         if (path.back() != L'\\')
         {
             path.append(L"\\");

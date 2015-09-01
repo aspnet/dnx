@@ -18,13 +18,15 @@ struct ApplicationMainInfo
 
     /* in */ ApplicationMainDelegate ApplicationMain;
 
+    /* out */ BSTR RuntimeDirectory;
+
     /* out */ BSTR ApplicationBase;
 };
 
 class __declspec(uuid("7E9C5238-60DC-49D3-94AA-53C91FA79F7C")) IKatanaManager : public IUnknown
 {
 public:
-    virtual HRESULT InitializeRuntime(LPCWSTR applicationBase) = 0;
+    virtual HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase) = 0;
 
     virtual HRESULT BindApplicationMain(ApplicationMainInfo* pInfo) = 0;
 
@@ -52,22 +54,25 @@ class KatanaManager :
     _bstr_t _rootWebConfigFileName;
 
     _bstr_t _applicationBase;
+    _bstr_t _runtimeDirectory;
 
     ApplicationMainInfo _applicationMainInfo;
 
 public:
 
     KatanaManager()
+        : m_pHostAssemblyManager{nullptr}
     {
         _calledInitializeRuntime = false;
         _hrInitializeRuntime = E_PENDING;
-        m_pHostAssemblyManager = new HostAssemblyManager();
-        m_pHostAssemblyManager->AddRef();
     }
 
     ~KatanaManager()
     {
-        m_pHostAssemblyManager->Release();
+        if (m_pHostAssemblyManager)
+        {
+            m_pHostAssemblyManager->Release();
+        }
     }
 
     IUnknown* CastInterface(REFIID riid)
@@ -82,7 +87,7 @@ public:
         return NULL;
     }
 
-    HRESULT InitializeRuntime(LPCWSTR applicationBase)
+    HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase)
     {
         Lock lock(&_crit);
         if (_calledInitializeRuntime)
@@ -91,6 +96,10 @@ public:
         HRESULT hr = S_OK;
 
         _applicationBase = applicationBase;
+        _runtimeDirectory = runtimeDirectory;
+
+        m_pHostAssemblyManager = new HostAssemblyManager(runtimeDirectory);
+        m_pHostAssemblyManager->AddRef();
 
         _HR(CLRCreateInstance(CLSID_CLRMetaHostPolicy, PPV(&_MetaHostPolicy)));
 
@@ -135,6 +144,7 @@ public:
     HRESULT BindApplicationMain(ApplicationMainInfo* pInfo)
     {
         _applicationMainInfo = *pInfo;
+        pInfo->RuntimeDirectory = _runtimeDirectory.copy();
         pInfo->ApplicationBase = _applicationBase.copy();
         return S_OK;
     }

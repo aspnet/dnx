@@ -256,7 +256,7 @@ int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writ
     // Set the DNX_CONOSLE_HOST flag which will print exceptions to stderr instead of throwing
     SetConsoleHost();
 
-    auto currentDirectory = GetNativeBootstrapperDirectory();
+    const auto currentDirectory = GetNativeBootstrapperDirectory();
 
     // Set the DEFAULT_LIB environment variable to be the same directory as the exe
     SetEnvironmentVariable(_X("DNX_DEFAULT_LIB"), currentDirectory.c_str());
@@ -272,6 +272,7 @@ int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writ
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     data.argc = static_cast<int>(argc);
     data.argv = const_cast<const dnx::char_t**>(argv);
+    data.runtimeDirectory = currentDirectory.c_str();
 
     dnx::char_t appBaseBuffer[MAX_PATH];
 

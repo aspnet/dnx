@@ -37,7 +37,7 @@ public class DomainManager : AppDomainManager
             Environment.SetEnvironmentVariable(EnvironmentNames.AppBase, _info.ApplicationBase);
         }
 
-        appDomainInfo.ApplicationBase = Environment.GetEnvironmentVariable(EnvironmentNames.DefaultLib);
+        appDomainInfo.ApplicationBase = _info.RuntimeDirectory;
         appDomainInfo.TargetFrameworkName = DetermineAppDomainTargetFramework();
         appDomainInfo.ConfigurationFile = Path.Combine(_info.ApplicationBase, Constants.AppConfigurationFileName);
     }
@@ -170,7 +170,10 @@ public class DomainManager : AppDomainManager
         public MainDelegate Main;
 
         [MarshalAs(UnmanagedType.BStr)]
-        public String ApplicationBase;
+        public string RuntimeDirectory;
+
+        [MarshalAs(UnmanagedType.BStr)]
+        public string ApplicationBase;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

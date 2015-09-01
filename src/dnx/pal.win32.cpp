@@ -133,10 +133,10 @@ int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CAL
         {
             trace_writer.write(std::wstring(L"Redirecting runtime to: ").append(runtime_new_path), true);
             SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), runtime_new_path.c_str());
+            data->runtimeDirectory = runtime_new_path.c_str();
 
             #if defined(CORECLR_WIN)
                 SetEnvironmentVariable(_T("CORECLR_DIR"), runtime_new_path.c_str());
-                data->runtimeDirectory = runtime_new_path.c_str();
             #endif
         }
 

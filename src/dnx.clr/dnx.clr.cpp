@@ -18,7 +18,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
 
     g_katanaManager = manager;
 
-    hr = manager->InitializeRuntime(data->applicationBase);
+    hr = manager->InitializeRuntime(data->runtimeDirectory, data->applicationBase);
     if (SUCCEEDED(hr))
     {
         g_katanaManager = NULL;

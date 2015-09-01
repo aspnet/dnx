@@ -17,7 +17,7 @@ public:
     virtual ULONG STDMETHODCALLTYPE AddRef();
     virtual ULONG STDMETHODCALLTYPE Release();
 
-    HostAssemblyManager();
+    HostAssemblyManager(const wchar_t* runtimeDirectory);
     virtual ~HostAssemblyManager();
 
 private:

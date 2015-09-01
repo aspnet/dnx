@@ -212,7 +212,7 @@ HRESULT StopClrHost(ICLRRuntimeHost2* pCLRRuntimeHost)
     return pCLRRuntimeHost->Stop();
 }
 
-HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data, const std::wstring& runtime_directory,
+HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data,
     const std::wstring& core_clr_directory, dnx::trace_writer& trace_writer)
 {
     const wchar_t* property_keys[] =
@@ -255,10 +255,10 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
     }
 
     // Add the assembly containing the app domain manager to the trusted list
-    trusted_platform_assemblies.append(dnx::utils::path_combine(runtime_directory, L"Microsoft.Dnx.Host.CoreClr.dll"));
+    trusted_platform_assemblies.append(dnx::utils::path_combine(data->runtimeDirectory, L"Microsoft.Dnx.Host.CoreClr.dll"));
 
     std::wstring app_paths;
-    app_paths.append(runtime_directory).append(L";");
+    app_paths.append(data->runtimeDirectory).append(L";");
     app_paths.append(core_clr_directory).append(L";");
 
     const wchar_t* property_values[] = {
@@ -323,9 +323,7 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
 
     Win32KDisable(trace_writer);
 
-    auto runtime_directory = data->runtimeDirectory ? data->runtimeDirectory : GetModuleDirectory(nullptr);
-
-    auto coreclr_module = LoadCoreClr(runtime_directory, trace_writer);
+    auto coreclr_module = LoadCoreClr(data->runtimeDirectory, trace_writer);
     if (!coreclr_module)
     {
         trace_writer.write(L"Failed to locate or load coreclr.dll", false);
@@ -348,10 +346,10 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
         return hr;
     }
 
-    hr = ExecuteMain(pCLRRuntimeHost, data, runtime_directory, GetModuleDirectory(coreclr_module), trace_writer);
+    hr = ExecuteMain(pCLRRuntimeHost, data, GetModuleDirectory(coreclr_module), trace_writer);
     if (FAILED(hr))
     {
-        trace_writer.write(L"Failed to start CLR host", false);
+        trace_writer.write(L"Failed to execute Main", false);
         return hr;
     }
 

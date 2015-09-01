@@ -4,9 +4,9 @@
 #include "stdafx.h"
 #include "HostAssemblyManager.h"
 
-HostAssemblyManager::HostAssemblyManager()
+HostAssemblyManager::HostAssemblyManager(const wchar_t* runtimeDirectory)
 {
-    m_pAssemblyStore = new HostAssemblyStore();
+    m_pAssemblyStore = new HostAssemblyStore(runtimeDirectory);
     m_pAssemblyStore->AddRef();
 }
 
