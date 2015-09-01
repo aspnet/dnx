@@ -1,10 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.Dnx.Compilation.CSharp;
 
 namespace Microsoft.Dnx.Runtime.Loader
 {
@@ -27,7 +25,6 @@ namespace Microsoft.Dnx.Runtime.Loader
 
         public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
-            // TODO: preserve name and culture info (we don't need to look at any other information)
             string path;
             var newAssemblyName = new AssemblyName(assemblyName.Name);
 
@@ -35,7 +32,7 @@ namespace Microsoft.Dnx.Runtime.Loader
             newAssemblyName.CultureName = assemblyName.CultureName;
 #elif DNX451
             // Assigning empty CultureInfo makes the new assembly culture as neutral which won't match the entries in _assemblies dictionary. Hence this check.
-            if (assemblyName.CultureInfo != null && !ResourcesForCulture.IsResourceNeutralCulture(assemblyName))
+            if (assemblyName.CultureInfo != null && !ResourcesHelper.IsResourceNeutralCulture(assemblyName))
             {
                  newAssemblyName.CultureInfo = assemblyName.CultureInfo;
             }

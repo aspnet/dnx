@@ -3,7 +3,6 @@
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Compilation.CSharp.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Loader": "1.0.0-*"

@@ -13,7 +13,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Compilation;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {
@@ -84,7 +83,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 EmitResult emitResult = null;
 
-                if (ResourcesForCulture.IsResourceNeutralCulture(assemblyName))
+                if (ResourcesHelper.IsResourceNeutralCulture(assemblyName))
                 {
                     var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
                     if (resourcesForCulture == null)

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {
@@ -72,12 +71,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 return string.Empty;
             }
             return cultureName.Substring(1);
-        }
-
-        public static bool IsResourceNeutralCulture(AssemblyName assemblyName)
-        {
-            //CultureName for neutral cultures is empty in windows but on mono CultureName is neutral.
-            return string.IsNullOrEmpty(assemblyName.CultureName) || assemblyName.CultureName.Equals("neutral");
         }
     }
 }
