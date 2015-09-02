@@ -277,7 +277,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             var usePortablePdbString = Environment.GetEnvironmentVariable(EnvironmentNames.PortablePdb);
 
-            // Use portable pdbs if explicitly specified or the platform doesn't support pdb genertion
+            // Use portable pdbs if explicitly specified or the platform doesn't support pdb generation
             var usePortablePdb = !_supportsPdbGeneration.Value ||
                                  string.Equals(usePortablePdbString, "true", StringComparison.OrdinalIgnoreCase) ||
                                  string.Equals(usePortablePdbString, "1", StringComparison.OrdinalIgnoreCase);
