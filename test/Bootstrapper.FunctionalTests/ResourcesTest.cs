@@ -58,5 +58,35 @@ Le nom '{0}' est ambigu.
 ", stdOut);
             }
         }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void ReadEmbeddedResourcesFromProject(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var tempDir = TestUtils.CreateTempDir())
+            {
+                var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "EmbeddedResources");
+                TestUtils.CreateDisposableTestProject(runtimeHomeDir, Path.Combine(tempDir, "ResourcesTestProjects"), Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "EmbeddedResources"));
+
+                string stdOut;
+                string stdErr;
+                var exitCode = TestUtils.ExecBootstrapper(
+                    runtimeHomeDir,
+                    arguments: "-p . run",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
+                    workingDir: appPath);
+
+                Assert.Equal(0, exitCode);
+                Assert.Equal(@"Hello
+<html>
+Basic Test
+</html>
+", stdOut);
+            }
+        }
     }
 }
