@@ -5,6 +5,7 @@ TestResults/
 _ReSharper.*/
 /packages
 artifacts/
+TestOutput/
 PublishProfiles/
 *.user
 *.suo
