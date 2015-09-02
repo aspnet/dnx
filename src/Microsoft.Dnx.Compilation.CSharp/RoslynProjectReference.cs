@@ -98,15 +98,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                     var sw = Stopwatch.StartNew();
 
-                    if (_supportsPdbGeneration.Value)
-                    {
-                        emitResult = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
-                    }
-                    else
-                    {
-                        Logger.TraceWarning("PDB generation is not supported on this platform");
-                        emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
-                    }
+                    var emitOptions = GetEmitOptions();
+                    emitResult = CompilationContext.Compilation.Emit(assemblyStream,
+                                                                     pdbStream: pdbStream,
+                                                                     manifestResources: resources,
+                                                                     options: emitOptions);
 
                     sw.Stop();
 
@@ -201,28 +197,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 var sw = Stopwatch.StartNew();
 
-                EmitResult emitResult = null;
-
-                if (_supportsPdbGeneration.Value)
-                {
-                    var options = new EmitOptions(pdbFilePath: pdbPath);
-                    emitResult = CompilationContext.Compilation.Emit(
-                        assemblyStream,
-                        pdbStream: pdbStream,
-                        xmlDocumentationStream: xmlDocStream,
-                        win32Resources: win32resStream,
-                        manifestResources: resources,
-                        options: options);
-                }
-                else
-                {
-                    Logger.TraceWarning("PDB generation is not supported on this platform");
-                    emitResult = CompilationContext.Compilation.Emit(
-                        assemblyStream,
-                        xmlDocumentationStream: xmlDocStream,
-                        manifestResources: resources,
-                        win32Resources: win32resStream);
-                }
+                var emitOptions = GetEmitOptions().WithPdbFilePath(pdbPath);
+                var emitResult = CompilationContext.Compilation.Emit(
+                    assemblyStream,
+                    pdbStream: pdbStream,
+                    xmlDocumentationStream: xmlDocStream,
+                    win32Resources: win32resStream,
+                    manifestResources: resources,
+                    options: emitOptions);
 
                 sw.Stop();
 
@@ -275,22 +257,38 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     }
                 }
 
-                if (_supportsPdbGeneration.Value)
+                if (afterCompileContext.SymbolStream != null)
                 {
-                    if (afterCompileContext.SymbolStream != null)
+                    afterCompileContext.SymbolStream.Position = 0;
+                    using (var pdbFileStream = File.Create(pdbPath))
                     {
-                        afterCompileContext.SymbolStream.Position = 0;
-
-                        using (var pdbFileStream = File.Create(pdbPath))
-                        {
-                            afterCompileContext.SymbolStream.CopyTo(pdbFileStream);
-                        }
+                        afterCompileContext.SymbolStream.CopyTo(pdbFileStream);
                     }
                 }
 
                 return CreateDiagnosticResult(emitResult.Success, afterCompileContext.Diagnostics,
                         CompilationContext.ProjectContext.TargetFramework);
             }
+        }
+
+        private EmitOptions GetEmitOptions()
+        {
+            var emitOptions = new EmitOptions();
+
+            var usePortablePdbString = Environment.GetEnvironmentVariable(EnvironmentNames.PortablePdb);
+
+            // Use portable pdbs if explicitly specified or the platform doesn't support pdb genertion
+            var usePortablePdb = !_supportsPdbGeneration.Value ||
+                                 string.Equals(usePortablePdbString, "true", StringComparison.OrdinalIgnoreCase) ||
+                                 string.Equals(usePortablePdbString, "1", StringComparison.OrdinalIgnoreCase);
+
+            if (usePortablePdb)
+            {
+                Logger.TraceInformation("Using portable pdb format");
+                return emitOptions.WithDebugInformationFormat(DebugInformationFormat.PortablePdb);
+            }
+
+            return emitOptions;
         }
 
         private EmitResult EmitResourceAssembly(
