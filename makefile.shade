@@ -2,6 +2,7 @@ use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=
 use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use import="Environment"
 use import="Regex"
+use import="Json"
 use namespace="System.IO"
 use namespace="System.Linq"
 use namespace="System.Xml.Linq"
@@ -918,17 +919,11 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                 {
                     foreach(var projectFile in Files.Include("test/*.Tests/project.json"))
                     {
-                        var serializer = new JavaScriptSerializer();
                         var projectText = File.ReadAllText(projectFile);
-                        var project = (Dictionary<string, object>)serializer.DeserializeObject(projectText);
-    
+                        var project = (JsonObject)Json.Deserialize(projectText);
+
                         object configsObject;
-                        var configs = project.TryGetValue("frameworks", out configsObject)
-                            ? (Dictionary<string, object>)configsObject
-                            : new Dictionary<string, object>
-                            {
-                                { "dnx451", new Dictionary<string, object>() } // Assume dnx451 only if none specified
-                            };
+                        var configs = project.ValueAsJsonObject("frameworks");
                         var targetFrameworks = configs.Keys.Where(k => k.StartsWith("dnx", StringComparison.OrdinalIgnoreCase));
                         foreach (var framework in targetFrameworks)
                         {
