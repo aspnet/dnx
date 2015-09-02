@@ -1,0 +1,9 @@
+{
+    "version": "1.0.0",
+    "dependencies": {
+        "DependencyB": "2.0.0"
+    },
+    "frameworks": {
+        "dnx451": {}
+    }
+}
