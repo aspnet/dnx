@@ -82,7 +82,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 };
 
                 EmitResult emitResult = null;
-                var usePortablePdb = false;
 
                 if (ResourcesHelper.IsResourceNeutralCulture(assemblyName))
                 {
@@ -98,7 +97,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
 
                     var sw = Stopwatch.StartNew();
-                    var emitOptions = GetEmitOptions(out usePortablePdb);
+
+                    var emitOptions = GetEmitOptions();
                     emitResult = CompilationContext.Compilation.Emit(assemblyStream,
                                                                      pdbStream: pdbStream,
                                                                      manifestResources: resources,
@@ -143,13 +143,9 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     afterCompileContext.AssemblyStream.Position = 0;
                 }
 
-                if (afterCompileContext.SymbolStream == null || 
-                    afterCompileContext.SymbolStream.Length == 0 ||
-                    (!usePortablePdb && RuntimeEnvironmentHelper.IsMono))
+                if (afterCompileContext.SymbolStream == null ||
+                    afterCompileContext.SymbolStream.Length == 0)
                 {
-                    // Portable PDB support is in mono >= 4.2 which is in alpha at time of writing.
-                    // If we end up generating a portable PDB for mono, don't use it unless it's explicity
-                    // been set in the environment variable.
                     assembly = loadContext.LoadStream(afterCompileContext.AssemblyStream, assemblySymbols: null);
                 }
                 else
@@ -201,9 +197,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 var sw = Stopwatch.StartNew();
 
-                // It's safe to ignore this flag here since we're just emitting the portable pdb to disk
-                bool usePortablePdb;
-                var emitOptions = GetEmitOptions(out usePortablePdb).WithPdbFilePath(pdbPath);
+                var emitOptions = GetEmitOptions().WithPdbFilePath(pdbPath);
                 var emitResult = CompilationContext.Compilation.Emit(
                     assemblyStream,
                     pdbStream: pdbStream,
@@ -277,17 +271,18 @@ namespace Microsoft.Dnx.Compilation.CSharp
             }
         }
 
-        private EmitOptions GetEmitOptions(out bool usePortablePdb)
+        private EmitOptions GetEmitOptions()
         {
             var emitOptions = new EmitOptions();
 
             var usePortablePdbString = Environment.GetEnvironmentVariable(EnvironmentNames.PortablePdb);
 
-            // Use portable pdbs if explicitly specified
-            usePortablePdb = string.Equals(usePortablePdbString, "true", StringComparison.OrdinalIgnoreCase) ||
-                             string.Equals(usePortablePdbString, "1", StringComparison.OrdinalIgnoreCase);
+            // Use portable pdbs if explicitly specified or the platform doesn't support pdb generation
+            var usePortablePdb = !_supportsPdbGeneration.Value ||
+                                 string.Equals(usePortablePdbString, "true", StringComparison.OrdinalIgnoreCase) ||
+                                 string.Equals(usePortablePdbString, "1", StringComparison.OrdinalIgnoreCase);
 
-            if (!_supportsPdbGeneration.Value || usePortablePdb)
+            if (usePortablePdb)
             {
                 Logger.TraceInformation("Using portable pdb format");
                 return emitOptions.WithDebugInformationFormat(DebugInformationFormat.PortablePdb);
