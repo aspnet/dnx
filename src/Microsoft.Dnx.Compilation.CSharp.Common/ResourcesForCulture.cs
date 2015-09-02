@@ -26,7 +26,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
         public static string GetResourceCultureName(ResourceDescriptor res)
         {
-            if (ResxResourceProvider.IsResxResourceFile(res.FileName))
+            var ext = Path.GetExtension(res.FileName);
+
+            if (string.Equals(ext, ".resx", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ext, ".restext", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ext, ".resources", StringComparison.OrdinalIgnoreCase))
             {
                 var resourceBaseName = Path.GetFileNameWithoutExtension(res.FileName);
                 var cultureName = Path.GetExtension(resourceBaseName);

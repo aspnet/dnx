@@ -19,6 +19,8 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         [InlineData("Program.f.resources", "")]
         [InlineData("Program.resources", "")]
         [InlineData("Program.a1.resources", "")]
+        [InlineData("Program.a1.test", "")]
+        [InlineData("Program.html", "")]
         public void GetResourceCultureNameTest(string fileName, string expectedCulture)
         {
             var resourceDescriptor = new ResourceDescriptor();
