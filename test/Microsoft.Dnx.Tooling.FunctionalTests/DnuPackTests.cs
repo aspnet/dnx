@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
+using NuGet;
 using Xunit;
 
 namespace Microsoft.Dnx.Tooling
@@ -162,6 +164,52 @@ public class TestClass : BaseClass {
             }
         }
 
+        [ConditionalTheory]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_PortablePdbsGeneratedWhenEnvVariableSet(string flavor, string os, string architecture)
+        {
+            string stdOut;
+            string stdError;
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            int exitCode;
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
+            {
+                var appName = PathUtility.GetDirectoryName(testEnv.RootDir);
+                File.WriteAllText($"{testEnv.RootDir}/project.json",
+                @"{
+                    ""frameworks"": {
+                        ""dnx451"": {
+                        }
+                    }
+                  }");
+
+                var environment = new Dictionary<string, string> { { "DNX_TRACE", "0" }, { "DNX_BUILD_PORTABLE_PDB", "1" } };
+                DnuTestUtils.ExecDnu(runtimeHomeDir,
+                                     "restore",
+                                     "",
+                                     out stdOut,
+                                     out stdError,
+                                     environment: null,
+                                     workingDir: testEnv.RootDir);
+
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir,
+                                                "pack",
+                                                "",
+                                                out stdOut,
+                                                out stdError,
+                                                environment,
+                                                testEnv.RootDir);
+
+                var outputDir = Path.Combine(testEnv.RootDir, "bin", "Debug", "dnx451");
+                Assert.Equal(0, exitCode);
+                Assert.True(Directory.Exists(outputDir));
+                Assert.True(File.Exists(Path.Combine(outputDir, appName + ".dll")));
+                Assert.True(File.Exists(Path.Combine(outputDir, appName + ".pdb")));
+            }
+        }
+
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_OutPathSpecified(string flavor, string os, string architecture)
@@ -223,7 +271,7 @@ public class TestClass : BaseClass {
                     .WriteTo(testEnv.ProjectPath);
 
                 exitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomeDir, 
+                    runtimeHomeDir,
                     subcommand: "restore",
                     arguments: string.Empty,
                     workingDir: testEnv.ProjectPath);
@@ -275,7 +323,7 @@ public class TestClass : BaseClass {
                     arguments: string.Empty,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
-                
+
                 Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0-beta.nupkg")));
                 Assert.True(File.Exists(Path.Combine(testEnv.ProjectPath, "bin", "Debug", $"{projectName}.1.0.0-beta.symbols.nupkg")));
             }
