@@ -3,10 +3,10 @@
     "dependencies": {
         "LibraryAlpha": "1.0.0-*"
     },
-    "commands": { 
-        "run" : "run"
+    "commands": {
+        "run": "run"
     },
-    "frameworks" : {
-        "dnx451" : { }
+    "frameworks": {
+        "dnx451": {}
     }
 }

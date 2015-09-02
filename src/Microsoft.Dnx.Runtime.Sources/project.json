@@ -1,23 +1,27 @@
 {
-    "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
-    "shared": "**/*.cs",
-    "dependencies": {
+    "version": "1.0.0-beta7",
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "warningsAsErrors": true
     },
+    "shared": "**/*.cs",
+    "dependencies": {},
     "frameworks": {
-        "dnx451": { },
+        "dnx451": {},
         "dnxcore50": {
             "dependencies": {
-                "System.Collections": "4.0.11-beta-*",
-                "System.ComponentModel": "4.0.1-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Diagnostics.Debug": "4.0.11-beta-*",
-                "System.Linq": "4.0.1-beta-*",
-                "System.Reflection": "4.0.11-beta-*",
-                "System.Runtime": "4.0.21-beta-*",
-                "System.Runtime.Extensions": "4.0.11-beta-*",
-                "System.Threading": "4.0.11-beta-*",
-                "System.Threading.Tasks": "4.0.11-beta-*"
+                "System.Collections": "4.0.11-beta-23225",
+                "System.ComponentModel": "4.0.1-beta-23225",
+                "System.Console": "4.0.0-beta-23225",
+                "System.Diagnostics.Debug": "4.0.11-beta-23225",
+                "System.Linq": "4.0.1-beta-23225",
+                "System.Reflection": "4.1.0-beta-23225",
+                "System.Runtime": "4.0.21-beta-23225",
+                "System.Runtime.Extensions": "4.0.11-beta-23225",
+                "System.Threading": "4.0.11-beta-23225",
+                "System.Threading.Tasks": "4.0.11-beta-23225"
             }
         }
     }

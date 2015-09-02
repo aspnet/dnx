@@ -2,8 +2,11 @@
     "version": "0.1-beta-*",
     "exclude": "more/*.cs",
     "dependencies": {
-        "HelloShared": { "version": "0.1-beta-*", "type": "build" },
-        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*"
+        "HelloShared": {
+            "version": "0.1-beta-*",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-beta7"
     },
     "commands": {
         "hi": "HelloWorld --mode amazing",
@@ -23,13 +26,13 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.IO": "4.0.11-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Linq": "4.0.1-beta-*",
-                "System.Reflection": "4.0.11-beta-*",
-                "System.Runtime": "4.0.21-beta-*",
-                "System.Threading.Tasks": "4.0.11-beta-*",
-                "System.ComponentModel": "4.0.1-beta-*"
+                "System.IO": "4.0.11-beta-23225",
+                "System.Console": "4.0.0-beta-23225",
+                "System.Linq": "4.0.1-beta-23225",
+                "System.Reflection": "4.1.0-beta-23225",
+                "System.Runtime": "4.0.21-beta-23225",
+                "System.Threading.Tasks": "4.0.11-beta-23225",
+                "System.ComponentModel": "4.0.1-beta-23225"
             }
         }
     }

@@ -1,8 +1,11 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta7",
     "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
     "compilationOptions": {
-        "define": [ "LOADER", "TRACE" ],
+        "define": [
+            "LOADER",
+            "TRACE"
+        ],
         "allowUnsafe": true,
         "warningsAsErrors": true
     },
@@ -13,12 +16,21 @@
         "../../ext/compiler/preprocess/Internalization.cs"
     ],
     "dependencies": {
-        "Microsoft.Dnx.Loader": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*"
+        "Microsoft.Dnx.Loader": "1.0.0-beta7",
+        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta7",
+        "Microsoft.Dnx.Runtime.Internals": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Runtime.Sources": {
+            "version": "1.0.0-beta7",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Compilation.CSharp.Abstractions": {
+            "version": "1.0.0-beta7",
+            "type": "build"
+        },
+        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-20150812-01"
     },
     "frameworks": {
         "dnx451": {
@@ -36,24 +48,24 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Collections.Concurrent": "4.0.11-beta-*",
-                "System.Diagnostics.Tools": "4.0.1-beta-*",
-                "System.Dynamic.Runtime": "4.0.11-beta-*",
-                "System.Globalization": "4.0.11-beta-*",
-                "System.IO.Compression": "4.0.1-beta-*",
-                "System.IO.FileSystem.Watcher": "4.0.0-beta-*",
-                "System.Linq": "4.0.1-beta-*",
-                "System.Reflection.Extensions": "4.0.1-beta-*",
-                "System.Resources.ResourceManager": "4.0.1-beta-*",
-                "System.Resources.ReaderWriter": "4.0.0-beta-*",
-                "System.Text.Encoding": "4.0.11-beta-*",
-                "System.Text.RegularExpressions": "4.0.11-beta-*",
-                "System.Threading.Timer": "4.0.1-beta-*",
-                "System.Threading.Tasks": "4.0.11-beta-*",
-                "System.Threading.Thread": "4.0.0-beta-*",
-                "System.Threading.ThreadPool": "4.0.10-beta-*",
-                "System.Xml.ReaderWriter": "4.0.11-beta-*",
-                "System.Xml.XDocument": "4.0.11-beta-*"
+                "System.Collections.Concurrent": "4.0.11-beta-23225",
+                "System.Diagnostics.Tools": "4.0.1-beta-23225",
+                "System.Dynamic.Runtime": "4.0.11-beta-23225",
+                "System.Globalization": "4.0.11-beta-23225",
+                "System.IO.Compression": "4.0.1-beta-23225",
+                "System.IO.FileSystem.Watcher": "4.0.0-beta-23225",
+                "System.Linq": "4.0.1-beta-23225",
+                "System.Reflection.Extensions": "4.0.1-beta-23225",
+                "System.Resources.ResourceManager": "4.0.1-beta-23225",
+                "System.Resources.ReaderWriter": "4.0.0-beta-23225",
+                "System.Text.Encoding": "4.0.11-beta-23225",
+                "System.Text.RegularExpressions": "4.0.11-beta-23225",
+                "System.Threading.Timer": "4.0.1-beta-23225",
+                "System.Threading.Tasks": "4.0.11-beta-23225",
+                "System.Threading.Thread": "4.0.0-beta-23225",
+                "System.Threading.ThreadPool": "4.0.10-beta-23225",
+                "System.Xml.ReaderWriter": "4.0.11-beta-23225",
+                "System.Xml.XDocument": "4.0.11-beta-23225"
             }
         }
     },

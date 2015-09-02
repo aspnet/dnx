@@ -1,29 +1,31 @@
 {
-  "version": "1.0.0-*",
-  "dependencies": {
-    "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*"
-  },
-  "compile": [
-    "../Microsoft.Dnx.Runtime/Json/*.cs"
-  ],
-  "frameworks": {
-    "dnx451": {
-      "dependencies": {
-      }
+    "version": "1.0.0-beta7",
+    "dependencies": {
+        "Microsoft.Dnx.Runtime.Sources": {
+            "version": "1.0.0-beta7",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-beta7"
     },
-    "dnxcore50": {
-      "dependencies": {
-        "System.Collections.Concurrent": "4.0.11-beta-*",
-        "System.Dynamic.Runtime": "4.0.11-beta-*",
-        "System.Globalization": "4.0.11-beta-*",
-        "System.IO.FileSystem": "4.0.1-beta-*",
-        "System.Net.Primitives": "4.0.11-beta-*",
-        "System.Net.Sockets": "4.0.10-beta-*",
-        "System.Threading.Thread": "4.0.0-beta-*"
-      }
-    }
-  },
+    "compile": [
+        "../Microsoft.Dnx.Runtime/Json/*.cs"
+    ],
+    "frameworks": {
+        "dnx451": {
+            "dependencies": {}
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Collections.Concurrent": "4.0.11-beta-23225",
+                "System.Dynamic.Runtime": "4.0.11-beta-23225",
+                "System.Globalization": "4.0.11-beta-23225",
+                "System.IO.FileSystem": "4.0.1-beta-23225",
+                "System.Net.Primitives": "4.0.11-beta-23225",
+                "System.Net.Sockets": "4.1.0-beta-23225",
+                "System.Threading.Thread": "4.0.0-beta-23225"
+            }
+        }
+    },
     "scripts": {
         "postbuild": [
             "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
