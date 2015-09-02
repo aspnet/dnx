@@ -15,7 +15,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             var resourcesByCultureName = resources
                 .GroupBy(GetResourceCultureName, StringComparer.OrdinalIgnoreCase);
 
-            if (cultureName.Equals("neutral"))
+            if (string.Equals(cultureName, "neutral", StringComparison.OrdinalIgnoreCase))
             {
                 cultureName = string.Empty;
             }
@@ -26,51 +26,60 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
         public static string GetResourceCultureName(ResourceDescriptor res)
         {
-            var resourceBaseName = Path.GetFileNameWithoutExtension(res.FileName);
-            var cultureName = Path.GetExtension(resourceBaseName);
-            if (string.IsNullOrEmpty(cultureName) || cultureName.Length < 3)
-            {
-                return string.Empty;
-            }
-            bool previousCharWasDash = false;
-            for (var index = 1; index != cultureName.Length; ++index)
-            {
-                var ch = cultureName[index];
-                var isDash = ch == '-';
-                var isAlpha = !isDash && ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
-                var isDigit = !isDash && !isAlpha && (ch >= '0' && ch <= '9');
+            var ext = Path.GetExtension(res.FileName);
 
-                if (isDash && previousCharWasDash)
+            if (string.Equals(ext, ".resx", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ext, ".restext", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ext, ".resources", StringComparison.OrdinalIgnoreCase))
+            {
+                var resourceBaseName = Path.GetFileNameWithoutExtension(res.FileName);
+                var cultureName = Path.GetExtension(resourceBaseName);
+                if (string.IsNullOrEmpty(cultureName) || cultureName.Length < 3)
                 {
-                    // two '-' in a row is not valid
                     return string.Empty;
                 }
-
-                if (index < 3)
+                bool previousCharWasDash = false;
+                for (var index = 1; index != cultureName.Length; ++index)
                 {
-                    if (!isAlpha)
+                    var ch = cultureName[index];
+                    var isDash = ch == '-';
+                    var isAlpha = !isDash && ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+                    var isDigit = !isDash && !isAlpha && (ch >= '0' && ch <= '9');
+
+                    if (isDash && previousCharWasDash)
                     {
-                        // first characters at [1] and [2] must be alpha
+                        // two '-' in a row is not valid
                         return string.Empty;
                     }
-                }
-                else
-                {
-                    if (!isAlpha && !isDigit && !isDash)
-                    {
-                        // not an allowed character
-                        return string.Empty;
-                    }
-                }
 
-                previousCharWasDash = isDash;
+                    if (index < 3)
+                    {
+                        if (!isAlpha)
+                        {
+                            // first characters at [1] and [2] must be alpha
+                            return string.Empty;
+                        }
+                    }
+                    else
+                    {
+                        if (!isAlpha && !isDigit && !isDash)
+                        {
+                            // not an allowed character
+                            return string.Empty;
+                        }
+                    }
+
+                    previousCharWasDash = isDash;
+                }
+                if (previousCharWasDash)
+                {
+                    // trailing '-' is not valid
+                    return string.Empty;
+                }
+                return cultureName.Substring(1);
             }
-            if (previousCharWasDash)
-            {
-                // trailing '-' is not valid
-                return string.Empty;
-            }
-            return cultureName.Substring(1);
+
+            return string.Empty;
         }
     }
 }
