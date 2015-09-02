@@ -111,6 +111,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     sw.Stop();
 
                     Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+
+                    foreach (var m in CompilationContext.Modules)
+                    {
+                        m.AfterCompile(afterCompileContext);
+                    }
                 }
                 else
                 {
@@ -124,14 +129,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 }
 
                 afterCompileContext.Diagnostics = CompilationContext.Diagnostics.Concat(emitResult.Diagnostics).ToList();
-
-                if (!Path.GetExtension(assemblyName.Name).Contains("resources"))
-                {
-                    foreach (var m in CompilationContext.Modules)
-                    {
-                        m.AfterCompile(afterCompileContext);
-                    }
-                }
 
                 if (!emitResult.Success || afterCompileContext.Diagnostics.Any(RoslynDiagnosticUtilities.IsError))
                 {
@@ -304,6 +301,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             var compilation = CSharpCompilation.Create(
                 assemblyName.Name,
+                references: CompilationContext.Compilation.References,
                 options: compilationOptions);
 
             Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);

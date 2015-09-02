@@ -1,5 +1,8 @@
 ﻿{
   "version": "1.0.0-*",
+  "compilationOptions": {
+    "warningsAsErrors": true
+  },
   "dependencies": { },
   "frameworks": {
     "dnx451": {

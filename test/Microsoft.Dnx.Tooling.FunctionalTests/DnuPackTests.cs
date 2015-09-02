@@ -374,11 +374,6 @@ public class TestClass : BaseClass {
             string stdError;
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
             int exitCode;
-            string netFlavorFolder = "dnx451";
-            if (flavor != "clr")
-            {
-                netFlavorFolder = "dnxcore50";
-            }
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
             {
@@ -407,8 +402,52 @@ public class TestClass : BaseClass {
 
                     Assert.Empty(stdError);
                     Assert.Equal(0, exitCode);
-                    Assert.True(Directory.Exists($"{workingDir}/bin"));
-                    Assert.True(File.Exists($"{workingDir}/bin/Debug/" + netFlavorFolder + "/fr-FR/ReadFromResources.resources.dll"));
+                    Assert.True(Directory.Exists(Path.Combine(workingDir, "bin")));
+                    Assert.True(File.Exists(Path.Combine(workingDir, "bin", "Debug", "dnx451", "fr-FR", "ReadFromResources.resources.dll")));
+                    Assert.True(File.Exists(Path.Combine(workingDir, "bin", "Debug", "dnxcore50", "fr-FR", "ReadFromResources.resources.dll")));
+                }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_ResourcesNoArgs_WarningAsErrorsCompilationOption(string flavor, string os, string architecture)
+        {
+            string stdOut;
+            string stdError;
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            int exitCode;
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
+            {
+                using (var tempDir = TestUtils.CreateTempDir())
+                {
+                    var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "ReadFromResources");
+                    TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "ReadFromResources"), appPath);
+                    var workingDir = Path.Combine(appPath, "src", "ResourcesLibrary");
+
+                    var environment = new Dictionary<string, string> { { "DNX_TRACE", "0" } };
+                    DnuTestUtils.ExecDnu(
+                        runtimeHomeDir,
+                        "restore", "",
+                        out stdOut,
+                        out stdError,
+                        environment: null,
+                        workingDir: workingDir);
+                    exitCode = DnuTestUtils.ExecDnu(
+                        runtimeHomeDir,
+                        "pack",
+                        "",
+                        out stdOut,
+                        out stdError,
+                        environment,
+                        workingDir);
+
+                    Assert.Empty(stdError);
+                    Assert.Equal(0, exitCode);
+                    Assert.True(Directory.Exists(Path.Combine(workingDir, "bin")));
+                    Assert.True(File.Exists(Path.Combine(workingDir, "bin", "Debug", "dnx451", "fr-FR", "ResourcesLibrary.resources.dll")));
+                    Assert.True(File.Exists(Path.Combine(workingDir, "bin", "Debug", "dnxcore50", "fr-FR", "ResourcesLibrary.resources.dll")));
                 }
             }
         }

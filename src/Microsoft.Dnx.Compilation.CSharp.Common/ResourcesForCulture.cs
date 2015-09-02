@@ -38,45 +38,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 {
                     return string.Empty;
                 }
-                bool previousCharWasDash = false;
-                for (var index = 1; index != cultureName.Length; ++index)
+
+                // Path.Extension adds a . to the file extension name; example - ".resources". Removing the "." with Substring 
+                cultureName = cultureName.Substring(1);
+
+                if (CultureInfoCache.KnownCultureNames.Contains(cultureName))
                 {
-                    var ch = cultureName[index];
-                    var isDash = ch == '-';
-                    var isAlpha = !isDash && ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
-                    var isDigit = !isDash && !isAlpha && (ch >= '0' && ch <= '9');
-
-                    if (isDash && previousCharWasDash)
-                    {
-                        // two '-' in a row is not valid
-                        return string.Empty;
-                    }
-
-                    if (index < 3)
-                    {
-                        if (!isAlpha)
-                        {
-                            // first characters at [1] and [2] must be alpha
-                            return string.Empty;
-                        }
-                    }
-                    else
-                    {
-                        if (!isAlpha && !isDigit && !isDash)
-                        {
-                            // not an allowed character
-                            return string.Empty;
-                        }
-                    }
-
-                    previousCharWasDash = isDash;
+                    return cultureName;
                 }
-                if (previousCharWasDash)
-                {
-                    // trailing '-' is not valid
-                    return string.Empty;
-                }
-                return cultureName.Substring(1);
             }
 
             return string.Empty;
