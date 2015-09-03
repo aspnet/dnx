@@ -169,17 +169,10 @@ namespace Microsoft.Dnx.Runtime
 
         public TargetFrameworkInformation GetTargetFramework(FrameworkName targetFramework)
         {
-            TargetFrameworkInformation targetFrameworkInfo;
-            if (_targetFrameworks.TryGetValue(targetFramework, out targetFrameworkInfo))
+            TargetFrameworkInformation targetFrameworkInfo = null;
+            if (targetFramework != null && _targetFrameworks.TryGetValue(targetFramework, out targetFrameworkInfo))
             {
                 return targetFrameworkInfo;
-            }
-
-            IEnumerable<TargetFrameworkInformation> compatibleConfigurations;
-            if (VersionUtility.GetNearest(targetFramework, GetTargetFrameworks(), out compatibleConfigurations) &&
-                compatibleConfigurations.Any())
-            {
-                targetFrameworkInfo = compatibleConfigurations.FirstOrDefault();
             }
 
             return targetFrameworkInfo ?? _defaultTargetFrameworkConfiguration;

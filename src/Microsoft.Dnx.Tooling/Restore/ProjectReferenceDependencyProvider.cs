@@ -42,7 +42,7 @@ namespace Microsoft.Dnx.Tooling
             }
 
             // This never returns null
-            var targetFrameworkInfo = project.GetTargetFramework(targetFramework);
+            var targetFrameworkInfo = project.GetCompatibleTargetFramework(targetFramework);
 
             var dependencies = project.Dependencies.Concat(targetFrameworkInfo.Dependencies).ToList();
 
