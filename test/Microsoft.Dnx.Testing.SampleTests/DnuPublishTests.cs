@@ -8,11 +8,12 @@ using Xunit;
 
 namespace Microsoft.Dnx.Testing.SampleTests
 {
+    [Collection("SampleTestCollection")]
     public class DnuPublishTests : DnxSdkFunctionalTestBase
     {
         [Theory]
         [MemberData(nameof(DnxSdks))]
-        public void DnuPublishWebApp_SubfolderAsPublicFolder_WithRuntime_DirPlusFlatList(DnxSdk sdk)
+        public void DnuPublishWebApp_SubfolderAsPublicFolder_DirPlusFlatList(DnxSdk sdk)
         {
             const string projectName = "ProjectForTesting";
             FrameworkName[] frameworkCandidates = {
@@ -140,7 +141,7 @@ namespace Microsoft.Dnx.Testing.SampleTests
                 }
             };
 
-            var basePath = TestUtils.GetLocalTempFolder();
+            var basePath = TestUtils.GetTestFolder<DnuPublishTests>(sdk);
             var projectPath = Path.Combine(basePath, projectName);
             var outputPath = Path.Combine(basePath, "output");
             projectStructure.Save(projectPath);

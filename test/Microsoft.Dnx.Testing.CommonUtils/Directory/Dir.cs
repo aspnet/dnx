@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,24 +11,30 @@ namespace Microsoft.Dnx.Testing
     public class Dir
     {
         public const string EmptyFile = "";
+
         private readonly Dictionary<string, object> _nodes = new Dictionary<string, object>();
+        private Func<FileInfo, object> _readFile;
 
         public Dir(string rootPath): this()
         {
+            if (!Directory.Exists(rootPath))
+            {
+                throw new DirectoryNotFoundException();
+            }
+
             Load(rootPath);
         }
 
         public Dir()
         {
-            ReadFile = fileInfo => File.ReadAllText(fileInfo.FullName);
+            _readFile = fileInfo => File.ReadAllText(fileInfo.FullName);
         }
 
         public Dir(Dir parent)
         {
-            ReadFile = parent.ReadFile;
+            _readFile = parent._readFile;
         }
 
-        public Func<FileInfo, object> ReadFile;
 
         public string LoadPath { get; private set; } = "In Memory";
 
@@ -60,7 +69,7 @@ namespace Microsoft.Dnx.Testing
 
             foreach (var file in directory.EnumerateFiles())
             {
-                this[file.Name] = ReadFile(file);
+                this[file.Name] = _readFile(file);
             }
         }
 
@@ -99,7 +108,7 @@ namespace Microsoft.Dnx.Testing
 
             foreach (var file in directoryInfo.EnumerateFiles())
             {
-                directory[file.Name] = directory.ReadFile(file);
+                directory[file.Name] = directory._readFile(file);
             }
 
             parent[directoryInfo.Name] = directory;
@@ -107,8 +116,8 @@ namespace Microsoft.Dnx.Testing
 
         public DirDiff Diff(Dir other)
         {
-            var nodes1 = Flatten().ToDictionary(pair => pair.Key, pair => pair.Value);
-            var nodes2 = other.Flatten().ToDictionary(pair => pair.Key, pair => pair.Value);
+            var nodes1 = Flatten();
+            var nodes2 = other.Flatten();
 
             return new DirDiff
             {
@@ -119,7 +128,7 @@ namespace Microsoft.Dnx.Testing
             };
         }
 
-        public IEnumerable<KeyValuePair<string, object>> Flatten()
+        public Dictionary<string, object> Flatten()
         {
             var allNodes = new Dictionary<string, object>();
             var stack = new Stack<Tuple<string, Dir>>();

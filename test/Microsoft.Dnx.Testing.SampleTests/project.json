@@ -10,8 +10,8 @@
     "Microsoft.AspNet.Testing": "1.0.0-*",
     "Microsoft.Dnx.Runtime": "1.0.0-*",
     "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
-    "Microsoft.Dnx.Tooling": "1.0.0-*",
     "Microsoft.Dnx.Testing.CommonUtils": "1.0.0-*",
+    "Microsoft.Dnx.Tooling": "1.0.0-*",
     "xunit.runner.aspnet": "2.0.0-aspnet-*"
   },
 

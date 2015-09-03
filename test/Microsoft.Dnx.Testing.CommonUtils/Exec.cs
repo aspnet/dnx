@@ -1,27 +1,13 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
 namespace Microsoft.Dnx.Testing
 {
-    public class ExecResult
-    {
-        public int ExitCode { get; set; }
-        public string StandardOutput { get; set; }
-        public string StandardError { get; set; }
-
-        public ExecResult EnsureSuccess()
-        {
-            if (ExitCode != 0)
-            {
-                throw new InvalidOperationException($"Exit code was {ExitCode}");
-            }
-
-            return this;
-        }
-    }
-
     public class Exec
     {
         public static ExecResult Run(
@@ -66,7 +52,7 @@ namespace Microsoft.Dnx.Testing
                 if (args.Data != null)
                 {
                     Console.WriteLine(args.Data);
-                    stdoutBuilder.AppendLine(args.Data);
+                    stdoutBuilder.AppendLine(RemoveAnsiColorCodes(args.Data));
                 }
             };
 
@@ -75,7 +61,7 @@ namespace Microsoft.Dnx.Testing
                 if (args.Data != null)
                 {
                     Console.WriteLine(args.Data);
-                    stderrBuilder.AppendLine(args.Data);
+                    stderrBuilder.AppendLine(RemoveAnsiColorCodes(args.Data));
                 }
             };
 
@@ -91,6 +77,31 @@ namespace Microsoft.Dnx.Testing
             };
 
             return result;
+        }
+
+        public static string RemoveAnsiColorCodes(string text)
+        {
+            var escapeIndex = 0;
+            while (true)
+            {
+                escapeIndex = text.IndexOf("\x1b[", escapeIndex);
+                if (escapeIndex != -1)
+                {
+                    int endIndex = escapeIndex + 3;
+                    while (endIndex < text.Length && text[endIndex] != 'm')
+                    {
+                        ++endIndex;
+                    }
+
+                    text = text.Remove(escapeIndex, (endIndex + 1) - escapeIndex);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return text;
         }
     }
 }

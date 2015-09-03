@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,18 +21,11 @@ namespace Microsoft.Dnx.Testing
         public ExecResult Publish(
             string projectPath,
             string outputPath,
-            bool noSource = false,
             string additionalArguments = null,
             Action<Dictionary<string, string>> envSetup = null)
         {
             var sb = new StringBuilder();
-            sb.Append("publish ");
-            sb.Append($@"""{projectPath}""");
-            if (noSource)
-            {
-                sb.Append(" --no-source");
-            }
-
+            sb.Append($@"publish ""{projectPath}""");
             sb.Append($@" --out ""{outputPath}""");
             sb.Append($" {additionalArguments}");
 
@@ -42,8 +38,7 @@ namespace Microsoft.Dnx.Testing
             IEnumerable<string> feeds = null)
         {
             var sb = new StringBuilder();
-            sb.Append("restore");
-            sb.Append($" \"{restoreDir}\"");
+            sb.Append($"restore \"{restoreDir}\"");
 
             if (!string.IsNullOrEmpty(packagesDir))
             {
@@ -77,8 +72,7 @@ namespace Microsoft.Dnx.Testing
             string configuration = "Debug")
         {
             var sb = new StringBuilder();
-            sb.Append("pack ");
-            sb.Append($@"""{projectDir}""");
+            sb.Append($@"pack ""{projectDir}""");
             sb.Append($@" --out ""{outputPath}""");
             sb.Append($" --configuration {configuration}");
 

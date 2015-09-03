@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,9 +12,18 @@ namespace Microsoft.Dnx.Testing
 {
     public class Solution
     {
+        private Lazy<ProjectResolver> _lazyResolver;
+        
         public Solution(string rootPath)
         {
+            if (!Directory.Exists(rootPath))
+            {
+                throw new DirectoryNotFoundException();
+            }
+
             RootPath = rootPath;
+
+            _lazyResolver = new Lazy<ProjectResolver>(() => new ProjectResolver(RootPath));
         }
 
         public string RootPath { get; private set; }
@@ -67,7 +79,7 @@ namespace Microsoft.Dnx.Testing
         public Runtime.Project GetProject(string name)
         {
             Runtime.Project project;
-            var resolver = new ProjectResolver(RootPath);
+            var resolver = _lazyResolver.Value;
             if (!resolver.TryResolveProject(name, out project))
             {
                 throw new InvalidOperationException($"Unable to resolve project '{name}' from '{RootPath}'");
@@ -92,7 +104,7 @@ namespace Microsoft.Dnx.Testing
 
         private IEnumerable<Runtime.Project> ResolveAllProjects()
         {
-            var resolver = new ProjectResolver(RootPath);
+            var resolver = _lazyResolver.Value;
             var searchPaths = resolver.SearchPaths;
             foreach (var path in searchPaths.Concat(searchPaths.SelectMany(p => Directory.EnumerateDirectories(p))))
             {
