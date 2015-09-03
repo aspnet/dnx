@@ -671,7 +671,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   ""targets"": {
     ""DNX,Version=v4.6"": {
       ""Lib/1.0.0"": {
-        ""type"": ""project""
+        ""type"": ""project"",
+        ""framework"": ""DNX,Version=v4.5.1""
       }
     }
   },
