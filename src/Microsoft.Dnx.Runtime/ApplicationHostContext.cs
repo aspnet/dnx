@@ -188,7 +188,7 @@ namespace Microsoft.Dnx.Runtime
 
                             var path = Path.GetFullPath(Path.Combine(context.ProjectDirectory, projectLibrary.Path));
 
-                            var projectDescription = projectResolver.GetDescription(context.TargetFramework, path, library);
+                            var projectDescription = projectResolver.GetDescription(path, library);
 
                             libraries.Add(projectDescription);
                         }

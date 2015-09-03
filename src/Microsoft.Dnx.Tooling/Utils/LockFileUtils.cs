@@ -83,7 +83,7 @@ namespace Microsoft.Dnx.Tooling.Utils
         public static LockFileTargetLibrary CreateLockFileTargetLibrary(Runtime.Project projectDependency,
                                                                         RestoreContext context)
         {
-            var targetFrameworkInfo = projectDependency.GetTargetFramework(context.FrameworkName);
+            var targetFrameworkInfo = projectDependency.GetCompatibleTargetFramework(context.FrameworkName);
 
             var lockFileLib = new LockFileTargetLibrary
             {
