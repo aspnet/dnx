@@ -1,7 +1,7 @@
 language: csharp
 sudo: false
 env:
-  - MONO_THREADS_PER_CPU=2000
+  - MONO_THREADS_PER_CPU=2000 DNX_TRACE=1 MONO_OPTIONS=--trace=all
 os:
   - linux
   - osx
