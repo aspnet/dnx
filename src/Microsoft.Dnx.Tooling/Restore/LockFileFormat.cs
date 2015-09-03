@@ -252,6 +252,12 @@ namespace Microsoft.Dnx.Tooling
                 library.Type = ReadString(type);
             }
 
+            var framework = json["framework"];
+            if (framework != null)
+            {
+                library.TargetFramework = new FrameworkName(ReadString(framework));
+            }
+
             library.Dependencies = ReadObject(json["dependencies"] as JObject, ReadPackageDependency);
             library.FrameworkAssemblies = new HashSet<string>(ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference), StringComparer.OrdinalIgnoreCase);
             library.RuntimeAssemblies = ReadObject(json["runtime"] as JObject, ReadFileItem);
@@ -267,6 +273,11 @@ namespace Microsoft.Dnx.Tooling
             var json = new JObject();
 
             json["type"] = WriteString(library.Type);
+
+            if (library.TargetFramework != null)
+            {
+                json["framework"] = WriteString(library.TargetFramework.ToString());
+            }
 
             if (library.Dependencies.Count > 0)
             {

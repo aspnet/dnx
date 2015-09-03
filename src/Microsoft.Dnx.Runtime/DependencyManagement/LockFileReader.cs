@@ -185,6 +185,12 @@ namespace Microsoft.Dnx.Runtime
             }
 
             library.Type = jobject.ValueAsString("type");
+            var framework = jobject.ValueAsString("framework");
+            if (framework != null)
+            {
+                library.TargetFramework = new FrameworkName(framework);
+            }
+
             library.Dependencies = ReadObject(jobject.ValueAsJsonObject("dependencies"), ReadPackageDependency);
             library.FrameworkAssemblies = new HashSet<string>(ReadArray(jobject.Value("frameworkAssemblies"), ReadFrameworkAssemblyReference), StringComparer.OrdinalIgnoreCase);
             library.RuntimeAssemblies = ReadObject(jobject.ValueAsJsonObject("runtime"), ReadFileItem);

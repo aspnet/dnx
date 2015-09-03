@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
@@ -12,6 +13,8 @@ namespace Microsoft.Dnx.Runtime
         public string Name { get; set; }
 
         public string Type { get; set; }
+
+        public FrameworkName TargetFramework { get; set; }
 
         public SemanticVersion Version { get; set; }
 

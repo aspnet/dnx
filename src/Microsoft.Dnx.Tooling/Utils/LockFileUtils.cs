@@ -66,34 +66,34 @@ namespace Microsoft.Dnx.Tooling.Utils
             return lockFileLib;
         }
 
-        public static LockFileProjectLibrary CreateLockFileProjectLibrary(LockFileProjectLibrary previousLibrary,
-                                                                          Runtime.Project project,
-                                                                          Runtime.Project library)
+        public static LockFileProjectLibrary CreateLockFileProjectLibrary(Runtime.Project project,
+                                                                          Runtime.Project projectDependency)
         {
             var result = new LockFileProjectLibrary()
             {
-                Name = library.Name,
-                Version = library.Version
+                Name = projectDependency.Name,
+                Version = projectDependency.Version
             };
 
-            result.Path = PathUtility.GetRelativePath(project.ProjectFilePath, library.ProjectFilePath, '/');
+            result.Path = PathUtility.GetRelativePath(project.ProjectFilePath, projectDependency.ProjectFilePath, '/');
 
             return result;
         }
 
-        public static LockFileTargetLibrary CreateLockFileTargetLibrary(LockFileProjectLibrary library,
-                                                                        Runtime.Project projectInfo,
+        public static LockFileTargetLibrary CreateLockFileTargetLibrary(Runtime.Project projectDependency,
                                                                         RestoreContext context)
         {
+            var targetFrameworkInfo = projectDependency.GetTargetFramework(context.FrameworkName);
+
             var lockFileLib = new LockFileTargetLibrary
             {
-                Name = library.Name,
-                Version = library.Version,
+                Name = projectDependency.Name,
+                Version = projectDependency.Version,
+                TargetFramework = targetFrameworkInfo.FrameworkName, // null TFM means it's incompatible
                 Type = "project"
             };
 
-            var targetFrameworkInfo = projectInfo.GetTargetFramework(context.FrameworkName);
-            var dependencies = projectInfo.Dependencies.Concat(targetFrameworkInfo.Dependencies);
+            var dependencies = projectDependency.Dependencies.Concat(targetFrameworkInfo.Dependencies);
 
             foreach (var dependency in dependencies)
             {

@@ -780,7 +780,6 @@ namespace Microsoft.Dnx.Tooling
                                    IEnumerable<TargetContext> contexts)
         {
             var resolver = new DefaultPackagePathResolver(repository.RepositoryRoot.Root);
-            var previousProjectLibraries = previousLockFile?.ProjectLibraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
             var previousPackageLibraries = previousLockFile?.PackageLibraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
 
             var lockFile = new LockFile();
@@ -810,17 +809,13 @@ namespace Microsoft.Dnx.Tooling
                 var packageInfo = repository.FindPackagesById(library.Name)
                                             .FirstOrDefault(p => p.Version == library.Version);
 
-                var projectInfo = projectResolver.FindProject(library.Name);
+                var projectDependency = projectResolver.FindProject(library.Name);
 
-                if (projectInfo != null)
+                if (projectDependency != null)
                 {
-                    LockFileProjectLibrary previousLibrary = null;
-                    previousProjectLibraries?.TryGetValue(Tuple.Create(library.Name, library.Version), out previousLibrary);
+                    var projectLibrary = LockFileUtils.CreateLockFileProjectLibrary(project, projectDependency);
 
-                    lockFile.ProjectLibraries.Add(LockFileUtils.CreateLockFileProjectLibrary(
-                        previousLibrary,
-                        project: project,
-                        library: projectInfo));
+                    lockFile.ProjectLibraries.Add(projectLibrary);
                 }
                 else if (packageInfo != null)
                 {
@@ -843,7 +838,6 @@ namespace Microsoft.Dnx.Tooling
             }
 
             var packageLibraries = lockFile.PackageLibraries.ToDictionary(lib => Tuple.Create(lib.Name, lib.Version));
-            var projectLibraries = lockFile.ProjectLibraries.ToDictionary(lib => Tuple.Create(lib.Name, lib.Version));
 
             // Add the contexts
             foreach (var context in contexts)
@@ -862,14 +856,11 @@ namespace Microsoft.Dnx.Tooling
                     var packageInfo = repository.FindPackagesById(library.Name)
                                                 .FirstOrDefault(p => p.Version == library.Version);
 
-                    var projectInfo = projectResolver.FindProject(library.Name);
-
-                    if (projectInfo != null)
+                    var projectDependency = projectResolver.FindProject(library.Name);
+                    if (projectDependency != null)
                     {
-                        target.Libraries.Add(LockFileUtils.CreateLockFileTargetLibrary(
-                            projectLibraries[Tuple.Create(library.Name, library.Version)],
-                            projectInfo,
-                            context.RestoreContext));
+                        var projectTargetLibrary = LockFileUtils.CreateLockFileTargetLibrary(projectDependency, context.RestoreContext);
+                        target.Libraries.Add(projectTargetLibrary);
                     }
                     else if (packageInfo != null)
                     {
