@@ -630,8 +630,10 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
                         var sourceFile = Path.Combine(target.TargetFolder, native + nativeExtension);
                         if (File.Exists(sourceFile))
                         {
-                            Log.Info("Moving " + native + " to " + targetFilePath);
-                            File.Move(Path.Combine(target.TargetFolder, native + nativeExtension), targetFilePath);
+                            Log.Info("Copying " + sourceFile + " to " + targetFilePath);
+                            File.Copy(sourceFile, targetFilePath);
+                        } else {
+                            Log.Warn(sourceFile + " does not exist");
                         }
                     }
                 }

@@ -20,7 +20,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         public DnuListTests(PackageManagerFunctionalTestFixture fixture)
         {
             _fixture = fixture;
-            _workingDir = TestUtils.CreateTempDir();
+            _workingDir = new DisposableDir();
         }
 
         public static IEnumerable<object[]> RuntimeComponents

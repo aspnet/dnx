@@ -26,11 +26,6 @@ namespace Microsoft.Dnx.CommonTestUtils
             }
         }
 
-        public static DisposableDir CreateTempDir()
-        {
-            return new DisposableDir();
-        }
-
         public static int Exec(string program, string commandLine)
         {
             string stdOut;
@@ -185,7 +180,7 @@ namespace Microsoft.Dnx.CommonTestUtils
                 buildArtifactDir,
                 GetRuntimeFilePattern(flavor, os, architecture),
                 SearchOption.TopDirectoryOnly).First();
-            runtimeHomePath = CreateTempDir();
+            runtimeHomePath = new DisposableDir();
             runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
             var runtimeRoot = Path.Combine(runtimeHomePath, "runtimes", runtimeName);
 
@@ -242,7 +237,7 @@ namespace Microsoft.Dnx.CommonTestUtils
         {
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var sourceSolutionPath = Path.Combine(rootDir, "misc", "DnuWrapTestSolutions", name);
-            var targetSolutionPath = CreateTempDir();
+            var targetSolutionPath = new DisposableDir();
             CopyFolder(sourceSolutionPath, targetSolutionPath);
             return targetSolutionPath;
         }
