@@ -31,7 +31,7 @@ namespace Microsoft.Dnx.Runtime
             var targetFrameworkInfo = project.GetTargetFramework(targetFramework);
             var targetFrameworkDependencies = new List<LibraryDependency>(targetFrameworkInfo.Dependencies);
 
-            if (VersionUtility.IsDesktop(targetFramework))
+            if (targetFramework != null && VersionUtility.IsDesktop(targetFramework))
             {
                 targetFrameworkDependencies.Add(new LibraryDependency
                 {
@@ -71,7 +71,7 @@ namespace Microsoft.Dnx.Runtime
 
             // Mark the library as unresolved if there were specified frameworks
             // and none of them resolved
-            bool unresolved = targetFramework == null;
+            bool unresolved = targetFrameworkInfo.FrameworkName == null;
 
             return new ProjectDescription(
                 new LibraryRange(project.Name, frameworkReference: false),
