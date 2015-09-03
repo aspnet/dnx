@@ -34,7 +34,7 @@ namespace Bootstrapper.FunctionalTests
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "ReadFromResources");
                 TestUtils.CreateDisposableTestProject(runtimeHomeDir, Path.Combine(tempDir, "ResourcesTestProjects"), Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "ReadFromResources"));
@@ -65,7 +65,7 @@ Le nom '{0}' est ambigu.
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "EmbeddedResources");
                 TestUtils.CreateDisposableTestProject(runtimeHomeDir, Path.Combine(tempDir, "ResourcesTestProjects"), Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "EmbeddedResources"));

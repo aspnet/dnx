@@ -14,7 +14,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
         public PackageManagerFunctionalTestFixture() : base()
         {
-            _contextDir = TestUtils.CreateTempDir();
+            _contextDir = new DisposableDir();
             PackageSource = Path.Combine(_contextDir.DirPath, "packages");
             Directory.CreateDirectory(PackageSource);
 
@@ -53,7 +53,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                                                          (string)runtimeForPacking[1],
                                                          (string)runtimeForPacking[2]);
 
-            using (var tempdir = TestUtils.CreateTempDir())
+            using (var tempdir = new DisposableDir())
             {
                 var dir = new DirectoryInfo(tempdir);
                 var projectDir = dir.CreateSubdirectory(name);

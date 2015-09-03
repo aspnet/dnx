@@ -13,7 +13,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 
         public DthFunctionalTestFixture() : base()
         {
-            _context = TestUtils.CreateTempDir();
+            _context = new DisposableDir();
 
             PrepareTestProjects();
         }

@@ -1926,7 +1926,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 var publishOutputPath = Path.Combine(tempDir, "output");
                 var appPath = Path.Combine(tempDir, testApp);
@@ -2031,7 +2031,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 var publishOutputPath = Path.Combine(tempDir, "output");
                 var appPath = Path.Combine(tempDir, testApp);
@@ -2098,7 +2098,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 var publishOutputPath = Path.Combine(tempDir, "output");
                 var appPath = Path.Combine(tempDir, testApp);
@@ -2148,7 +2148,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 var outputPath = Path.Combine(tempDir, "output");
                 var solutionRootPath = Path.Combine(tempDir, testAppName);
@@ -2272,7 +2272,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 var publishOutputPath = Path.Combine(tempDir, "output");
                 var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "ReadFromResources");

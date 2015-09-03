@@ -381,7 +381,7 @@ public class TestClass : BaseClass {
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
             {
-                using (var tempDir = TestUtils.CreateTempDir())
+                using (var tempDir = new DisposableDir())
                 {
                     var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "ReadFromResources");
                     TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "ReadFromResources"), appPath);
@@ -424,7 +424,7 @@ public class TestClass : BaseClass {
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
             {
-                using (var tempDir = TestUtils.CreateTempDir())
+                using (var tempDir = new DisposableDir())
                 {
                     var appPath = Path.Combine(tempDir, "ResourcesTestProjects", "ReadFromResources");
                     TestUtils.CopyFolder(Path.Combine(TestUtils.GetMiscProjectsFolder(), "ResourcesTestProjects", "ReadFromResources"), appPath);

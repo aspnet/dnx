@@ -230,7 +230,7 @@ command
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 var sampleAppRoot = Path.Combine(tempSamplesDir, "HelloWorld");
 
@@ -296,7 +296,7 @@ Hello, code!
 }";
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", projectJson)
@@ -354,7 +354,7 @@ Hello, code!
 }";
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", projectJson)
@@ -414,7 +414,7 @@ Hello, code!
 }";
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", projectJson)
@@ -499,7 +499,7 @@ Hello, code!
 }";
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", projectJson)
@@ -550,7 +550,7 @@ Hello, code!
 </configuration>";
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var tempDir = TestUtils.CreateTempDir())
+            using (var tempDir = new DisposableDir())
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", projectJson)
