@@ -3,21 +3,14 @@
 
 #include "stdafx.h"
 #include "tpa.h"
+#include "utils.h"
+#include "app_main.h"
 #include <assert.h>
 
 // Windows types used by the ExecuteAssembly function
 typedef int32_t HRESULT;
 typedef const char* LPCSTR;
 typedef uint32_t DWORD;
-
-typedef struct CALL_APPLICATION_MAIN_DATA
-{
-    char* applicationBase;
-    char* runtimeDirectory;
-    int argc;
-    char** argv;
-    int exitcode;
-} *PCALL_APPLICATION_MAIN_DATA;
 
 // Prototype of the ExecuteAssembly function from the libcoreclr.so
 typedef HRESULT (*ExecuteAssemblyFunction)(
@@ -77,9 +70,7 @@ bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNa
 
     for (auto assembly_name : CreateTpaBase(isNative))
     {
-        trustedPlatformAssemblies.append(tpaDirectory);
-        trustedPlatformAssemblies.append("/");
-        trustedPlatformAssemblies.append(assembly_name);
+        trustedPlatformAssemblies.append(dnx::utils::path_combine(tpaDirectory, assembly_name));
         trustedPlatformAssemblies.append(":");
     }
 
@@ -89,65 +80,15 @@ bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNa
 void* pLibCoreClr = nullptr;
 void* pLibCoreClrPal = nullptr;
 
-bool LoadCoreClrAtPath(const std::string loadPath, void** ppLibCoreClr, void** ppLibCoreClrPal)
+bool LoadCoreClrAtPath(const std::string& loadPath, void** ppLibCoreClr, void** ppLibCoreClrPal)
 {
-    std::string coreClrDllPath = loadPath;
-    std::string coreClrPalPath = loadPath;
-
-    coreClrDllPath.append("/");
-    coreClrDllPath.append(LIBCORECLR_NAME);
-
-    coreClrPalPath.append("/");
-    coreClrPalPath.append(LIBCORECLRPAL_NAME);
+    std::string coreClrDllPath = dnx::utils::path_combine(loadPath, LIBCORECLR_NAME);
+    std::string coreClrPalPath = dnx::utils::path_combine(loadPath, LIBCORECLRPAL_NAME);
 
     *ppLibCoreClrPal = dlopen(coreClrPalPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
     *ppLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
     return *ppLibCoreClrPal != nullptr && *ppLibCoreClr != nullptr;
-}
-
-// libcoreclr has a dependency on libcoreclrpal, which is commonly not on LD_LIBRARY_PATH, so for every
-// location we try to load libcoreclr from, we first try to load libcoreclrpal so when we load coreclr
-// itself the linker is happy.
-//
-// NOTE: The code here is structured in a way such that it is OK if the load of libcoreclrpal fails,
-// because depending on the version of the coreclr DNX has, the PAL may still be staticlly linked
-// into coreclr and we want to be able to load coreclr's that have been built this way.
-void LoadCoreClr(std::string& runtimeDirectory)
-{
-    void* ret = nullptr;
-
-    char* coreClrEnvVar = getenv("CORECLR_DIR");
-
-    if (coreClrEnvVar)
-    {
-        runtimeDirectory = coreClrEnvVar;
-
-        LoadCoreClrAtPath(runtimeDirectory, &pLibCoreClr, &pLibCoreClrPal);
-
-        if (!pLibCoreClr && pLibCoreClrPal)
-        {
-            // The PAL loaded but CoreCLR did not.  We are going to try other places, so let's
-            // unload this PAL.
-            dlclose(pLibCoreClrPal);
-            pLibCoreClrPal = nullptr;
-        }
-    }
-
-    if (!pLibCoreClr)
-    {
-        // Try to load coreclr from application path.
-
-        runtimeDirectory = GetPathToBootstrapper();
-
-        size_t lastSlash = runtimeDirectory.rfind('/');
-
-        assert(lastSlash != std::string::npos);
-
-        runtimeDirectory.erase(lastSlash);
-
-        LoadCoreClrAtPath(runtimeDirectory, &pLibCoreClr, &pLibCoreClrPal);
-    }
 }
 
 void FreeCoreClr()
@@ -164,41 +105,65 @@ void FreeCoreClr()
         pLibCoreClrPal = nullptr;
     }
 }
-}
 
-extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
+// libcoreclr has a dependency on libcoreclrpal, which is commonly not on LD_LIBRARY_PATH, so for every
+// location we try to load libcoreclr from, we first try to load libcoreclrpal so when we load coreclr
+// itself the linker is happy.
+//
+// NOTE: The code here is structured in a way such that it is OK if the load of libcoreclrpal fails,
+// because depending on the version of the coreclr DNX has, the PAL may still be staticlly linked
+// into coreclr and we want to be able to load coreclr's that have been built this way.
+int LoadCoreClr(std::string& coreClrDirectory, const std::string& runtimeDirectory)
 {
-    HRESULT hr = S_OK;
-    size_t cchTrustedPlatformAssemblies = 0;
-    std::string runtimeDirectory;
+    void* ret = nullptr;
 
-    if (data->runtimeDirectory)
-    {
-        runtimeDirectory = data->runtimeDirectory;
-    }
-    else
-    {
-        // TODO: This should get the directory that this library is in, not the CWD.
-        char szCurrentDirectory[PATH_MAX];
+    char* coreClrEnvVar = getenv("CORECLR_DIR");
 
-        if (!getcwd(szCurrentDirectory, PATH_MAX))
+    if (coreClrEnvVar)
+    {
+        coreClrDirectory = coreClrEnvVar;
+
+        LoadCoreClrAtPath(coreClrDirectory, &pLibCoreClr, &pLibCoreClrPal);
+
+        if (!pLibCoreClr && pLibCoreClrPal)
         {
-            return E_FAIL;
+            // The PAL loaded but CoreCLR did not.  We are going to try other places, so let's
+            // unload this PAL.
+            dlclose(pLibCoreClrPal);
+            pLibCoreClrPal = nullptr;
         }
-
-        runtimeDirectory = std::string(szCurrentDirectory);
     }
 
-    std::string coreClrDirectory;
-    LoadCoreClr(coreClrDirectory);
-
+    if (!pLibCoreClr)
+    {
+        // Try to load coreclr from application path.
+        coreClrDirectory = runtimeDirectory;
+        LoadCoreClrAtPath(coreClrDirectory, &pLibCoreClr, &pLibCoreClrPal);
+    }
+    
     if (!pLibCoreClr)
     {
         char* error = dlerror();
         fprintf(stderr, "failed to locate libcoreclr with error %s\n", error);
 
         FreeCoreClr();
-        return E_FAIL;
+        return -1;
+    }
+    
+    return 0;
+}
+}
+
+extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
+{
+    HRESULT hr = S_OK;
+
+    const std::string runtimeDirectory = data->runtimeDirectory;
+    std::string coreClrDirectory;
+    
+    if (LoadCoreClr(coreClrDirectory, runtimeDirectory) != 0)
+    {
+        return -1;
     }
 
     const char* property_keys[] =
@@ -216,22 +181,18 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
         if (!GetTrustedPlatformAssembliesList(coreClrDirectory.c_str(), false, trustedPlatformAssemblies))
         {
             fprintf(stderr, "Failed to find files in the coreclr directory\n");
-
             FreeCoreClr();
             return E_FAIL;
         }
     }
 
     // Add the assembly containing the app domain manager to the trusted list
-    trustedPlatformAssemblies.append(runtimeDirectory);
-    trustedPlatformAssemblies.append("Microsoft.Dnx.Host.CoreClr.dll");
+    trustedPlatformAssemblies.append(dnx::utils::path_combine(runtimeDirectory, "Microsoft.Dnx.Host.CoreClr.dll"));
 
-    std::string appPaths(runtimeDirectory);
-
-    appPaths.append(":");
-    appPaths.append(coreClrDirectory);
-    appPaths.append(":");
-
+    std::string appPaths;
+    appPaths.append(runtimeDirectory).append(":")
+            .append(coreClrDirectory).append(":");
+    
     const char* property_values[] = {
         // APPBASE
         data->applicationBase,
@@ -253,10 +214,7 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 
     setenv("DNX_FRAMEWORK", "dnxcore50", 1);
 
-    std::string coreClrDllPath(coreClrDirectory);
-    coreClrDllPath.append("/");
-    coreClrDllPath.append(LIBCORECLR_NAME);
-
+    std::string coreClrDllPath = dnx::utils::path_combine(coreClrDirectory, LIBCORECLR_NAME);
     std::string pathToBootstrapper = GetPathToBootstrapper();
 
     hr = executeAssembly(pathToBootstrapper.c_str(),

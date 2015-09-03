@@ -62,7 +62,10 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
         host = dlopen(localPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
         if (!host)
         {
-            throw std::runtime_error(std::string("Failed to load: ").append(moduleName));
+            std::ostringstream oss;
+            oss << "Failed to load: '" << moduleName  << "' error: " << dlerror();
+
+            throw std::runtime_error(oss.str());
         }
 
         trace_writer.write(std::string("Loaded module: ").append(moduleName), true);

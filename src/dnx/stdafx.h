@@ -23,7 +23,7 @@
 #include <unistd.h>
 
 typedef uint32_t DWORD;
-typedef DWORD HRESULT;
+typedef int32_t HRESULT;
 typedef void* HMODULE;
 typedef void* FARPROC;
 typedef void* HANDLE;

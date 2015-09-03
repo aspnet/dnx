@@ -345,12 +345,14 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
         var sourceFiles = new string[] 
         {
             Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "tpa.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp")
+            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp"),
+            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp")
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_LINUX --std=c++11 -ldl -Isrc/{2}/include", string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
+        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_LINUX --std=c++11 -ldl -Isrc/{2}/include",
+            string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
     copy sourceDir='${soOutputDir}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
@@ -365,12 +367,13 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.linux.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp")
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/{2}/include", string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/{2}/include",
+            string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
     copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "linux", "x64")}' overwrite='${true}'
@@ -385,12 +388,14 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
         var sourceFiles = new string[]
         {
             Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "tpa.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp")
+            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp"),
+            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp")
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_DARWIN --std=c++11 -ldl -Isrc/{2}/include", string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
+        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_DARWIN --std=c++11 -ldl -Isrc/{2}/include",
+            string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
     copy sourceDir='${soOutputDir}' include='*.dylib' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
@@ -405,12 +410,13 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.darwin.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp")
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/{2}/include", string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/{2}/include",
+            string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
     copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "darwin", "x64")}' overwrite='${true}'

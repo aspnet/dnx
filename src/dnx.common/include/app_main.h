@@ -14,9 +14,10 @@ typedef struct CALL_APPLICATION_MAIN_DATA
     int exitcode; // Exit code from Managed Application
 } *PCALL_APPLICATION_MAIN_DATA;
 
-typedef HRESULT(
 #if defined(_WIN32)
-    __stdcall
+    typedef HRESULT(__stdcall
+#else
+    typedef int32_t(
 #endif
     *FnCallApplicationMain)(
     PCALL_APPLICATION_MAIN_DATA pCallApplicationMainData);
