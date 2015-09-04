@@ -287,6 +287,10 @@ public class TestClass : BaseClass {
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
             var projectJson = @"{
+  ""frameworks"": {
+      ""dnx451"": { },
+      ""dnxcore50"": { }
+  },
   ""scripts"": {
     ""postbuild"": ""echo POST_BUILD_SCRIPT_OUTPUT"",
     ""postpack"": ""echo POST_PACK_SCRIPT_OUTPUT""
