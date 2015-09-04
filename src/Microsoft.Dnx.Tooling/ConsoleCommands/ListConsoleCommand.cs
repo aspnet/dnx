@@ -38,12 +38,12 @@ namespace Microsoft.Dnx.Tooling
 
                     var options = new DependencyListOptions(reportsFactory.CreateReports(verbose: true, quiet: false), argProject)
                     {
-                        TargetFrameworks = frameworks.Values,
                         ShowAssemblies = showAssemblies.HasValue(),
                         RuntimeFolder = runtimeFolder.Value(),
                         Details = details.HasValue(),
                         ResultsFilter = resultsFilter.Value()
                     };
+                    options.AddFrameworkMonikers(frameworks.Values);
 
                     if (!options.Valid)
                     {

@@ -8,6 +8,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Runtime.Helpers;
+using Microsoft.Dnx.Tooling.Utils;
+using NuGet;
 
 namespace Microsoft.Dnx.Tooling.Publish
 {
@@ -15,9 +18,11 @@ namespace Microsoft.Dnx.Tooling.Publish
     {
         private readonly IServiceProvider _hostServices;
         private readonly PublishOptions _options;
+        private readonly IApplicationEnvironment _applicationEnvironment;
 
-        public PublishManager(IServiceProvider hostServices, PublishOptions options)
+        public PublishManager(IServiceProvider hostServices, PublishOptions options, IApplicationEnvironment applicationEnvironment)
         {
+            _applicationEnvironment = applicationEnvironment;
             _hostServices = hostServices;
             _options = options;
             _options.ProjectDir = Normalize(_options.ProjectDir);
@@ -181,12 +186,38 @@ namespace Microsoft.Dnx.Tooling.Publish
             // the published output targets all frameworks specified in project.json
             if (!_options.Runtimes.Any())
             {
-                foreach (var frameworkInfo in project.GetTargetFrameworks())
+                IEnumerable<FrameworkName> frameworksToPublish;
+
+                if (!_options.TargetFrameworks.Any())
                 {
-                    if (!frameworkContexts.ContainsKey(frameworkInfo.FrameworkName))
+                    frameworksToPublish = project
+                            .GetTargetFrameworks()
+                            .Select(fx => fx.FrameworkName);
+                }
+                else
+                {
+                    string frameworkSelectionError;
+                    frameworksToPublish = FrameworkSelectionHelper.SelectFrameworks(project,
+                                                                       _options.TargetFrameworks,
+                                                                       _applicationEnvironment.RuntimeFramework,
+                                                                       out frameworkSelectionError)?.ToList();
+                    if (frameworksToPublish == null)
                     {
-                        frameworkContexts[frameworkInfo.FrameworkName] =
-                            CreateDependencyContext(project, frameworkInfo.FrameworkName);
+                        _options.Reports.WriteError(frameworkSelectionError);
+                        return false;
+                    }
+
+                    foreach (var framework in frameworksToPublish)
+                    {
+                        root.Frameworks.Add(framework, null);
+                    }
+                }
+
+                foreach (var framework in frameworksToPublish)
+                {
+                    if (!frameworkContexts.ContainsKey(framework))
+                    {
+                        frameworkContexts[framework] = CreateDependencyContext(project, framework);
                     }
                 }
             }
@@ -271,7 +302,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             return !anyUnresolvedDependency && success;
         }
 
-        bool TryAddRuntime(PublishRoot root, FrameworkName frameworkName, string runtimePath)
+        private bool TryAddRuntime(PublishRoot root, FrameworkName frameworkName, string runtimePath)
         {
             if (!Directory.Exists(runtimePath))
             {
@@ -279,6 +310,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             }
 
             root.Runtimes.Add(new PublishRuntime(root, frameworkName, runtimePath));
+            root.Frameworks.Add(frameworkName, null);
             return true;
         }
 

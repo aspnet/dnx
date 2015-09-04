@@ -3,7 +3,10 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
+using Microsoft.Dnx.Runtime.Helpers;
 
 namespace Microsoft.Dnx.Tooling.List
 {
@@ -37,12 +40,23 @@ namespace Microsoft.Dnx.Tooling.List
 
         public bool ShowAssemblies { get; set; }
 
-        public IEnumerable<string> TargetFrameworks { get; set; }
+        public IDictionary<FrameworkName, string> TargetFrameworks { get; private set; } = new Dictionary<FrameworkName, string>();
 
         public bool Details { get; set; }
 
         public string ResultsFilter { get; set; }
 
         public Reports Reports { get; }
+
+        public void AddFrameworkMonikers(IEnumerable<string> monikers)
+        {
+            if (monikers != null)
+            {
+                foreach (var moniker in monikers.Distinct())
+                {
+                    TargetFrameworks.Add(FrameworkNameHelper.ParseFrameworkName(moniker), moniker);
+                }
+            }
+        }
     }
 }

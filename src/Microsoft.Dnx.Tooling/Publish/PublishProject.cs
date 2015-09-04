@@ -126,6 +126,12 @@ namespace Microsoft.Dnx.Tooling.Publish
             buildOptions.GeneratePackages = true;
             buildOptions.Reports = root.Reports.ShallowCopy();
 
+            if (root.Frameworks.Any())
+            {
+                // Make sure we only emit the nupkgs for the specified frameworks
+                buildOptions.TargetFrameworks.AddRange(root.Frameworks);
+            }
+
             // Mute "dnu pack" completely if it is invoked by "dnu publish --quiet"
             buildOptions.Reports.Information = root.Reports.Quiet;
 
@@ -421,9 +427,9 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             var restoreCommand = new RestoreCommand(appEnv);
 
-            foreach (var runtime in root.Runtimes)
+            foreach (var framework in root.Frameworks)
             {
-                restoreCommand.TargetFrameworks.Add(publishProject.SelectFrameworkForRuntime(runtime));
+                restoreCommand.TargetFrameworks.Add(framework.Key);
             }
 
             restoreCommand.SkipRestoreEvents = true;

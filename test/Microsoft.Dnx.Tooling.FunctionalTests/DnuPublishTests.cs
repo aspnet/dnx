@@ -1228,7 +1228,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
         [MemberData(nameof(ClrRuntimeComponents))]
         public void DnuPublishWebApp_Dnx46(string flavor, string os, string architecture)
         {
-            DnuPublishWebApp_SpecificFramework(flavor, os, architecture, "dnx46");
+            DnuPublishWebApp_TargetParticularFramework(flavor, os, architecture, "dnx46");
         }
 
         // DNX on Mono does not yet support 4.5.2
@@ -1237,17 +1237,17 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
         [MemberData(nameof(ClrRuntimeComponents))]
         public void DnuPublishWebApp_Dnx452(string flavor, string os, string architecture)
         {
-            DnuPublishWebApp_SpecificFramework(flavor, os, architecture, "dnx452");
+            DnuPublishWebApp_TargetParticularFramework(flavor, os, architecture, "dnx452");
         }
 
         [Theory]
         [MemberData(nameof(ClrRuntimeComponents))]
         public void DnuPublishWebApp_Dnx451(string flavor, string os, string architecture)
         {
-            DnuPublishWebApp_SpecificFramework(flavor, os, architecture, "dnx451");
+            DnuPublishWebApp_TargetParticularFramework(flavor, os, architecture, "dnx451");
         }
 
-        private void DnuPublishWebApp_SpecificFramework(string flavor, string os, string architecture, string framework)
+        private void DnuPublishWebApp_TargetParticularFramework(string flavor, string os, string architecture, string framework)
         {
             var fx = NuGet.VersionUtility.ParseFrameworkName(framework);
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -2302,16 +2302,132 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
                 appOutputPath = Path.Combine(publishOutputPath, "approot", "packages", "Microsoft.Data.Edm");
                 versionDir = new DirectoryInfo(appOutputPath).GetDirectories().First().FullName;
-                var edmLocales = new List<string>() {"de", "es", "fr", "it", "ja", "ko", "ru", "zh-Hans", "zh-Hant" };
+                var edmLocales = new List<string>() { "de", "es", "fr", "it", "ja", "ko", "ru", "zh-Hans", "zh-Hant" };
                 var edmFxs = new List<string>() { "net40", "portable-net45+wp8+win8+wpa" };
 
                 foreach (var fx in edmFxs)
                 {
                     foreach (var locale in edmLocales)
                     {
-                        Assert.True(File.Exists(Path.Combine(versionDir, "lib", fx, locale, "Microsoft.Data.Edm.resources.dll")), 
+                        Assert.True(File.Exists(Path.Combine(versionDir, "lib", fx, locale, "Microsoft.Data.Edm.resources.dll")),
                             string.Format("Microsoft.Data.Edm {0} resources assembly did not get published for {1}", locale, fx));
                     }
+                }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPublishWithSpecificFramework_dnx451(string flavor, string os, string architecture)
+        {
+            DnuPublish_SpecificFramework(flavor, os, architecture, "dnx451");
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPublishWithSpecificFramework_dnxcore50(string flavor, string os, string architecture)
+        {
+            DnuPublish_SpecificFramework(flavor, os, architecture, "dnxcore50");
+        }
+
+        private void DnuPublish_SpecificFramework(string flavor, string os, string architecture, string targetFramework)
+        {
+            const string ProjectAName = "proj.A";
+            const string ProjectBName = "proj.B";
+            const string PublishFolderName = "publish";
+
+            var supportedFrameworks = new string[] { "dnx451", "dnxcore50" };
+
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            var projectStructure =
+@"{
+  '.': ['project.json', 'Program.cs'],
+  'packages': {}
+}";
+            using (var solutionFolder = new DisposableDir())
+            {
+                var projectAFolder = Path.Combine(solutionFolder.DirPath, ProjectAName);
+                var projectBFolder = Path.Combine(solutionFolder.DirPath, ProjectBName);
+                var publishFolder = Path.Combine(solutionFolder.DirPath, PublishFolderName);
+
+                DirTree
+                   .CreateFromJson(projectStructure)
+                   .WithFileContents("project.json",
+@"{
+  ""dependencies"": {
+  },
+  ""frameworks"": {
+    ""dnx451"": {},
+    ""dnxcore50"": {
+      ""dependencies"": {
+        ""System.Runtime"":""4.0.20-*""
+      }
+    }
+  }
+}")
+                   .WriteTo(projectAFolder);
+
+                DirTree
+                    .CreateFromJson(projectStructure)
+                    .WithFileContents("project.json",
+@"{
+  ""dependencies"": {
+    """ + ProjectAName + @""": ""1.0.0-*""
+  },
+  ""frameworks"": {
+    ""dnx451"": {},
+    ""dnxcore50"": {
+      ""dependencies"": {
+        ""System.Runtime"":""4.0.10-*""
+      }
+    }
+  }
+}")
+                    .WriteTo(projectBFolder);
+
+                File.WriteAllText(Path.Combine(solutionFolder.DirPath, "global.json"),
+@"{
+    ""projects"": ["".""]
+}");
+                File.WriteAllText(Path.Combine(solutionFolder.DirPath, "NuGet.config"),
+@"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <packageSources>
+    <add key = ""NuGet"" value = ""https://nuget.org/api/v2/"" />
+  </packageSources>
+</configuration>");
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { EnvironmentNames.Packages, Path.Combine(solutionFolder.DirPath, "packages") }
+                };
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: "",
+                    environment: environment,
+                    workingDir: solutionFolder.DirPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: $"--out {publishFolder} --framework {targetFramework} --no-source",
+                    environment: environment,
+                    workingDir: projectBFolder);
+                Assert.Equal(0, exitCode);
+
+                var packagesFolder = Path.Combine(solutionFolder.DirPath, publishFolder, "approot", "packages");
+                var frameworksNotExpected = supportedFrameworks
+                    .Except(new string[] { targetFramework })
+                    .ToList();
+
+                foreach (var singlePackageFolder in Directory.EnumerateDirectories(packagesFolder, "dnx*", SearchOption.AllDirectories))
+                {
+                    var folderName = Path.GetFileName(singlePackageFolder);
+                    Assert.False(frameworksNotExpected.Contains(folderName));
                 }
             }
         }

@@ -22,6 +22,10 @@ namespace Microsoft.Dnx.Tooling
                     CommandOptionType.SingleValue);
                 var optionNoSource = c.Option("--no-source", "Compiles the source files into NuGet packages",
                     CommandOptionType.NoValue);
+                var optionFramework = c.Option(
+                    "--framework",
+                    "Name of the frameworks to include.",
+                    CommandOptionType.MultipleValue);
                 var optionRuntime = c.Option("--runtime <RUNTIME>", "Name or full path of the runtime folder to include, or \"active\" for current runtime on PATH",
                     CommandOptionType.MultipleValue);
                 var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
@@ -41,25 +45,35 @@ namespace Microsoft.Dnx.Tooling
                 {
                     c.ShowRootCommandFullNameAndVersion();
 
+                    var reports = reportsFactory.CreateReports(optionQuiet.HasValue());
+
+                    // Validate the arguments
+                    if (optionFramework.HasValue() && optionRuntime.HasValue())
+                    {
+                        reports.WriteError($"--{optionFramework.LongName} and --{optionRuntime.LongName} cannot be used together.");
+                        return -1;
+                    }
+
                     var options = new PublishOptions
                     {
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         Configuration = optionConfiguration.Value() ?? "Debug",
-                        RuntimeTargetFramework = applicationEnvironment.RuntimeFramework,
+                        RuntimeActiveFramework = applicationEnvironment.RuntimeFramework,
                         WwwRoot = optionWwwRoot.Value(),
                         WwwRootOut = optionWwwRootOut.Value() ?? optionWwwRoot.Value(),
                         NoSource = optionNoSource.HasValue(),
                         Runtimes = optionRuntime.HasValue() ?
-                            string.Join(";", optionRuntime.Values).
-                                Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :
+                            string.Join(";", optionRuntime.Values).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :
                             new string[0],
                         Native = optionNative.HasValue(),
                         IncludeSymbols = optionIncludeSymbols.HasValue(),
-                        Reports = reportsFactory.CreateReports(optionQuiet.HasValue())
+                        Reports = reports
                     };
 
-                    var manager = new PublishManager(serviceProvider, options);
+                    options.AddFrameworkMonikers(optionFramework.Values);
+
+                    var manager = new PublishManager(serviceProvider, options, applicationEnvironment);
                     if (!manager.Publish())
                     {
                         return -1;
@@ -69,6 +83,5 @@ namespace Microsoft.Dnx.Tooling
                 });
             });
         }
-
     }
 }

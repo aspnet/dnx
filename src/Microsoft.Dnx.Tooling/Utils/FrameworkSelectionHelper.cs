@@ -12,12 +12,10 @@ namespace Microsoft.Dnx.Tooling.Utils
     public static class FrameworkSelectionHelper
     {
         public static IEnumerable<FrameworkName> SelectFrameworks(Runtime.Project project,
-                                                                  IEnumerable<string> userSelection,
+                                                                  IDictionary<FrameworkName, string> specifiedFrameworks,
                                                                   FrameworkName fallbackFramework,
                                                                   out string errorMessage)
         {
-            var specifiedFrameworks = userSelection.ToDictionary(f => f, FrameworkNameHelper.ParseFrameworkName);
-
             var projectFrameworks = new HashSet<FrameworkName>(
                 project.GetTargetFrameworks()
                        .Select(c => c.FrameworkName));
@@ -32,7 +30,7 @@ namespace Microsoft.Dnx.Tooling.Utils
                     return null;
                 }
 
-                frameworks = specifiedFrameworks.Count > 0 ? specifiedFrameworks.Values : (IEnumerable<FrameworkName>)projectFrameworks;
+                frameworks = specifiedFrameworks.Count > 0 ? specifiedFrameworks.Keys : (IEnumerable<FrameworkName>)projectFrameworks;
             }
             else
             {
@@ -44,14 +42,14 @@ namespace Microsoft.Dnx.Tooling.Utils
         }
 
         private static bool ValidateFrameworks(HashSet<FrameworkName> projectFrameworks,
-                                               IDictionary<string, FrameworkName> specifiedFrameworks,
+                                               IDictionary<FrameworkName, string> specifiedFrameworks,
                                                out string errorMessage)
         {
             foreach (var framework in specifiedFrameworks)
             {
-                if (!projectFrameworks.Contains(framework.Value))
+                if (!projectFrameworks.Contains(framework.Key))
                 {
-                    errorMessage = framework.Key + " is not specified in project.json";
+                    errorMessage = framework.Value + " is not specified in project.json";
                     return false;
                 }
             }

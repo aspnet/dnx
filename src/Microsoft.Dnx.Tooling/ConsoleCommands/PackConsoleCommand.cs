@@ -39,7 +39,7 @@ namespace Microsoft.Dnx.Tooling
                         buildOptions.ProjectPatterns.Add(Path.Combine(Directory.GetCurrentDirectory(), "project.json"));
                     }
                     buildOptions.Configurations = optionConfiguration.Values;
-                    buildOptions.TargetFrameworks = optionFramework.Values;
+                    buildOptions.AddFrameworkMonikers(optionFramework.Values);
                     buildOptions.GeneratePackages = true;
                     buildOptions.Reports = reportsFactory.CreateReports(optionQuiet.HasValue());
 

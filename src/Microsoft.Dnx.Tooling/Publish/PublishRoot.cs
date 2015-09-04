@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json.Linq;
@@ -25,6 +26,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             Projects = new List<PublishProject>();
             Packages = new List<PublishPackage>();
             Runtimes = new List<PublishRuntime>();
+            Frameworks = new Dictionary<FrameworkName, string>();
             OutputPath = outputPath;
             HostServices = hostServices;
             TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
@@ -42,6 +44,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         public string Configuration { get; set; }
 
         public IList<PublishRuntime> Runtimes { get; set; }
+        public IDictionary<FrameworkName, string> Frameworks { get; set; }
         public IList<PublishProject> Projects { get; private set; }
         public IList<PublishPackage> Packages { get; private set; }
 
@@ -120,7 +123,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
                 File.WriteAllText(
                     Path.Combine(OutputPath, commandName + ".cmd"),
-                    string.Format(template, 
+                    string.Format(template,
                                   runtimeFolder,
                                   Runtime.Constants.BootstrapperExeName,
                                   relativeAppBase,
@@ -167,11 +170,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
                 var scriptPath = Path.Combine(OutputPath, commandName);
                 File.WriteAllText(scriptPath,
-                    string.Format(template, 
+                    string.Format(template,
                                   EnvironmentNames.AppBase,
                                   relativeAppBase,
                                   runtimeFolder,
-                                  Runtime.Constants.BootstrapperExeName, 
+                                  Runtime.Constants.BootstrapperExeName,
                                   Configuration,
                                   commandName).Replace("\r\n", "\n"));
 
