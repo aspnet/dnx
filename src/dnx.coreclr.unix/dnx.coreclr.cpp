@@ -7,29 +7,30 @@
 #include "app_main.h"
 #include <assert.h>
 
-// Windows types used by the ExecuteAssembly function
-typedef int32_t HRESULT;
-typedef const char* LPCSTR;
-typedef uint32_t DWORD;
+typedef int (*coreclr_initialize_fn)(
+            const char* exePath,
+            const char* appDomainFriendlyName,
+            int propertyCount,
+            const char** propertyKeys,
+            const char** propertyValues,
+            void** hostHandle,
+            unsigned int* domainId);
 
-// Prototype of the ExecuteAssembly function from the libcoreclr.so
-typedef HRESULT (*ExecuteAssemblyFunction)(
-                    LPCSTR exePath,
-                    LPCSTR coreClrPath,
-                    LPCSTR appDomainFriendlyName,
-                    int propertyCount,
-                    LPCSTR* propertyKeys,
-                    LPCSTR* propertyValues,
-                    int argc,
-                    LPCSTR* argv,
-                    LPCSTR managedAssemblyPath,
-                    LPCSTR entryPointAssemblyName,
-                    LPCSTR entryPointTypeName,
-                    LPCSTR entryPointMethodsName,
-                    DWORD* exitCode);
+typedef int (*coreclr_create_delegate_fn)(
+            void* hostHandle,
+            unsigned int domainId,
+            const char* entryPointAssemblyName,
+            const char* entryPointTypeName,
+            const char* entryPointMethodName,
+            void** delegate);
 
-const HRESULT S_OK = 0;
-const HRESULT E_FAIL = -1;
+typedef int (*coreclr_shutdown_fn)(
+            void* hostHandle,
+            unsigned int domainId);
+
+typedef int (*host_main_fn)(const int argc, const wchar_t** argv);
+
+#define BootstrapperName "Microsoft.Dnx.Host.CoreClr"
 
 namespace
 {
@@ -152,19 +153,18 @@ int LoadCoreClr(std::string& coreClrDirectory, const std::string& runtimeDirecto
     
     return 0;
 }
-}
 
-extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
+int32_t initialize_runtime(const char* app_base, const std::string& coreclr_directory, const std::string& runtime_directory,
+    void **host_handle, unsigned int* domain_id)
 {
-    HRESULT hr = S_OK;
-
-    const std::string runtimeDirectory = data->runtimeDirectory;
-    std::string coreClrDirectory;
-    
-    if (LoadCoreClr(coreClrDirectory, runtimeDirectory) != 0)
+    auto coreclr_initialize = (coreclr_initialize_fn)dlsym(pLibCoreClr, "coreclr_initialize");
+    if (!coreclr_initialize)
     {
+        fprintf(stderr, "Could not find coreclr_initialize entrypoint in coreclr\n");
         return -1;
     }
+
+    auto bootstrapper_path = GetPathToBootstrapper();
 
     const char* property_keys[] =
     {
@@ -173,65 +173,148 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
         "APP_PATHS",
     };
 
-    std::string trustedPlatformAssemblies;
+    std::string trusted_assemblies;
 
     // Try native images first
-    if (!GetTrustedPlatformAssembliesList(coreClrDirectory.c_str(), true, trustedPlatformAssemblies))
+    if (!GetTrustedPlatformAssembliesList(coreclr_directory, true, trusted_assemblies))
     {
-        if (!GetTrustedPlatformAssembliesList(coreClrDirectory.c_str(), false, trustedPlatformAssemblies))
+        if (!GetTrustedPlatformAssembliesList(coreclr_directory, false, trusted_assemblies))
         {
             fprintf(stderr, "Failed to find files in the coreclr directory\n");
-            FreeCoreClr();
-            return E_FAIL;
+            return -1;
         }
     }
 
     // Add the assembly containing the app domain manager to the trusted list
-    trustedPlatformAssemblies.append(dnx::utils::path_combine(runtimeDirectory, "Microsoft.Dnx.Host.CoreClr.dll"));
+    trusted_assemblies.append(dnx::utils::path_combine(runtime_directory, BootstrapperName ".dll"));
 
-    std::string appPaths;
-    appPaths.append(runtimeDirectory).append(":")
-            .append(coreClrDirectory).append(":");
-    
+    auto app_paths = runtime_directory + ":" + coreclr_directory + ":";
+
     const char* property_values[] = {
         // APPBASE
-        data->applicationBase,
+        app_base,
         // TRUESTED_PLATFORM_ASSEMBLIES
-        trustedPlatformAssemblies.c_str(),
+        trusted_assemblies.c_str(),
         // APP_PATHS
-        appPaths.c_str(),
+        app_paths.c_str(),
     };
 
-    ExecuteAssemblyFunction executeAssembly = (ExecuteAssemblyFunction)dlsym(pLibCoreClr, "ExecuteAssembly");
+    return coreclr_initialize(bootstrapper_path.c_str(), BootstrapperName, sizeof(property_keys) / sizeof(const char*),
+                property_keys, property_values, host_handle, domain_id);
+}
 
-    if (!executeAssembly)
+int32_t create_delegate(void *host_handle, unsigned int domain_id, void** delegate)
+{
+    auto coreclr_create_delegate = (coreclr_create_delegate_fn)dlsym(pLibCoreClr, "coreclr_create_delegate");
+    if (!coreclr_create_delegate)
     {
-        fprintf(stderr, "Could not find ExecuteAssembly entrypoint in coreclr.\n");
+        fprintf(stderr, "Could not find coreclr_create_delegate entrypoint in coreclr\n");
+        return -1;
+    }
 
-        FreeCoreClr();
-        return E_FAIL;
+    return coreclr_create_delegate(host_handle, domain_id, BootstrapperName", Version=0.0.0.0",
+            "DomainManager", "Execute", delegate);
+}
+
+int32_t shutdown_runtime(void* host_handle, unsigned int domain_id)
+{
+    auto coreclr_shutdown = (coreclr_shutdown_fn)dlsym(pLibCoreClr, "coreclr_shutdown");
+    if (!coreclr_shutdown)
+    {
+        fprintf(stderr, "Could not find coreclr_shutdown entrypoint in coreclr\n");
+        return -1;
+    }
+
+    return coreclr_shutdown(host_handle, domain_id);
+}
+
+int InvokeDelegate(host_main_fn host_main, int argc, const char** argv)
+{
+    typedef int (*MultiByteToWideChar_fn)(
+        unsigned int CodePage,
+        int32_t dwFlags,
+        const char* lpMultiByteStr,
+        int cbMultiByte,
+        wchar_t* lpWideCharStr,
+        int cchWideChar);
+
+    auto MultiByteToWideChar = (MultiByteToWideChar_fn)dlsym(pLibCoreClr, "MultiByteToWideChar");
+
+    if (!MultiByteToWideChar)
+    {
+        fprintf(stderr, "Could not find MultiByteToWideChar entrypoint in coreclr\n");
+        return -1;
+    }
+
+    const wchar_t** wchar_argv = new const wchar_t*[argc];
+    for (auto i = 0; i < argc; i++)
+    {
+        int length = MultiByteToWideChar(0 /*CP_ACP*/, 0, argv[i], -1, nullptr, 0);
+        auto arg = new wchar_t[length];
+        MultiByteToWideChar(0 /*CP_ACP*/, 0, argv[i], length, arg, length);
+        wchar_argv[i] = arg;
+    }
+
+    auto exit_code = host_main(argc, wchar_argv);
+
+    for (auto i = 0; i < argc; i++)
+    {
+        delete[] wchar_argv[i];
+    }
+    delete[] wchar_argv;
+
+    return exit_code;
+}
+
+int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data, const std::string& runtime_directory, const std::string& coreclr_directory)
+{
+    void* host_handle = nullptr;
+    unsigned int domain_id;
+
+    auto result = initialize_runtime(data->applicationBase, coreclr_directory, runtime_directory, &host_handle, &domain_id);
+    if (result < 0)
+    {
+        fprintf(stderr, "Failed to initialize runtime: 0x%08x\n", result);
+        return -1;
+    }
+
+    void* host_main;
+    result = create_delegate(host_handle, domain_id, &host_main);
+    if (result < 0)
+    {
+        fprintf(stderr, "Failed to create delegate: 0x%08x\n", result);
+    }
+    else
+    {
+        data->exitcode = InvokeDelegate((host_main_fn)host_main, data->argc, data->argv);
+    }
+
+    auto shutdown_result = shutdown_runtime(host_handle, domain_id);
+    if (shutdown_result < 0)
+    {
+        fprintf(stderr, "Failed to shutdown runtime: 0x%08x\n", shutdown_result);
+        return -1;
+    }
+
+    return result;
+}
+}
+
+extern "C" int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data)
+{
+    const std::string runtime_directory = data->runtimeDirectory;
+    std::string coreclr_directory;
+
+    if (LoadCoreClr(coreclr_directory, runtime_directory) != 0)
+    {
+        return -1;
     }
 
     setenv("DNX_FRAMEWORK", "dnxcore50", 1);
 
-    std::string coreClrDllPath = dnx::utils::path_combine(coreClrDirectory, LIBCORECLR_NAME);
-    std::string pathToBootstrapper = GetPathToBootstrapper();
-
-    hr = executeAssembly(pathToBootstrapper.c_str(),
-                         coreClrDllPath.c_str(),
-                         "Microsoft.Dnx.Host.CoreClr",
-                         sizeof(property_keys) / sizeof(property_keys[0]),
-                         property_keys,
-                         property_values,
-                         data->argc,
-                         (const char**)data->argv,
-                         nullptr,
-                         "Microsoft.Dnx.Host.CoreClr, Version=0.0.0.0",
-                         "DomainManager",
-                         "Execute",
-                         (DWORD*)&(data->exitcode));
+    auto result = CallApplicationMain(data, runtime_directory, coreclr_directory);
 
     FreeCoreClr();
 
-    return hr;
+    return result;
 }
