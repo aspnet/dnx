@@ -12,7 +12,7 @@ namespace Microsoft.Dnx.Runtime
 {
     public class ProjectDependencyProvider
     {
-        public ProjectDescription GetDescription(FrameworkName targetFramework, string path, LockFileTargetLibrary targetLibrary)
+        public ProjectDescription GetDescription(string path, LockFileTargetLibrary targetLibrary)
         {
             Project project;
 
@@ -22,7 +22,7 @@ namespace Microsoft.Dnx.Runtime
                 return null;
             }
 
-            return GetDescription(targetFramework, project);
+            return GetDescription(targetLibrary.TargetFramework, project);
         }
 
         public ProjectDescription GetDescription(FrameworkName targetFramework, Project project)
@@ -31,7 +31,7 @@ namespace Microsoft.Dnx.Runtime
             var targetFrameworkInfo = project.GetTargetFramework(targetFramework);
             var targetFrameworkDependencies = new List<LibraryDependency>(targetFrameworkInfo.Dependencies);
 
-            if (VersionUtility.IsDesktop(targetFramework))
+            if (targetFramework != null && VersionUtility.IsDesktop(targetFramework))
             {
                 targetFrameworkDependencies.Add(new LibraryDependency
                 {
@@ -71,8 +71,7 @@ namespace Microsoft.Dnx.Runtime
 
             // Mark the library as unresolved if there were specified frameworks
             // and none of them resolved
-            bool unresolved = targetFrameworkInfo.FrameworkName == null &&
-                              project.GetTargetFrameworks().Any();
+            bool unresolved = targetFrameworkInfo.FrameworkName == null;
 
             return new ProjectDescription(
                 new LibraryRange(project.Name, frameworkReference: false),

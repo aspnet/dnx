@@ -112,7 +112,14 @@ namespace Microsoft.Dnx.ApplicationHost
 
             using (var projectPath = TestUtils.CreateTempDir())
             {
-                DirTree.CreateFromJson(projectStructure).WriteTo(projectPath);
+                DirTree.CreateFromJson(projectStructure)
+                       .WithFileContents("project.json", @"
+{
+    ""frameworks"": {
+        ""dnx451"": { },
+        ""dnxcore50"": { }
+    }
+}").WriteTo(projectPath);
 
                 string stdOut, stdErr;
                 var exitCode = TestUtils.ExecBootstrapper(

@@ -60,7 +60,12 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 var outputDir = dir.CreateSubdirectory("output");
                 var projectJson = Path.Combine(projectDir.FullName, "project.json");
 
-                File.WriteAllText(projectJson, "{\"version\": \"" + version + "\"}");
+                File.WriteAllText(projectJson, $@"{{
+  ""version"": ""{version}"",
+  ""frameworks"": {{ 
+      ""dnx451"": {{ }}
+  }}
+}}");
                 DnuTestUtils.ExecDnu(runtimeHomePath, "restore", projectJson);
                 DnuTestUtils.ExecDnu(runtimeHomePath, "pack", projectJson + " --out " + outputDir.FullName, environment: null, workingDir: null);
 
