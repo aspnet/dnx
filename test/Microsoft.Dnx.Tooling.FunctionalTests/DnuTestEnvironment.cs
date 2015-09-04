@@ -18,7 +18,7 @@ namespace Microsoft.Dnx.Tooling
             _projectName = projectName ?? "ProjectName";
             _outputDirName = outputDirName ?? "OutputDirName";
             _runtimePath = runtimePath;
-            RootDir = TestUtils.CreateTempDir();
+            RootDir = new DisposableDir();
         }
 
         public string RootDir { get; private set; }

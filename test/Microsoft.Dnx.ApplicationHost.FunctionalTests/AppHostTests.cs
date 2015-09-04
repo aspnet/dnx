@@ -86,7 +86,7 @@ namespace Microsoft.Dnx.ApplicationHost
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var emptyFolder = TestUtils.CreateTempDir())
+            using (var emptyFolder = new DisposableDir())
             {
                 string stdOut, stdErr;
                 var exitCode = TestUtils.ExecBootstrapper(
@@ -110,7 +110,7 @@ namespace Microsoft.Dnx.ApplicationHost
   ""project.json"": ""{ }""
 }";
 
-            using (var projectPath = TestUtils.CreateTempDir())
+            using (var projectPath = new DisposableDir())
             {
                 DirTree.CreateFromJson(projectStructure)
                        .WithFileContents("project.json", @"
@@ -273,7 +273,7 @@ $@"{{
   }}
 }}";
 
-            using (var applicationRoot = TestUtils.CreateTempDir())
+            using (var applicationRoot = new DisposableDir())
             {
                 var projectPath = Path.Combine(applicationRoot, projectName);
                 DirTree.CreateFromJson(projectStructure)
