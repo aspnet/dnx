@@ -18,7 +18,10 @@ namespace Microsoft.Dnx.Tooling
                 return targets.FirstOrDefault();
             }
 
-            return null;
+            return new TargetFrameworkInformation
+            {
+                Dependencies = new List<LibraryDependency>()
+            };
         }
     }
 }
