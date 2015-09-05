@@ -24,9 +24,9 @@ namespace Microsoft.Dnx.Compilation
 
         public CompilationCache CompilationCache { get; }
 
-        public Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext, AssemblyName assemblyName)
+        public Assembly LoadProject(Project project, FrameworkName targetFramework, string aspect, IAssemblyLoadContext loadContext, AssemblyName assemblyName)
         {
-            var exporter = CreateProjectExporter(project, _context.ApplicationEnvironment.RuntimeFramework, _context.ApplicationEnvironment.Configuration);
+            var exporter = CreateProjectExporter(project, targetFramework, _context.ApplicationEnvironment.Configuration);
 
             // Export the project
             var export = exporter.GetExport(project.Name, aspect);
@@ -59,7 +59,7 @@ namespace Microsoft.Dnx.Compilation
             {
                 Project = project,
                 RuntimeIdentifiers = _context.RuntimeEnvironment.GetAllRuntimeIdentifiers(),
-                TargetFramework = targetFramework
+                TargetFramework = _context.ApplicationEnvironment.RuntimeFramework
             };
 
             var libraries = ApplicationHostContext.GetRuntimeLibraries(context);

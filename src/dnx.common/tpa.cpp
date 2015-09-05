@@ -28,6 +28,7 @@ const std::vector<const dnx::char_t*> CreateTpaBase(bool native_images)
             _X("System.Diagnostics.Tracing.ni.dll"),
             _X("System.Globalization.ni.dll"),
             _X("System.IO.ni.dll"),
+            _X("System.IO.FileSystem.ni.dll"),
             _X("System.IO.FileSystem.Primitives.ni.dll"),
             _X("System.Linq.ni.dll"),
             _X("System.Private.Uri.ni.dll"),
@@ -43,6 +44,7 @@ const std::vector<const dnx::char_t*> CreateTpaBase(bool native_images)
             _X("System.Text.Encoding.ni.dll"),
             _X("System.Text.Encoding.Extensions.ni.dll"),
             _X("System.Threading.ni.dll"),
+            _X("System.Threading.Overlapped.ni.dll"),
             _X("System.Threading.Tasks.ni.dll"),
         }
         : std::vector<const dnx::char_t*>
@@ -61,6 +63,7 @@ const std::vector<const dnx::char_t*> CreateTpaBase(bool native_images)
             _X("System.Diagnostics.Tracing.dll"),
             _X("System.Globalization.dll"),
             _X("System.IO.dll"),
+            _X("System.IO.FileSystem.dll"),
             _X("System.IO.FileSystem.Primitives.dll"),
             _X("System.Linq.dll"),
             _X("System.Private.Uri.dll"),
@@ -76,6 +79,7 @@ const std::vector<const dnx::char_t*> CreateTpaBase(bool native_images)
             _X("System.Text.Encoding.dll"),
             _X("System.Text.Encoding.Extensions.dll"),
             _X("System.Threading.dll"),
+            _X("System.Threading.Overlapped.dll"),
             _X("System.Threading.Tasks.dll"),
         };
 }
