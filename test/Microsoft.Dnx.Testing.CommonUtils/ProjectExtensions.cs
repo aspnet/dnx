@@ -4,7 +4,6 @@
 using System;
 using System.IO;
 using Newtonsoft.Json.Linq;
-using NuGet;
 
 namespace Microsoft.Dnx.Testing
 {

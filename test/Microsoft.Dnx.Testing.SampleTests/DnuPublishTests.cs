@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Helpers;
@@ -96,10 +99,10 @@ namespace Microsoft.Dnx.Testing.SampleTests
 <configuration>
   <appSettings>
     <add key=""{Constants.WebConfigBootstrapperVersion}"" value="""" />
-    <add key=""{Constants.WebConfigRuntimePath}"" value=""..\approot\runtimes"" />
+    <add key=""{Constants.WebConfigRuntimePath}"" value=""..{Path.DirectorySeparatorChar}approot{Path.DirectorySeparatorChar}runtimes"" />
     <add key=""{Constants.WebConfigRuntimeVersion}"" value=""{sdk.Version}"" />
     <add key=""{Constants.WebConfigRuntimeFlavor}"" value=""{sdk.Flavor}"" />
-    <add key=""{Constants.WebConfigRuntimeAppBase}"" value=""..\approot\src\{projectName}"" />
+    <add key=""{Constants.WebConfigRuntimeAppBase}"" value=""..{Path.DirectorySeparatorChar}approot{Path.DirectorySeparatorChar}src{Path.DirectorySeparatorChar}{projectName}"" />
   </appSettings>
   <system.web>
     <httpRuntime targetFramework=""4.5.1"" />
