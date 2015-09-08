@@ -134,7 +134,7 @@ namespace Microsoft.Dnx.Tooling.Utils
             contentItems.Load(files);
 
             IEnumerable<PackageDependencySet> dependencySet;
-            if (VersionUtility.GetNearest(framework, package.DependencySets, out dependencySet))
+            if (VersionUtility2.GetNearest(framework, package.DependencySets, out dependencySet))
             {
                 var set = dependencySet.FirstOrDefault()?.Dependencies?.ToList();
 
@@ -144,12 +144,10 @@ namespace Microsoft.Dnx.Tooling.Utils
                 }
             }
 
-            // TODO: Remove this when we do #596
-            // ASP.NET Core and .NET Core 5.0 don't have framework reference assemblies
-            if (!VersionUtility.IsPackageBased(framework))
+            if (!VersionUtility2.IsPackageBased(framework))
             {
                 IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
-                if (VersionUtility.GetNearest(framework, package.FrameworkAssemblies, out frameworkAssemblies))
+                if (VersionUtility2.GetNearest(framework, package.FrameworkAssemblies, out frameworkAssemblies))
                 {
                     AddFrameworkReferences(lockFileLib, framework, frameworkAssemblies);
                 }
@@ -217,7 +215,7 @@ namespace Microsoft.Dnx.Tooling.Utils
 
             // See if there's a list of specific references defined for this target framework
             IEnumerable<PackageReferenceSet> referenceSets;
-            if (VersionUtility.GetNearest(framework, package.PackageAssemblyReferences, out referenceSets))
+            if (VersionUtility2.GetNearest(framework, package.PackageAssemblyReferences, out referenceSets))
             {
                 // Get the first compatible reference set
                 var referenceSet = referenceSets.FirstOrDefault();
@@ -270,14 +268,14 @@ namespace Microsoft.Dnx.Tooling.Utils
             var results = new List<string>();
 
             IEnumerable<IPackageAssemblyReference> compatibleReferences;
-            if (VersionUtility.GetNearest(targetFramework, package.AssemblyReferences, out compatibleReferences))
+            if (VersionUtility2.GetNearest(targetFramework, package.AssemblyReferences, out compatibleReferences))
             {
                 // Get the list of references for this target framework
                 var references = compatibleReferences.ToList();
 
                 // See if there's a list of specific references defined for this target framework
                 IEnumerable<PackageReferenceSet> referenceSets;
-                if (VersionUtility.GetNearest(targetFramework, package.PackageAssemblyReferences, out referenceSets))
+                if (VersionUtility2.GetNearest(targetFramework, package.PackageAssemblyReferences, out referenceSets))
                 {
                     // Get the first compatible reference set
                     var referenceSet = referenceSets.FirstOrDefault();
@@ -310,7 +308,7 @@ namespace Microsoft.Dnx.Tooling.Utils
             var results = new List<string>();
 
             IEnumerable<IPackageAssemblyReference> compatibleReferences;
-            if (VersionUtility.GetNearest(targetFramework, package.ResourceReferences, out compatibleReferences))
+            if (VersionUtility2.GetNearest(targetFramework, package.ResourceReferences, out compatibleReferences))
             {
                 // Get the list of references for this target framework
                 var references = compatibleReferences.ToList();
@@ -540,7 +538,7 @@ namespace Microsoft.Dnx.Tooling.Utils
 
                 if (criteriaFrameworkName != null && availableFrameworkName != null)
                 {
-                    return VersionUtility.IsCompatible(criteriaFrameworkName, availableFrameworkName);
+                    return VersionUtility2.IsCompatible(criteriaFrameworkName, availableFrameworkName);
                 }
 
                 return false;
@@ -559,7 +557,7 @@ namespace Microsoft.Dnx.Tooling.Utils
                     var frameworks = new[] { criteriaFrameworkName, availableFrameworkName };
 
                     // Find the nearest compatible framework to the project framework.
-                    var nearest = VersionUtility.GetNearest(projectFrameworkName, frameworks);
+                    var nearest = VersionUtility2.GetNearest(projectFrameworkName, frameworks);
 
                     if (nearest == null)
                     {

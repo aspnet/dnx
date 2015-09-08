@@ -190,7 +190,7 @@ namespace Microsoft.Dnx.Tooling
                     {
                         // We found a match locally and remotely, so pick the better version
                         // in relation to the specified version.
-                        if (VersionUtility.ShouldUseConsidering(
+                        if (VersionUtility2.ShouldUseConsidering(
                             current: remoteMatch.Library.Version,
                             considering: localMatch.Library.Version,
                             ideal: libraryRange.VersionRange))
@@ -242,7 +242,7 @@ namespace Microsoft.Dnx.Tooling
                 {
                     // We found a match locally and remotely, so pick the better version
                     // in relation to the specified version.
-                    if (VersionUtility.ShouldUseConsidering(
+                    if (VersionUtility2.ShouldUseConsidering(
                         current: localMatch.Library.Version,
                         considering: remoteMatch.Library.Version,
                         ideal: libraryRange.VersionRange))
@@ -304,7 +304,7 @@ namespace Microsoft.Dnx.Tooling
             }
 
             // Pick the best match of the 2
-            if (VersionUtility.ShouldUseConsidering(
+            if (VersionUtility2.ShouldUseConsidering(
                 nonHttpMatch?.Library?.Version,
                 httpMatch?.Library.Version,
                 libraryRange.VersionRange))
@@ -349,7 +349,7 @@ namespace Microsoft.Dnx.Tooling
 
             foreach (var match in matches)
             {
-                if (VersionUtility.ShouldUseConsidering(
+                if (VersionUtility2.ShouldUseConsidering(
                     current: bestMatch?.Library?.Version,
                     considering: match?.Library?.Version,
                     ideal: libraryRange.VersionRange))

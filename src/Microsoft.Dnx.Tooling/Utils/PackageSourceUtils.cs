@@ -79,7 +79,7 @@ namespace Microsoft.Dnx.Tooling
 
             foreach (var result in results)
             {
-                if (VersionUtility.ShouldUseConsidering(
+                if (VersionUtility2.ShouldUseConsidering(
                     current: bestResult?.Version,
                     considering: result.Version,
                     ideal: idealVersion))
