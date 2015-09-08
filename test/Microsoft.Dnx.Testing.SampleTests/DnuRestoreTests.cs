@@ -12,18 +12,19 @@ namespace Microsoft.Dnx.Testing.SampleTests
         public void DnuRestoreInstallsIndirectDependency(DnxSdk sdk)
         {
             // SimpleChain -> DependencyA -> DependencyB
-            const string appName = "SimpleChain";
-            const string solutionName = "DependencyGraphs";
+            const string feedSolutionName = "DependencyGraphsFeed";
+            const string projectSolutionName = "DependencyGraphsProject";
+            const string projectName = "SimpleChain";
 
-            var solution = TestUtils.GetSolution<DnuRestoreTests>(sdk, solutionName);
-            var project = solution.GetProject(appName);
-            var tempProjectDir = TestUtils.GetTempTestFolder<DnuRestoreTests>(sdk);
-            TestUtils.CopyFolder(project.ProjectDirectory, tempProjectDir);
-            var localFeed = TestUtils.CreateLocalFeed<DnuRestoreTests>(sdk, solution);
-            var packagesDir = Path.Combine(tempProjectDir, "packages");
+            var feedSolution = TestUtils.GetSolution<DnuRestoreTests>(sdk, feedSolutionName, appendSolutionNameToTestFolder: true);
+            var localFeed = TestUtils.CreateLocalFeed<DnuRestoreTests>(sdk, feedSolution);
+
+            var projectSolution = TestUtils.GetSolution<DnuRestoreTests>(sdk, projectSolutionName, appendSolutionNameToTestFolder: true);
+            var project = projectSolution.GetProject(projectName);
+            var packagesDir = Path.Combine(project.ProjectDirectory, "packages");
 
             var result = sdk.Dnu.Restore(
-                tempProjectDir,
+                project.ProjectDirectory,
                 packagesDir,
                 feeds: new [] { localFeed });
             result.EnsureSuccess();

@@ -22,12 +22,13 @@ namespace Microsoft.Dnx.Testing
                 throw new DirectoryNotFoundException();
             }
 
+            LoadPath = rootPath;
             Load(rootPath);
         }
 
         public Dir()
         {
-            _readFile = fileInfo => File.ReadAllText(fileInfo.FullName);
+            _readFile = fileInfo => new Lazy<object>(() => File.ReadAllText(fileInfo.FullName));
         }
 
         public Dir(Dir parent)
@@ -35,10 +36,9 @@ namespace Microsoft.Dnx.Testing
             _readFile = parent._readFile;
         }
 
-
         public string LoadPath { get; private set; } = "In Memory";
 
-        public IEnumerable<KeyValuePair<string, object>> Nodes
+        public Dictionary<string, object> Nodes
         {
             get
             {
@@ -59,12 +59,13 @@ namespace Microsoft.Dnx.Testing
 
         public void Load(string path)
         {
-            LoadPath = path;
             var directory = new DirectoryInfo(path);
 
             foreach (var subDirectoryInfo in directory.EnumerateDirectories())
             {
-                Read(this, subDirectoryInfo);
+                Dir subDirectory = new Dir(this);
+                this[subDirectoryInfo.Name] = subDirectory;
+                subDirectory.Load(Path.Combine(path, subDirectoryInfo.Name));
             }
 
             foreach (var file in directory.EnumerateFiles())
@@ -93,25 +94,8 @@ namespace Microsoft.Dnx.Testing
             else
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllText(path, value?.ToString() ?? string.Empty);
+                File.WriteAllText(path, (value is Lazy<object> ? ((Lazy<object>)value)?.Value.ToString() : value.ToString()) ?? string.Empty);
             }
-        }
-
-        private static void Read(Dir parent, DirectoryInfo directoryInfo)
-        {
-            var directory = new Dir(parent);
-
-            foreach (var subDirectoryInfo in directoryInfo.EnumerateDirectories())
-            {
-                Read(directory, subDirectoryInfo);
-            }
-
-            foreach (var file in directoryInfo.EnumerateFiles())
-            {
-                directory[file.Name] = directory._readFile(file);
-            }
-
-            parent[directoryInfo.Name] = directory;
         }
 
         public DirDiff Diff(Dir other)
@@ -124,7 +108,10 @@ namespace Microsoft.Dnx.Testing
                 ExtraEntries = nodes1.Keys.Except(nodes2.Keys),
                 MissingEntries = nodes2.Keys.Except(nodes1.Keys),
                 DifferentEntries = nodes1.Keys.Intersect(nodes2.Keys)
-                    .Where(entry => !string.Equals(nodes1[entry].ToString(), nodes2[entry].ToString(), StringComparison.Ordinal))
+                    .Where(entry => !string.Equals(
+                        nodes1[entry] is Lazy<object> ? ((Lazy<object>)nodes1[entry])?.Value.ToString() : nodes1[entry].ToString(),
+                        nodes2[entry] is Lazy<object> ? ((Lazy<object>)nodes2[entry])?.Value.ToString() : nodes2[entry].ToString(), 
+                        StringComparison.Ordinal))
             };
         }
 

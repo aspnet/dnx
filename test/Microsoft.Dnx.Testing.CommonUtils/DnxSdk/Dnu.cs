@@ -35,7 +35,8 @@ namespace Microsoft.Dnx.Testing
         public ExecResult Restore(
             string restoreDir,
             string packagesDir = null,
-            IEnumerable<string> feeds = null)
+            IEnumerable<string> feeds = null,
+            string additionalArguments = null)
         {
             var sb = new StringBuilder();
             sb.Append($"restore \"{restoreDir}\"");
@@ -50,31 +51,38 @@ namespace Microsoft.Dnx.Testing
                 sb.Append($" -s {string.Join(" -s ", feeds)}");
             }
 
+            sb.Append($" {additionalArguments}");
+
             return Execute(sb.ToString());
         }
 
         public ExecResult PackagesAdd(
             string packagePath,
             string packagesDir,
+            string additionalArguments = null,
             Action<Dictionary<string, string>> envSetup = null)
         {
-            return Execute($"packages add {packagePath} {packagesDir}", envSetup);
+            return Execute($"packages add {packagePath} {packagesDir} {additionalArguments}", envSetup);
         }
 
-        public ExecResult Wrap(string csprojPath)
+        public ExecResult Wrap(
+            string csprojPath,
+            string additionalArguments = null)
         {
-            return Execute($"wrap {csprojPath}");
+            return Execute($"wrap {csprojPath} {additionalArguments}");
         }
 
         public DnuPackOutput Pack(
             string projectDir, 
             string outputPath, 
-            string configuration = "Debug")
+            string configuration = "Debug",
+            string additionalArguments = null)
         {
             var sb = new StringBuilder();
             sb.Append($@"pack ""{projectDir}""");
             sb.Append($@" --out ""{outputPath}""");
             sb.Append($" --configuration {configuration}");
+            sb.Append($" {additionalArguments}");
 
             var result = Execute(sb.ToString());
 

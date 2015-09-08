@@ -20,6 +20,7 @@ namespace Microsoft.Dnx.Testing
                 return string.IsNullOrEmpty(sdkVersionForTesting) ? "1.0.0-dev" : sdkVersionForTesting;
             }
         }
+
         public static IEnumerable<object[]> DnxSdks
         {
             get

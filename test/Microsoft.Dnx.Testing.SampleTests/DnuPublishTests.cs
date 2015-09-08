@@ -13,7 +13,7 @@ namespace Microsoft.Dnx.Testing.SampleTests
     {
         [Theory]
         [MemberData(nameof(DnxSdks))]
-        public void DnuPublishWebApp_SubfolderAsPublicFolder_DirPlusFlatList(DnxSdk sdk)
+        public void DnuPublishWebApp_SubdirAsPublicDir_DirPlusFlatList(DnxSdk sdk)
         {
             const string projectName = "ProjectForTesting";
             FrameworkName[] frameworkCandidates = {
