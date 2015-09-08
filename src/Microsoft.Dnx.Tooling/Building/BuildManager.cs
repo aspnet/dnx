@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
-using Microsoft.Dnx.Compilation.FileSystem;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Internals;
@@ -128,176 +128,14 @@ namespace Microsoft.Dnx.Tooling
                 return false;
             }
 
-            if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(_currentProject, "prepack", GetScriptVariable))
-            {
-                LogError(ScriptExecutor.ErrorMessage);
-                return false;
-            }
-
-            if (!ScriptExecutor.Execute(_currentProject, "prebuild", GetScriptVariable))
-            {
-                LogError(ScriptExecutor.ErrorMessage);
-                return false;
-            }
-
             var success = true;
 
             var allDiagnostics = new List<DiagnosticMessage>();
 
-
-            PackageBuilder packageBuilder = null;
-            PackageBuilder symbolPackageBuilder = null;
-            InstallBuilder installBuilder = null;
-            SourceBuilder sourceBuilder = null;
-
             // Build all specified configurations
             foreach (var configuration in configurations)
             {
-                if (_buildOptions.GeneratePackages)
-                {
-                    // Create a new builder per configuration
-                    packageBuilder = new PackageBuilder();
-                    symbolPackageBuilder = new PackageBuilder();
-                    InitializeBuilder(_currentProject, packageBuilder);
-                    InitializeBuilder(_currentProject, symbolPackageBuilder);
-                    installBuilder = new InstallBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
-                    sourceBuilder = new SourceBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
-                }
-
-                var configurationSuccess = true;
-
-                var outputPath = Path.Combine(baseOutputPath, configuration);
-
-                // Build all target frameworks a project supports
-                foreach (var targetFramework in frameworks)
-                {
-                    _buildOptions.Reports.Information.WriteLine();
-                    _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
-                        _currentProject.Name, targetFramework.ToString().Yellow().Bold());
-
-                    var diagnostics = new List<DiagnosticMessage>();
-
-                    var context = new BuildContext(_compilationEngine,
-                                                   _currentProject,
-                                                   targetFramework,
-                                                   configuration,
-                                                   outputPath);
-
-                    context.Initialize(_buildOptions.Reports.Quiet);
-
-                    if (context.Build(diagnostics))
-                    {
-                        if (_buildOptions.GeneratePackages)
-                        {
-                            context.PopulateDependencies(packageBuilder);
-                            context.AddLibs(packageBuilder, "*.dll");
-                            context.AddLibs(packageBuilder, "*.xml");
-
-                            context.PopulateDependencies(symbolPackageBuilder);
-                            context.AddLibs(symbolPackageBuilder, "*.*");
-
-                            context.AddLibs(packageBuilder, "*.resources.dll", recursiveSearch: true);
-                        }
-                    }
-                    else
-                    {
-                        configurationSuccess = false;
-                    }
-
-                    allDiagnostics.AddRange(diagnostics);
-
-                    WriteDiagnostics(diagnostics);
-                }
-
-                success = success && configurationSuccess;
-
-                if (_buildOptions.GeneratePackages)
-                {
-                    // Create a package per configuration
-                    string nupkg = GetPackagePath(_currentProject, outputPath);
-                    string symbolsNupkg = GetPackagePath(_currentProject, outputPath, symbols: true);
-
-                    if (configurationSuccess)
-                    {
-                        // Generates the application package only if this is an application packages
-                        configurationSuccess = installBuilder.Build(outputPath);
-                        success = success && configurationSuccess;
-                    }
-
-                    if (configurationSuccess)
-                    {
-                        configurationSuccess = sourceBuilder.Build(outputPath);
-                        success = success && configurationSuccess;
-                    }
-
-                    if (configurationSuccess)
-                    {
-                        var packDiagnostics = new List<DiagnosticMessage>();
-                        foreach (var sharedFile in _currentProject.Files.SharedFiles)
-                        {
-                            var file = new PhysicalPackageFile();
-                            file.SourcePath = sharedFile;
-                            file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
-                            packageBuilder.Files.Add(file);
-                        }
-
-                        var root = _currentProject.ProjectDirectory;
-
-                        if (_currentProject.Files.PackInclude != null && _currentProject.Files.PackInclude.Any())
-                        {
-                            AddPackageFiles(_currentProject.ProjectDirectory, _currentProject.Files.PackInclude, packageBuilder, packDiagnostics);
-                        }
-                        success &= !packDiagnostics.HasErrors();
-                        allDiagnostics.AddRange(packDiagnostics);
-
-                        foreach (var path in _currentProject.Files.SourceFiles)
-                        {
-                            var srcFile = new PhysicalPackageFile();
-                            srcFile.SourcePath = path;
-                            srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
-                            symbolPackageBuilder.Files.Add(srcFile);
-                        }
-
-                        // Write the packages as long as we're still in a success state.
-                        if (success)
-                        {
-                            using (var fs = File.Create(nupkg))
-                            {
-                                packageBuilder.Save(fs);
-                                _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(nupkg));
-                            }
-
-                            if (symbolPackageBuilder.Files.Any())
-                            {
-                                using (var fs = File.Create(symbolsNupkg))
-                                {
-                                    symbolPackageBuilder.Save(fs);
-                                    _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(symbolsNupkg));
-                                }
-                            }
-                        }
-
-                        WriteDiagnostics(packDiagnostics);
-                    }
-                }
-            }
-
-            // Run post-build steps
-            if (success)
-            {
-                if (!ScriptExecutor.Execute(_currentProject, "postbuild", GetScriptVariable))
-                {
-                    LogError(ScriptExecutor.ErrorMessage);
-                    success = false;
-                }
-
-                if (_buildOptions.GeneratePackages &&
-                    !ScriptExecutor.Execute(_currentProject, "postpack", GetScriptVariable))
-                {
-                    LogError(ScriptExecutor.ErrorMessage);
-                    success = false;
-                }
+                success &= BuildConfiguration(baseOutputPath, frameworks, allDiagnostics, configuration);
             }
 
             sw.Stop();
@@ -314,6 +152,165 @@ namespace Microsoft.Dnx.Tooling
             WriteSummary(allDiagnostics);
 
             _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
+            return success;
+        }
+
+        private bool BuildConfiguration(string baseOutputPath, IEnumerable<FrameworkName> frameworks, List<DiagnosticMessage> allDiagnostics, string configuration)
+        {
+            PackageBuilder packageBuilder = null;
+            PackageBuilder symbolPackageBuilder = null;
+            InstallBuilder installBuilder = null;
+            SourceBuilder sourceBuilder = null;
+
+            if (_buildOptions.GeneratePackages)
+            {
+                if(!ScriptExecutor.Execute(_currentProject, "prepack", GetScriptVariable))
+                {
+                    LogError(ScriptExecutor.ErrorMessage);
+                    return false;
+                }
+
+                // Create a new builder per configuration
+                packageBuilder = new PackageBuilder();
+                symbolPackageBuilder = new PackageBuilder();
+                InitializeBuilder(_currentProject, packageBuilder);
+                InitializeBuilder(_currentProject, symbolPackageBuilder);
+                installBuilder = new InstallBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
+                sourceBuilder = new SourceBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
+            }
+
+            var success = true;
+
+            var outputPath = Path.Combine(baseOutputPath, configuration);
+
+            // Build all target frameworks a project supports
+            foreach (var targetFramework in frameworks)
+            {
+                _buildOptions.Reports.Information.WriteLine();
+                _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
+                    _currentProject.Name, targetFramework.ToString().Yellow().Bold());
+
+                if (!ScriptExecutor.Execute(_currentProject, "prebuild", GetScriptVariable))
+                {
+                    LogError(ScriptExecutor.ErrorMessage);
+                    success = false;
+                    continue;
+                }
+
+                var diagnostics = new List<DiagnosticMessage>();
+                var context = new BuildContext(_compilationEngine,
+                                               _currentProject,
+                                               targetFramework,
+                                               configuration,
+                                               outputPath);
+
+                context.Initialize(_buildOptions.Reports.Quiet);
+
+                success &= context.Build(diagnostics);
+
+                if (success)
+                {
+                    if (_buildOptions.GeneratePackages)
+                    {
+                        context.PopulateDependencies(packageBuilder);
+                        context.AddLibs(packageBuilder, "*.dll");
+                        context.AddLibs(packageBuilder, "*.xml");
+
+                        context.PopulateDependencies(symbolPackageBuilder);
+                        context.AddLibs(symbolPackageBuilder, "*.*");
+
+                        context.AddLibs(packageBuilder, "*.resources.dll", recursiveSearch: true);
+                    }
+
+                    if (!ScriptExecutor.Execute(_currentProject, "postbuild", GetScriptVariable))
+                    {
+                        LogError(ScriptExecutor.ErrorMessage);
+                        success = false;
+                    }
+                }
+
+                allDiagnostics.AddRange(diagnostics);
+
+                WriteDiagnostics(diagnostics);
+            }
+
+            if (_buildOptions.GeneratePackages)
+            {
+                success = success &&
+                    // Generates the application package only if this is an application packages
+                    installBuilder.Build(outputPath) &&
+                    sourceBuilder.Build(outputPath);
+
+                if (success)
+                {
+                    // Create a package per configuration
+                    var nupkg = GetPackagePath(_currentProject, outputPath);
+                    var symbolsNupkg = GetPackagePath(_currentProject, outputPath, symbols: true);
+
+                    success &= GeneratePackage(success, allDiagnostics, packageBuilder, symbolPackageBuilder, nupkg, symbolsNupkg);
+                }
+
+                if (success)
+                {
+                    if (!ScriptExecutor.Execute(_currentProject, "postpack", GetScriptVariable))
+                    {
+                        LogError(ScriptExecutor.ErrorMessage);
+                        return false;
+                    }
+                }
+            }
+
+            return success;
+        }
+
+        private bool GeneratePackage(bool success, List<DiagnosticMessage> allDiagnostics, PackageBuilder packageBuilder, PackageBuilder symbolPackageBuilder, string nupkg, string symbolsNupkg)
+        {
+            var packDiagnostics = new List<DiagnosticMessage>();
+            foreach (var sharedFile in _currentProject.Files.SharedFiles)
+            {
+                var file = new PhysicalPackageFile();
+                file.SourcePath = sharedFile;
+                file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
+                packageBuilder.Files.Add(file);
+            }
+
+            var root = _currentProject.ProjectDirectory;
+
+            if (_currentProject.Files.PackInclude != null && _currentProject.Files.PackInclude.Any())
+            {
+                AddPackageFiles(_currentProject.ProjectDirectory, _currentProject.Files.PackInclude, packageBuilder, packDiagnostics);
+            }
+            success &= !packDiagnostics.HasErrors();
+            allDiagnostics.AddRange(packDiagnostics);
+
+            foreach (var path in _currentProject.Files.SourceFiles)
+            {
+                var srcFile = new PhysicalPackageFile();
+                srcFile.SourcePath = path;
+                srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
+                symbolPackageBuilder.Files.Add(srcFile);
+            }
+
+            // Write the packages as long as we're still in a success state.
+            if (success)
+            {
+                using (var fs = File.Create(nupkg))
+                {
+                    packageBuilder.Save(fs);
+                    _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(nupkg));
+                }
+
+                if (symbolPackageBuilder.Files.Any())
+                {
+                    using (var fs = File.Create(symbolsNupkg))
+                    {
+                        symbolPackageBuilder.Save(fs);
+                        _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(symbolsNupkg));
+                    }
+                }
+            }
+
+            WriteDiagnostics(packDiagnostics);
             return success;
         }
 
