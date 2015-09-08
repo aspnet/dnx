@@ -63,14 +63,14 @@ namespace Microsoft.Dnx.Testing
             string additionalArguments = null,
             Action<Dictionary<string, string>> envSetup = null)
         {
-            return Execute($"packages add {packagePath} {packagesDir} {additionalArguments}", envSetup);
+            return Execute($"packages add \"{packagePath}\" \"{packagesDir}\" {additionalArguments}", envSetup);
         }
 
         public ExecResult Wrap(
             string csprojPath,
             string additionalArguments = null)
         {
-            return Execute($"wrap {csprojPath} {additionalArguments}");
+            return Execute($"wrap \"{csprojPath}\" {additionalArguments}");
         }
 
         public DnuPackOutput Pack(

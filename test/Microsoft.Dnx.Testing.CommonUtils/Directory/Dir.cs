@@ -15,7 +15,8 @@ namespace Microsoft.Dnx.Testing
         private readonly Dictionary<string, object> _nodes = new Dictionary<string, object>();
         private Func<FileInfo, object> _readFile;
 
-        public Dir(string rootPath): this()
+        public Dir(string rootPath)
+            : this()
         {
             if (!Directory.Exists(rootPath))
             {
@@ -38,11 +39,19 @@ namespace Microsoft.Dnx.Testing
 
         public string LoadPath { get; private set; } = "In Memory";
 
-        public Dictionary<string, object> Nodes
+        public object this[string key]
         {
             get
             {
-                return _nodes;
+                if (_nodes[key] is Lazy<object>)
+                {
+                    _nodes[key] = ((Lazy<object>)_nodes[key])?.Value;
+                }
+                return _nodes[key];
+            }
+            set
+            {
+                _nodes[key] = value;
             }
         }
 
@@ -55,6 +64,22 @@ namespace Microsoft.Dnx.Testing
                     _nodes[key] = value;
                 }
             }
+        }
+
+        public Dictionary<string, object> GetNodes(bool loadFiles = true)
+        {
+            if (loadFiles)
+            {
+                var keys = new List<string>(_nodes.Keys);
+                foreach (var key in keys)
+                {
+                    if (_nodes[key] is Lazy<object>)
+                    {
+                        _nodes[key] = ((Lazy<object>)_nodes[key])?.Value;
+                    }
+                }
+            }
+            return _nodes;
         }
 
         public void Load(string path)
@@ -79,43 +104,24 @@ namespace Microsoft.Dnx.Testing
             Write(path, this);
         }
 
-        private void Write(string path, object value)
+        public DirDiff Diff(Dir other, bool compareContents = true)
         {
-            var tree = value as Dir;
-            if (tree != null)
-            {
-                Directory.CreateDirectory(path);
-
-                foreach (var node in tree.Nodes)
-                {
-                    Write(Path.Combine(path, node.Key), node.Value);
-                }
-            }
-            else
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllText(path, (value is Lazy<object> ? ((Lazy<object>)value)?.Value.ToString() : value.ToString()) ?? string.Empty);
-            }
-        }
-
-        public DirDiff Diff(Dir other)
-        {
-            var nodes1 = Flatten();
-            var nodes2 = other.Flatten();
+            var nodes1 = Flatten(compareContents);
+            var nodes2 = other.Flatten(compareContents);
 
             return new DirDiff
             {
                 ExtraEntries = nodes1.Keys.Except(nodes2.Keys),
                 MissingEntries = nodes2.Keys.Except(nodes1.Keys),
-                DifferentEntries = nodes1.Keys.Intersect(nodes2.Keys)
-                    .Where(entry => !string.Equals(
-                        nodes1[entry] is Lazy<object> ? ((Lazy<object>)nodes1[entry])?.Value.ToString() : nodes1[entry].ToString(),
-                        nodes2[entry] is Lazy<object> ? ((Lazy<object>)nodes2[entry])?.Value.ToString() : nodes2[entry].ToString(), 
-                        StringComparison.Ordinal))
+                DifferentEntries = compareContents ? 
+                    nodes1.Keys.Intersect(nodes2.Keys).Where(
+                        entry => !string.Equals(nodes1[entry].ToString(), nodes2[entry].ToString(), StringComparison.Ordinal)) :
+                        Enumerable.Empty<string>()
+
             };
         }
 
-        public Dictionary<string, object> Flatten()
+        public Dictionary<string, object> Flatten(bool loadFiles = true)
         {
             var allNodes = new Dictionary<string, object>();
             var stack = new Stack<Tuple<string, Dir>>();
@@ -127,7 +133,7 @@ namespace Microsoft.Dnx.Testing
                 var basePath = top.Item1;
                 var tree = top.Item2;
 
-                foreach (var node in tree.Nodes)
+                foreach (var node in tree.GetNodes(loadFiles))
                 {
                     var subTree = node.Value as Dir;
                     var subPath = string.IsNullOrEmpty(basePath) ? node.Key : $"{basePath}/{node.Key}";
@@ -143,6 +149,25 @@ namespace Microsoft.Dnx.Testing
             }
 
             return allNodes;
+        }
+
+        private void Write(string path, object value)
+        {
+            var tree = value as Dir;
+            if (tree != null)
+            {
+                Directory.CreateDirectory(path);
+
+                foreach (var node in tree.GetNodes(loadFiles: true))
+                {
+                    Write(Path.Combine(path, node.Key), node.Value);
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                File.WriteAllText(path, value.ToString() ?? string.Empty);
+            }
         }
     }
 }

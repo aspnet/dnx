@@ -17,9 +17,19 @@ namespace Microsoft.Dnx.Testing
 
         public ExecResult Execute(string commandLine, bool dnxTraceOn = true)
         {
-            var dnxPath = Path.Combine(_sdkPath, "bin", "dnx");
+            string command;
+            if (RuntimeEnvironmentHelper.IsWindows)
+            {
+                command = "cmd";
+                commandLine = $"/C {Path.Combine(_sdkPath, "bin", "dnx.exe")} {commandLine}";
+            }
+            else
+            {
+                command = "bash";
+                commandLine = $"{Path.Combine(_sdkPath, "bin", "dnx")} {commandLine}";
+            }
             return Exec.Run(
-                dnxPath,
+                command,
                 commandLine,
                 env => env[EnvironmentNames.Trace] = dnxTraceOn ? "1" : null);
         }

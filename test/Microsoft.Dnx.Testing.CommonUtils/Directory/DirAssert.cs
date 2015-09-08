@@ -5,9 +5,9 @@ namespace Microsoft.Dnx.Testing
 {
     public class DirAssert
     {
-        public static void Equal(Dir expected, Dir actual)
+        public static void Equal(Dir expected, Dir actual, bool compareContents = true)
         {
-            var diff = actual.Diff(expected);
+            var diff = actual.Diff(expected, compareContents);
             if (diff.NoDiff)
             {
                 return;

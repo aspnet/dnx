@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Microsoft.Dnx.Testing.SampleTests
 {
-    [Collection("SampleTestCollection")]
+    [Collection(nameof(SampleTestCollection))]
     public class DnuPublishTests : DnxSdkFunctionalTestBase
     {
         [Theory]
@@ -124,7 +124,7 @@ namespace Microsoft.Dnx.Testing.SampleTests
                     ["runtimes"] = new Dir
                     {
                         // We don't want to construct folder structure of a bundled runtime manually
-                        [sdk.FullName] = new Dir(sdk.Path)
+                        [sdk.FullName] = new Dir(sdk.Location)
                     },
                     [$"src/{projectName}"] = new Dir
                     {

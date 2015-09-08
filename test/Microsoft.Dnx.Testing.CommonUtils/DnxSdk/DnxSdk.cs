@@ -16,15 +16,15 @@ namespace Microsoft.Dnx.Testing
 
         public string OperationSystem { get; set; }
 
-        public string Path { get; set; }
+        public string Location { get; set; }
 
         public string FullName { get; set; }
 
         public FrameworkName TargetFramework { get; set; }
 
-        public Dnu Dnu => new Dnu(Path);
+        public Dnu Dnu => new Dnu(Location);
 
-        public Dnx Dnx => new Dnx(Path);
+        public Dnx Dnx => new Dnx(Location);
 
         public static string GetRuntimeHome()
         {
@@ -61,7 +61,7 @@ namespace Microsoft.Dnx.Testing
             {
                 FullName = fullName,
                 TargetFramework = TestUtils.GetFrameworkForRuntimeFlavor(flavor),
-                Path = System.IO.Path.Combine(basePath, "runtimes", fullName),
+                Location = System.IO.Path.Combine(basePath, "runtimes", fullName),
                 Architecture = arch,
                 Flavor = flavor,
                 OperationSystem = os,
@@ -82,7 +82,7 @@ namespace Microsoft.Dnx.Testing
 
         public override string ToString()
         {
-            return Path;
+            return Location;
         }
     }
 }
