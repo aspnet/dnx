@@ -56,10 +56,8 @@ namespace Microsoft.Dnx.Tooling
                     .Replace("{name}", match.Library.Name)
                     .Replace("{version}", match.Library.Version.ToString());
 
-                // Console.WriteLine("*** {0}", runtimeJsonPath);
                 if (File.Exists(runtimeJsonPath))
                 {
-                    Console.WriteLine("*** READING {0}", runtimeJsonPath);
                     var formatter = new RuntimeFileFormatter();
                     return Task.FromResult(formatter.ReadRuntimeFile(runtimeJsonPath));
                 }
