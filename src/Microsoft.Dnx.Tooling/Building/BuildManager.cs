@@ -11,6 +11,7 @@ using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Compilation.FileSystem;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Compilation;
+using Microsoft.Dnx.Runtime.Internals;
 using Microsoft.Dnx.Tooling.SourceControl;
 using Microsoft.Dnx.Tooling.Utils;
 using Microsoft.Framework.FileSystemGlobbing;
@@ -340,6 +341,7 @@ namespace Microsoft.Dnx.Tooling
                 if (string.IsNullOrEmpty(entry.Target))
                 {
                     diagnostics.Add(new DiagnosticMessage(
+                        DiagnosticMonikers.NU1003,
                         $"Invalid '{ProjectFilesCollection.PackIncludePropertyName}' section. The target '{entry.Target}' is invalid, " +
                         "targets must either be a file name or a directory suffixed with '/'. " +
                         "The root directory of the package can be specified by using a single '/' character.",
@@ -353,6 +355,7 @@ namespace Microsoft.Dnx.Tooling
                 if (entry.Target.Split('/').Any(s => s.Equals(".") || s.Equals("..")))
                 {
                     diagnostics.Add(new DiagnosticMessage(
+                        DiagnosticMonikers.NU1004,
                         $"Invalid '{ProjectFilesCollection.PackIncludePropertyName}' section. " +
                         $"The target '{entry.Target}' contains path-traversal characters ('.' or '..'). " +
                         "These characters are not permitted in target paths.",
@@ -387,6 +390,7 @@ namespace Microsoft.Dnx.Tooling
                             $"\"{entry.SourceGlobs[0]}\"" :
                             ("[" + string.Join(",", entry.SourceGlobs.Select(v => $"\"{v}\"")) + "]");
                         diagnostics.Add(new DiagnosticMessage(
+                            DiagnosticMonikers.NU1005,
                             $"Invalid '{ProjectFilesCollection.PackIncludePropertyName}' section. " +
                             $"The target '{entry.Target}' refers to a single file, but the pattern {sourceValue} " +
                             "produces multiple files. To mark the target as a directory, suffix it with '/'.",

@@ -252,7 +252,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             var expectedOutput = new[]
             {
-                "PROJECTJSONPATH(5,18): error: Invalid 'packInclude' section. The target 'tools' refers to a single file, but the pattern \"packageTools/**/*.ps1\" produces multiple files. To mark the target as a directory, suffix it with '/'."
+                "PROJECTJSONPATH(5,18): error NU1005: Invalid 'packInclude' section. The target 'tools' refers to a single file, but the pattern \"packageTools/**/*.ps1\" produces multiple files. To mark the target as a directory, suffix it with '/'."
             };
 
             RunAdditionalFilesTest(flavor, os, architecture, dirTree, projectJson, expectedOutput, shouldFail: true);
@@ -280,7 +280,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             var expectedOutput = new[]
             {
-                "PROJECTJSONPATH(5,18): error: Invalid 'packInclude' section. The target 'tools' refers to a single file, but the pattern [\"packageTools/install.ps1\",\"packageTools/sub/support.ps1\"] produces multiple files. To mark the target as a directory, suffix it with '/'."
+                "PROJECTJSONPATH(5,18): error NU1005: Invalid 'packInclude' section. The target 'tools' refers to a single file, but the pattern [\"packageTools/install.ps1\",\"packageTools/sub/support.ps1\"] produces multiple files. To mark the target as a directory, suffix it with '/'."
             };
 
             RunAdditionalFilesTest(flavor, os, architecture, dirTree, projectJson, expectedOutput, shouldFail: true);
@@ -308,7 +308,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             var expectedOutput = new[]
             {
-                "PROJECTJSONPATH(5,22): error: Invalid 'packInclude' section. The target 'tools/../' contains path-traversal characters ('.' or '..'). These characters are not permitted in target paths."
+                "PROJECTJSONPATH(5,22): error NU1004: Invalid 'packInclude' section. The target 'tools/../' contains path-traversal characters ('.' or '..'). These characters are not permitted in target paths."
             };
 
             RunAdditionalFilesTest(flavor, os, architecture, dirTree, projectJson, expectedOutput, shouldFail: true);
@@ -336,7 +336,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             var expectedOutput = new[]
             {
-                "PROJECTJSONPATH(5,13): error: Invalid 'packInclude' section. The target '' is invalid, targets must either be a file name or a directory suffixed with '/'. The root directory of the package can be specified by using a single '/' character."
+                "PROJECTJSONPATH(5,13): error NU1003: Invalid 'packInclude' section. The target '' is invalid, targets must either be a file name or a directory suffixed with '/'. The root directory of the package can be specified by using a single '/' character."
             };
 
             RunAdditionalFilesTest(flavor, os, architecture, dirTree, projectJson, expectedOutput, shouldFail: true);
@@ -364,7 +364,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             var expectedOutput = new[]
             {
-                "PROJECTJSONPATH(5,21): error: Invalid 'packInclude' section. The target 'tools/./' contains path-traversal characters ('.' or '..'). These characters are not permitted in target paths."
+                "PROJECTJSONPATH(5,21): error NU1004: Invalid 'packInclude' section. The target 'tools/./' contains path-traversal characters ('.' or '..'). These characters are not permitted in target paths."
             };
 
             RunAdditionalFilesTest(flavor, os, architecture, dirTree, projectJson, expectedOutput, shouldFail: true);

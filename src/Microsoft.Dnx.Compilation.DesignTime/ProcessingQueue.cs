@@ -167,6 +167,7 @@ namespace Microsoft.Dnx.Compilation.DesignTime
                 var item = arrayValue[i] as JsonObject;
 
                 var message = new DiagnosticMessage(
+                    item.ValueAsString(nameof(DiagnosticMessage.ErrorCode)),
                     item.ValueAsString(nameof(DiagnosticMessage.Message)),
                     item.ValueAsString(nameof(DiagnosticMessage.FormattedMessage)),
                     item.ValueAsString(nameof(DiagnosticMessage.SourceFilePath)),

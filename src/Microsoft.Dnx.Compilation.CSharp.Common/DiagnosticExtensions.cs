@@ -19,6 +19,7 @@ namespace Microsoft.CodeAnalysis
         {
             var mappedLineSpan = self.Location.GetMappedLineSpan();
             return new DiagnosticMessage(
+                self.Id,
                 self.GetMessage(),
                 RoslynDiagnosticFormatter.Format(self, targetFramework),
                 mappedLineSpan.Path,

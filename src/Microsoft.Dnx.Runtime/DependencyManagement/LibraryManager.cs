@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Dnx.Runtime.Internals;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
@@ -119,19 +120,22 @@ namespace Microsoft.Dnx.Runtime
                 if (!library.Resolved)
                 {
                     string message;
+                    string errorCode;
                     if (library.Compatible)
                     {
+                        errorCode = DiagnosticMonikers.NU1001;
                         message = $"The dependency {library.RequestedRange} could not be resolved.";
                     }
                     else
                     {
+                        errorCode = DiagnosticMonikers.NU1002;
                         var projectName = Directory.GetParent(_projectPath).Name;
-                        message =
-                            $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
+                        message = $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
                     }
 
                     messages.Add(
                         new DiagnosticMessage(
+                            errorCode,
                             message,
                             projectPath,
                             DiagnosticMessageSeverity.Error,
@@ -164,6 +168,7 @@ namespace Microsoft.Dnx.Runtime
                         var message = string.Format("Dependency specified was {0} but ended up with {1}.", library.RequestedRange, library.Identity);
                         messages.Add(
                             new DiagnosticMessage(
+                                DiagnosticMonikers.NU1007,
                                 message,
                                 projectPath,
                                 DiagnosticMessageSeverity.Warning,

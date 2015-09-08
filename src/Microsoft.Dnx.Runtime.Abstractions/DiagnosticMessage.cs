@@ -8,14 +8,15 @@ namespace Microsoft.Dnx.Runtime
     /// </summary>
     public class DiagnosticMessage
     {
-        public DiagnosticMessage(string message, string filePath, DiagnosticMessageSeverity severity)
-            : this(message, filePath, severity, startLine: 1, startColumn: 0)
+        public DiagnosticMessage(string errorCode, string message, string filePath, DiagnosticMessageSeverity severity)
+            : this(errorCode, message, filePath, severity, startLine: 1, startColumn: 0)
         { }
 
-        public DiagnosticMessage(string message, string filePath, DiagnosticMessageSeverity severity, int startLine, int startColumn)
+        public DiagnosticMessage(string errorCode, string message, string filePath, DiagnosticMessageSeverity severity, int startLine, int startColumn)
                 : this(
+                    errorCode,
                     message,
-                    $"{filePath}({startLine},{startColumn}): {severity.ToString().ToLowerInvariant()}: {message}",
+                    $"{filePath}({startLine},{startColumn}): {severity.ToString().ToLowerInvariant()} {errorCode}: {message}",
                     filePath,
                     severity,
                     startLine,
@@ -25,15 +26,17 @@ namespace Microsoft.Dnx.Runtime
         { }
 
         public DiagnosticMessage(
-            string message, 
-            string formattedMessage, 
-            string filePath, 
-            DiagnosticMessageSeverity severity, 
-            int startLine, 
-            int startColumn, 
-            int endLine, 
+            string errorCode,
+            string message,
+            string formattedMessage,
+            string filePath,
+            DiagnosticMessageSeverity severity,
+            int startLine,
+            int startColumn,
+            int endLine,
             int endColumn)
         {
+            ErrorCode = errorCode;
             Message = message;
             SourceFilePath = filePath;
             Severity = severity;
@@ -43,6 +46,11 @@ namespace Microsoft.Dnx.Runtime
             EndColumn = endColumn;
             FormattedMessage = formattedMessage;
         }
+
+        /// <summary>
+        /// The moniker associated with the error message
+        /// </summary>
+        public string ErrorCode { get; }
 
         /// <summary>
         /// Path of the file that produced the message.

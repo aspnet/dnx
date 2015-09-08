@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Dnx.Runtime.Internals;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -246,6 +247,7 @@ namespace Microsoft.Dnx.Runtime
             if (!result.LockFileExists)
             {
                 context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
+                    DiagnosticMonikers.NU1009,
                     $"The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.",
                     Path.Combine(context.Project.ProjectDirectory, LockFileReader.LockFileName),
                     DiagnosticMessageSeverity.Error));
@@ -254,6 +256,7 @@ namespace Microsoft.Dnx.Runtime
             if (!result.ValidLockFile)
             {
                 context.LibraryManager.AddGlobalDiagnostics(new DiagnosticMessage(
+                    DiagnosticMonikers.NU1006,
                     $"{result.LockFileValidationMessage}. Please run \"dnu restore\" to generate a new lock file.",
                     Path.Combine(context.Project.ProjectDirectory, LockFileReader.LockFileName),
                     DiagnosticMessageSeverity.Error));
