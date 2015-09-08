@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Testing
 {
@@ -33,8 +34,15 @@ namespace Microsoft.Dnx.Testing
         {
             get
             {
-                yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x86") };
-                yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x64") };
+                if (RuntimeEnvironmentHelper.IsWindows)
+                {
+                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x86") };
+                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x64") };
+                }
+                else
+                {
+                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "mono", string.Empty, string.Empty) };
+                }
             }
         }
 
@@ -42,8 +50,11 @@ namespace Microsoft.Dnx.Testing
         {
             get
             {
-                yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "coreclr", "win", "x86") };
-                yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "coreclr", "win", "x64") };
+                if (RuntimeEnvironmentHelper.IsWindows)
+                {
+                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "coreclr", "win", "x86") };
+                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "coreclr", "win", "x64") };
+                }
             }
         }
     }

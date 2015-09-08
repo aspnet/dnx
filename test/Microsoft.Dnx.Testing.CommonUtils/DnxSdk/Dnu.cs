@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Testing
 {
@@ -99,8 +100,18 @@ namespace Microsoft.Dnx.Testing
             string commandLine, 
             Action<Dictionary<string, string>> envSetup = null)
         {
-            var dnxPath = Path.Combine(_sdkPath, "bin", "dnu.cmd");
-            return Exec.Run(dnxPath, commandLine, envSetup);
+            string command;
+            if (RuntimeEnvironmentHelper.IsWindows)
+            {
+                command = "cmd";
+                commandLine = $"/C {Path.Combine(_sdkPath, "bin", "dnu.cmd")} {commandLine}";
+            }
+            else
+            {
+                command = "bash";
+                commandLine = $"{Path.Combine(_sdkPath, "bin", "dnu")} {commandLine}";
+            }
+            return Exec.Run(command, commandLine, envSetup);
         }
     }
 }

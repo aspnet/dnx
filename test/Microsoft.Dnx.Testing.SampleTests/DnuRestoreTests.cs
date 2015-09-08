@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Microsoft.Dnx.Testing.SampleTests
 {
-    [Collection("SampleTestCollection")]
+    [Collection(nameof(SampleTestCollection))]
     public class DnuRestoreTests : DnxSdkFunctionalTestBase
     {
         [Theory]

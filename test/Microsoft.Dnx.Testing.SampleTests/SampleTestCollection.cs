@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Microsoft.Dnx.Testing.SampleTests
 {
-    [CollectionDefinition("SampleTestCollection")]
+    [CollectionDefinition(nameof(SampleTestCollection))]
     public class SampleTestCollection : ICollectionFixture<SampleTestFixture>
     {
     }
