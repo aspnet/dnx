@@ -2,23 +2,26 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 {
     public class DthTestClient : IDisposable
     {
-        private readonly int _contextId;
         private readonly string _hostId;
         private readonly BinaryReader _reader;
         private readonly BinaryWriter _writer;
         private readonly NetworkStream _networkStream;
+
+        private readonly BlockingCollection<DthMessage> _messageQueue;
+        private readonly CancellationTokenSource _readCancellationToken;
 
         public DthTestClient(DthTestServer server, int contextId)
         {
@@ -29,22 +32,38 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             socket.Connect(new IPEndPoint(IPAddress.Loopback, server.Port));
 
             _hostId = server.HostId;
-            _contextId = contextId;
+            ContextId = contextId;
 
             _networkStream = new NetworkStream(socket);
             _reader = new BinaryReader(_networkStream);
             _writer = new BinaryWriter(_networkStream);
+
+            _messageQueue = new BlockingCollection<DthMessage>();
+
+            _readCancellationToken = new CancellationTokenSource();
+            Task.Run(() => ReadMessage(_readCancellationToken.Token), _readCancellationToken.Token);
+        }
+
+        public int ContextId { get; }
+
+        public void SendPayLoad(string messageType)
+        {
+            SendPayLoad(messageType, new { });
         }
 
         public void SendPayLoad(string messageType, object payload)
         {
-            SendMessage(new
+            lock (_writer)
             {
-                ContextId = _contextId,
-                HostId = _hostId,
-                MessageType = messageType,
-                Payload = payload
-            });
+                var message = new
+                {
+                    ContextId = ContextId,
+                    HostId = _hostId,
+                    MessageType = messageType,
+                    Payload = payload
+                };
+                _writer.Write(JsonConvert.SerializeObject(message));
+            }
         }
 
         public void Initialize(string projectPath)
@@ -52,52 +71,85 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             SendPayLoad("Initialize", new { ProjectFolder = projectPath });
         }
 
-        public DthMessage<T> GetResponse<T>()
+        public void SetProtocolVersion(int version)
         {
-            return GetResponse<T>(TimeSpan.FromSeconds(5));
+            SendPayLoad(ProtocolManager.NegotiationMessageTypeName, new { Version = version });
         }
 
-        public DthMessage<T> GetResponse<T>(TimeSpan timeout)
+        /// <summary>
+        /// Read all messages from pipeline till timeout
+        /// </summary>
+        /// <param name="timeout">The timeout</param>
+        /// <returns>All the messages in a list</returns>
+        public List<DthMessage> DrainAllMessages(TimeSpan timeout)
         {
-            var raw = string.Empty;
-
-            Exception exception = null;
-            var thread = new Thread(() =>
+            var result = new List<DthMessage>();
+            while (true)
             {
                 try
                 {
-                    raw = _reader.ReadString();
+                    result.Add(GetResponse(timeout));
                 }
-                catch (Exception ex)
+                catch (TimeoutException)
                 {
-                    exception = ex;
+                    return result;
                 }
-            });
-            thread.Start();
+                catch (Exception)
+                {
+                    throw;
+                }
+            }
+        }
 
-            if (thread.Join(timeout))
+        /// <summary>
+        /// Read messages from pipeline until the first match
+        /// </summary>]
+        /// <param name="type">A message type</param>
+        /// <returns>The first match message</returns>
+        public DthMessage DrainTillFirst(string type)
+        {
+            return DrainTillFirst(type, TimeSpan.FromSeconds(10));
+        }
+
+        /// <summary>
+        /// Read messages from pipeline until the first match
+        /// </summary>
+        /// <param name="type">A message type</param>
+        /// <param name="timeout">Timeout for each read</param>
+        /// <returns>The first match message</returns>
+        public DthMessage DrainTillFirst(string type, TimeSpan timeout)
+        {
+            while (true)
             {
-                if (exception != null)
+                var next = GetResponse(timeout);
+                if (next.MessageType == type)
                 {
-                    throw new InvalidOperationException($"Unexpected exception during reading content from network stream.", exception);
+                    return next;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Read messages from pipeline until the first match
+        /// </summary>
+        /// <param name="type">A message type</param>
+        /// <param name="timeout">Timeout</param>
+        /// <param name="leadingMessages">All the messages read before the first match</param>
+        /// <returns>The first match</returns>
+        public DthMessage DrainTillFirst(string type, TimeSpan timeout, out List<DthMessage> leadingMessages)
+        {
+            leadingMessages = new List<DthMessage>();
+            while (true)
+            {
+                var next = GetResponse(timeout);
+                if (next.MessageType == type)
+                {
+                    return next;
                 }
                 else
                 {
-                    try
-                    {
-                        return JsonConvert.DeserializeObject<DthMessage<T>>(raw);
-                    }
-                    catch (Exception deserializException)
-                    {
-                        throw new InvalidOperationException(
-                            $"Fail to deserailze data into {nameof(DthMessage<T>)}.\nContent: {raw}.\nException: {deserializException.Message}.",
-                            deserializException);
-                    }
+                    leadingMessages.Add(next);
                 }
-            }
-            else
-            {
-                throw new InvalidOperationException($"Response time out after {timeout.TotalSeconds}s.");
             }
         }
 
@@ -106,13 +158,53 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             _reader.Close();
             _writer.Close();
             _networkStream.Close();
+            _readCancellationToken.Cancel();
         }
 
-        private void SendMessage(object message)
+        private void ReadMessage(CancellationToken cancellationToken)
         {
-            lock (_writer)
+            while (true)
             {
-                _writer.Write(JsonConvert.SerializeObject(message));
+                try
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    var content = _reader.ReadString();
+                    var message = JsonConvert.DeserializeObject<DthMessage>(content);
+
+                    _messageQueue.Add(message);
+                }
+                catch (IOException)
+                {
+                    // swallow
+                }
+                catch (JsonSerializationException deserializException)
+                {
+                    throw new InvalidOperationException(
+                        $"Fail to deserailze data into {nameof(DthMessage)}.",
+                        deserializException);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+        }
+
+        private DthMessage GetResponse(TimeSpan timeout)
+        {
+            DthMessage message;
+
+            if (_messageQueue.TryTake(out message, timeout))
+            {
+                return message;
+            }
+            else
+            {
+                throw new TimeoutException($"Response time out after {timeout.TotalSeconds} seconds.");
             }
         }
     }
