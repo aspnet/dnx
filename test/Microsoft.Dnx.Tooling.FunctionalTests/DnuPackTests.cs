@@ -370,6 +370,80 @@ public class TestClass : BaseClass {
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_ExecutesScriptsForEachConfigurationAndTargetFramework(string flavor, string os, string architecture)
+        {
+            var projectStructure = @"{
+  '.': ['project.json']
+}";
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, "TestProject"))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""version"": ""1.0-beta"",
+  ""frameworks"": {
+    ""dnx451"": {},
+    ""dnxcore50"": {
+        ""dependencies"": {
+            ""System.Runtime"":""4.0.20-*""
+        }
+      }
+  },
+  ""scripts"": {
+    ""prebuild"": ""echo PREBUILD_SCRIPT_OUTPUT"",
+    ""prepack"": ""echo PREPACK_SCRIPT_OUTPUT"",
+    ""postbuild"": ""echo POSTBUILD_SCRIPT_OUTPUT"",
+    ""postpack"": ""echo POSTPACK_SCRIPT_OUTPUT""
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                string stdOut, stdErr;
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "restore",
+                    arguments: string.Empty,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    "pack",
+                    testEnv.ProjectPath + " --configuration Debug --configuration Release",
+                    out stdOut,
+                    out stdErr);
+
+                Assert.Equal(0, exitCode);
+                Assert.Empty(stdErr);
+
+                var idx = 0;
+                for (var i = 0; i < 2; i++)
+                {
+                    idx = stdOut.IndexOf("PREPACK_SCRIPT_OUTPUT", idx);
+                    Assert.True(idx >= 0);
+                    idx = stdOut.IndexOf("PREBUILD_SCRIPT_OUTPUT", idx);
+                    Assert.True(idx >= 0);
+                    idx = stdOut.IndexOf("POSTBUILD_SCRIPT_OUTPUT", idx);
+                    Assert.True(idx >= 0);
+                    idx = stdOut.IndexOf("PREBUILD_SCRIPT_OUTPUT", idx);
+                    Assert.True(idx >= 0);
+                    idx = stdOut.IndexOf("POSTBUILD_SCRIPT_OUTPUT", idx);
+                    Assert.True(idx >= 0);
+                    idx = stdOut.IndexOf("POSTPACK_SCRIPT_OUTPUT", idx);
+                    Assert.True(idx >= 0);
+                    idx += "POSTPACK_SCRIPT_OUTPUT".Length;
+                }
+
+                Assert.Equal(-1, stdOut.IndexOf("PREPACK_SCRIPT_OUTPUT", idx));
+                Assert.Equal(-1, stdOut.IndexOf("PREBUILD_SCRIPT_OUTPUT", idx));
+                Assert.Equal(-1, stdOut.IndexOf("POSTBUILD_SCRIPT_OUTPUT", idx));
+                Assert.Equal(-1, stdOut.IndexOf("POSTPACK_SCRIPT_OUTPUT", idx));
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_ShowUnresolvedDependencyWhenBuildFails(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
