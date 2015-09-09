@@ -35,7 +35,7 @@ namespace Microsoft.Dnx.Testing
 #if DNX451
                 processStartInfo.EnvironmentVariables[pair.Key] = pair.Value;
 #else
-                processStartInfo.Environment.Add(pair);
+                processStartInfo.Environment[pair.Key] = pair.Value;
 #endif
             }
 

@@ -34,14 +34,14 @@ namespace Microsoft.Dnx.Testing
         {
             get
             {
-                if (RuntimeEnvironmentHelper.IsWindows)
+                if (RuntimeEnvironmentHelper.IsMono)
                 {
-                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x86") };
-                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x64") };
+                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "mono", string.Empty, string.Empty) };
                 }
                 else
                 {
-                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "mono", string.Empty, string.Empty) };
+                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x86") };
+                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x64") };
                 }
             }
         }
