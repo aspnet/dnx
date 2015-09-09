@@ -391,10 +391,10 @@ public class TestClass : BaseClass {
       }
   },
   ""scripts"": {
-    ""prebuild"": ""echo PREBUILD_SCRIPT_OUTPUT"",
-    ""prepack"": ""echo PREPACK_SCRIPT_OUTPUT"",
-    ""postbuild"": ""echo POSTBUILD_SCRIPT_OUTPUT"",
-    ""postpack"": ""echo POSTPACK_SCRIPT_OUTPUT""
+    ""prebuild"": ""echo PREBUILD_SCRIPT_OUTPUT %build:TargetFramework% %build:Configuration%"",
+    ""prepack"": ""echo PREPACK_SCRIPT_OUTPUT %build:TargetFramework% %build:Configuration%"",
+    ""postbuild"": ""echo POSTBUILD_SCRIPT_OUTPUT %build:TargetFramework% %build:Configuration%"",
+    ""postpack"": ""echo POSTPACK_SCRIPT_OUTPUT %build:TargetFramework% %build:Configuration%""
   }
 }")
                     .WriteTo(testEnv.ProjectPath);

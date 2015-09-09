@@ -182,7 +182,7 @@ namespace Microsoft.Dnx.Tooling
                 _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
                     _currentProject.Name, targetFramework.ToString().Yellow().Bold());
 
-                if (!RunPreBuildScripts())
+                if (!RunPreBuildScripts(getScriptVariable))
                 {
                     success = false;
                     continue;
@@ -212,7 +212,7 @@ namespace Microsoft.Dnx.Tooling
                     }
 
                     // Run post-build steps
-                    success &= RunPostBuildScripts();
+                    success &= RunPostBuildScripts(getScriptVariable);
                 }
                 else
                 {
@@ -244,16 +244,16 @@ namespace Microsoft.Dnx.Tooling
             return success;
         }
 
-        private bool RunPreBuildScripts()
+        private bool RunPreBuildScripts(Func<string, string> getScriptVariable)
         {
             if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(_currentProject, "prepack", GetScriptVariable))
+                !ScriptExecutor.Execute(_currentProject, "prepack", getScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(_currentProject, "prebuild", GetScriptVariable))
+            if (!ScriptExecutor.Execute(_currentProject, "prebuild", getScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
@@ -262,16 +262,16 @@ namespace Microsoft.Dnx.Tooling
             return true;
         }
 
-        private bool RunPostBuildScripts()
+        private bool RunPostBuildScripts(Func<string, string> getScriptVariable)
         {
-            if (!ScriptExecutor.Execute(_currentProject, "postbuild", GetScriptVariable))
+            if (!ScriptExecutor.Execute(_currentProject, "postbuild", getScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
             if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(_currentProject, "postpack", GetScriptVariable))
+                !ScriptExecutor.Execute(_currentProject, "postpack", getScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
@@ -422,14 +422,27 @@ namespace Microsoft.Dnx.Tooling
             }
         }
 
-        private string GetScriptVariable(string key)
+        private Func<string, string> GetScriptVariable(string targetFramework, string buildConfiguration)
         {
-            if (string.Equals("project:BuildOutputDir", key, StringComparison.OrdinalIgnoreCase))
+            return key =>
             {
-                return GetBuildOutputDir(_currentProject);
-            }
+                if (string.Equals("project:BuildOutputDir", key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return GetBuildOutputDir(_currentProject);
+                }
 
-            return null;
+                if (string.Equals("build:TargetFramework", key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return targetFramework;
+                }
+
+                if (string.Equals("build:Configuration", key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return buildConfiguration;
+                }
+
+                return null;
+            };
         }
 
         private static void InitializeBuilder(Runtime.Project project, PackageBuilder builder)
