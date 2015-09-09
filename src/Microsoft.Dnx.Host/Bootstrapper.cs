@@ -54,6 +54,9 @@ namespace Microsoft.Dnx.Host
                 {
                     applicationBaseDirectory = Directory.GetCurrentDirectory();
                 }
+
+                // Set the app domain variable so that AppContext.BaseDirectory works on .NET Framework (and hopefully mono)
+                AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY", applicationBaseDirectory);
 #else
                 string applicationBaseDirectory = AppContext.BaseDirectory;
 #endif
