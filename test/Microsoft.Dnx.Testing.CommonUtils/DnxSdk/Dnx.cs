@@ -25,8 +25,7 @@ namespace Microsoft.Dnx.Testing
             }
             else
             {
-                command = "bash";
-                commandLine = $"{Path.Combine(_sdkPath, "bin", "dnx")} {commandLine}";
+                command = Path.Combine(_sdkPath, "bin", "dnx");
             }
             return Exec.Run(
                 command,

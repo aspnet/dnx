@@ -18,7 +18,7 @@ namespace Microsoft.Dnx.Testing
         {
             if (!Directory.Exists(rootPath))
             {
-                throw new DirectoryNotFoundException();
+                throw new ArgumentException("Directory was not found", nameof(rootPath)); ;
             }
 
             RootPath = rootPath;

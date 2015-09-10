@@ -20,7 +20,7 @@ namespace Microsoft.Dnx.Testing
         {
             if (!Directory.Exists(rootPath))
             {
-                throw new DirectoryNotFoundException();
+                throw new ArgumentException("Directory was not found", nameof(rootPath));
             }
 
             LoadPath = rootPath;
@@ -37,7 +37,7 @@ namespace Microsoft.Dnx.Testing
             _readFile = parent._readFile;
         }
 
-        public string LoadPath { get; private set; } = "In Memory";
+        public string LoadPath { get; } = "In Memory";
 
         public object this[string key]
         {
