@@ -54,7 +54,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
 
         [Theory]
         [InlineData("net45", "DEBUG,TRACE")]
-        [InlineData("k10", "DEBUG,TRACE")]
+        [InlineData("dnxcore50", "DEBUG,TRACE")]
         public void DefaultDefines(string shortName, string define)
         {
             var project = ProjectUtilities.GetProject(
@@ -102,7 +102,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         ""net45"":  {
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""debugSymbols"": ""none"" }
         },
-        ""k10"": {
+        ""dnxcore50"": {
             ""compilationOptions"": { ""warningsAsErrors"": true, ""debugSymbols"": ""pdbOnly"" }
         }
     }
@@ -111,7 +111,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
 @"c:\foo\project.json");
 
             var net45Options = project.GetCompilationSettings("net45");
-            var k10Options = project.GetCompilationSettings("k10");
+            var dnxcore50Options = project.GetCompilationSettings("dnxcore50");
 
             Assert.True(net45Options.CompilationOptions.AllowUnsafe);
             Assert.Equal(new[] { "DEBUG", "TRACE", "X", "y", "NET45" }, net45Options.Defines);
@@ -119,8 +119,8 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
             Assert.Equal(ReportDiagnostic.Error, net45Options.CompilationOptions.GeneralDiagnosticOption);
             Assert.Equal(OptimizationLevel.Release, net45Options.CompilationOptions.OptimizationLevel);
 
-            Assert.Equal(new[] { "DEBUG", "TRACE", "K10" }, k10Options.Defines);
-            Assert.Equal(ReportDiagnostic.Error, k10Options.CompilationOptions.GeneralDiagnosticOption);
+            Assert.Equal(new[] { "DEBUG", "TRACE", "DNXCORE50" }, dnxcore50Options.Defines);
+            Assert.Equal(ReportDiagnostic.Error, dnxcore50Options.CompilationOptions.GeneralDiagnosticOption);
         }
 
         [Fact]
@@ -132,7 +132,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         ""net45"":  {
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true }
         },
-        ""k10"": {
+        ""dnxcore50"": {
             ""dependencies"": {
             }
         }
@@ -155,7 +155,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
 {
     ""compilationOptions"": { ""allowUnsafe"": true },
     ""frameworks"" : {
-        ""k10"": {
+        ""dnxcore50"": {
             ""dependencies"": {
             }
         }
@@ -164,11 +164,11 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
 "foo",
 @"c:\foo\project.json");
 
-            var k10Options = project.GetCompilationSettings("k10");
+            var dnxcore50Options = project.GetCompilationSettings("dnxcore50");
 
-            Assert.True(k10Options.CompilationOptions.AllowUnsafe);
-            Assert.Equal(new[] { "DEBUG", "TRACE", "K10" }, k10Options.Defines);
-            Assert.Equal(Platform.AnyCpu, k10Options.CompilationOptions.Platform);
+            Assert.True(dnxcore50Options.CompilationOptions.AllowUnsafe);
+            Assert.Equal(new[] { "DEBUG", "TRACE", "DNXCORE50" }, dnxcore50Options.Defines);
+            Assert.Equal(Platform.AnyCpu, dnxcore50Options.CompilationOptions.Platform);
         }
     }
 

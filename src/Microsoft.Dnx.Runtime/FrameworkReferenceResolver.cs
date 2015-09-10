@@ -18,10 +18,6 @@ namespace Microsoft.Dnx.Runtime
 
         private static readonly IDictionary<FrameworkName, List<FrameworkName>> _aliases = new Dictionary<FrameworkName, List<FrameworkName>>
         {
-            { new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)), new List<FrameworkName> {
-                    new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1))
-                }
-            },
             { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)), new List<FrameworkName> {
                     new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1))
                 }
@@ -35,8 +31,7 @@ namespace Microsoft.Dnx.Runtime
         private static readonly IDictionary<FrameworkName, List<FrameworkName>> _monoAliases = new Dictionary<FrameworkName, List<FrameworkName>>
         {
             { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new List<FrameworkName> {
-                    new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)),
-                    new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0))
+                    new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1))
                 }
             }
         };
@@ -80,19 +75,7 @@ namespace Microsoft.Dnx.Runtime
         public string GetFriendlyFrameworkName(FrameworkName targetFramework)
         {
             // We don't have a friendly name for this anywhere on the machine so hard code it
-            if (string.Equals(targetFramework.Identifier, "K", StringComparison.OrdinalIgnoreCase))
-            {
-                return ".NET Core Framework 4.5";
-            }
-            else if (string.Equals(targetFramework.Identifier, VersionUtility.AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
-            {
-                return "ASP.NET Core 5.0";
-            }
-            else if (string.Equals(targetFramework.Identifier, VersionUtility.AspNetFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
-            {
-                return "ASP.NET 5.0";
-            }
-            else if (string.Equals(targetFramework.Identifier, VersionUtility.DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(targetFramework.Identifier, VersionUtility.DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
             {
                 return "DNX Core 5.0";
             }
@@ -102,7 +85,10 @@ namespace Microsoft.Dnx.Runtime
             }
             else if (string.Equals(targetFramework.Identifier, VersionUtility.NetPlatformFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
             {
-                return ".NET Platform";
+                var version = targetFramework.Version > Constants.Version50 ?
+                    (" " + targetFramework.Version.ToString()) :
+                    string.Empty;
+                return ".NET Platform" + version;
             }
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);

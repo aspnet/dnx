@@ -19,14 +19,17 @@ namespace NuGet
 {
     public static class VersionUtility
     {
-        public static readonly string AspNetCoreFrameworkIdentifier = "Asp.NetCore";
         public static readonly string DnxCoreFrameworkIdentifier = "DNXCore";
         public static readonly string PortableFrameworkIdentifier = ".NETPortable";
         public static readonly string NetPlatformFrameworkIdentifier = ".NETPlatform";
         public static readonly string NetCoreFrameworkIdentifier = ".NETCore";
+        public static readonly string UapFrameworkIdentifier = "UAP";
+        public static readonly string WindowsFrameworkIdentifier = "Windows";
+        public static readonly string WindowsPhoneFrameworkIdentifier = "WindowsPhone";
+        public static readonly string WindowsPhoneAppFrameworkIdentifier = "WindowsPhoneApp";
+        public static readonly string SilverlightFrameworkIdentifier = "Silverlight";
 
         internal const string NetFrameworkIdentifier = ".NETFramework";
-        internal const string AspNetFrameworkIdentifier = "Asp.Net";
         internal const string DnxFrameworkIdentifier = "DNX";
         internal const string DnxFrameworkShortName = "dnx";
         internal const string DnxCoreFrameworkShortName = "dnxcore";
@@ -45,7 +48,7 @@ namespace NuGet
 
         private static readonly Dictionary<string, string> _knownProfiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             { "Client", "Client" },
-            { "WP", "WindowsPhone" },
+            { "WP", WindowsPhoneFrameworkIdentifier },
             { "WP71", "WindowsPhone71" },
             { "CF", "CompactFramework" },
             { "Full", String.Empty }
@@ -56,16 +59,15 @@ namespace NuGet
             { ".NETMicroFramework", "netmf" },
             { DnxFrameworkIdentifier, DnxFrameworkShortName },
             { DnxCoreFrameworkIdentifier, DnxCoreFrameworkShortName },
-            { AspNetFrameworkIdentifier, "aspnet" },
-            { AspNetCoreFrameworkIdentifier, "aspnetcore" },
             { NetPlatformFrameworkIdentifier, NetPlatformFrameworkShortName },
+            { UapFrameworkIdentifier, UapFrameworkIdentifier },
 
-            { "Silverlight", "sl" },
-            { ".NETCore", "win"},
-            { "Windows", "win"},
-            { ".NETPortable", "portable" },
-            { "WindowsPhone", "wp"},
-            { "WindowsPhoneApp", "wpa"}
+            { SilverlightFrameworkIdentifier, "sl" },
+            { NetCoreFrameworkIdentifier, "win"},
+            { WindowsFrameworkIdentifier, "win"},
+            { PortableFrameworkIdentifier, "portable" },
+            { WindowsPhoneFrameworkIdentifier, "wp"},
+            { WindowsPhoneAppFrameworkIdentifier, "wpa"}
         };
 
         private static readonly Dictionary<string, string> _identifierToProfileFolder = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
@@ -94,7 +96,6 @@ namespace NuGet
         {
             return
                 string.Equals(framework.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(framework.Identifier, AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
                 (string.Equals(framework.Identifier, NetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) && framework.Version >= _version5);
         }
 
@@ -116,7 +117,6 @@ namespace NuGet
         public static bool IsDesktop(FrameworkName frameworkName)
         {
             return frameworkName.Identifier == NetFrameworkIdentifier ||
-                   frameworkName.Identifier == AspNetFrameworkIdentifier ||
                    frameworkName.Identifier == DnxFrameworkIdentifier;
         }
 
@@ -541,10 +541,20 @@ namespace NuGet
                 // only show version part if it's > 0.0.0.0
                 if (frameworkName.Version > new Version(0, 0))
                 {
-                    // Remove the . from versions
-                    name += frameworkName.Version.ToString().Replace(".", String.Empty);
+                    // Remove the . from versions, unless:
+                    //  a) Any version part is greater than 9
+                    //  b) The identifier is .NETPlatform
+                    var version = frameworkName.Version.ToString();
+                    if (!frameworkName.Identifier.Equals(NetPlatformFrameworkIdentifier) &&
+                        frameworkName.Version.Major < 10 &&
+                        frameworkName.Version.Minor < 10 &&
+                        frameworkName.Version.Build < 10 &&
+                        frameworkName.Version.Revision < 10)
+                    {
+                        version = version.Replace(".", string.Empty);
+                    }
+                    name += version;
                 }
-
                 if (String.IsNullOrEmpty(frameworkName.Profile))
                 {
                     return name;
@@ -681,7 +691,7 @@ namespace NuGet
             if (!projectFramework.IsPortableFramework())
             {
                 // Find exact matching items in expansion order.
-                foreach (var activeFramework in Expand(internalProjectFramework))
+                foreach (var activeFramework in DotNetGenerationMapping.Expand(internalProjectFramework))
                 {
                     var matchingGroups = frameworkGroups.Where(g => 
                         string.Equals(g.Key?.Identifier, activeFramework.Identifier, StringComparison.OrdinalIgnoreCase) &&
@@ -796,7 +806,7 @@ namespace NuGet
             targetFrameworkName = NormalizeFrameworkName(targetFrameworkName);
             frameworkName = NormalizeFrameworkName(frameworkName);
 
-            frameworkName = Expand(frameworkName)
+            frameworkName = DotNetGenerationMapping.Expand(frameworkName)
                 .FirstOrDefault(fx => String.Equals(fx.Identifier, targetFrameworkName.Identifier, StringComparison.OrdinalIgnoreCase));
             if (frameworkName == null)
             {
@@ -829,54 +839,6 @@ namespace NuGet
             }
 
             return false;
-        }
-
-        private static IEnumerable<FrameworkName> Expand(FrameworkName input)
-        {
-            // Try to convert the project framework into an equivalent target framework
-            // If the identifiers didn't match, we need to see if this framework has an equivalent framework that DOES match.
-            // If it does, we use that from here on.
-            // Example:
-            //  If the Project Targets ASP.Net, Version=5.0. It can accept Packages targetting .NETFramework, Version=4.5.1
-            //  so since the identifiers don't match, we need to "translate" the project target framework to .NETFramework
-            //  however, we still want direct ASP.Net == ASP.Net matches, so we do this ONLY if the identifiers don't already match
-
-            yield return input;
-
-            // dnxcoreN -> aspnetcoreN -> dotnetN
-            if (input.Identifier.Equals(DnxCoreFrameworkIdentifier))
-            {
-                yield return new FrameworkName(AspNetCoreFrameworkIdentifier, input.Version);
-                yield return new FrameworkName(NetPlatformFrameworkIdentifier, input.Version);
-            }
-            // aspnetcoreN -> dotnetN
-            else if (input.Identifier.Equals(AspNetCoreFrameworkIdentifier))
-            {
-                yield return new FrameworkName(NetPlatformFrameworkIdentifier, input.Version);
-            }
-            // dnxN -> aspnet50 -> netN
-            else if (input.Identifier.Equals(DnxFrameworkIdentifier))
-            {
-                yield return new FrameworkName(AspNetFrameworkIdentifier, new Version(5, 0));
-                yield return new FrameworkName(NetFrameworkIdentifier, input.Version);
-                yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
-            }
-            // aspnet50 -> net46 (project framework; this is DEPRECATED, so setting a max version is OK)
-            else if (input.Identifier.Equals(AspNetFrameworkIdentifier))
-            {
-                yield return new FrameworkName(NetFrameworkIdentifier, new Version(4, 6));
-                yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
-            }
-            // netcore50 (universal windows apps) -> dotnet50
-            else if (input.Identifier.Equals(NetCoreFrameworkIdentifier) && input.Version.Major == 5 && input.Version.Minor == 0)
-            {
-                yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
-            }
-            // net45 -> dotnet
-            else if (input.Identifier.Equals(NetFrameworkIdentifier) && input.Version >= new Version(4, 5))
-            {
-                yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
-            }
         }
 
         private static bool IsPortableLibraryCompatible(FrameworkName frameworkName, FrameworkName targetFrameworkName)
@@ -917,9 +879,7 @@ namespace NuGet
                 {
                     // TODO: Remove this logic when out dependencies have moved to ASP.NET Core 5.0
                     // as this logic is super fuzzy and terrible
-                    if (string.Equals(frameworkName.Identifier, AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
-                        (string.Equals(frameworkName.Identifier, NetPlatformFrameworkIdentifier, StringComparison.OrdinalIgnoreCase)))
+                    if (string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
                     {
                         var frameworkIdentifierLookup = targetFrameworkPortableProfile.SupportedFrameworks
                                                                                       .Select(NormalizeFrameworkName)
@@ -1209,12 +1169,9 @@ namespace NuGet
             var frameworks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 { DnxFrameworkShortName, DnxFrameworkIdentifier },
                 { DnxCoreFrameworkShortName, DnxCoreFrameworkIdentifier },
-                { "aspnet", AspNetFrameworkIdentifier },
-                { "asp.net", AspNetFrameworkIdentifier },
-                { "aspnetcore", AspNetCoreFrameworkIdentifier },
-                { "asp.netcore", AspNetCoreFrameworkIdentifier },
                 { NetPlatformFrameworkShortName, NetPlatformFrameworkIdentifier },
                 { NetPlatformFrameworkIdentifier, NetPlatformFrameworkIdentifier },
+                { UapFrameworkIdentifier, UapFrameworkIdentifier },
 
                 { "NET", NetFrameworkIdentifier },
 
@@ -1231,17 +1188,16 @@ namespace NuGet
                 { ".NETPortable", PortableFrameworkIdentifier },
                 { "NETPortable", PortableFrameworkIdentifier },
                 { "portable", PortableFrameworkIdentifier },
-                { "wp", "WindowsPhone" },
-                { "WindowsPhone", "WindowsPhone" },
-                { "Windows", "Windows" },
-                { "win", "Windows" },
+                { "wp", WindowsPhoneFrameworkIdentifier },
+                { "WindowsPhone", WindowsPhoneFrameworkIdentifier },
+                { "Windows", WindowsFrameworkIdentifier },
+                { "win", WindowsFrameworkIdentifier },
                 { "MonoAndroid", "MonoAndroid" },
                 { "MonoTouch", "MonoTouch" },
                 { "MonoMac", "MonoMac" },
                 { "native", "native"},
-                { "WindowsPhoneApp", "WindowsPhoneApp"},
-                { "wpa", "WindowsPhoneApp"},
-                { "k", "K" }
+                { "WindowsPhoneApp", WindowsPhoneAppFrameworkIdentifier },
+                { "wpa", WindowsPhoneAppFrameworkIdentifier }
             };
 
             return frameworks;

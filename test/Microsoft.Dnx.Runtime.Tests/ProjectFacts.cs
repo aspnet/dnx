@@ -418,7 +418,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         ""dnxcore50"": {
             ""compilationOptions"": { ""define"": [""X""], ""warningsAsErrors"": true }
         },
-        ""k10"": {
+        ""netcore50"": {
             ""compilationOptions"": { ""warningsAsErrors"": true }
         }
     }
@@ -445,12 +445,12 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.Equal(new[] { "X", "DNXCORE50" }, aspnetCore50Options.Defines);
             Assert.True(aspnetCore50Options.WarningsAsErrors.Value);
 
-            var k10Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("k10"));
-            Assert.NotNull(k10Options);
-            Assert.Null(k10Options.AllowUnsafe);
-            Assert.Equal(new[] { "K10" }, k10Options.Defines);
-            Assert.True(k10Options.WarningsAsErrors.Value);
-            Assert.Null(k10Options.Platform);
+            var netcore50Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("netcore50"));
+            Assert.NotNull(netcore50Options);
+            Assert.Null(netcore50Options.AllowUnsafe);
+            Assert.Equal(new[] { "NETCORE50" }, netcore50Options.Defines);
+            Assert.True(netcore50Options.WarningsAsErrors.Value);
+            Assert.Null(netcore50Options.Platform);
         }
 
         [Fact]

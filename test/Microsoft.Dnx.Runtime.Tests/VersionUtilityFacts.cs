@@ -13,50 +13,7 @@ namespace Microsoft.Dnx.Runtime.Tests
     public class VersionUtilityFacts
     {
         [Theory]
-        [InlineData("net45", "aspnet50", false)]
-        [InlineData("aspnet50", "net45", true)]
-        [InlineData("aspnetcore50", "k10", false)]
-        [InlineData("k10", "aspnetcore50", false)]
-        [InlineData("netcore45", "aspnetcore50", false)]
-        [InlineData("win8", "aspnetcore50", false)]
-        [InlineData("win81", "aspnetcore50", false)]
-        [InlineData("aspnetcore50", "netcore45", false)]
-        [InlineData("aspnetcore50", "win8", false)]
-        [InlineData("aspnetcore50", "win81", false)]
-        [InlineData("aspnetcore50", "portable-net40+win8+aspnetcore50", true)]
-        [InlineData("net45", "aspnet452", false)]
-        [InlineData("aspnet50", "net45", true)]
-        [InlineData("aspnet50", "net45", true)]
-        [InlineData("aspnetcore50", "k10", false)]
-        [InlineData("k10", "aspnetcore50", false)]
-        [InlineData("netcore45", "aspnetcore50", false)]
-        [InlineData("win8", "aspnetcore50", false)]
-        [InlineData("win81", "aspnetcore50", false)]
-        [InlineData("aspnetcore50", "netcore45", false)]
-        [InlineData("aspnetcore50", "win8", false)]
-        [InlineData("aspnetcore50", "win81", false)]
-        [InlineData("aspnetcore50", "portable-net40+win8+aspnetcore50", true)]
-        // Temporary until our dependencies update
-        [InlineData("aspnetcore50", "portable-net45+win8", true)]
-        [InlineData("aspnetcore50", "portable-net451+win81", true)]
-        [InlineData("aspnetcore50", "portable-net40+sl5+win8", false)]
-        [InlineData("aspnetcore50", "portable-net45+win8", true)]
-        [InlineData("aspnetcore50", "portable-net451+win81", true)]
-        [InlineData("aspnetcore50", "portable-net40+sl5+win8", false)]
-
-        // Tests for aspnet -> dnx rename
-        [InlineData("dnx451", "aspnet50", true)]
-        [InlineData("dnx452", "dnx451", true)]
-        [InlineData("dnx451", "net45", true)]
-        [InlineData("aspnet50", "dnx451", false)]
-        [InlineData("net45", "dnx451", false)]
-
-        [InlineData("dnxcore50", "aspnetcore50", true)]
-        [InlineData("aspnetcore50", "dnxcore50", false)]
-        // Portable stuff?
-
         [InlineData("dnxcore50", "portable-net40+win8+dnxcore50", true)]
-        [InlineData("dnxcore50", "portable-net40+win8+aspnetcore50", true)]
         [InlineData("dnxcore50", "portable-net45+win8", true)]
         [InlineData("dnxcore50", "portable-net451+win81", true)]
         [InlineData("dnxcore50", "portable-net40+sl5+win8", false)]
@@ -66,23 +23,140 @@ namespace Microsoft.Dnx.Runtime.Tests
 
         // dotnet
         [InlineData("dotnet", "dotnet", true)]
-        [InlineData("dnxcore50", "dotnet", true)]
-        [InlineData("aspnetcore50", "dotnet", true)]
-        [InlineData("dnx451", "dotnet", true)]
-        [InlineData("dnx46", "dotnet", true)]
-        [InlineData("net451", "dotnet", true)]
-        [InlineData("net45", "dotnet", true)]
-        [InlineData("net40", "dotnet", false)]
-        [InlineData("net46", "dotnet", true)]
-        [InlineData("sl20", "dotnet", false)]
-        [InlineData("dotnet", "portable-net40+sl5+win8", false)]
-        [InlineData("dotnet", "portable-net45+win8", true)]
-        [InlineData("dotnet", "portable-net451+win81", true)]
-        [InlineData("dotnet", "portable-net451+win8+core50", true)]
-        [InlineData("dotnet", "portable-net451+win8+dnxcore50", true)]
-        [InlineData("dotnet", "portable-net451+win8+aspnetcore50", true)]
+        [InlineData("dotnet5.1", "dotnet", true)]
 
-        // Old-world Portable doesn't support dotnet
+        // dnxcore50 -> dotnet
+        [InlineData("dnxcore50", "dotnet5.4", false)]
+        [InlineData("dnxcore50", "dotnet5.3", true)]
+        [InlineData("dnxcore50", "dotnet5.2", true)]
+        [InlineData("dnxcore50", "dotnet5.1", true)]
+
+        // net -> dotnet
+        [InlineData("net461", "dotnet5.4", true)]
+        [InlineData("net461", "dotnet5.3", true)]
+        [InlineData("net461", "dotnet5.2", true)]
+        [InlineData("net461", "dotnet5.1", true)]
+        [InlineData("net461", "dotnet", true)]
+
+        [InlineData("net46", "dotnet5.4", false)]
+        [InlineData("net46", "dotnet5.3", true)]
+        [InlineData("net46", "dotnet5.2", true)]
+        [InlineData("net46", "dotnet5.1", true)]
+        [InlineData("net46", "dotnet", true)]
+
+        [InlineData("net452", "dotnet5.4", false)]
+        [InlineData("net452", "dotnet5.3", false)]
+        [InlineData("net452", "dotnet5.2", true)]
+        [InlineData("net452", "dotnet5.1", true)]
+        [InlineData("net452", "dotnet", true)]
+
+        [InlineData("net451", "dotnet5.4", false)]
+        [InlineData("net451", "dotnet5.3", false)]
+        [InlineData("net451", "dotnet5.2", true)]
+        [InlineData("net451", "dotnet5.1", true)]
+        [InlineData("net451", "dotnet", true)]
+
+        [InlineData("net45", "dotnet5.4", false)]
+        [InlineData("net45", "dotnet5.3", false)]
+        [InlineData("net45", "dotnet5.2", false)]
+        [InlineData("net45", "dotnet5.1", true)]
+        [InlineData("net45", "dotnet", true)]
+
+        // dnx -> dotnet
+        [InlineData("dnx461", "dotnet5.4", true)]
+        [InlineData("dnx461", "dotnet5.3", true)]
+        [InlineData("dnx461", "dotnet5.2", true)]
+        [InlineData("dnx461", "dotnet5.1", true)]
+        [InlineData("dnx461", "dotnet", true)]
+
+        [InlineData("dnx46", "dotnet5.4", false)]
+        [InlineData("dnx46", "dotnet5.3", true)]
+        [InlineData("dnx46", "dotnet5.2", true)]
+        [InlineData("dnx46", "dotnet5.1", true)]
+        [InlineData("dnx46", "dotnet", true)]
+
+        [InlineData("dnx452", "dotnet5.4", false)]
+        [InlineData("dnx452", "dotnet5.3", false)]
+        [InlineData("dnx452", "dotnet5.2", true)]
+        [InlineData("dnx452", "dotnet5.1", true)]
+        [InlineData("dnx452", "dotnet", true)]
+
+        [InlineData("dnx451", "dotnet5.4", false)]
+        [InlineData("dnx451", "dotnet5.3", false)]
+        [InlineData("dnx451", "dotnet5.2", true)]
+        [InlineData("dnx451", "dotnet5.1", true)]
+        [InlineData("dnx451", "dotnet", true)]
+
+        [InlineData("dnx45", "dotnet5.4", false)]
+        [InlineData("dnx45", "dotnet5.3", false)]
+        [InlineData("dnx45", "dotnet5.2", false)]
+        [InlineData("dnx45", "dotnet5.1", true)]
+        [InlineData("dnx45", "dotnet", true)]
+
+        // uap10 -> netcore50 -> win81 -> wpa81 -> dotnet
+        [InlineData("uap10.0", "netcore50", true)]
+        [InlineData("uap10.0", "win81", true)]
+        [InlineData("uap10.0", "wpa81", true)]
+        [InlineData("uap10.0", "dotnet5.4", false)]
+        [InlineData("uap10.0", "dotnet5.3", true)]
+        [InlineData("uap10.0", "dotnet5.2", true)]
+        [InlineData("uap10.0", "dotnet5.1", true)]
+        [InlineData("netcore50", "win81", true)]
+        [InlineData("netcore50", "wpa81", true)]
+        [InlineData("netcore50", "dotnet5.4", false)]
+        [InlineData("netcore50", "dotnet5.3", true)]
+        [InlineData("netcore50", "dotnet5.2", true)]
+        [InlineData("netcore50", "dotnet5.1", true)]
+
+        // wpa81/win81 -> dotnet
+        [InlineData("wpa81", "dotnet5.4", false)]
+        [InlineData("wpa81", "dotnet5.3", false)]
+        [InlineData("wpa81", "dotnet5.2", true)]
+        [InlineData("wpa81", "dotnet5.1", true)]
+        [InlineData("win81", "dotnet5.4", false)]
+        [InlineData("win81", "dotnet5.3", false)]
+        [InlineData("win81", "dotnet5.2", true)]
+        [InlineData("win81", "dotnet5.1", true)]
+
+        // wp8/win8 -> dotnet
+        [InlineData("wp8", "dotnet5.4", false)]
+        [InlineData("wp8", "dotnet5.3", false)]
+        [InlineData("wp8", "dotnet5.2", false)]
+        [InlineData("wp8", "dotnet5.1", true)]
+        [InlineData("win8", "dotnet5.4", false)]
+        [InlineData("win8", "dotnet5.3", false)]
+        [InlineData("win8", "dotnet5.2", false)]
+        [InlineData("win8", "dotnet5.1", true)]
+
+        // Older things don't support dotnet at all
+        [InlineData("sl4", "dotnet", false)]
+        [InlineData("sl3", "dotnet", false)]
+        [InlineData("sl2", "dotnet", false)]
+        [InlineData("net40", "dotnet", false)]
+        [InlineData("net35", "dotnet", false)]
+        [InlineData("net20", "dotnet", false)]
+        [InlineData("net20", "dotnet", false)]
+
+        // dotnet doesn't support the things that support it
+        [InlineData("dotnet5.1", "net45", false)]
+        [InlineData("dotnet5.2", "net45", false)]
+        [InlineData("dotnet5.2", "net451", false)]
+        [InlineData("dotnet5.2", "net452", false)]
+        [InlineData("dotnet5.1", "net46", false)]
+        [InlineData("dotnet5.2", "net46", false)]
+        [InlineData("dotnet5.3", "net46", false)]
+        [InlineData("dotnet5.1", "net461", false)]
+        [InlineData("dotnet5.2", "net461", false)]
+        [InlineData("dotnet5.3", "net461", false)]
+        [InlineData("dotnet5.4", "net461", false)]
+        [InlineData("dotnet5.1", "dnxcore50", false)]
+        [InlineData("dotnet5.2", "dnxcore50", false)]
+        [InlineData("dotnet5.3", "dnxcore50", false)]
+        [InlineData("dotnet5.4", "dnxcore50", false)]
+
+        // Old-world Portable doesn't support dotnet and vice-versa
+        [InlineData("dotnet", "portable-net40+sl5+win8", false)]
+        [InlineData("dotnet", "portable-net45+win8", false)]
         [InlineData("portable-net40+sl5+win8", "dotnet", false)]
         [InlineData("portable-net45+win8", "dotnet", false)]
         [InlineData("portable-net451+win81", "dotnet", false)]
@@ -103,6 +177,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("dotnet", ".NETPlatform", "5.0")]
         [InlineData("dotnet10", ".NETPlatform", "1.0")]
         [InlineData("dotnet50", ".NETPlatform", "5.0")]
+        [InlineData("dotnet5.1", ".NETPlatform", "5.1")]
         [InlineData("dotnet60", ".NETPlatform", "6.0")]
         public void CanParseShortFrameworkNames(string shortName, string longName, string version)
         {
@@ -112,7 +187,10 @@ namespace Microsoft.Dnx.Runtime.Tests
 
         [Theory]
         [InlineData(".NETPlatform", "5.0", "dotnet")]
-        [InlineData(".NETPlatform", "5.1", "dotnet51")]
+        [InlineData(".NETPlatform", "5.1", "dotnet5.1")]
+        [InlineData(".NETPlatform", "5.2", "dotnet5.2")]
+        [InlineData(".NETPlatform", "5.3", "dotnet5.3")]
+        [InlineData("UAP", "10.0", "UAP10.0")]
         public void ShortFrameworkNamesAreCorrect(string longName, string version, string shortName)
         {
             var fx = new FrameworkName(longName, Version.Parse(version));

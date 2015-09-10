@@ -116,11 +116,11 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("dnx452", "DNX 4.5.2")]
         [InlineData("dnx46", "DNX 4.6")]
         [InlineData("dotnet", ".NET Platform")]
-
-        // Legacy
-        [InlineData("k10", ".NET Core Framework 4.5")]
-        [InlineData("aspnetcore50", "ASP.NET Core 5.0")]
-        [InlineData("aspnet50", "ASP.NET 5.0")]
+        [InlineData("dotnet5.1", ".NET Platform 5.1")]
+        [InlineData("dotnet5.2", ".NET Platform 5.2")]
+        [InlineData("dotnet5.3", ".NET Platform 5.3")]
+        [InlineData("dotnet5.4", ".NET Platform 5.4")]
+        [InlineData("dotnet5.5", ".NET Platform 5.5")]
         public void GetFriendlyNameReturnsExpectedNames(string shortName, string friendlyName)
         {
             Assert.Equal(

@@ -28,5 +28,7 @@ namespace Microsoft.Dnx.Runtime
 
         public static readonly Version Version35 = new Version(3, 5);
         public static readonly Version Version40 = new Version(4, 0);
+        public static readonly Version Version50 = new Version(5, 0);
+        public static readonly Version Version10_0 = new Version(10, 0);
     }
 }
