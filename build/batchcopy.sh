@@ -6,6 +6,10 @@ echo "       To: $2"
 src=${1//\\//}
 dst=${2//\\//}
 
+if [ ! -d "$src" ]; then
+  exit 0
+fi
+
 if [ ! -d "$dst" ]; then
   mkdir -p $dst
 fi
