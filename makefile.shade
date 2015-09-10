@@ -372,7 +372,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/{2}/include",
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl -lpthread -Isrc/{2}/include",
             string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
@@ -415,7 +415,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/{2}/include",
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl -lpthread -Isrc/{2}/include",
             string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
