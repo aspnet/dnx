@@ -160,9 +160,17 @@ namespace Microsoft.Dnx.Tooling
             InstallBuilder installBuilder = null;
             SourceBuilder sourceBuilder = null;
 
+            var contextVariables = new Dictionary<string, string>
+            {
+                { "project:BuildOutputDir", GetBuildOutputDir(_currentProject) },
+                { "build:Configuration", configuration }
+            };
+
+            var getScriptVariable = GetScriptVariable(contextVariables);
+
             if (_buildOptions.GeneratePackages)
             {
-                if(!ScriptExecutor.Execute(_currentProject, "prepack", GetScriptVariable))
+                if(!ScriptExecutor.Execute(_currentProject, "prepack", getScriptVariable))
                 {
                     LogError(ScriptExecutor.ErrorMessage);
                     return false;
@@ -188,7 +196,9 @@ namespace Microsoft.Dnx.Tooling
                 _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
                     _currentProject.Name, targetFramework.ToString().Yellow().Bold());
 
-                if (!ScriptExecutor.Execute(_currentProject, "prebuild", GetScriptVariable))
+                contextVariables["build:TargetFramework"] = VersionUtility.GetShortFrameworkName(targetFramework);
+
+                if (!ScriptExecutor.Execute(_currentProject, "prebuild", getScriptVariable))
                 {
                     LogError(ScriptExecutor.ErrorMessage);
                     success = false;
@@ -220,7 +230,7 @@ namespace Microsoft.Dnx.Tooling
                         context.AddLibs(packageBuilder, "*.resources.dll", recursiveSearch: true);
                     }
 
-                    if (!ScriptExecutor.Execute(_currentProject, "postbuild", GetScriptVariable))
+                    if (!ScriptExecutor.Execute(_currentProject, "postbuild", getScriptVariable))
                     {
                         LogError(ScriptExecutor.ErrorMessage);
                         success = false;
@@ -230,6 +240,8 @@ namespace Microsoft.Dnx.Tooling
                 allDiagnostics.AddRange(diagnostics);
 
                 WriteDiagnostics(diagnostics);
+
+                contextVariables.Remove("build:TargetFramework");
             }
 
             if (_buildOptions.GeneratePackages)
@@ -250,7 +262,7 @@ namespace Microsoft.Dnx.Tooling
 
                 if (success)
                 {
-                    if (!ScriptExecutor.Execute(_currentProject, "postpack", GetScriptVariable))
+                    if (!ScriptExecutor.Execute(_currentProject, "postpack", getScriptVariable))
                     {
                         LogError(ScriptExecutor.ErrorMessage);
                         return false;
@@ -403,14 +415,14 @@ namespace Microsoft.Dnx.Tooling
             }
         }
 
-        private string GetScriptVariable(string key)
+        private Func<string, string> GetScriptVariable(IDictionary<string, string> contextVariables)
         {
-            if (string.Equals("project:BuildOutputDir", key, StringComparison.OrdinalIgnoreCase))
+            return key =>
             {
-                return GetBuildOutputDir(_currentProject);
-            }
-
-            return null;
+                string value;
+                contextVariables.TryGetValue(key, out value);
+                return value;
+            };
         }
 
         private static void InitializeBuilder(Runtime.Project project, PackageBuilder builder)
