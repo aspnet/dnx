@@ -34,15 +34,6 @@ typedef int (*host_main_fn)(const int argc, const wchar_t** argv);
 
 namespace
 {
-
-#ifdef PLATFORM_DARWIN
-const char* LIBCORECLR_NAME = "libcoreclr.dylib";
-const char* LIBCORECLRPAL_NAME = "libcoreclrpal.dylib";
-#else
-const char* LIBCORECLR_NAME = "libcoreclr.so";
-const char* LIBCORECLRPAL_NAME = "libcoreclrpal.so";
-#endif
-
 std::string GetPathToBootstrapper()
 {
 #ifdef PLATFORM_DARWIN
@@ -79,17 +70,21 @@ bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNa
 }
 
 void* pLibCoreClr = nullptr;
-void* pLibCoreClrPal = nullptr;
 
-bool LoadCoreClrAtPath(const std::string& loadPath, void** ppLibCoreClr, void** ppLibCoreClrPal)
+bool LoadCoreClrAtPath(const std::string& loadPath, void** ppLibCoreClr)
 {
-    std::string coreClrDllPath = dnx::utils::path_combine(loadPath, LIBCORECLR_NAME);
-    std::string coreClrPalPath = dnx::utils::path_combine(loadPath, LIBCORECLRPAL_NAME);
+    const char* LIBCORECLR_NAME =
+#ifdef PLATFORM_DARWIN
+        "libcoreclr.dylib";
+#else
+        "libcoreclr.so";
+#endif
 
-    *ppLibCoreClrPal = dlopen(coreClrPalPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    auto coreClrDllPath = dnx::utils::path_combine(loadPath, LIBCORECLR_NAME);
+
     *ppLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
-    return *ppLibCoreClrPal != nullptr && *ppLibCoreClr != nullptr;
+    return *ppLibCoreClr != nullptr;
 }
 
 void FreeCoreClr()
@@ -99,21 +94,8 @@ void FreeCoreClr()
         dlclose(pLibCoreClr);
         pLibCoreClr = nullptr;
     }
-
-    if (pLibCoreClrPal)
-    {
-        dlclose(pLibCoreClrPal);
-        pLibCoreClrPal = nullptr;
-    }
 }
 
-// libcoreclr has a dependency on libcoreclrpal, which is commonly not on LD_LIBRARY_PATH, so for every
-// location we try to load libcoreclr from, we first try to load libcoreclrpal so when we load coreclr
-// itself the linker is happy.
-//
-// NOTE: The code here is structured in a way such that it is OK if the load of libcoreclrpal fails,
-// because depending on the version of the coreclr DNX has, the PAL may still be staticlly linked
-// into coreclr and we want to be able to load coreclr's that have been built this way.
 int LoadCoreClr(std::string& coreClrDirectory, const std::string& runtimeDirectory)
 {
     void* ret = nullptr;
@@ -123,23 +105,14 @@ int LoadCoreClr(std::string& coreClrDirectory, const std::string& runtimeDirecto
     if (coreClrEnvVar)
     {
         coreClrDirectory = coreClrEnvVar;
-
-        LoadCoreClrAtPath(coreClrDirectory, &pLibCoreClr, &pLibCoreClrPal);
-
-        if (!pLibCoreClr && pLibCoreClrPal)
-        {
-            // The PAL loaded but CoreCLR did not.  We are going to try other places, so let's
-            // unload this PAL.
-            dlclose(pLibCoreClrPal);
-            pLibCoreClrPal = nullptr;
-        }
+        LoadCoreClrAtPath(coreClrDirectory, &pLibCoreClr);
     }
 
     if (!pLibCoreClr)
     {
         // Try to load coreclr from application path.
         coreClrDirectory = runtimeDirectory;
-        LoadCoreClrAtPath(coreClrDirectory, &pLibCoreClr, &pLibCoreClrPal);
+        LoadCoreClrAtPath(coreClrDirectory, &pLibCoreClr);
     }
     
     if (!pLibCoreClr)
