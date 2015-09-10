@@ -391,10 +391,10 @@ public class TestClass : BaseClass {
       }
   },
   ""scripts"": {
-    ""prebuild"": ""echo PREBUILD_SCRIPT_OUTPUT"",
-    ""prepack"": ""echo PREPACK_SCRIPT_OUTPUT"",
-    ""postbuild"": ""echo POSTBUILD_SCRIPT_OUTPUT"",
-    ""postpack"": ""echo POSTPACK_SCRIPT_OUTPUT""
+    ""prebuild"": ""echo PREBUILD_SCRIPT_OUTPUT %build:Configuration% %build:TargetFramework%"",
+    ""prepack"": ""echo PREPACK_SCRIPT_OUTPUT %build:Configuration% %build:TargetFramework%"",
+    ""postbuild"": ""echo POSTBUILD_SCRIPT_OUTPUT %build:Configuration% %build:TargetFramework%"",
+    ""postpack"": ""echo POSTPACK_SCRIPT_OUTPUT %build:Configuration% %build:TargetFramework%""
   }
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -418,27 +418,26 @@ public class TestClass : BaseClass {
                 Assert.Empty(stdErr);
 
                 var idx = 0;
-                for (var i = 0; i < 2; i++)
+                foreach (var configuration in new[] { "Debug", "Release"})
                 {
-                    idx = stdOut.IndexOf("PREPACK_SCRIPT_OUTPUT", idx);
+                    // note that %TargetFramework% is not defined outside build
+                    idx = stdOut.IndexOf($"PREPACK_SCRIPT_OUTPUT {configuration} %build:TargetFramework%", 0);
                     Assert.True(idx >= 0);
-                    idx = stdOut.IndexOf("PREBUILD_SCRIPT_OUTPUT", idx);
+                    foreach (var framework in new[] { "dnx451", "dnxcore50" })
+                    {
+                        idx = stdOut.IndexOf($"PREBUILD_SCRIPT_OUTPUT {configuration} {framework}", idx);
+                        Assert.True(idx >= 0);
+                        idx = stdOut.IndexOf($"POSTBUILD_SCRIPT_OUTPUT {configuration} {framework}", idx);
+                        Assert.True(idx >= 0);
+                    }
+                    idx = stdOut.IndexOf($"POSTPACK_SCRIPT_OUTPUT {configuration} %build:TargetFramework%", 0);
                     Assert.True(idx >= 0);
-                    idx = stdOut.IndexOf("POSTBUILD_SCRIPT_OUTPUT", idx);
-                    Assert.True(idx >= 0);
-                    idx = stdOut.IndexOf("PREBUILD_SCRIPT_OUTPUT", idx);
-                    Assert.True(idx >= 0);
-                    idx = stdOut.IndexOf("POSTBUILD_SCRIPT_OUTPUT", idx);
-                    Assert.True(idx >= 0);
-                    idx = stdOut.IndexOf("POSTPACK_SCRIPT_OUTPUT", idx);
-                    Assert.True(idx >= 0);
-                    idx += "POSTPACK_SCRIPT_OUTPUT".Length;
                 }
 
-                Assert.Equal(-1, stdOut.IndexOf("PREPACK_SCRIPT_OUTPUT", idx));
-                Assert.Equal(-1, stdOut.IndexOf("PREBUILD_SCRIPT_OUTPUT", idx));
-                Assert.Equal(-1, stdOut.IndexOf("POSTBUILD_SCRIPT_OUTPUT", idx));
-                Assert.Equal(-1, stdOut.IndexOf("POSTPACK_SCRIPT_OUTPUT", idx));
+                Assert.Equal(-1, stdOut.IndexOf("PREPACK_SCRIPT_OUTPUT", idx + 1));
+                Assert.Equal(-1, stdOut.IndexOf("PREBUILD_SCRIPT_OUTPUT", idx + 1));
+                Assert.Equal(-1, stdOut.IndexOf("POSTBUILD_SCRIPT_OUTPUT", idx + 1));
+                Assert.Equal(-1, stdOut.IndexOf("POSTPACK_SCRIPT_OUTPUT", idx + 1));
             }
         }
 
