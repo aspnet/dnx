@@ -37,7 +37,7 @@ namespace Microsoft.Dnx.Tooling
 
             foreach (var result in results)
             {
-                if (VersionUtility.ShouldUseConsidering(
+                if (VersionUtility2.ShouldUseConsidering(
                     current: bestResult?.Version,
                     considering: result.Version,
                     ideal: libraryRange.VersionRange))
@@ -70,7 +70,7 @@ namespace Microsoft.Dnx.Tooling
             {
                 var metadata = (IPackageMetadata)Manifest.ReadFrom(stream, validateSchema: false).Metadata;
                 IEnumerable<PackageDependencySet> dependencySet;
-                if (VersionUtility.GetNearest(targetFramework, metadata.DependencySets, out dependencySet))
+                if (VersionUtility2.GetNearest(targetFramework, metadata.DependencySets, out dependencySet))
                 {
                     return dependencySet
                         .SelectMany(ds => ds.Dependencies)

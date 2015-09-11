@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         {
             // Filter out frameworks incompatible with the current framework before selecting
             return SelectFrameworkNameForRuntime(
-                availableFrameworks.Where(f => VersionUtility.IsCompatible(currentFramework, f)), 
+                availableFrameworks.Where(f => VersionUtility2.IsCompatible(currentFramework, f)), 
                 runtime);
         }
 

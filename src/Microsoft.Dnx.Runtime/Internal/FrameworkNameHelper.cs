@@ -11,19 +11,6 @@ namespace Microsoft.Dnx.Runtime.Helpers
     {
         public static FrameworkName ParseFrameworkName(string targetFramework)
         {
-            if (targetFramework.Contains("+"))
-            {
-                var portableProfile = NetPortableProfile.Parse(targetFramework);
-
-                if (portableProfile != null &&
-                    portableProfile.FrameworkName.Profile != targetFramework)
-                {
-                    return portableProfile.FrameworkName;
-                }
-
-                return VersionUtility.UnsupportedFrameworkName;
-            }
-
             if (targetFramework.IndexOf(',') != -1)
             {
                 // Assume it's a framework name if it contains commas
@@ -39,7 +26,7 @@ namespace Microsoft.Dnx.Runtime.Helpers
             var shortName = frameworkDefinition.Item1;
             var targetFramework = frameworkDefinition.Item2;
 
-            if (VersionUtility.IsPortableFramework(targetFramework))
+            if (targetFramework.IsPortableFramework())
             {
                 return null;
             }

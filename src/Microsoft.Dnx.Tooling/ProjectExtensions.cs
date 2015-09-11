@@ -15,7 +15,7 @@ namespace Microsoft.Dnx.Tooling
         public static TargetFrameworkInformation GetCompatibleTargetFramework(this Runtime.Project project, FrameworkName targetFramework)
         {
             IEnumerable<TargetFrameworkInformation> targets;
-            if (VersionUtility.GetNearest(targetFramework, project.GetTargetFrameworks(), out targets) &&
+            if (VersionUtility2.GetNearest(targetFramework, project.GetTargetFrameworks(), out targets) &&
                 targets.Any())
             {
                 return targets.FirstOrDefault();

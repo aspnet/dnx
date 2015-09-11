@@ -60,7 +60,7 @@ namespace Microsoft.Dnx.Runtime
             var package = packageInfo.Package;
 
             IEnumerable<PackageDependencySet> dependencySet;
-            if (VersionUtility.GetNearest(targetFramework, package.DependencySets, out dependencySet))
+            if (VersionUtility2.GetNearest(targetFramework, package.DependencySets, out dependencySet))
             {
                 foreach (var set in dependencySet)
                 {
@@ -77,16 +77,13 @@ namespace Microsoft.Dnx.Runtime
                 }
             }
 
-            // TODO: Remove this when we do #596
-            // ASP.NET Core isn't compatible with generic PCL profiles
-            if (string.Equals(targetFramework.Identifier, VersionUtility.AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(targetFramework.Identifier, VersionUtility.DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            if (VersionUtility2.IsPackageBased(targetFramework))
             {
                 yield break;
             }
 
             IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
-            if (VersionUtility.GetNearest(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
+            if (VersionUtility2.GetNearest(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
             {
                 foreach (var assemblyReference in frameworkAssemblies)
                 {
@@ -136,7 +133,7 @@ namespace Microsoft.Dnx.Runtime
 
             foreach (var packageInfo in packages)
             {
-                if (VersionUtility.ShouldUseConsidering(
+                if (VersionUtility2.ShouldUseConsidering(
                     current: bestMatch?.Version,
                     considering: packageInfo.Version,
                     ideal: versionRange))

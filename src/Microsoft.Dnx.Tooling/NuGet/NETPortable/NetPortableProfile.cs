@@ -129,7 +129,7 @@ namespace NuGet
 
             return other.SupportedFrameworks.All(
                 projectFramework => this.SupportedFrameworks.Any(
-                    packageFramework => VersionUtility.IsCompatible(projectFramework, packageFramework)));
+                    packageFramework => VersionUtility2.IsCompatible(projectFramework, packageFramework)));
         }
 
         public bool IsCompatibleWith(FrameworkName framework)
@@ -139,7 +139,7 @@ namespace NuGet
                 throw new ArgumentNullException(nameof(framework));
             }
 
-            return SupportedFrameworks.Any(f => VersionUtility.IsCompatible(framework, f));
+            return SupportedFrameworks.Any(f => VersionUtility2.IsCompatible(framework, f));
         }
 
         /// <summary>
