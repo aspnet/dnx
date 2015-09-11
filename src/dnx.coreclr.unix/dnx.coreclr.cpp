@@ -69,9 +69,23 @@ bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNa
     return true;
 }
 
+bool GetTrustedPlatformAssembliesList(const std::string& runtime_directory, std::string& trusted_assemblies)
+{
+        // Try native images first
+    if (!GetTrustedPlatformAssembliesList(runtime_directory, true, trusted_assemblies))
+    {
+        if (!GetTrustedPlatformAssembliesList(runtime_directory, false, trusted_assemblies))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void* pLibCoreClr = nullptr;
 
-bool LoadCoreClrAtPath(const std::string& loadPath, void** ppLibCoreClr)
+bool LoadCoreClrAtPath(const char* runtime_directory, void** ppLibCoreClr)
 {
     const char* LIBCORECLR_NAME =
 #ifdef PLATFORM_DARWIN
@@ -80,9 +94,9 @@ bool LoadCoreClrAtPath(const std::string& loadPath, void** ppLibCoreClr)
         "libcoreclr.so";
 #endif
 
-    auto coreClrDllPath = dnx::utils::path_combine(loadPath, LIBCORECLR_NAME);
+    auto coreclr_lib_path = dnx::utils::path_combine(runtime_directory, LIBCORECLR_NAME);
 
-    *ppLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    *ppLibCoreClr = dlopen(coreclr_lib_path.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
     return *ppLibCoreClr != nullptr;
 }
@@ -96,25 +110,12 @@ void FreeCoreClr()
     }
 }
 
-int LoadCoreClr(std::string& coreClrDirectory, const std::string& runtimeDirectory)
+int LoadCoreClr(const char* runtime_directory)
 {
     void* ret = nullptr;
 
-    char* coreClrEnvVar = getenv("CORECLR_DIR");
+    LoadCoreClrAtPath(runtime_directory, &pLibCoreClr);
 
-    if (coreClrEnvVar)
-    {
-        coreClrDirectory = coreClrEnvVar;
-        LoadCoreClrAtPath(coreClrDirectory, &pLibCoreClr);
-    }
-
-    if (!pLibCoreClr)
-    {
-        // Try to load coreclr from application path.
-        coreClrDirectory = runtimeDirectory;
-        LoadCoreClrAtPath(coreClrDirectory, &pLibCoreClr);
-    }
-    
     if (!pLibCoreClr)
     {
         char* error = dlerror();
@@ -127,8 +128,7 @@ int LoadCoreClr(std::string& coreClrDirectory, const std::string& runtimeDirecto
     return 0;
 }
 
-int32_t initialize_runtime(const char* app_base, const std::string& coreclr_directory, const std::string& runtime_directory,
-    void **host_handle, unsigned int* domain_id)
+int32_t initialize_runtime(CALL_APPLICATION_MAIN_DATA* data, void **host_handle, unsigned int* domain_id)
 {
     auto coreclr_initialize = (coreclr_initialize_fn)dlsym(pLibCoreClr, "coreclr_initialize");
     if (!coreclr_initialize)
@@ -148,28 +148,22 @@ int32_t initialize_runtime(const char* app_base, const std::string& coreclr_dire
 
     std::string trusted_assemblies;
 
-    // Try native images first
-    if (!GetTrustedPlatformAssembliesList(coreclr_directory, true, trusted_assemblies))
+    if (!GetTrustedPlatformAssembliesList(data->runtimeDirectory, trusted_assemblies))
     {
-        if (!GetTrustedPlatformAssembliesList(coreclr_directory, false, trusted_assemblies))
-        {
-            fprintf(stderr, "Failed to find files in the coreclr directory\n");
-            return -1;
-        }
+        fprintf(stderr, "Failed to find files in the coreclr directory\n");
+        return -1;
     }
 
     // Add the assembly containing the app domain manager to the trusted list
-    trusted_assemblies.append(dnx::utils::path_combine(runtime_directory, BootstrapperName ".dll"));
-
-    auto app_paths = runtime_directory + ":" + coreclr_directory + ":";
+    trusted_assemblies.append(dnx::utils::path_combine(data->runtimeDirectory, BootstrapperName ".dll"));
 
     const char* property_values[] = {
         // APPBASE
-        app_base,
+        data->applicationBase,
         // TRUESTED_PLATFORM_ASSEMBLIES
         trusted_assemblies.c_str(),
         // APP_PATHS
-        app_paths.c_str(),
+        data->runtimeDirectory,
     };
 
     return coreclr_initialize(bootstrapper_path.c_str(), BootstrapperName, sizeof(property_keys) / sizeof(const char*),
@@ -239,12 +233,12 @@ int InvokeDelegate(host_main_fn host_main, int argc, const char** argv)
     return exit_code;
 }
 
-int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data, const std::string& runtime_directory, const std::string& coreclr_directory)
+int CallMain(CALL_APPLICATION_MAIN_DATA* data)
 {
     void* host_handle = nullptr;
     unsigned int domain_id;
 
-    auto result = initialize_runtime(data->applicationBase, coreclr_directory, runtime_directory, &host_handle, &domain_id);
+    auto result = initialize_runtime(data, &host_handle, &domain_id);
     if (result < 0)
     {
         fprintf(stderr, "Failed to initialize runtime: 0x%08x\n", result);
@@ -275,17 +269,14 @@ int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data, const std::string& run
 
 extern "C" int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data)
 {
-    const std::string runtime_directory = data->runtimeDirectory;
-    std::string coreclr_directory;
-
-    if (LoadCoreClr(coreclr_directory, runtime_directory) != 0)
+    if (LoadCoreClr(data->runtimeDirectory) != 0)
     {
         return -1;
     }
 
     setenv("DNX_FRAMEWORK", "dnxcore50", 1);
 
-    auto result = CallApplicationMain(data, runtime_directory, coreclr_directory);
+    auto result = CallMain(data);
 
     FreeCoreClr();
 
