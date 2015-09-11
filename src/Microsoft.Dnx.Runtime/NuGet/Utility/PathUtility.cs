@@ -86,6 +86,12 @@ namespace NuGet
             if (Microsoft.Dnx.Runtime.RuntimeEnvironmentHelper.IsWindows)
             {
                 compare = StringComparison.OrdinalIgnoreCase;
+                // check if paths are on the same volume
+                if (!string.Equals(Path.GetPathRoot(path1), Path.GetPathRoot(path2)))
+                {
+                    // on different volumes, "relative" path is just path2
+                    return path2;
+                }
             }
             else
             {

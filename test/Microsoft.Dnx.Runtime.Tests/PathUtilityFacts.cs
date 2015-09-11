@@ -69,7 +69,10 @@ namespace Microsoft.Dnx.Runtime.Tests
                         new object[] { "", "C:/folder/app", "C:/folder/app" },
                         new object[] { "app/", "C:/folder/app", "C:/folder/app/" },
                         new object[] { "../diff/app/", "C:/folder/app", "C:/diff/app/" },
-                        new object[] { "../folder1/file", "C:\\folder\\file", "C:\\folder1\\file" }
+                        new object[] { "../folder1/file", "C:\\folder\\file", "C:\\folder1\\file" },
+                        new object[] { "H:\\folder\\file", "C:\\folder\\file", "H:\\folder\\file" },
+                        new object[] { "folder/file", "C:\\", "C:\\folder\\file" },
+                        new object[] { "..\\", "C:\\folder\\file", "C:\\" }
                     });
                 }
                 else
