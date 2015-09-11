@@ -19,7 +19,7 @@ std::wstring GetModuleDirectory(HMODULE module)
 }
 
 // Generate a list of trusted platform assemblies.
-bool GetTrustedPlatformAssembliesList(const std::wstring& core_clr_directory, bool bNative, std::wstring& tpa_paths)
+bool GetTrustedPlatformAssembliesList(const std::wstring& runtime_directory, bool bNative, std::wstring& tpa_paths)
 {
     // Build the list of the tpa assemblies
     auto tpas = CreateTpaBase(bNative);
@@ -27,7 +27,7 @@ bool GetTrustedPlatformAssembliesList(const std::wstring& core_clr_directory, bo
     // Scan the directory to see if all the files in TPA list exist
     for (auto assembly_name : tpas)
     {
-        if (!dnx::utils::file_exists(dnx::utils::path_combine(core_clr_directory, assembly_name)))
+        if (!dnx::utils::file_exists(dnx::utils::path_combine(runtime_directory, assembly_name)))
         {
             return false;
         }
@@ -35,57 +35,24 @@ bool GetTrustedPlatformAssembliesList(const std::wstring& core_clr_directory, bo
 
     for (auto assembly_name : tpas)
     {
-        tpa_paths.append(dnx::utils::path_combine(core_clr_directory, assembly_name)).append(L";");
+        tpa_paths.append(dnx::utils::path_combine(runtime_directory, assembly_name)).append(L";");
     }
 
     return true;
 }
 
-HMODULE LoadLoaderModule(dnx::trace_writer& trace_writer)
+bool GetTrustedPlatformAssembliesList(const std::wstring& runtime_directory, std::wstring& trusted_platform_assemblies)
 {
-    const wchar_t* module_names[] =
+    // Try native images first
+    if (!GetTrustedPlatformAssembliesList(runtime_directory, true, trusted_platform_assemblies))
     {
-        L"api-ms-win-core-libraryloader-l1-1-1.dll",
-        L"kernel32.dll",
-    };
-
-    for (auto i = 0; i < sizeof(module_names) / sizeof(wchar_t*); i++)
-    {
-        auto loader_module = LoadLibraryExW(module_names[i], NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-        if (loader_module)
+        if (!GetTrustedPlatformAssembliesList(runtime_directory, false, trusted_platform_assemblies))
         {
-            trace_writer.write(std::wstring(L"Loaded ").append(module_names[i]), true);
-            return loader_module;
+             return false;
         }
     }
 
-    return nullptr;
-}
-
-HMODULE LoadCoreClrFromPath(const std::wstring& coreclr_dir, dnx::trace_writer& trace_writer)
-{
-    auto loader_module = LoadLoaderModule(trace_writer);
-    if (!loader_module)
-    {
-        trace_writer.write(L"Failed to load loader module", false);
-        return nullptr;
-    }
-
-    auto pfnAddDllDirectory = (FnAddDllDirectory)GetProcAddress(loader_module, "AddDllDirectory");
-    auto pfnSetDefaultDllDirectories = (FnSetDefaultDllDirectories)GetProcAddress(loader_module, "SetDefaultDllDirectories");
-    if (!pfnAddDllDirectory || !pfnSetDefaultDllDirectories)
-    {
-        trace_writer.write(std::wstring(L"Failed to find function: ")
-            .append(pfnAddDllDirectory ? L"SetDefaultDllDirectories" : L"AddDllDirectory"), false);
-        return nullptr;
-    }
-
-    pfnAddDllDirectory(coreclr_dir.c_str());
-
-    // Modify the default dll flags so that dependencies can be found in this path
-    pfnSetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
-
-    return LoadLibraryExW(dnx::utils::path_combine(coreclr_dir, L"coreclr.dll").c_str(), NULL, 0);
+    return true;
 }
 
 bool PinModule(HMODULE module, dnx::trace_writer& trace_writer)
@@ -106,24 +73,7 @@ bool PinModule(HMODULE module, dnx::trace_writer& trace_writer)
 
 HMODULE LoadCoreClr(const std::wstring& runtime_directory, dnx::trace_writer& trace_writer)
 {
-    HMODULE coreclr_module;
-
-    wchar_t coreclr_dir_buffer[MAX_PATH];
-    auto result = GetEnvironmentVariableW(L"CORECLR_DIR", coreclr_dir_buffer, MAX_PATH);
-    if (result > MAX_PATH)
-    {
-        trace_writer.write(L"The value of the 'CORECLR_DIR' variable is invalid. Aborting loading coreclr.dll.", true);
-        return nullptr;
-    }
-
-    if (result)
-    {
-        coreclr_module = LoadCoreClrFromPath(coreclr_dir_buffer, trace_writer);
-    }
-    else
-    {
-        coreclr_module = LoadLibraryExW(dnx::utils::path_combine(runtime_directory, L"coreclr.dll").c_str(), NULL, 0);
-    }
+    HMODULE coreclr_module = LoadLibraryExW(dnx::utils::path_combine(runtime_directory, L"coreclr.dll").c_str(), NULL, 0);
 
     if (coreclr_module)
     {
@@ -212,8 +162,7 @@ HRESULT StopClrHost(ICLRRuntimeHost2* pCLRRuntimeHost)
     return pCLRRuntimeHost->Stop();
 }
 
-HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data,
-    const std::wstring& core_clr_directory, dnx::trace_writer& trace_writer)
+HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data, dnx::trace_writer& trace_writer)
 {
     const wchar_t* property_keys[] =
     {
@@ -244,22 +193,14 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
     // paths to the user profile folder so it can be bigger.
     trusted_platform_assemblies.reserve(8192);
 
-    // Try native images first
-    if (!GetTrustedPlatformAssembliesList(core_clr_directory, true, trusted_platform_assemblies))
+    if (!GetTrustedPlatformAssembliesList(data->runtimeDirectory, trusted_platform_assemblies))
     {
-        if (!GetTrustedPlatformAssembliesList(core_clr_directory, false, trusted_platform_assemblies))
-        {
-            trace_writer.write(L"Failed to find TPA files in the coreclr directory", false);
-            return E_FAIL;
-        }
+        trace_writer.write(L"Failed to find TPA files in the coreclr directory", false);
+        return E_FAIL;
     }
 
     // Add the assembly containing the app domain manager to the trusted list
     trusted_platform_assemblies.append(dnx::utils::path_combine(data->runtimeDirectory, L"Microsoft.Dnx.Host.CoreClr.dll"));
-
-    std::wstring app_paths;
-    app_paths.append(data->runtimeDirectory).append(L";");
-    app_paths.append(core_clr_directory).append(L";");
 
     const wchar_t* property_values[] = {
         // APPBASE
@@ -267,7 +208,7 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
         // TRUSTED_PLATFORM_ASSEMBLIES
         trusted_platform_assemblies.c_str(),
         // APP_PATHS
-        app_paths.c_str(),
+        data->runtimeDirectory,
         // Use the latest behavior when TFM not specified
         L"UseLatestBehaviorWhenTFMNotSpecified",
     };
@@ -288,7 +229,7 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
     {
         trace_writer.write(L"Failed to create app domain", false);
         trace_writer.write(std::wstring(L"TPA: ").append(trusted_platform_assemblies), false);
-        trace_writer.write(std::wstring(L"AppPaths: ").append(app_paths), false);
+        trace_writer.write(std::wstring(L"AppPaths: ").append(data->runtimeDirectory), false);
         return hr;
     }
 
@@ -346,7 +287,7 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
         return hr;
     }
 
-    hr = ExecuteMain(pCLRRuntimeHost, data, GetModuleDirectory(coreclr_module), trace_writer);
+    hr = ExecuteMain(pCLRRuntimeHost, data, trace_writer);
     if (FAILED(hr))
     {
         trace_writer.write(L"Failed to execute Main", false);
