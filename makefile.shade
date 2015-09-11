@@ -938,12 +938,6 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                     continue;
                 }
                 
-                // TODO: enable tests on darwin and linux after we get rid of ansi console color issue on CoreCLR
-                if (target.OS == "darwin" || target.OS == "linux")
-                {
-                    continue;
-                }
-                
                 var binPath = binPaths[target.Name];
                 
                 ExecuteWithPath(binPath, () =>
