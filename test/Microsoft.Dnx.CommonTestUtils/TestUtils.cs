@@ -12,6 +12,7 @@ using Microsoft.Dnx.Tooling;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Newtonsoft.Json.Linq;
+using System.Threading;
 
 namespace Microsoft.Dnx.CommonTestUtils
 {
@@ -358,6 +359,8 @@ namespace Microsoft.Dnx.CommonTestUtils
                     {
                         throw;
                     }
+
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
                 }
             }
         }
