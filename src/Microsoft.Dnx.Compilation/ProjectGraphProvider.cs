@@ -7,6 +7,13 @@ namespace Microsoft.Dnx.Compilation
 {
     public class ProjectGraphProvider : IProjectGraphProvider
     {
+        private readonly IResolvedLibraryCache _libraryCache;
+
+        public ProjectGraphProvider(IResolvedLibraryCache libraryCache)
+        {
+            _libraryCache = libraryCache;
+        }
+
         public LibraryManager GetProjectGraph(Project project, FrameworkName targetFramework)
         {
             // TODO: Cache sub-graph walk?
@@ -15,7 +22,8 @@ namespace Microsoft.Dnx.Compilation
             var context = new ApplicationHostContext
             {
                 Project = project,
-                TargetFramework = targetFramework
+                TargetFramework = targetFramework,
+                LibraryCache = _libraryCache,
             };
 
             ApplicationHostContext.Initialize(context);

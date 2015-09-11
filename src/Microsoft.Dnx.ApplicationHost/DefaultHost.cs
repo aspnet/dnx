@@ -110,7 +110,8 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             {
                 ProjectDirectory = _projectDirectory,
                 RuntimeIdentifiers = _runtimeEnvironment.GetAllRuntimeIdentifiers(),
-                TargetFramework = _targetFramework
+                TargetFramework = _targetFramework,
+                LibraryCache = new ResolvedLibraryCache(),
             };
 
             var libraries = ApplicationHostContext.GetRuntimeLibraries(applicationHostContext, throwOnInvalidLockFile: true);
@@ -145,7 +146,8 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 loadContextAccessor.Default, 
                 new CompilationCache(), 
                 fileWatcher, 
-                new ProjectGraphProvider());
+                new ProjectGraphProvider(applicationHostContext.LibraryCache),
+                applicationHostContext.LibraryCache);
 
             // Compilation services available only for runtime compilation
             compilationContext.AddCompilationService(typeof(RuntimeOptions), options);

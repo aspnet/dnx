@@ -59,7 +59,8 @@ namespace Microsoft.Dnx.Compilation
             {
                 Project = project,
                 RuntimeIdentifiers = _context.RuntimeEnvironment.GetAllRuntimeIdentifiers(),
-                TargetFramework = _context.ApplicationEnvironment.RuntimeFramework
+                TargetFramework = _context.ApplicationEnvironment.RuntimeFramework,
+                LibraryCache = _context.LibraryCache,
             };
 
             var libraries = ApplicationHostContext.GetRuntimeLibraries(context);

@@ -66,7 +66,16 @@ namespace Microsoft.Dnx.DesignTimeHost
             var applicationEnvironment = (IApplicationEnvironment)_services.GetService(typeof(IApplicationEnvironment));
             var runtimeEnvironment = (IRuntimeEnvironment)_services.GetService(typeof(IRuntimeEnvironment));
             var loadContextAccessor = (IAssemblyLoadContextAccessor)_services.GetService(typeof(IAssemblyLoadContextAccessor));
-            var compilationEngine = new CompilationEngine(new CompilationEngineContext(applicationEnvironment, runtimeEnvironment, loadContextAccessor.Default, new CompilationCache()));
+
+            var libraryCache = new ResolvedLibraryCache();
+            var compilationEngine = new CompilationEngine(new CompilationEngineContext(
+                applicationEnvironment,
+                runtimeEnvironment,
+                loadContextAccessor.Default,
+                new CompilationCache(),
+                null,
+                new ProjectGraphProvider(libraryCache),
+                libraryCache));
             var frameworkResolver = new FrameworkReferenceResolver();
 
             // This fixes the mono incompatibility but ties it to ipv4 connections

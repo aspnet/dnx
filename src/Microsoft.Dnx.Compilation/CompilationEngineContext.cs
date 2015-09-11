@@ -9,6 +9,7 @@ namespace Microsoft.Dnx.Compilation
     {
         public IProjectGraphProvider ProjectGraphProvider { get; }
         public IFileWatcher FileWatcher { get; }
+        public IResolvedLibraryCache LibraryCache { get; }
         public IServiceProvider Services { get { return _compilerServices; } }
         public IAssemblyLoadContext DefaultLoadContext { get; set; }
         public IApplicationEnvironment ApplicationEnvironment { get; set; }
@@ -21,34 +22,17 @@ namespace Microsoft.Dnx.Compilation
                                         IRuntimeEnvironment runtimeEnvironment,
                                         IAssemblyLoadContext defaultLoadContext,
                                         CompilationCache cache,
-                                        IProjectGraphProvider projectGraphProvider) :
-            this(applicationEnvironment, runtimeEnvironment, defaultLoadContext, cache, NoopWatcher.Instance, projectGraphProvider)
-        {
-
-        }
-
-        public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
-                                        IRuntimeEnvironment runtimeEnvironment,
-                                        IAssemblyLoadContext defaultLoadContext,
-                                        CompilationCache cache) :
-            this(applicationEnvironment, runtimeEnvironment, defaultLoadContext, cache, NoopWatcher.Instance, new ProjectGraphProvider())
-        {
-
-        }
-
-        public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
-                                        IRuntimeEnvironment runtimeEnvironment,
-                                        IAssemblyLoadContext defaultLoadContext,
-                                        CompilationCache cache,
                                         IFileWatcher fileWatcher,
-                                        IProjectGraphProvider projectGraphProvider)
-        {
+                                        IProjectGraphProvider projectGraphProvider,
+                                        IResolvedLibraryCache libraryCache)
+        { 
             ApplicationEnvironment = applicationEnvironment;
             RuntimeEnvironment = runtimeEnvironment;
             DefaultLoadContext = defaultLoadContext;
-            ProjectGraphProvider = projectGraphProvider;
             CompilationCache = cache;
-            FileWatcher = fileWatcher;
+            FileWatcher = fileWatcher ?? NoopWatcher.Instance;
+            ProjectGraphProvider = projectGraphProvider;
+            LibraryCache = libraryCache;
 
             // Register compiler services
             AddCompilationService(typeof(IFileWatcher), FileWatcher);

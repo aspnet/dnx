@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -33,6 +34,8 @@ namespace Microsoft.Dnx.Runtime
         public FrameworkReferenceResolver FrameworkResolver { get; set; }
 
         public LibraryManager LibraryManager { get; private set; }
+
+        public IResolvedLibraryCache LibraryCache { get; set; }
 
         public static IList<LibraryDescription> GetRuntimeLibraries(ApplicationHostContext context)
         {
@@ -76,32 +79,34 @@ namespace Microsoft.Dnx.Runtime
                     library.Resolved = false;
                 }
 
-                library.Framework = library.Framework ?? context.TargetFramework;
+                Debug.Assert(library.Framework == context.TargetFramework);
+
                 foreach (var dependency in library.Dependencies)
                 {
-                    LibraryDescription dep;
-                    if (!lookup.TryGetValue(dependency.Name, out dep))
+                    LibraryDescription resolvedDependency;
+                    if (!lookup.TryGetValue(dependency.Name, out resolvedDependency))
                     {
                         if (dependency.LibraryRange.IsGacOrFrameworkReference)
                         {
-                            dep = referenceAssemblyDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
+                            resolvedDependency = referenceAssemblyDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
                                   gacDependencyResolver.GetDescription(dependency.LibraryRange, context.TargetFramework) ??
                                   unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
-
-                            dep.Framework = context.TargetFramework;
-                            lookup[dependency.Name] = dep;
                         }
                         else
                         {
-                            dep = unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
-                            lookup[dependency.Name] = dep;
+                            resolvedDependency = unresolvedDependencyProvider.GetDescription(dependency.LibraryRange, context.TargetFramework);
                         }
                     }
 
-                    // REVIEW: This isn't quite correct but there's a many to one relationship here.
-                    // Different ranges can resolve to this dependency but only one wins
-                    dep.RequestedRange = dependency.LibraryRange;
-                    dependency.Library = dep;
+                    Debug.Assert(resolvedDependency.Framework == context.TargetFramework);
+                    Debug.Assert(resolvedDependency.RequestedRange == dependency.LibraryRange);
+                    if (context.LibraryCache != null)
+                    {
+                        resolvedDependency = context.LibraryCache.GetOrAdd(resolvedDependency);
+                    }
+
+                    lookup[dependency.Name] = resolvedDependency;
+                    dependency.Library = resolvedDependency;
                 }
             }
 
@@ -173,8 +178,12 @@ namespace Microsoft.Dnx.Runtime
             var packageResolver = new PackageDependencyProvider(context.PackagesDirectory);
             var projectResolver = new ProjectDependencyProvider();
 
-            context.MainProject = projectResolver.GetDescription(context.TargetFramework, context.Project); ;
+            context.MainProject = projectResolver.GetDescription(context.TargetFramework, context.Project);
 
+            if (context.LibraryCache != null)
+            {
+                context.MainProject = (ProjectDescription)context.LibraryCache.GetOrAdd(context.MainProject);
+            }
             // Add the main project
             libraries.Add(context.MainProject);
 
@@ -193,7 +202,13 @@ namespace Microsoft.Dnx.Runtime
 
                             var path = Path.GetFullPath(Path.Combine(context.ProjectDirectory, projectLibrary.Path));
 
-                            var projectDescription = projectResolver.GetDescription(path, library);
+                            var projectDescription = (LibraryDescription)projectResolver.GetDescription(path, library);
+                            projectDescription.Framework = context.TargetFramework;
+
+                            if (context.LibraryCache != null)
+                            {
+                                projectDescription = context.LibraryCache.GetOrAdd(projectDescription);
+                            }
 
                             libraries.Add(projectDescription);
                         }
@@ -201,7 +216,13 @@ namespace Microsoft.Dnx.Runtime
                         {
                             var packageEntry = lockFileLookup.GetPackage(library.Name, library.Version);
 
-                            var packageDescription = packageResolver.GetDescription(packageEntry, library);
+                            var packageDescription = (LibraryDescription)packageResolver.GetDescription(packageEntry, library);
+                            packageDescription.Framework = context.TargetFramework;
+
+                            if (context.LibraryCache != null)
+                            {
+                                packageDescription = context.LibraryCache.GetOrAdd(packageDescription);
+                            }
 
                             libraries.Add(packageDescription);
                         }

@@ -39,11 +39,15 @@ namespace Microsoft.Dnx.Tooling
             var runtimeEnvironment = (IRuntimeEnvironment)hostServices.GetService(typeof(IRuntimeEnvironment));
             var loadContextAccessor = (IAssemblyLoadContextAccessor)hostServices.GetService(typeof(IAssemblyLoadContextAccessor));
 
+            var libraryCache = new ResolvedLibraryCache();
             _compilationEngine = new CompilationEngine(new CompilationEngineContext(
                 _applicationEnvironment,
                 runtimeEnvironment,
                 loadContextAccessor.Default,
-                new CompilationCache()));
+                new CompilationCache(),
+                null,
+                new ProjectGraphProvider(libraryCache),
+                libraryCache));
 
             ScriptExecutor = new ScriptExecutor(buildOptions.Reports.Information);
         }
