@@ -17,13 +17,9 @@ namespace Microsoft.Dnx.Testing
             PackageName = packageName;
             Configuration = configuration;
             var basePath = Path.Combine(RootPath, Configuration);
-            PackagePath = Directory.EnumerateFiles(basePath, $"*{Constants.PackageExtension}")
+            PackagePath = Directory.GetFiles(basePath, $"*{Constants.PackageExtension}")
                 .Where(x => Path.GetFileName(x).StartsWith(packageName))
                 .FirstOrDefault(x => !x.EndsWith($"*.symbols{Constants.PackageExtension}"));
-            if (string.IsNullOrEmpty(PackagePath))
-            {
-                throw new InvalidOperationException($"Could not find NuGet package in '{basePath}'");
-            }
         }
 
         public string RootPath { get; private set; }

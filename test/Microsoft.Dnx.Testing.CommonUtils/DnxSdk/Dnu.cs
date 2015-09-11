@@ -104,11 +104,11 @@ namespace Microsoft.Dnx.Testing
             if (RuntimeEnvironmentHelper.IsWindows)
             {
                 command = "cmd";
-                commandLine = $"/C {Path.Combine(_sdkPath, "bin", "dnu.cmd")} {commandLine}";
+                commandLine = $"/C \"\"{Path.Combine(_sdkPath, "bin", "dnu.cmd")}\" {commandLine}\"";
             }
             else
             {
-                command = Path.Combine(_sdkPath, "bin", "dnu");
+                command = $"\"{Path.Combine(_sdkPath, "bin", "dnu")}\"";
             }
             return Exec.Run(command, commandLine, envSetup);
         }
