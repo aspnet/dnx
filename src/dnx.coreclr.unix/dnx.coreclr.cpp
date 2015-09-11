@@ -122,7 +122,7 @@ int LoadCoreClr(const char* runtime_directory)
         fprintf(stderr, "failed to locate libcoreclr with error %s\n", error);
 
         FreeCoreClr();
-        return -1;
+        return 1;
     }
     
     return 0;
@@ -134,7 +134,7 @@ int32_t initialize_runtime(CALL_APPLICATION_MAIN_DATA* data, void **host_handle,
     if (!coreclr_initialize)
     {
         fprintf(stderr, "Could not find coreclr_initialize entrypoint in coreclr\n");
-        return -1;
+        return 1;
     }
 
     auto bootstrapper_path = GetPathToBootstrapper();
@@ -151,7 +151,7 @@ int32_t initialize_runtime(CALL_APPLICATION_MAIN_DATA* data, void **host_handle,
     if (!GetTrustedPlatformAssembliesList(data->runtimeDirectory, trusted_assemblies))
     {
         fprintf(stderr, "Failed to find files in the coreclr directory\n");
-        return -1;
+        return 1;
     }
 
     // Add the assembly containing the app domain manager to the trusted list
@@ -176,7 +176,7 @@ int32_t create_delegate(void *host_handle, unsigned int domain_id, void** delega
     if (!coreclr_create_delegate)
     {
         fprintf(stderr, "Could not find coreclr_create_delegate entrypoint in coreclr\n");
-        return -1;
+        return 1;
     }
 
     return coreclr_create_delegate(host_handle, domain_id, BootstrapperName", Version=0.0.0.0",
@@ -189,7 +189,7 @@ int32_t shutdown_runtime(void* host_handle, unsigned int domain_id)
     if (!coreclr_shutdown)
     {
         fprintf(stderr, "Could not find coreclr_shutdown entrypoint in coreclr\n");
-        return -1;
+        return 1;
     }
 
     return coreclr_shutdown(host_handle, domain_id);
@@ -210,7 +210,7 @@ int InvokeDelegate(host_main_fn host_main, int argc, const char** argv)
     if (!MultiByteToWideChar)
     {
         fprintf(stderr, "Could not find MultiByteToWideChar entrypoint in coreclr\n");
-        return -1;
+        return 1;
     }
 
     const wchar_t** wchar_argv = new const wchar_t*[argc];
@@ -242,7 +242,7 @@ int CallMain(CALL_APPLICATION_MAIN_DATA* data)
     if (result < 0)
     {
         fprintf(stderr, "Failed to initialize runtime: 0x%08x\n", result);
-        return -1;
+        return 1;
     }
 
     void* host_main;
@@ -260,7 +260,7 @@ int CallMain(CALL_APPLICATION_MAIN_DATA* data)
     if (shutdown_result < 0)
     {
         fprintf(stderr, "Failed to shutdown runtime: 0x%08x\n", shutdown_result);
-        return -1;
+        return 1;
     }
 
     return result;
@@ -271,7 +271,7 @@ extern "C" int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data)
 {
     if (LoadCoreClr(data->runtimeDirectory) != 0)
     {
-        return -1;
+        return 1;
     }
 
     setenv("DNX_FRAMEWORK", "dnxcore50", 1);
