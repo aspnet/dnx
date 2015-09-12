@@ -59,8 +59,6 @@ namespace Microsoft.Dnx.Runtime
 
         public string[] Owners { get; set; }
 
-        public IDictionary<string, string> Repository { get; set; }
-
         public bool EmbedInteropTypes { get; set; }
 
         public SemanticVersion Version { get; set; }

@@ -10,9 +10,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Internals;
-using Microsoft.Dnx.Tooling.SourceControl;
 using Microsoft.Dnx.Tooling.Utils;
 using Microsoft.Framework.FileSystemGlobbing;
 using Microsoft.Framework.FileSystemGlobbing.Abstractions;
@@ -160,7 +158,6 @@ namespace Microsoft.Dnx.Tooling
             PackageBuilder packageBuilder = null;
             PackageBuilder symbolPackageBuilder = null;
             InstallBuilder installBuilder = null;
-            SourceBuilder sourceBuilder = null;
 
             var contextVariables = new Dictionary<string, string>
             {
@@ -184,7 +181,6 @@ namespace Microsoft.Dnx.Tooling
                 InitializeBuilder(_currentProject, packageBuilder);
                 InitializeBuilder(_currentProject, symbolPackageBuilder);
                 installBuilder = new InstallBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
-                sourceBuilder = new SourceBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
             }
 
             var success = true;
@@ -250,8 +246,7 @@ namespace Microsoft.Dnx.Tooling
             {
                 success = success &&
                     // Generates the application package only if this is an application packages
-                    installBuilder.Build(outputPath) &&
-                    sourceBuilder.Build(outputPath);
+                    installBuilder.Build(outputPath);
 
                 if (success)
                 {

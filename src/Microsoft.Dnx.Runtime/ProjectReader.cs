@@ -147,16 +147,6 @@ namespace Microsoft.Dnx.Runtime
                 }
             }
 
-            var repository = rawProject.Value("repository") as JsonObject;
-            if (repository != null)
-            {
-                project.Repository = repository
-                    .Keys
-                    .ToDictionary(
-                        key => key,
-                        key => repository.ValueAsString(key).Value);
-            }
-
             BuildTargetFrameworksAndConfigurations(project, rawProject, diagnostics);
 
             PopulateDependencies(
