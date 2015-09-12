@@ -125,7 +125,7 @@ namespace Microsoft.Dnx.Runtime
             }
 
             context.ProjectDirectory = context.Project?.ProjectDirectory ?? context.ProjectDirectory;
-            context.RootDirectory = context.RootDirectory ?? ProjectResolver.ResolveRootDirectory(context.ProjectDirectory);
+            context.RootDirectory = context.RootDirectory ?? ProjectRootResolver.ResolveRootDirectory(context.ProjectDirectory);
             context.PackagesDirectory = context.PackagesDirectory ?? PackageDependencyProvider.ResolveRepositoryPath(context.RootDirectory);
 
             LockFileLookup lockFileLookup = null;

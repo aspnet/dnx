@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Runtime;
-using ProjectResolver = Microsoft.Dnx.Tooling.ProjectResolver;
+using Microsoft.Dnx.Tooling;
 
 namespace Microsoft.Dnx.Testing
 {
@@ -76,9 +76,9 @@ namespace Microsoft.Dnx.Testing
             }
         }
 
-        public Runtime.Project GetProject(string name)
+        public Project GetProject(string name)
         {
-            Runtime.Project project;
+            Project project;
             var resolver = _lazyResolver.Value;
             if (!resolver.TryResolveProject(name, out project))
             {
@@ -89,7 +89,7 @@ namespace Microsoft.Dnx.Testing
 
         public string GetWrapperProjectPath(string name)
         {
-            var path = Path.Combine(WrapFolderPath, name, Runtime.Project.ProjectFileName);
+            var path = Path.Combine(WrapFolderPath, name, Project.ProjectFileName);
             if (!Directory.Exists(path))
             {
                 throw new InvalidOperationException($"Unable to find wrapper project {path}");
@@ -102,13 +102,13 @@ namespace Microsoft.Dnx.Testing
             return Path.Combine(RootPath, name, $"{name}.csproj");
         }
 
-        private IEnumerable<Runtime.Project> ResolveAllProjects()
+        private IEnumerable<Project> ResolveAllProjects()
         {
             var resolver = _lazyResolver.Value;
             var searchPaths = resolver.SearchPaths;
             foreach (var path in searchPaths.Concat(searchPaths.SelectMany(p => Directory.EnumerateDirectories(p))))
             {
-                Runtime.Project project;
+                Project project;
                 var name = new DirectoryInfo(path).Name;
                 if (resolver.TryResolveProject(name, out project))
                 {
