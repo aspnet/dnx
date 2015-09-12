@@ -73,11 +73,6 @@ namespace Microsoft.Dnx.Runtime
             return true;
         }
 
-        public static string GetGlobalFilePath(string folder)
-        {
-            return Path.Combine(folder, GlobalFileName);
-        }
-
         public static bool HasGlobalFile(string path)
         {
             string projectPath = Path.Combine(path, GlobalFileName);
