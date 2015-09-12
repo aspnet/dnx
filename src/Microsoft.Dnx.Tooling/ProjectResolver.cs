@@ -95,7 +95,7 @@ namespace Microsoft.Dnx.Tooling
 
         public static string ResolveRootDirectory(string projectPath)
         {
-            return Runtime.ProjectResolver.ResolveRootDirectory(projectPath);
+            return ProjectRootResolver.ResolveRootDirectory(projectPath);
         }
 
         private class ProjectInformation

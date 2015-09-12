@@ -2,11 +2,13 @@
   "dependencies": {
     "Microsoft.Dnx.Runtime": "1.0.0-*",
     "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
-    "Microsoft.Dnx.Tooling": "1.0.0-*",
     "Newtonsoft.Json": "6.0.6",
     "xunit.runner.aspnet": "2.0.0-aspnet-*"
   },
-
+  "compile": [
+    "../../src/Microsoft.Dnx.Tooling/ProjectResolver.cs",
+    "../../src/Microsoft.Dnx.Tooling/IProjectResolver.cs"
+  ],
   "frameworks": {
     "dnx451": { },
     "dnxcore50": { }

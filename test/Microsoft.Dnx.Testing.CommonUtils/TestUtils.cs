@@ -33,7 +33,7 @@ namespace Microsoft.Dnx.Testing
             [CallerMemberName]string testName = null, 
             bool appendSolutionNameToTestFolder = false)
         {
-            var rootPath = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootPath = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var originalSolutionPath = Path.Combine(rootPath, "misc", solutionName);
             var tempSolutionPath = GetTestFolder<TTest>(sdk, testName + (appendSolutionNameToTestFolder ? $".{solutionName}" : string.Empty));
             CopyFolder(originalSolutionPath, tempSolutionPath);
@@ -51,7 +51,7 @@ namespace Microsoft.Dnx.Testing
             var basePath = Environment.GetEnvironmentVariable("DNX_LOCAL_TEMP_FOLDER_FOR_TESTING");
             if (string.IsNullOrEmpty(basePath))
             {
-                var rootPath = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+                var rootPath = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
                 basePath = Path.Combine(rootPath, "TestOutput");
             }
 
@@ -62,10 +62,12 @@ namespace Microsoft.Dnx.Testing
 
         public static void CopyFolder(string sourceFolder, string targetFolder)
         {
-            if (!Directory.Exists(targetFolder))
+            if (Directory.Exists(targetFolder))
             {
-                Directory.CreateDirectory(targetFolder);
+                Directory.Delete(targetFolder, recursive: true);
             }
+
+            Directory.CreateDirectory(targetFolder);
 
             foreach (var filePath in Directory.EnumerateFiles(sourceFolder))
             {

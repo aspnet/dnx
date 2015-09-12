@@ -6,7 +6,7 @@ using System.IO;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class ProjectResolver
+    public class ProjectRootResolver
     {
         public static string ResolveRootDirectory(string projectPath)
         {

@@ -15,7 +15,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ResourcesTests
         [Fact]
         public void ResolveEmbeddedResources()
         {
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
 
             Project project;
@@ -39,7 +39,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ResourcesTests
                 "testproject.subfolder.nestedresource.resources",
                 "testproject.OtherResources.resources"
             };
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
 
             Project project;
@@ -55,7 +55,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ResourcesTests
         [Fact]
         public void ResolveRenamedResxResources()
         {
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
 
             Project project = ProjectUtilities.GetProject(@"
@@ -85,7 +85,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ResourcesTests
                 "testproject.subfolder.nestedresource.resources",
                 "thisIs.New.Resource.resources"
             };
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
 
             Project project = ProjectUtilities.GetProject(@"

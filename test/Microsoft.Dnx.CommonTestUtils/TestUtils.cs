@@ -135,19 +135,19 @@ namespace Microsoft.Dnx.CommonTestUtils
 
         public static string GetMiscProjectsFolder()
         {
-            var dnxRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var dnxRuntimeRoot = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             return Path.Combine(dnxRuntimeRoot, "misc");
         }
 
         public static string GetBuildArtifactsFolder()
         {
-            var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var kRuntimeRoot = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             return Path.Combine(kRuntimeRoot, "artifacts", "build");
         }
 
         public static string GetTestArtifactsFolder()
         {
-            var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var kRuntimeRoot = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             return Path.Combine(kRuntimeRoot, "artifacts", "test");
         }
 
@@ -236,7 +236,7 @@ namespace Microsoft.Dnx.CommonTestUtils
 
         public static DisposableDir GetTempTestSolution(string name)
         {
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var sourceSolutionPath = Path.Combine(rootDir, "misc", "DnuWrapTestSolutions", name);
             var targetSolutionPath = new DisposableDir();
             CopyFolder(sourceSolutionPath, targetSolutionPath);
@@ -245,19 +245,19 @@ namespace Microsoft.Dnx.CommonTestUtils
 
         public static string GetXreTestAppPath(string name)
         {
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             return Path.Combine(rootDir, "misc", "XreTestApps", name);
         }
 
         public static string GetDnuPublishTestAppPath(string name)
         {
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             return Path.Combine(rootDir, "misc", "DnuPublishTestApps", name);
         }
 
         public static string GetSamplesFolder()
         {
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             return Path.Combine(rootDir, "samples");
         }
 
@@ -267,7 +267,7 @@ namespace Microsoft.Dnx.CommonTestUtils
             TestUtils.CopyFolder(TestUtils.GetSamplesFolder(), tempDir);
 
             // Make sure sample projects depend on runtime components from newly built dnx
-            var currentDnxSolutionRootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var currentDnxSolutionRootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var currentDnxSolutionSrcPath = Path.Combine(currentDnxSolutionRootDir, "src").Replace("\\", "\\\\");
             var samplesGlobalJson = new JObject();
             samplesGlobalJson["projects"] = new JArray(new[] { currentDnxSolutionSrcPath });
@@ -308,7 +308,7 @@ namespace Microsoft.Dnx.CommonTestUtils
             CopyFolder(projectDir, targetProjectDir);
 
             // Make sure package restore can be successful
-            var currentDnxSolutionRootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var currentDnxSolutionRootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
 
             File.Copy(Path.Combine(currentDnxSolutionRootDir, NuGet.Constants.SettingsFileName),
                       Path.Combine(targetProjectDir, NuGet.Constants.SettingsFileName));

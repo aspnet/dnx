@@ -15,7 +15,7 @@ namespace Microsoft.Dnx.Testing
             _sdkPath = sdkPath;
         }
 
-        public ExecResult Execute(string commandLine, bool dnxTraceOn = true)
+        public ExecResult Execute(string commandLine, bool dnxTraceOn = false)
         {
             string command;
             if (RuntimeEnvironmentHelper.IsWindows)
