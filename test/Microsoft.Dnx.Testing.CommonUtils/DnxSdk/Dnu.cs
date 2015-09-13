@@ -108,7 +108,7 @@ namespace Microsoft.Dnx.Testing
             }
             else
             {
-                command = $"\"{Path.Combine(_sdkPath, "bin", "dnu")}\"";
+                command = Path.Combine(_sdkPath, "bin", "dnu");
             }
             return Exec.Run(command, commandLine, envSetup);
         }
