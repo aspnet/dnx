@@ -69,7 +69,7 @@ namespace Microsoft.Dnx.Testing
             };
         }
 
-        private static string GetRuntimeName(string flavor, string os, string architecture)
+        public static string GetRuntimeName(string flavor, string os, string architecture)
         {
             // Mono ignores os and architecture
             if (string.Equals(flavor, "mono", StringComparison.OrdinalIgnoreCase))
