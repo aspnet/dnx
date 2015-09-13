@@ -20,7 +20,7 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
             sdk.Dnu.Restore(project.ProjectDirectory).EnsureSuccess();
             
             // Act
-            var result = sdk.Dnx.Execute($"-p {project.ProjectDirectory} run");
+            var result = sdk.Dnx.Execute($"-p \"{project.ProjectDirectory}\" run");
 
             // Assert
             Assert.Equal(0, result.ExitCode);
