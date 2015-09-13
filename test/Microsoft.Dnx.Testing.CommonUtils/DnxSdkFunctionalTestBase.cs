@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Runtime;
 
@@ -36,12 +37,12 @@ namespace Microsoft.Dnx.Testing
             {
                 if (RuntimeEnvironmentHelper.IsMono)
                 {
-                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "mono", string.Empty, string.Empty) };
+                    yield return new[] { GetRuntime("mono", string.Empty, string.Empty) };
                 }
                 else
                 {
-                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x86") };
-                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "clr", "win", "x64") };
+                    yield return new[] { GetRuntime("clr", "win", "x86") };
+                    yield return new[] { GetRuntime("clr", "win", "x64") };
                 }
             }
         }
@@ -52,10 +53,39 @@ namespace Microsoft.Dnx.Testing
             {
                 if (RuntimeEnvironmentHelper.IsWindows)
                 {
-                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "coreclr", "win", "x86") };
-                    yield return new[] { DnxSdk.GetRuntime(SdkVersionForTesting, "coreclr", "win", "x64") };
+                    yield return new[] { GetRuntime("coreclr", "win", "x86") };
+                    yield return new[] { GetRuntime("coreclr", "win", "x64") };
                 }
             }
+        }
+
+
+        private static DnxSdk GetRuntime(string flavor, string os, string arch)
+        {
+            var dnxSolutionRoot = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var runtimeHome = Path.Combine(dnxSolutionRoot, "artifacts", "test", DnxSdk.GetRuntimeName(flavor, os, arch));
+            var buildVersion = Environment.GetEnvironmentVariable("DNX_BUILD_VERSION");
+            var sdkVersionForTesting = Environment.GetEnvironmentVariable(SdkVersionForTestingEnvName);
+
+            DnxSdk sdk = null;
+
+            if (string.IsNullOrEmpty(sdkVersionForTesting) && 
+                Directory.Exists(runtimeHome) && 
+                !string.IsNullOrEmpty(buildVersion))
+            {
+                sdk = DnxSdk.GetRuntime(runtimeHome, $"1.0.0-{buildVersion}", flavor, os, arch);
+            }
+            else
+            {
+                sdk = DnxSdk.GetRuntime(SdkVersionForTesting, flavor, os, arch);
+            }
+
+            if (!Directory.Exists(sdk.Location))
+            {
+                throw new InvalidOperationException($"Unable to locate DNX at ${sdk.Location}");
+            }
+
+            return sdk;
         }
     }
 }
