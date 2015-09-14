@@ -114,5 +114,44 @@ namespace dnx
                 ? path.substr(0, last_separator)
                 : path;
         }
+
+#if defined (_WIN32)
+        const wchar_t* get_windows_version()
+        {
+            OSVERSIONINFO version_info;
+            ZeroMemory(&version_info, sizeof(OSVERSIONINFO));
+            version_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
+#pragma warning(disable:4996)
+            GetVersionEx(&version_info);
+#pragma warning(default:4996)
+
+            if (version_info.dwMajorVersion == 10)
+            {
+                return L"10.0";
+            }
+
+            if (version_info.dwMajorVersion == 6)
+            {
+                if (version_info.dwMinorVersion == 3)
+                {
+                    return L"8.1";
+                }
+
+                if (version_info.dwMinorVersion == 2)
+                {
+                    return L"8.0";
+                }
+
+                if (version_info.dwMinorVersion == 1)
+                {
+                    return L"7.0";
+                }
+            }
+
+            return nullptr;
+        }
+
+#endif
     }
 }

@@ -16,7 +16,7 @@ namespace Microsoft.Dnx.Host
     {
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
-        public static int Execute(string[] args, FrameworkName targetFramework)
+        public static int Execute(string[] args, FrameworkName targetFramework, BootstrapperContext context)
         {
             // If we're a console host then print exceptions to stderr
             var printExceptionsToStdError = Environment.GetEnvironmentVariable(EnvironmentNames.ConsoleHost) == "1";

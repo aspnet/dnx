@@ -21,3 +21,15 @@ typedef struct CALL_APPLICATION_MAIN_DATA
 #endif
     *FnCallApplicationMain)(
     PCALL_APPLICATION_MAIN_DATA pCallApplicationMainData);
+
+// this structure is used to pass data to managed code
+// and needs to be in sync with its managed counterpart
+struct bootstrapper_context
+{
+    const wchar_t* operating_system;
+    const wchar_t* os_version;
+    const wchar_t* architecture;
+    const wchar_t* runtime_directory;
+    const wchar_t* application_base;
+    bool handle_exceptions;
+};
