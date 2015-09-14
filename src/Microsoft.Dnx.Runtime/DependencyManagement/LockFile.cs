@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace Microsoft.Dnx.Runtime
@@ -12,6 +11,7 @@ namespace Microsoft.Dnx.Runtime
     {
         public bool Islocked { get; set; }
         public int Version { get; set; }
+        public IList<string> GlobalSearchPaths { get; set; } = new List<string>();
         public IList<ProjectFileDependencyGroup> ProjectFileDependencyGroups { get; set; } = new List<ProjectFileDependencyGroup>();
         public IList<LockFilePackageLibrary> PackageLibraries { get; set; } = new List<LockFilePackageLibrary>();
         public IList<LockFileProjectLibrary> ProjectLibraries { get; set; } = new List<LockFileProjectLibrary>();
@@ -29,6 +29,35 @@ namespace Microsoft.Dnx.Runtime
             {
                 message = $"The expected lock file version does not match the actual version";
                 return false;
+            }
+
+            // Verify the global search paths
+            message = $"The project search paths defined in {GlobalSettings.GlobalFileName} have changed";
+            GlobalSettings globalSettings;
+            if (GlobalSettings.TryGetGlobalSettings(ProjectRootResolver.ResolveRootDirectory(project.ProjectDirectory), out globalSettings))
+            {
+                if (globalSettings.ProjectSearchPaths.Count != GlobalSearchPaths.Count)
+                {
+                    return false;
+                }
+
+                // The search paths were saved in lock file orderedly
+                var orderedPaths = globalSettings.ProjectSearchPaths.OrderBy(x => x).ToList();
+
+                for (int i = 0; i < globalSettings.ProjectSearchPaths.Count; ++i)
+                {
+                    if (!string.Equals(orderedPaths[i], GlobalSearchPaths[i], StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                if (GlobalSearchPaths.Any())
+                {
+                    return false;
+                }
             }
 
             message = $"Dependencies in {Project.ProjectFileName} were modified";

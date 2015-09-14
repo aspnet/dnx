@@ -811,10 +811,17 @@ namespace Microsoft.Dnx.Tooling
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
 
+            // Set the search paths defined in global settings
+            GlobalSettings globalSettings;
+            if (GlobalSettings.TryGetGlobalSettings(ProjectRootResolver.ResolveRootDirectory(project.ProjectDirectory), out globalSettings))
+            {
+                lockFile.GlobalSearchPaths = globalSettings.ProjectSearchPaths;
+            }
+
             // Use empty string as the key of dependencies shared by all frameworks
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
-                string.Empty,
-                project.Dependencies.Select(x => x.LibraryRange.ToString())));
+                    string.Empty,
+                    project.Dependencies.Select(x => x.LibraryRange.ToString())));
 
             foreach (var frameworkInfo in project.GetTargetFrameworks())
             {
