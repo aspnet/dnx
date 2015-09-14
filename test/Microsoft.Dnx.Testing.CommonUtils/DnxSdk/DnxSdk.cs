@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Runtime.Versioning;
+using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Testing
 {
@@ -31,7 +32,7 @@ namespace Microsoft.Dnx.Testing
 
         public static string GetRuntimeHome()
         {
-            var dnxHomePath = Environment.GetEnvironmentVariable("DNX_HOME");
+            var dnxHomePath = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
             var homePath = string.IsNullOrEmpty(dnxHomePath) ? null : Environment.ExpandEnvironmentVariables(dnxHomePath);
 
             if (string.IsNullOrEmpty(homePath))

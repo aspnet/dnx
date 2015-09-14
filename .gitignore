@@ -1,11 +1,9 @@
 [Oo]bj/
 [Bb]in/
-TestResults/
 .nuget/
 _ReSharper.*/
 packages/
 artifacts/
-TestOutput/
 PublishProfiles/
 *.user
 *.suo
