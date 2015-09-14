@@ -22,6 +22,9 @@ namespace Microsoft.Dnx.ApplicationHost
 {
     public class DefaultHost
     {
+        private static readonly string RuntimeAbstractionsPackageName =
+            typeof(IRuntimeEnvironment).GetTypeInfo().Assembly.GetName().Name;
+
         private ApplicationHostContext _applicationHostContext;
 
         private readonly string _projectDirectory;
@@ -124,6 +127,8 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             _project = applicationHostContext.Project;
 
+            ValidateMinRuntimeVersion(libraries);
+
             if (options.WatchFiles)
             {
                 fileWatcher.OnChanged += _ =>
@@ -140,11 +145,11 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration, hostEnvironment);
 
             var compilationContext = new CompilationEngineContext(
-                applicationEnvironment, 
-                _runtimeEnvironment, 
-                loadContextAccessor.Default, 
-                new CompilationCache(), 
-                fileWatcher, 
+                applicationEnvironment,
+                _runtimeEnvironment,
+                loadContextAccessor.Default,
+                new CompilationCache(),
+                fileWatcher,
                 new ProjectGraphProvider());
 
             // Compilation services available only for runtime compilation
@@ -181,6 +186,28 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(projects));
 
             AddBreadcrumbs(libraries);
+        }
+
+        private void ValidateMinRuntimeVersion(IEnumerable<LibraryDescription> libraries)
+        {
+            if (string.Equals(Environment.GetEnvironmentVariable(EnvironmentNames.DnxDisableMinVersionCheck), "1", StringComparison.OrdinalIgnoreCase))
+            {
+                // Min version is disabled
+                return;
+            }
+
+            foreach (var lib in libraries)
+            {
+                // We only need to validate if runtime abstractions is precompiled
+                // because when building from sources the versions are not ordered
+                // correctly
+                if (lib.Type == LibraryTypes.Package &&
+                    string.Equals(lib.Identity.Name, RuntimeAbstractionsPackageName, StringComparison.Ordinal) &&
+                    lib.Identity.Version > new SemanticVersion(_runtimeEnvironment.RuntimeVersion))
+                {
+                    throw new InvalidOperationException($"This application requires DNX version {lib.Identity.Version} or newer to run.");
+                }
+            }
         }
 
         private void AddBreadcrumbs(IEnumerable<LibraryDescription> libraries)
