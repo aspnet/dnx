@@ -60,7 +60,7 @@ namespace Microsoft.Dnx.DesignTimeHost
         private async Task OpenChannel(int port, string hostId)
         {
             var contexts = new Dictionary<int, ApplicationContext>();
-            var protocolManager = new ProtocolManager(maxVersion: 2);
+            var protocolManager = new ProtocolManager(maxVersion: 3);
 
             // REVIEW: Should these be on a shared context object that flows?
             var applicationEnvironment = (IApplicationEnvironment)_services.GetService(typeof(IApplicationEnvironment));
@@ -77,7 +77,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             Console.WriteLine($"Process ID {Process.GetCurrentProcess().Id}");
             Console.WriteLine("Listening on port {0}", port);
 
-            for (; ;)
+            while (true)
             {
                 var acceptSocket = await AcceptAsync(listenSocket);
 

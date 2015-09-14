@@ -49,14 +49,16 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             {
                 foreach (var combination in RuntimeComponents)
                 {
-                    // The current max protocol version is 2
+                    // The current max protocol version is 3
 
                     // request 1, respond 1
                     yield return combination.Concat(new object[] { 1, 1 }).ToArray();
                     // request 2, respond 2
                     yield return combination.Concat(new object[] { 2, 2 }).ToArray();
                     // request 3, respond 2
-                    yield return combination.Concat(new object[] { 3, 2 }).ToArray();
+                    yield return combination.Concat(new object[] { 3, 3 }).ToArray();
+                    // request 4, respond 3
+                    yield return combination.Concat(new object[] { 4, 3 }).ToArray();
                 }
             }
         }
@@ -147,7 +149,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 var message = client.DrainTillFirst("AllDiagnostics");
                 message.EnsureSource(server, client);
-
                 var payload = (message.Payload as JArray)?.OfType<JObject>();
                 Assert.NotNull(payload);
                 Assert.Equal(3, payload.Count());
@@ -165,7 +166,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
-        public void DthCompilation_RestoreComplete_OnEmptyConsoleApp(string flavor, string os, string architecture)
+        public void DthCompilation_RestoreComplete_OnEmptyLibrary(string flavor, string os, string architecture)
         {
             var projectName = "EmptyLibrary";
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -200,6 +201,98 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 var after = client.DrainTillFirst("Dependencies");
                 after.EnsureSource(server, client);
                 Assert.NotNull(after.Payload["Dependencies"]["System.Console"]);
+            }
+        }
+
+        public static IEnumerable<object[]> UnresolvedDependencyTestData
+        {
+            get
+            {
+                foreach (var combination in RuntimeComponents)
+                {
+                    yield return combination.Concat(new object[] { 1, "Project", "UnresolvedProjectSample", "EmptyLibrary", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 1, "Package", "UnresolvedPackageSample", "NoSuchPackage", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 1, "Package", "IncompatiblePackageSample", "Newtonsoft.Json", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 2, "Project", "UnresolvedProjectSample", "EmptyLibrary", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 2, "Package", "UnresolvedPackageSample", "NoSuchPackage", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 2, "Package", "IncompatiblePackageSample", "Newtonsoft.Json", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 3, "Project", "UnresolvedProjectSample", "EmptyLibrary", "Project" }).ToArray();
+
+                    // Unresolved package dependency's type is still Unresolved
+                    yield return combination.Concat(new object[] { 3, "Package", "UnresolvedPackageSample", "NoSuchPackage", "Unresolved" }).ToArray();
+
+                    // Incompatible package's type, however, is Package
+                    yield return combination.Concat(new object[] { 3, "Package", "IncompatiblePackageSample", "Newtonsoft.Json", "Package" }).ToArray();
+                }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(UnresolvedDependencyTestData))]
+        public void DthCompilation_Initialize_UnresolvedDependency(
+            string flavor, string os, string architecture, int protocolVersion, string referenceType,
+            string testProjectName, string expectedUnresolvedDependency, string expectedUnresolvedType)
+        {
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            var testProject = _fixture.GetTestProjectPath(testProjectName);
+
+            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var client = new DthTestClient(server, 0))
+            {
+                client.Initialize(testProject, protocolVersion);
+
+                var dependenciesMessage = client.DrainTillFirst("Dependencies");
+                dependenciesMessage.EnsureSource(server, client);
+
+                var dependencies = dependenciesMessage.Payload["Dependencies"];
+                Assert.NotNull(dependencies);
+
+                var unresolveDependency = dependencies[expectedUnresolvedDependency];
+                Assert.NotNull(unresolveDependency);
+
+                Assert.Equal(expectedUnresolvedDependency, unresolveDependency["Name"]);
+                Assert.Equal(expectedUnresolvedDependency, unresolveDependency["DisplayName"]);
+                Assert.False(unresolveDependency["Resolved"].Value<bool>());
+                Assert.Equal(expectedUnresolvedType, unresolveDependency["Type"].Value<string>());
+
+                if (expectedUnresolvedType == "Project")
+                {
+                    Assert.Equal(
+                        Path.Combine(Path.GetDirectoryName(testProject), expectedUnresolvedDependency, Project.ProjectFileName),
+                        unresolveDependency["Path"].Value<string>());
+                }
+                else
+                {
+                    Assert.False(unresolveDependency["Path"].HasValues);
+                }
+
+                var referencesMessage = client.DrainTillFirst("References");
+                referencesMessage.EnsureSource(server, client);
+
+                if (referenceType == "Project")
+                {
+                    var projectReferences = (JArray)referencesMessage.Payload["ProjectReferences"];
+                    Assert.NotNull(projectReferences);
+
+                    var projectReference = (JObject)projectReferences.Single();
+                    var expectedUnresolvedProjectPath = Path.Combine(Path.GetDirectoryName(testProject), expectedUnresolvedDependency, Project.ProjectFileName);
+
+                    Assert.Equal(expectedUnresolvedDependency, projectReference["Name"]);
+                    Assert.Equal(expectedUnresolvedProjectPath, projectReference["Path"]);
+                    Assert.False(projectReference["WrappedProjectPath"].HasValues);
+                }
+                else if (referenceType == "Package")
+                {
+                    var projectReferences = (JArray)referencesMessage.Payload["ProjectReferences"];
+                    Assert.NotNull(projectReferences);
+                    Assert.False(projectReferences.Any());
+                }
             }
         }
     }

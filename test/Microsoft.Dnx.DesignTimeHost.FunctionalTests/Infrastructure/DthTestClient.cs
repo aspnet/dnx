@@ -71,9 +71,24 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             SendPayLoad("Initialize", new { ProjectFolder = projectPath });
         }
 
+        public void Initialize(string projectPath, int protocolVersion)
+        {
+            SendPayLoad("Initialize", new { ProjectFolder = projectPath, Version = protocolVersion });
+        }
+
+        public void Initialize(string projectPath, int protocolVersion, string configuration)
+        {
+            SendPayLoad("Initialize", new { ProjectFolder = projectPath, Version = protocolVersion, Configuration = configuration });
+        }
+
         public void SetProtocolVersion(int version)
         {
             SendPayLoad(ProtocolManager.NegotiationMessageTypeName, new { Version = version });
+        }
+
+        public List<DthMessage> DrainAllMessages()
+        {
+            return DrainAllMessages(TimeSpan.FromSeconds(10));
         }
 
         /// <summary>
