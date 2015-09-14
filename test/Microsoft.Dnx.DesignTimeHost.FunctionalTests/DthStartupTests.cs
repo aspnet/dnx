@@ -208,10 +208,10 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             {
                 foreach (var combination in RuntimeComponents)
                 {
-                    // request 1, respond 1
                     yield return combination.Concat(new object[] { "UnresolvedProjectSample", "EmptyLibrary", "Project" }).ToArray();
-                    // request 2, respond 2
-                    yield return combination.Concat(new object[] { "UnresolvedPackageSample", "NoSuchPackage", "Package" }).ToArray();
+
+                    // Unresolved package dependency's type is still Unresolved
+                    yield return combination.Concat(new object[] { "UnresolvedPackageSample", "NoSuchPackage", "Unresolved" }).ToArray();
                 }
             }
         }
@@ -238,20 +238,22 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 var unresolveDependency = dependencies[expectedUnresolvedDependency];
                 Assert.NotNull(unresolveDependency);
-                Assert.Equal("Unresolved", unresolveDependency["Type"].Value<string>());
+
+                Assert.Equal(expectedUnresolvedDependency, unresolveDependency["Name"]);
+                Assert.Equal(expectedUnresolvedDependency, unresolveDependency["DisplayName"]);
+                Assert.False(unresolveDependency["Resolved"].Value<bool>());
+                Assert.Equal(expectedUnresolvedType, unresolveDependency["Type"]);
 
                 if (expectedUnresolvedType == "Project")
                 {
                     Assert.Equal(
-                        Path.Combine(Path.GetDirectoryName(testProject), "EmptyLibrary", Project.ProjectFileName),
+                        Path.Combine(Path.GetDirectoryName(testProject), expectedUnresolvedDependency, Project.ProjectFileName),
                         unresolveDependency["Path"].Value<string>());
                 }
-                else if (expectedUnresolvedType == "Package")
+                else
                 {
                     Assert.False(unresolveDependency["Path"].HasValues);
                 }
-
-                // expectedUnresolvedType is not implemented in project
             }
         }
     }

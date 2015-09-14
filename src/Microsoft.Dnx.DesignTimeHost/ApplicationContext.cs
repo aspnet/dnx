@@ -1240,7 +1240,8 @@ namespace Microsoft.Dnx.DesignTimeHost
                 Name = library.Identity.Name,
                 DisplayName = library.Identity.IsGacOrFrameworkReference ? library.RequestedRange.GetReferenceAssemblyName() : library.Identity.Name,
                 Version = library.Identity.Version?.ToString(),
-                Type = library.Resolved ? library.Type : "Unresolved",
+                Type = library.Type,
+                Resolved = library.Resolved,
                 Path = library.Path,
                 Dependencies = library.Dependencies.Select(dependency => new DependencyItem
                 {
