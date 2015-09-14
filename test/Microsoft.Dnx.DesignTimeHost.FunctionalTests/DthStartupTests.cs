@@ -147,7 +147,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 var message = client.DrainTillFirst("AllDiagnostics");
                 message.EnsureSource(server, client);
-
                 var payload = (message.Payload as JArray)?.OfType<JObject>();
                 Assert.NotNull(payload);
                 Assert.Equal(3, payload.Count());
@@ -165,7 +164,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
-        public void DthCompilation_RestoreComplete_OnEmptyConsoleApp(string flavor, string os, string architecture)
+        public void DthCompilation_RestoreComplete_OnEmptyLibrary(string flavor, string os, string architecture)
         {
             var projectName = "EmptyLibrary";
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -200,6 +199,34 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 var after = client.DrainTillFirst("Dependencies");
                 after.EnsureSource(server, client);
                 Assert.NotNull(after.Payload["Dependencies"]["System.Console"]);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DthCompilation_Initialize_OnUnresolveProjectSample(string flavor, string os, string architecture)
+        {
+            var projectName = "UnresolvedProjectSample";
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            var testProject = _fixture.GetTestProjectPath(projectName);
+
+            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var client = new DthTestClient(server, 0))
+            {
+                client.Initialize(testProject);
+
+                var message = client.DrainTillFirst("Dependencies");
+                message.EnsureSource(server, client);
+
+                var dependencies = message.Payload["Dependencies"];
+                Assert.NotNull(dependencies);
+
+                var unresolveDependency = dependencies["EmptyLibrary"];
+                Assert.NotNull(unresolveDependency);
+                Assert.Equal("Unresolved", unresolveDependency["Type"].Value<string>());
+                Assert.Equal(
+                    Path.Combine(Path.GetDirectoryName(testProject), "EmptyLibrary", Project.ProjectFileName),
+                    unresolveDependency["Path"].Value<string>());
             }
         }
     }
