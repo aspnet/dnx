@@ -14,6 +14,7 @@ namespace Microsoft.Dnx.Testing
 
         private readonly Dictionary<string, object> _nodes = new Dictionary<string, object>();
         private Func<FileInfo, object> _readFile;
+        private Func<object, object, bool> _fileComparator;
 
         public Dir(string rootPath)
             : this()
@@ -30,11 +31,13 @@ namespace Microsoft.Dnx.Testing
         public Dir()
         {
             _readFile = fileInfo => new Lazy<object>(() => File.ReadAllText(fileInfo.FullName));
+            _fileComparator = DefaultFileComparator;
         }
 
         public Dir(Dir parent)
         {
             _readFile = parent._readFile;
+            _fileComparator = parent._fileComparator;
         }
 
         public string LoadPath { get; } = "In Memory";
@@ -115,7 +118,7 @@ namespace Microsoft.Dnx.Testing
                 MissingEntries = nodes2.Keys.Except(nodes1.Keys),
                 DifferentEntries = compareContents ? 
                     nodes1.Keys.Intersect(nodes2.Keys).Where(
-                        entry => !string.Equals(nodes1[entry].ToString(), nodes2[entry].ToString(), StringComparison.Ordinal)) :
+                        entry => _fileComparator(nodes1[entry], nodes2[entry])) :
                         Enumerable.Empty<string>()
 
             };
@@ -124,31 +127,66 @@ namespace Microsoft.Dnx.Testing
         public Dictionary<string, object> Flatten(bool loadFiles = true)
         {
             var allNodes = new Dictionary<string, object>();
-            var stack = new Stack<Tuple<string, Dir>>();
-            stack.Push(Tuple.Create(string.Empty, this));
+            var stack = new Stack<Tuple<string, Dir, bool>>();
+            stack.Push(Tuple.Create(string.Empty, this, false));
 
             while (stack.Count > 0)
             {
                 var top = stack.Pop();
                 var basePath = top.Item1;
                 var tree = top.Item2;
+                var skipComparison = top.Item3;
 
                 foreach (var node in tree.GetNodes(loadFiles))
                 {
-                    var subTree = node.Value as Dir;
+                    var dirItem = node.Value as DirItem;
+                    var skipItem = skipComparison || (dirItem == null ? false : dirItem.SkipComparison );
+
+                    var subTree = dirItem == null ? node.Value as Dir : dirItem.Item as Dir;
                     var subPath = string.IsNullOrEmpty(basePath) ? node.Key : $"{basePath}/{node.Key}";
                     if (subTree == null)
                     {
-                        allNodes[subPath] = node.Value;
+                        if (skipItem && dirItem != null)
+                        {
+                            dirItem.SkipComparison = true;
+                        }
+
+                        allNodes[subPath] = skipItem ? (dirItem == null ? new DirItem(node.Value, true) : dirItem) : node.Value;
                     }
                     else
                     {
-                        stack.Push(Tuple.Create(subPath, subTree));
+                        stack.Push(Tuple.Create(subPath, subTree, skipItem));
                     }
                 }
             }
 
             return allNodes;
+        }
+
+        private bool DefaultFileComparator(object file1, object file2)
+        {
+            var item1 = file1 as DirItem;
+            var item2 = file2 as DirItem;
+
+            if (item1 != null)
+            {
+                if (item1.SkipComparison)
+                {
+                    return false;
+                }
+                file1 = item1.Item;
+            }
+
+            if (item2 != null)
+            {
+                if (item2.SkipComparison)
+                {
+                    return false;
+                }
+                file2 = item2.Item;
+            }
+
+            return !string.Equals(file1.ToString(), file2.ToString(), StringComparison.Ordinal);
         }
 
         private void Write(string path, object value)

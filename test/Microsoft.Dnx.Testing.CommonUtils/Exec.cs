@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.Testing
             Action<Dictionary<string, string>> envSetup = null,
             string workingDir = null)
         {
-            Console.WriteLine($"Running: {program} {commandLine}");
+            TestLogger.TraceInformation($"Running: {program} {commandLine}");
             var env = new Dictionary<string, string>();
             envSetup?.Invoke(env);
 
@@ -71,7 +71,6 @@ namespace Microsoft.Dnx.Testing
                 // This should preserve blank lines
                 if (args.Data != null)
                 {
-                    Console.WriteLine(args.Data);
                     stdoutBuilder.AppendLine(RemoveAnsiColorCodes(args.Data));
                 }
             };
@@ -80,7 +79,6 @@ namespace Microsoft.Dnx.Testing
             {
                 if (args.Data != null)
                 {
-                    Console.WriteLine(args.Data);
                     stderrBuilder.AppendLine(RemoveAnsiColorCodes(args.Data));
                 }
             };
@@ -95,6 +93,12 @@ namespace Microsoft.Dnx.Testing
                 StandardOutput = stdoutBuilder.ToString(),
                 ExitCode = process.ExitCode
             };
+
+            if (result.ExitCode != 0)
+            {
+                TestLogger.TraceInformation($"Command Output:{Environment.NewLine}{result.StandardOutput}");
+                TestLogger.TraceError($"Command Error:{Environment.NewLine}{result.StandardError}");
+            }
 
             return result;
         }

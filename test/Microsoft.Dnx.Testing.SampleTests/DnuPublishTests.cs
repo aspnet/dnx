@@ -14,7 +14,7 @@ namespace Microsoft.Dnx.Testing.SampleTests
     [Collection(nameof(SampleTestCollection))]
     public class DnuPublishTests : DnxSdkFunctionalTestBase
     {
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void DnuPublishWebApp_SubdirAsPublicDir_DirPlusFlatList(DnxSdk sdk)
         {
@@ -160,6 +160,8 @@ namespace Microsoft.Dnx.Testing.SampleTests
 
             Assert.Empty(result.StandardError);
             DirAssert.Equal(expectedOutputStructure, actualOutputStructure);
+
+            TestUtils.CleanUpTestDir<DnuPublishTests>(sdk);
         }
     }
 }

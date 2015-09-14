@@ -9,7 +9,7 @@ namespace Microsoft.Dnx.Testing.SampleTests
     [Collection(nameof(SampleTestCollection))]
     public class DnuRestoreTests : DnxSdkFunctionalTestBase
     {
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void DnuRestoreInstallsIndirectDependency(DnxSdk sdk)
         {
@@ -36,6 +36,8 @@ namespace Microsoft.Dnx.Testing.SampleTests
             Assert.Contains($"Installing DependencyB.2.0.0", result.StandardOutput);
             Assert.True(Directory.Exists(Path.Combine(packagesDir, "DependencyA", "1.0.0")));
             Assert.True(Directory.Exists(Path.Combine(packagesDir, "DependencyB", "2.0.0")));
+
+            TestUtils.CleanUpTestDir<DnuRestoreTests>(sdk);
         }
     }
 }

@@ -11,13 +11,19 @@ namespace Microsoft.Dnx.Testing
 {
     public class DnxSdkFunctionalTestBase
     {
-        public const string SdkVersionForTestingEnvName = "DNX_SDK_VERSION_FOR_TESTING";
+        public static bool UseCustomSdks
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(TestEnvironmentNames.Runtimes));
+            }
+        }
 
         public static string SdkVersionForTesting
         {
             get
             {
-                var sdkVersionForTesting = Environment.GetEnvironmentVariable(SdkVersionForTestingEnvName);
+                var sdkVersionForTesting = Environment.GetEnvironmentVariable(TestEnvironmentNames.TestSdkVersion);
                 // Warning when DNX_SDK_VERSION_FOR_TESTING is not set?
                 return string.IsNullOrEmpty(sdkVersionForTesting) ? "1.0.0-dev" : sdkVersionForTesting;
             }
@@ -27,7 +33,14 @@ namespace Microsoft.Dnx.Testing
         {
             get
             {
-                return ClrDnxSdks.Concat(CoreClrDnxSdks);
+                if (UseCustomSdks)
+                {
+                    return CustomDnxSdks;
+                }
+                else
+                {
+                    return ClrDnxSdks.Concat(CoreClrDnxSdks);
+                }
             }
         }
 
@@ -35,7 +48,14 @@ namespace Microsoft.Dnx.Testing
         {
             get
             {
-                if (RuntimeEnvironmentHelper.IsMono)
+                if (UseCustomSdks)
+                {
+                    foreach (var sdk in CustomDnxSdks)
+                    {
+                        yield return sdk;
+                    }
+                }
+                else if (RuntimeEnvironmentHelper.IsMono)
                 {
                     yield return new[] { GetRuntime("mono", string.Empty, string.Empty) };
                 }
@@ -51,10 +71,39 @@ namespace Microsoft.Dnx.Testing
         {
             get
             {
-                if (RuntimeEnvironmentHelper.IsWindows)
+                if (UseCustomSdks)
+                {
+                    foreach (var sdk in CustomDnxSdks)
+                    {
+                        yield return sdk;
+                    }
+                }
+                else if (RuntimeEnvironmentHelper.IsWindows)
                 {
                     yield return new[] { GetRuntime("coreclr", "win", "x86") };
                     yield return new[] { GetRuntime("coreclr", "win", "x64") };
+                }
+                else
+                {
+                    yield break;
+                }
+            }
+        }
+
+        public static IEnumerable<object[]> CustomDnxSdks
+        {
+            get
+            {
+                var sdks = Environment.GetEnvironmentVariable(TestEnvironmentNames.Runtimes).Split(';');
+                foreach (var sdk in sdks)
+                {
+                    if (sdk == "mono")
+                    {
+                        yield return new[] { GetRuntime("mono", string.Empty, string.Empty) };
+                    }
+
+                    var runtimeDefinition = sdk.Split('-');
+                    yield return new[] { GetRuntime(runtimeDefinition[0], runtimeDefinition[1], runtimeDefinition[2]) };
                 }
             }
         }
@@ -64,7 +113,7 @@ namespace Microsoft.Dnx.Testing
             var dnxSolutionRoot = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var runtimeHome = Path.Combine(dnxSolutionRoot, "artifacts", "test", DnxSdk.GetRuntimeName(flavor, os, arch));
             var buildVersion = Environment.GetEnvironmentVariable("DNX_BUILD_VERSION");
-            var sdkVersionForTesting = Environment.GetEnvironmentVariable(SdkVersionForTestingEnvName);
+            var sdkVersionForTesting = Environment.GetEnvironmentVariable(TestEnvironmentNames.TestSdkVersion);
 
             DnxSdk sdk = null;
 

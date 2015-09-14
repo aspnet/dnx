@@ -12,6 +12,26 @@ namespace Microsoft.Dnx.Testing
 {
     public static class TestUtils
     {
+        private static string _rootTestFolder;
+
+        public static string RootTestFolder
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_rootTestFolder))
+                {
+                    // This env var can be set by VS load profile
+                    _rootTestFolder = Environment.GetEnvironmentVariable(TestEnvironmentNames.LocalTestFolder);
+                    if (string.IsNullOrEmpty(_rootTestFolder))
+                    {
+                        var rootPath = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+                        _rootTestFolder = Path.Combine(rootPath, TestConstants.TestOutputDirectory);
+                    }
+                }
+                return _rootTestFolder;
+            }
+        }
+
         public static FrameworkName GetFrameworkForRuntimeFlavor(string flavor)
         {
             if (string.Equals("clr", flavor, StringComparison.OrdinalIgnoreCase) ||
@@ -34,28 +54,20 @@ namespace Microsoft.Dnx.Testing
             bool appendSolutionNameToTestFolder = false)
         {
             var rootPath = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-            var originalSolutionPath = Path.Combine(rootPath, "misc", solutionName);
-            var tempSolutionPath = GetTestFolder<TTest>(sdk, testName + (appendSolutionNameToTestFolder ? $".{solutionName}" : string.Empty));
+            var originalSolutionPath = Path.Combine(rootPath, TestConstants.TestSolutionsDirectory, solutionName);
+            var tempSolutionPath = GetTestFolder<TTest>(sdk, Path.Combine(testName, appendSolutionNameToTestFolder ? solutionName : string.Empty));
             CopyFolder(originalSolutionPath, tempSolutionPath);
             return new Solution(tempSolutionPath);
         }
 
         public static string GetTempTestFolder<T>(DnxSdk sdk, [CallerMemberName]string testName = null)
         {
-            return GetTestFolder<T>(sdk, $"{testName}.{Path.GetRandomFileName()}");
+            return GetTestFolder<T>(sdk, Path.Combine(testName, Path.GetRandomFileName()));
         }
 
         public static string GetTestFolder<T>(DnxSdk sdk, [CallerMemberName]string testName = null)
         {
-            // This env var can be set by VS load profile
-            var basePath = Environment.GetEnvironmentVariable("DNX_LOCAL_TEMP_FOLDER_FOR_TESTING");
-            if (string.IsNullOrEmpty(basePath))
-            {
-                var rootPath = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-                basePath = Path.Combine(rootPath, "TestOutput");
-            }
-
-            var tempFolderPath = Path.Combine(basePath, sdk.FullName, $"{typeof(T).Name}.{testName}");
+            var tempFolderPath = Path.Combine(RootTestFolder, $"{typeof(T).Name}.{testName}", sdk.FullName);
             Directory.CreateDirectory(tempFolderPath);
             return tempFolderPath;
         }
@@ -84,8 +96,8 @@ namespace Microsoft.Dnx.Testing
 
         public static string CreateLocalFeed<TTest>(DnxSdk sdk, Solution solution, [CallerMemberName]string testName = null)
         {
-            var feed = GetTestFolder<TTest>(sdk, $"{testName}.{Path.GetRandomFileName()}");
-            var packOutput = GetTestFolder<TTest>(sdk, $"{testName}.{Path.GetRandomFileName()}");
+            var feed = GetTestFolder<TTest>(sdk, Path.Combine(testName, Path.GetRandomFileName()));
+            var packOutput = GetTestFolder<TTest>(sdk, Path.Combine(testName, Path.GetRandomFileName()));
 
             sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
             foreach (var project in solution.Projects)
@@ -96,6 +108,19 @@ namespace Microsoft.Dnx.Testing
             }
 
             return feed;
+        }
+
+        public static void CleanUpTestDir<T>(DnxSdk sdk, [CallerMemberName]string testName = null)
+        {
+            var saveFilesBehaviour = Environment.GetEnvironmentVariable(TestEnvironmentNames.SaveFiles);
+            if (string.IsNullOrEmpty(saveFilesBehaviour) || !saveFilesBehaviour.Equals(TestConstants.SaveFilesAll, StringComparison.OrdinalIgnoreCase))
+            {
+                var testFolder = GetTestFolder<T>(sdk, testName);
+                if (Directory.Exists(testFolder))
+                {
+                    Directory.Delete(testFolder, recursive: true);
+                }
+            }
         }
     }
 }
