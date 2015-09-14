@@ -202,13 +202,28 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DthCompilation_Initialize_OnUnresolveProjectSample(string flavor, string os, string architecture)
+        public static IEnumerable<object[]> UnresolvedDependencyTestData
         {
-            var projectName = "UnresolvedProjectSample";
+            get
+            {
+                foreach (var combination in RuntimeComponents)
+                {
+                    // request 1, respond 1
+                    yield return combination.Concat(new object[] { "UnresolvedProjectSample", "EmptyLibrary", "Project" }).ToArray();
+                    // request 2, respond 2
+                    yield return combination.Concat(new object[] { "UnresolvedPackageSample", "NoSuchPackage", "Package" }).ToArray();
+                }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(UnresolvedDependencyTestData))]
+        public void DthCompilation_Initialize_UnresolvedDependency(
+            string flavor, string os, string architecture,
+            string testProjectName, string expectedUnresolvedDependency, string expectedUnresolvedType)
+        {
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-            var testProject = _fixture.GetTestProjectPath(projectName);
+            var testProject = _fixture.GetTestProjectPath(testProjectName);
 
             using (var server = DthTestServer.Create(runtimeHomePath, testProject))
             using (var client = new DthTestClient(server, 0))
@@ -221,12 +236,22 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 var dependencies = message.Payload["Dependencies"];
                 Assert.NotNull(dependencies);
 
-                var unresolveDependency = dependencies["EmptyLibrary"];
+                var unresolveDependency = dependencies[expectedUnresolvedDependency];
                 Assert.NotNull(unresolveDependency);
                 Assert.Equal("Unresolved", unresolveDependency["Type"].Value<string>());
-                Assert.Equal(
-                    Path.Combine(Path.GetDirectoryName(testProject), "EmptyLibrary", Project.ProjectFileName),
-                    unresolveDependency["Path"].Value<string>());
+
+                if (expectedUnresolvedType == "Project")
+                {
+                    Assert.Equal(
+                        Path.Combine(Path.GetDirectoryName(testProject), "EmptyLibrary", Project.ProjectFileName),
+                        unresolveDependency["Path"].Value<string>());
+                }
+                else if (expectedUnresolvedType == "Package")
+                {
+                    Assert.False(unresolveDependency["Path"].HasValues);
+                }
+
+                // expectedUnresolvedType is not implemented in project
             }
         }
     }
