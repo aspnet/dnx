@@ -693,7 +693,7 @@ namespace NuGet
                 // Find exact matching items in expansion order.
                 foreach (var activeFramework in DotNetGenerationMapping.Expand(internalProjectFramework))
                 {
-                    var matchingGroups = frameworkGroups.Where(g => 
+                    var matchingGroups = frameworkGroups.Where(g =>
                         string.Equals(g.Key?.Identifier, activeFramework.Identifier, StringComparison.OrdinalIgnoreCase) &&
                         string.Equals(g.Key?.Profile, activeFramework.Profile, StringComparison.OrdinalIgnoreCase)).ToList();
                     var bestGroup = matchingGroups
@@ -879,7 +879,8 @@ namespace NuGet
                 {
                     // TODO: Remove this logic when out dependencies have moved to ASP.NET Core 5.0
                     // as this logic is super fuzzy and terrible
-                    if (string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) || 
+                        string.Equals(frameworkName.Identifier, NetPlatformFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
                     {
                         var frameworkIdentifierLookup = targetFrameworkPortableProfile.SupportedFrameworks
                                                                                       .Select(NormalizeFrameworkName)

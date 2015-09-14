@@ -13,6 +13,8 @@ namespace Microsoft.Dnx.Runtime.Tests
     public class VersionUtilityFacts
     {
         [Theory]
+        // Compat rules that we have just because we need it for now
+        [InlineData("dotnet", "portable-net45+win8", true)]
         [InlineData("dnxcore50", "portable-net40+win8+dnxcore50", true)]
         [InlineData("dnxcore50", "portable-net45+win8", true)]
         [InlineData("dnxcore50", "portable-net451+win81", true)]
@@ -156,7 +158,6 @@ namespace Microsoft.Dnx.Runtime.Tests
 
         // Old-world Portable doesn't support dotnet and vice-versa
         [InlineData("dotnet", "portable-net40+sl5+win8", false)]
-        [InlineData("dotnet", "portable-net45+win8", false)]
         [InlineData("portable-net40+sl5+win8", "dotnet", false)]
         [InlineData("portable-net45+win8", "dotnet", false)]
         [InlineData("portable-net451+win81", "dotnet", false)]
