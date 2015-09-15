@@ -77,7 +77,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             Console.WriteLine($"Process ID {Process.GetCurrentProcess().Id}");
             Console.WriteLine("Listening on port {0}", port);
 
-            for (;;)
+            while (true)
             {
                 var acceptSocket = await AcceptAsync(listenSocket);
 
