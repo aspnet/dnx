@@ -27,6 +27,7 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
             var other = obj as DependencyDescription;
 
             return other != null &&
+                   Resolved == other.Resolved &&
                    string.Equals(Name, other.Name) &&
                    object.Equals(Version, other.Version) &&
                    string.Equals(Path, other.Path) &&

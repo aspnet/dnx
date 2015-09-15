@@ -49,14 +49,16 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             {
                 foreach (var combination in RuntimeComponents)
                 {
-                    // The current max protocol version is 2
+                    // The current max protocol version is 3
 
                     // request 1, respond 1
                     yield return combination.Concat(new object[] { 1, 1 }).ToArray();
                     // request 2, respond 2
                     yield return combination.Concat(new object[] { 2, 2 }).ToArray();
                     // request 3, respond 2
-                    yield return combination.Concat(new object[] { 3, 2 }).ToArray();
+                    yield return combination.Concat(new object[] { 3, 3 }).ToArray();
+                    // request 4, respond 3
+                    yield return combination.Concat(new object[] { 4, 3 }).ToArray();
                 }
             }
         }
@@ -208,10 +210,18 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             {
                 foreach (var combination in RuntimeComponents)
                 {
-                    yield return combination.Concat(new object[] { "UnresolvedProjectSample", "EmptyLibrary", "Project" }).ToArray();
+                    yield return combination.Concat(new object[] { 1, "UnresolvedProjectSample", "EmptyLibrary", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 1, "UnresolvedPackageSample", "NoSuchPackage", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 2, "UnresolvedProjectSample", "EmptyLibrary", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 2, "UnresolvedPackageSample", "NoSuchPackage", "Unresolved" }).ToArray();
+
+                    yield return combination.Concat(new object[] { 3, "UnresolvedProjectSample", "EmptyLibrary", "Project" }).ToArray();
 
                     // Unresolved package dependency's type is still Unresolved
-                    yield return combination.Concat(new object[] { "UnresolvedPackageSample", "NoSuchPackage", "Unresolved" }).ToArray();
+                    yield return combination.Concat(new object[] { 3, "UnresolvedPackageSample", "NoSuchPackage", "Unresolved" }).ToArray();
                 }
             }
         }
@@ -219,7 +229,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [Theory]
         [MemberData(nameof(UnresolvedDependencyTestData))]
         public void DthCompilation_Initialize_UnresolvedDependency(
-            string flavor, string os, string architecture,
+            string flavor, string os, string architecture, int protocolVersion,
             string testProjectName, string expectedUnresolvedDependency, string expectedUnresolvedType)
         {
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -228,7 +238,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             using (var server = DthTestServer.Create(runtimeHomePath, testProject))
             using (var client = new DthTestClient(server, 0))
             {
-                client.Initialize(testProject);
+                client.Initialize(testProject, protocolVersion);
 
                 var message = client.DrainTillFirst("Dependencies");
                 message.EnsureSource(server, client);
@@ -242,7 +252,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 Assert.Equal(expectedUnresolvedDependency, unresolveDependency["Name"]);
                 Assert.Equal(expectedUnresolvedDependency, unresolveDependency["DisplayName"]);
                 Assert.False(unresolveDependency["Resolved"].Value<bool>());
-                Assert.Equal(expectedUnresolvedType, unresolveDependency["Type"]);
+                Assert.Equal(expectedUnresolvedType, unresolveDependency["Type"].Value<string>());
 
                 if (expectedUnresolvedType == "Project")
                 {
