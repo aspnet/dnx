@@ -7,7 +7,7 @@ using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.DesignTimeHost
 {
-    public static class DependencyDescriptionHelper
+    internal static class DependencyDescriptionHelper
     {
         public static DependencyDescription CreateDependencyDescription(LibraryDescription library, int protocolVersion)
         {
