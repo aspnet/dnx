@@ -3,23 +3,24 @@
 
 using System;
 using System.IO;
+using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Dnx.Testing
 {
     public static class ProjectExtensions
     {
-        public static string GetBinPath(this Runtime.Project project)
+        public static string GetBinPath(this Project project)
         {
             return Path.Combine(project.ProjectDirectory, "bin");
         }
 
-        public static string GetLocalPackagesDir(this Runtime.Project project)
+        public static string GetLocalPackagesDir(this Project project)
         {
             return Path.Combine(project.ProjectDirectory, "packages");
         }
 
-        public static void UpdateProjectFile(this Runtime.Project project, Action<JObject> updateContents)
+        public static void UpdateProjectFile(this Project project, Action<JObject> updateContents)
         {
             JsonUtils.UpdateJson(project.ProjectFilePath, updateContents);
         }

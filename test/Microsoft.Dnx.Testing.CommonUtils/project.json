@@ -5,10 +5,6 @@
     "Newtonsoft.Json": "6.0.6",
     "xunit.runner.aspnet": "2.0.0-aspnet-*"
   },
-  "compile": [
-    "../../src/Microsoft.Dnx.Tooling/ProjectResolver.cs",
-    "../../src/Microsoft.Dnx.Tooling/IProjectResolver.cs"
-  ],
   "frameworks": {
     "dnx451": { },
     "dnxcore50": { }

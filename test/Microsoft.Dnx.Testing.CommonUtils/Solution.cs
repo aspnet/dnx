@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Tooling;
 
 namespace Microsoft.Dnx.Testing
 {
@@ -28,7 +27,7 @@ namespace Microsoft.Dnx.Testing
 
         public string RootPath { get; private set; }
 
-        public IEnumerable<Runtime.Project> Projects
+        public IEnumerable<Project> Projects
         {
             get
             {
