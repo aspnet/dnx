@@ -992,14 +992,11 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
 - // ===================== SHARED UTILITIES ===================== 
 macro name='DoRestore'
     for each='var projectFile in Files.Include("src/*/project.json")'
-        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        k-restore restoreDir="${ Path.GetDirectoryName(projectFile) }"
     for each='var projectFile in Files.Include("test/*/project.json")'
-        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        k-restore restoreDir="${ Path.GetDirectoryName(projectFile) }"
     for each='var projectFile in Files.Include("samples/*/project.json")'
-        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        k-restore restoreDir="${ Path.GetDirectoryName(projectFile) }"
 
 #update-tpa .copy-coreclr
     @{
