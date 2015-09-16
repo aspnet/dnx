@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <sys/utsname.h>
 
 typedef int (*coreclr_initialize_fn)(
             const char* exePath,
@@ -137,7 +138,7 @@ int LoadCoreClr(const char* runtime_directory)
         FreeCoreClr();
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -237,6 +238,7 @@ int InvokeDelegate(host_main_fn host_main, int argc, const char** argv, const bo
 }
 
 #if defined(PLATFORM_LINUX)
+
 std::string get_os_version()
 {
     std::vector<std::string> qualifiers { "DISTRIB_ID=", "DISTRIB_RELEASE=" };
@@ -272,26 +274,72 @@ std::string get_os_version()
     fprintf(stderr, "Could not open /etc/lsb_release. OS version will default to the empty string.\n");
     return "";
 }
+#else
+std::string translate_darwin_version(const std::string release)
+{
+    auto dot_position = release.find(".");
+    if (dot_position == std::string::npos)
+    {
+        fprintf(stderr, "Could not determine os version.\n");
+        return "10.1";
+    }
 
+    /*
+    release to OS X version mapping
+    15.x.x -> 10.11.x El Capitan
+    14.x.x -> 10.10.x Yosemite
+    13.x.x -> 10.9.x  Mavericks
+    12.x.x -> 10.8.x  Mountain Lion
+    11.x.x -> 10.7.x  Lion
+    10.x.x -> 10.6.x  Snow Leopard
+     9.x.x -> 10.5.x  Leopard
+     8.x.x -> 10.4.x  Tiger
+     7.x.x -> 10.3.x  Panther
+     6.x.x -> 10.2.x  Jaguar
+     5.x   -> 10.1.x  Puma
+    */
+
+    auto version = stoi(release.substr(0, dot_position));
+    return std::string("10.").append(std::to_string(version - 4));
+}
 #endif
 
 bootstrapper_context initialize_context(const CALL_APPLICATION_MAIN_DATA* data)
 {
     bootstrapper_context ctx;
-    ctx.operating_system = 
+
+    struct utsname uname_data;
+    if (uname(&uname_data) == 0)
+    {
+        ctx.operating_system = to_wchar_t(uname_data.sysname);
+
+#if defined(PLATFORM_DARWIN)
+        ctx.os_version = to_wchar_t(translate_darwin_version(uname_data.release).c_str());
+#endif
+    }
+    else
+    {
+        fprintf(stderr, "uname() failed using default os name and version.\n");
+
+        ctx.operating_system =
 #if defined(PLATFORM_LINUX)
-    to_wchar_t("Linux");
+        to_wchar_t("Linux");
 #else
-    to_wchar_t("Darwin");
+        to_wchar_t("Darwin");
+        ctx.operating_system = to_wchar_t("10.1");
+#endif
+    }
+
+#if defined(PLATFORM_LINUX)
+    ctx.os_version = to_wchar_t(get_os_version().c_str());
 #endif
 
-    ctx.os_version = to_wchar_t(get_os_version().c_str());
-    // currently we only support 64-bit linux
+    // currently we only support 64-bit Linux and Darwin
     ctx.architecture = to_wchar_t("x64");
     ctx.runtime_directory = to_wchar_t(data->runtimeDirectory);
     ctx.application_base = to_wchar_t(data->applicationBase);
-    // we always wanto handle exceptions since they cannot be
-    // marshaled from managed to native code
+    // we always want to handle exceptions since in CoreClr
+    // they cannot be marshalled from managed to native code
     ctx.handle_exceptions = true;
 
     return ctx;
@@ -322,7 +370,7 @@ int CallMain(CALL_APPLICATION_MAIN_DATA* data)
         fprintf(stderr, "Failed to initialize runtime: 0x%08x\n", result);
         return 1;
     }
-    
+
     void* host_main;
     result = create_delegate(host_handle, domain_id, &host_main);
     if (result < 0)
