@@ -15,11 +15,26 @@
     "dependencies": {
         "Microsoft.Dnx.Loader": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Json.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.HashCodeCombiner.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Dnx.Runtime.Json.Sources": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Runtime.Internals": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Runtime.Sources": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Compilation.CSharp.Abstractions": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Framework.HashCodeCombiner.Sources": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
         "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*"
     },
     "frameworks": {
@@ -36,6 +51,7 @@
         },
         "dnxcore50": {
             "dependencies": {
+                "System.Console": "4.0.0-beta-*",
                 "System.Collections.Concurrent": "4.0.11-beta-*",
                 "System.Diagnostics.Tools": "4.0.1-beta-*",
                 "System.Dynamic.Runtime": "4.0.11-beta-*",
