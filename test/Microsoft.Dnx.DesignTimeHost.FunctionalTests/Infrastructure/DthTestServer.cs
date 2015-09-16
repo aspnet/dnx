@@ -9,8 +9,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Testing;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 {
@@ -54,7 +54,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             {
                 if (args.Data != null)
                 {
-                    stdout.AppendLine(TestUtils.RemoveAnsiColorCodes(args.Data));
+                    stdout.AppendLine(CommonTestUtils.TestUtils.RemoveAnsiColorCodes(args.Data));
 
                     if (string.Equals(args.Data, successOuput, StringComparison.Ordinal))
                     {
@@ -69,7 +69,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             {
                 if (args.Data != null)
                 {
-                    stderr.AppendLine(TestUtils.RemoveAnsiColorCodes(args.Data));
+                    stderr.AppendLine(CommonTestUtils.TestUtils.RemoveAnsiColorCodes(args.Data));
                 }
             };
 
@@ -94,6 +94,11 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             {
                 throw new InvalidOperationException($"Timeout after {timeout.TotalSeconds}. Expected message {successOuput} from STDOUT to indicate that DTH is started successfully.");
             }
+        }
+
+        public static DthTestServer Create(DnxSdk sdk, string projectPath)
+        {
+            return Create(sdk.Location, projectPath, TimeSpan.FromSeconds(10));
         }
 
         public static DthTestServer Create(string runtimeHomePath, string projectPath)

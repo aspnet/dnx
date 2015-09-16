@@ -4,26 +4,33 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Testing;
+using Newtonsoft.Json.Linq;
+using Xunit;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 {
-    public class DthFunctionalTestFixture : DnxRuntimeFixture
+    public class DthFunctionalTestFixture: IDisposable
     {
         private readonly DisposableDir _context;
+        private readonly IDictionary<string, string> _testProjects;
 
-        public DthFunctionalTestFixture() : base()
+        public DthFunctionalTestFixture()
         {
             _context = new DisposableDir();
-
-            PrepareTestProjects();
+            _testProjects = PrepareTestProjects();
         }
 
-        public override void Dispose()
+        public string ContextDir
+        {
+            get { return _context.DirPath; }
+        }
+
+        public virtual void Dispose()
         {
             _context?.Dispose();
-
-            base.Dispose();
         }
 
         public string GetTestProjectPath(string projectName)
@@ -33,14 +40,14 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 
         public IDisposable CreateDisposableTestProject(string projectName, string runtimeHomePath, out string testProjectDir)
         {
-            var source = Path.Combine(TestUtils.GetMiscProjectsFolder(), "DthTestProjects", projectName);
+            var source = Path.Combine(CommonTestUtils.TestUtils.GetMiscProjectsFolder(), "DthTestProjects", projectName);
             if (!Directory.Exists(source))
             {
                 throw new ArgumentException($"Test project {source} doesn't exist.", nameof(projectName));
             }
 
             var disposableDir = new DisposableDir();
-            var restoreExitCode = TestUtils.CreateDisposableTestProject(runtimeHomePath, disposableDir, source);
+            var restoreExitCode = CommonTestUtils.TestUtils.CreateDisposableTestProject(runtimeHomePath, disposableDir, source);
             if (restoreExitCode != 0)
             {
                 throw new InvalidOperationException($"Failed to restore project {projectName}");
@@ -50,19 +57,48 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             return disposableDir;
         }
 
-        private void PrepareTestProjects()
+        private IDictionary<string, string> PrepareTestProjects()
         {
-            var runtime = TestUtils.GetClrRuntimeComponents().First();
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir((string)runtime[0], (string)runtime[1], (string)runtime[2]);
-            var dthTestProjectsSource = Path.Combine(TestUtils.GetMiscProjectsFolder(), "DthTestProjects");
+            var result = new Dictionary<string, string>();
 
+            var sdk = (DnxSdk)DnxSdkFunctionalTestBase.ClrDnxSdks.First()[0];
+
+            // Prepare test projects in source code
+            var dthTestProjectsSource = Path.Combine(CommonTestUtils.TestUtils.GetMiscProjectsFolder(), "DthTestProjects");
             foreach (var testProject in Directory.GetDirectories(dthTestProjectsSource))
             {
-                TestUtils.CreateDisposableTestProject(
-                    runtimeHomeDir,
-                    _context.DirPath,
-                    testProject);
+                var testProjectName = Path.GetFileName(testProject);
+                var target = Path.Combine(_context, "testProjects", testProjectName);
+
+                Testing.TestUtils.CopyFolder(testProject, target);
+
+                var restoreResult = sdk.Dnu.Restore(target);
+                restoreResult.EnsureSuccess();
+
+                _testProjects[testProjectName] = target;
             }
+
+            // Generate test package on the fly
+            
+            
+            return result;
+        }
+        
+        private string CreateTestPackages()
+        {
+            var projectJson = new JObject {
+                ["version"] = "0.1.0",
+                ["frameworks"] = new JObject {
+                    ["dnx451"] = new JObject()
+                }
+            };
+            
+            var dir = new Dir {
+                ["alpha"] = new Dir {
+                    ["projectDir"] = 
+                }
+                ["output"] = new Dir { }
+            };
         }
     }
 }
