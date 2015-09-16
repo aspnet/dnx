@@ -118,6 +118,7 @@ namespace Microsoft.Dnx.Tooling
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
             lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MinValue);
+            lockFile.GlobalSearchPaths = ReadArray(cursor["globalSearchPaths"] as JArray, ReadString);
             lockFile.Targets = ReadObject(cursor["targets"] as JObject, ReadTarget);
             lockFile.ProjectFileDependencyGroups = ReadObject(cursor["projectFileDependencyGroups"] as JObject, ReadProjectFileDependencyGroup);
             ReadLibrary(cursor["libraries"] as JObject, lockFile);
@@ -132,6 +133,7 @@ namespace Microsoft.Dnx.Tooling
             json["targets"] = WriteObject(lockFile.Targets, WriteTarget);
             json["libraries"] = WriteLibraries(lockFile);
             json["projectFileDependencyGroups"] = WriteObject(lockFile.ProjectFileDependencyGroups, WriteProjectFileDependencyGroup);
+            json["globalSearchPaths"] = WriteArray(lockFile.GlobalSearchPaths.OrderBy(x => x), WriteString);
             return json;
         }
 

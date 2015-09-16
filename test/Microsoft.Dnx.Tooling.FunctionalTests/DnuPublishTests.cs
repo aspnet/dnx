@@ -49,7 +49,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   ""projectFileDependencyGroups"": {
     """": [],
     ""FRAMEWORK_NAME"": []
-  }
+  },
+  ""globalSearchPaths"": [
+    ""src""
+  ]
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
 
         private static readonly string BasicLockFile = BasicLockFileTemplate
@@ -687,7 +690,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
       ""Lib ""
     ],
     ""DNX,Version=v4.6"": []
-  }
+  },
+  ""globalSearchPaths"": [
+    ""src""
+  ]
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
             string expectedLibLockFile = BasicLockFileTemplate.Replace("FRAMEWORK_NAME", "DNX,Version=v4.5.1");
 
@@ -1711,7 +1717,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
     """": [],
     ""DNX,Version=v4.5.1"": [],
     ""DNXCore,Version=v5.0"": []
-  }
+  },
+  ""globalSearchPaths"": [
+    ""src""
+  ]
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString()))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""projects"": [
@@ -1831,7 +1840,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
     """": [],
     ""DNX,Version=v4.5.1"": [],
     ""DNXCore,Version=v5.0"": []
-  }
+  },
+  ""globalSearchPaths"": [
+    ""src""
+  ]
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString())
   .Replace("RUNTIME_TARGET", flavor == "coreclr" ? "DNXCore,Version=v5.0" : "DNX,Version=v4.5.1"))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -1921,7 +1933,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
       ""NoDependencies >= 1.0.0""
     ],
     ""DNX,Version=v4.5.1"": []
-  }
+  },
+  ""globalSearchPaths"": [
+    ""src""
+  ]
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -2025,7 +2040,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
       ""NoDependencies >= 1.0.0""
     ],
     ""DNX,Version=v4.5.1"": []
-  }
+  },
+  ""globalSearchPaths"": [
+    ""src""
+  ]
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString())
 .Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
 

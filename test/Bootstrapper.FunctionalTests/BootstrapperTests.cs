@@ -285,13 +285,13 @@ Hello, code!
             const string lockFile = @"{
   ""locked"": false,
   ""version"": 2,
-  ""targets"": {
-    ""DNX,Version=v4.5.1"": {}
-  },
   ""libraries"": {},
   ""projectFileDependencyGroups"": {
     """": [],
     ""DNX,Version=v4.5.1"": []
+  },
+  ""targets"": {
+    ""DNX,Version=v4.5.1"": {}
   }
 }";
 

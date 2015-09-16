@@ -95,6 +95,7 @@ namespace Microsoft.Dnx.Runtime
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
             lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MinValue);
+            lockFile.GlobalSearchPaths = ReadArray(cursor.Value("globalSearchPaths"), ReadString);
             lockFile.Targets = ReadObject(cursor.ValueAsJsonObject("targets"), ReadTarget);
             lockFile.ProjectFileDependencyGroups = ReadObject(cursor.ValueAsJsonObject("projectFileDependencyGroups"), ReadProjectFileDependencyGroup);
             ReadLibrary(cursor.ValueAsJsonObject("libraries"), lockFile);
