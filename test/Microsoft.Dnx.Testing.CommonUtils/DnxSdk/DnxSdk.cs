@@ -28,7 +28,8 @@ namespace Microsoft.Dnx.Testing
 
         public static string GetRuntimeHome()
         {
-            var homePath = Environment.ExpandEnvironmentVariables(Environment.GetEnvironmentVariable("DNX_HOME"));
+            var dnxHomePath = Environment.GetEnvironmentVariable("DNX_HOME");
+            var homePath = string.IsNullOrEmpty(dnxHomePath) ? string.Empty : Environment.ExpandEnvironmentVariables(dnxHomePath);
 
             if (string.IsNullOrEmpty(homePath))
             {
