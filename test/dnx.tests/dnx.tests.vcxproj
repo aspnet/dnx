@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\dnx\dnx.cpp" />
+    <ClCompile Include="argument_search_tests.cpp" />
     <ClCompile Include="dnxtests.cpp" />
     <ClCompile Include="pal.tests.cpp" />
     <ClCompile Include="parameter_expansion_tests.cpp" />

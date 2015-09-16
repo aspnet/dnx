@@ -5,10 +5,21 @@
 #include "pal.h"
 #include "utils.h"
 
-int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer);
+int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer);
 void FreeExpandedCommandLineArguments(size_t argc, dnx::char_t** ppszArgv);
-bool ExpandCommandLineArguments(size_t argc, dnx::char_t** ppszArgv, size_t& expanded_argc, dnx::char_t**& ppszExpandedArgv);
-bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2);
+bool ExpandCommandLineArguments(int argc, dnx::char_t** ppszArgv, size_t& expanded_argc, dnx::char_t**& ppszExpandedArgv);
+
+void WaitForDebugger(int argc, dnx::char_t** argv)
+{
+    if (dnx::utils::find_bootstrapper_option_index(argc, argv, _X("--bootstrapper-debug")) >= 0
+#if !defined(CORECLR_WIN) && !defined(CORECLR_LINUX) && !defined(CORECLR_DARWIN)
+        || dnx::utils::find_bootstrapper_option_index(argc, argv, _X("--debug")) >= 0
+#endif
+        )
+    {
+        WaitForDebuggerToAttach();
+    }
+}
 
 #if defined(ARM)
 int wmain(int argc, wchar_t* argv[])
@@ -19,25 +30,7 @@ extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
 #endif
 {
     // Check for the debug flag before doing anything else
-    for (int i = 1; i < argc; ++i)
-    {
-        //anything without - or -- is appbase or non-dnx command
-        if (argv[i][0] != _X('-'))
-        {
-            break;
-        }
-        if (strings_equal_ignore_case(argv[i], _X("--appbase")))
-        {
-            //skip path argument
-            ++i;
-            continue;
-        }
-        if (strings_equal_ignore_case(argv[i], _X("--debug")))
-        {
-            WaitForDebuggerToAttach();
-            break;
-        }
-    }
+    WaitForDebugger(argc - 1, &(argv[1]));
 
     size_t nExpandedArgc = 0;
     dnx::char_t** ppszExpandedArgv = nullptr;
@@ -49,7 +42,7 @@ extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
         return CallApplicationProcessMain(argc - 1, &argv[1], trace_writer);
     }
 
-    auto exitCode = CallApplicationProcessMain(nExpandedArgc, ppszExpandedArgv, trace_writer);
+    auto exitCode = CallApplicationProcessMain(static_cast<int>(nExpandedArgc), ppszExpandedArgv, trace_writer);
     FreeExpandedCommandLineArguments(nExpandedArgc, ppszExpandedArgv);
     return exitCode;
 }

@@ -11,6 +11,8 @@
 #if defined(_WIN32)
 #include <locale>
 #include <codecvt>
+#else
+#include<string.h>
 #endif
 
 namespace dnx
@@ -50,6 +52,16 @@ namespace dnx
             return to_xstring_t(s);
         }
 #endif
+
+        bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2)
+        {
+#if defined(_WIN32)
+            return _wcsicmp(s1, s2) == 0;
+#else
+            return strcasecmp(s1, s2) == 0;
+#endif
+        }
+
 
         bool ends_with_slash(const xstring_t& path)
         {
@@ -153,5 +165,70 @@ namespace dnx
         }
 
 #endif
+        int get_bootstrapper_option_arg_count(const dnx::char_t* option_name)
+        {
+            if (strings_equal_ignore_case(option_name, _X("--appbase")) ||
+                strings_equal_ignore_case(option_name, _X("--lib")) ||
+                strings_equal_ignore_case(option_name, _X("--packages")) ||
+                strings_equal_ignore_case(option_name, _X("--configuration")) ||
+                strings_equal_ignore_case(option_name, _X("--framework")) ||
+                strings_equal_ignore_case(option_name, _X("--port")) ||
+                strings_equal_ignore_case(option_name, _X("--project")) ||
+                strings_equal_ignore_case(option_name, _X("-p")))
+            {
+                return 1;
+            }
+
+            if (strings_equal_ignore_case(option_name, _X("--watch")) ||
+                strings_equal_ignore_case(option_name, _X("--debug")) ||
+                strings_equal_ignore_case(option_name, _X("--bootstrapper-debug")) ||
+                strings_equal_ignore_case(option_name, _X("--help")) ||
+                strings_equal_ignore_case(option_name, _X("-h")) ||
+                strings_equal_ignore_case(option_name, _X("-?")) ||
+                strings_equal_ignore_case(option_name, _X("--version")))
+            {
+                return 0;
+            }
+
+            // It isn't a bootstrapper option
+            return -1;
+        }
+
+        int find_bootstrapper_option_index(int argc, dnx::char_t**argv, const dnx::char_t* optionName)
+        {
+            for (int i = 0; i < argc; i++)
+            {
+                auto option_num_args = dnx::utils::get_bootstrapper_option_arg_count(argv[i]);
+                if (option_num_args < 0)
+                {
+                    return -1;
+                }
+
+                if (dnx::utils::strings_equal_ignore_case(argv[i], optionName))
+                {
+                    return i;
+                }
+
+                i += option_num_args;
+            }
+
+            return -1;
+        }
+
+        int find_first_non_bootstrapper_param_index(int argc, dnx::char_t**argv)
+        {
+            for (int i = 0; i < argc; i++)
+            {
+                auto option_num_args = dnx::utils::get_bootstrapper_option_arg_count(argv[i]);
+                if (option_num_args < 0)
+                {
+                    return i;
+                }
+
+                i += option_num_args;
+            }
+
+            return -1;
+        }
     }
 }
