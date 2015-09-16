@@ -11,6 +11,10 @@ var PRODUCT_VERSION = '1.0.0'
 var AUTHORS='Microsoft Open Technologies, Inc.'
 
 use-standard-lifecycle
+
+- // Need this to run before nuget-verify
+#package-runtime .clean-sdk-dir target='package'
+
 k-standard-goals
 
 var Configuration2='${E("Configuration")}'
@@ -137,7 +141,6 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 #native-compile
 
 #build-compile target='compile'
-#package-runtime .clean-sdk-dir target='package'
 
 #xunit-test
 
@@ -750,7 +753,7 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
 
     nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(extractDirectory, "**", "*.nuspec"))'
 
-#nuget-pack-runtime target='package'
+#nuget-pack-runtime target='package-runtime'
     @{
         UpdateAllNuspecs(RUNTIME_TARGETS, NUSPEC_ROOT, BUILD_DIR2);
     }
