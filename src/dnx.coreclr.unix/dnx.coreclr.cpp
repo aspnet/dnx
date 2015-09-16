@@ -6,6 +6,9 @@
 #include "utils.h"
 #include "app_main.h"
 #include <assert.h>
+#include <string>
+#include <vector>
+#include <fstream>
 
 typedef int (*coreclr_initialize_fn)(
             const char* exePath,
@@ -28,12 +31,24 @@ typedef int (*coreclr_shutdown_fn)(
             void* hostHandle,
             unsigned int domainId);
 
-typedef int (*host_main_fn)(const int argc, const wchar_t** argv);
+typedef int (*MultiByteToWideChar_fn)(
+            unsigned int CodePage,
+            int32_t dwFlags,
+            const char* lpMultiByteStr,
+            int cbMultiByte,
+            wchar_t* lpWideCharStr,
+            int cchWideChar);
+
+typedef int (*host_main_fn)(const int argc, const wchar_t** argv, const bootstrapper_context* ctx);
 
 #define BootstrapperName "Microsoft.Dnx.Host.CoreClr"
 
 namespace
 {
+
+void* pLibCoreClr = nullptr;
+MultiByteToWideChar_fn MultiByteToWideChar = nullptr;
+
 std::string GetPathToBootstrapper()
 {
 #ifdef PLATFORM_DARWIN
@@ -82,8 +97,6 @@ bool GetTrustedPlatformAssembliesList(const std::string& runtime_directory, std:
 
     return true;
 }
-
-void* pLibCoreClr = nullptr;
 
 bool LoadCoreClrAtPath(const char* runtime_directory, void** ppLibCoreClr)
 {
@@ -195,34 +208,24 @@ int32_t shutdown_runtime(void* host_handle, unsigned int domain_id)
     return coreclr_shutdown(host_handle, domain_id);
 }
 
-int InvokeDelegate(host_main_fn host_main, int argc, const char** argv)
+// the caller is responsible for deleting the instance
+const wchar_t* to_wchar_t(const char* str)
 {
-    typedef int (*MultiByteToWideChar_fn)(
-        unsigned int CodePage,
-        int32_t dwFlags,
-        const char* lpMultiByteStr,
-        int cbMultiByte,
-        wchar_t* lpWideCharStr,
-        int cchWideChar);
+    auto length = MultiByteToWideChar(0 /*CP_ACP*/, 0, str, -1, nullptr, 0);
+    auto str_w = new wchar_t[length];
+    MultiByteToWideChar(0 /*CP_ACP*/, 0, str, length, str_w, length);
+    return str_w;
+}
 
-    auto MultiByteToWideChar = (MultiByteToWideChar_fn)dlsym(pLibCoreClr, "MultiByteToWideChar");
-
-    if (!MultiByteToWideChar)
-    {
-        fprintf(stderr, "Could not find MultiByteToWideChar entrypoint in coreclr\n");
-        return 1;
-    }
-
+int InvokeDelegate(host_main_fn host_main, int argc, const char** argv, const bootstrapper_context& ctx)
+{
     const wchar_t** wchar_argv = new const wchar_t*[argc];
     for (auto i = 0; i < argc; i++)
     {
-        int length = MultiByteToWideChar(0 /*CP_ACP*/, 0, argv[i], -1, nullptr, 0);
-        auto arg = new wchar_t[length];
-        MultiByteToWideChar(0 /*CP_ACP*/, 0, argv[i], length, arg, length);
-        wchar_argv[i] = arg;
+        wchar_argv[i] = to_wchar_t(argv[i]);
     }
 
-    auto exit_code = host_main(argc, wchar_argv);
+    auto exit_code = host_main(argc, wchar_argv, &ctx);
 
     for (auto i = 0; i < argc; i++)
     {
@@ -231,6 +234,81 @@ int InvokeDelegate(host_main_fn host_main, int argc, const char** argv)
     delete[] wchar_argv;
 
     return exit_code;
+}
+
+#if defined(PLATFORM_LINUX)
+std::string get_os_version()
+{
+    std::vector<std::string> qualifiers { "DISTRIB_ID=", "DISTRIB_RELEASE=" };
+
+    std::ifstream lsb_release;
+    lsb_release.open("/etc/lsb-release", std::ifstream::in);
+    if (lsb_release.is_open())
+    {
+        std::string os_version;
+        for (std::string line; std::getline(lsb_release, line); )
+        {
+            for (auto& qualifier : qualifiers)
+            {
+                if (line.compare(0, qualifier.length(), qualifier) == 0)
+                {
+                    if (os_version.length() > 0)
+                    {
+                        os_version.append(" ");
+                    }
+                    os_version.append(line.substr(qualifier.length()));
+                }
+            }
+        }
+
+        if (os_version.length() == 0)
+        {
+            fprintf(stderr, "Could not find version information. OS version will default to the empty string.\n");
+        }
+
+        return os_version;
+    }
+
+    fprintf(stderr, "Could not open /etc/lsb_release. OS version will default to the empty string.\n");
+    return "";
+}
+
+#endif
+
+bootstrapper_context initialize_context(const CALL_APPLICATION_MAIN_DATA* data)
+{
+    bootstrapper_context ctx;
+    ctx.operating_system = 
+#if defined(PLATFORM_LINUX)
+    to_wchar_t("Linux");
+#else
+    to_wchar_t("Darwin");
+#endif
+
+    ctx.os_version = to_wchar_t(get_os_version().c_str());
+    // currently we only support 64-bit linux
+    ctx.architecture = to_wchar_t("x64");
+    ctx.runtime_directory = to_wchar_t(data->runtimeDirectory);
+    ctx.application_base = to_wchar_t(data->applicationBase);
+    // we always wanto handle exceptions since they cannot be
+    // marshaled from managed to native code
+    ctx.handle_exceptions = true;
+
+    return ctx;
+}
+
+void clean_context(bootstrapper_context& ctx)
+{
+    delete[] ctx.operating_system;
+    ctx.operating_system = nullptr;
+    delete[] ctx.architecture;
+    ctx.architecture = nullptr;
+    delete[] ctx.os_version;
+    ctx.os_version = nullptr;
+    delete[] ctx.runtime_directory;
+    ctx.runtime_directory = nullptr;
+    delete[] ctx.application_base;
+    ctx.application_base = nullptr;
 }
 
 int CallMain(CALL_APPLICATION_MAIN_DATA* data)
@@ -244,7 +322,7 @@ int CallMain(CALL_APPLICATION_MAIN_DATA* data)
         fprintf(stderr, "Failed to initialize runtime: 0x%08x\n", result);
         return 1;
     }
-
+    
     void* host_main;
     result = create_delegate(host_handle, domain_id, &host_main);
     if (result < 0)
@@ -253,7 +331,9 @@ int CallMain(CALL_APPLICATION_MAIN_DATA* data)
     }
     else
     {
-        data->exitcode = InvokeDelegate((host_main_fn)host_main, data->argc, data->argv);
+        auto ctx = initialize_context(data);
+        data->exitcode = InvokeDelegate((host_main_fn)host_main, data->argc, data->argv, ctx);
+        clean_context(ctx);
     }
 
     auto shutdown_result = shutdown_runtime(host_handle, domain_id);
@@ -274,9 +354,20 @@ extern "C" int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data)
         return 1;
     }
 
-    setenv("DNX_FRAMEWORK", "dnxcore50", 1);
+    int result = 0;
 
-    auto result = CallMain(data);
+    MultiByteToWideChar = (MultiByteToWideChar_fn)dlsym(pLibCoreClr, "MultiByteToWideChar");
+    if (!MultiByteToWideChar)
+    {
+        fprintf(stderr, "Could not find MultiByteToWideChar entrypoint in coreclr\n");
+        result = 1;
+    }
+    else
+    {
+        setenv("DNX_FRAMEWORK", "dnxcore50", 1);
+
+        result = CallMain(data);
+    }
 
     FreeCoreClr();
 

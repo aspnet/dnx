@@ -49,6 +49,14 @@ sealed class DomainManager
             bootstrapperContext.TargetFramework = new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
             bootstrapperContext.HandleExceptions = context->HandleExceptions;
 
+            Logger.TraceInformation($"Operating System: {bootstrapperContext.OperatingSystem}");
+            Logger.TraceInformation($"Operating System Version: {bootstrapperContext.OsVersion}");
+            Logger.TraceInformation($"Architecture: {bootstrapperContext.Architecture}");
+            Logger.TraceInformation($"Runtime Directory: {bootstrapperContext.RuntimeDirectory}");
+            Logger.TraceInformation($"Application Base: {bootstrapperContext.ApplicationBase}");
+            Logger.TraceInformation($"Target Framework: {bootstrapperContext.TargetFramework}");
+            Logger.TraceInformation($"Handle Exceptions: {bootstrapperContext.HandleExceptions}");
+
             return RuntimeBootstrapper.Execute(
                 arguments,
                 bootstrapperContext.TargetFramework,
