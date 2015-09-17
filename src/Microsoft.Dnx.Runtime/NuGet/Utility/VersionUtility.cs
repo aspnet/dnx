@@ -63,7 +63,7 @@ namespace NuGet
             { UapFrameworkIdentifier, UapFrameworkIdentifier },
 
             { SilverlightFrameworkIdentifier, "sl" },
-            { NetCoreFrameworkIdentifier, "win"},
+            { NetCoreFrameworkIdentifier, "netcore"},
             { WindowsFrameworkIdentifier, "win"},
             { PortableFrameworkIdentifier, "portable" },
             { WindowsPhoneFrameworkIdentifier, "wp"},
