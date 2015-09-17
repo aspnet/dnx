@@ -37,7 +37,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             var expectedOutputGlobalJson = new JObject
             {
-                ["userkey"] = "uservalue",
+                ["sdk"] = new JObject
+                {
+                    ["version"] = "1.0.0-beta7"
+                },
                 ["projects"] = new JArray("src"),
                 ["packages"] = "packages"
             };

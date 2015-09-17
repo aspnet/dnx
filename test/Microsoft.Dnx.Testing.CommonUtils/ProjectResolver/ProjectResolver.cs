@@ -10,7 +10,7 @@ using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Testing
 {
-    internal class ProjectResolver : IProjectResolver
+    internal class ProjectResolver
     {
         private readonly HashSet<string> _searchPaths = new HashSet<string>();
         private ILookup<string, ProjectInformation> _projects;
