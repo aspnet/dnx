@@ -273,6 +273,7 @@ int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writ
     data.argc = static_cast<int>(argc);
     data.argv = const_cast<const dnx::char_t**>(argv);
     data.runtimeDirectory = currentDirectory.c_str();
+    data.handleExceptions = true;
 
     dnx::char_t appBaseBuffer[MAX_PATH];
 

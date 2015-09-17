@@ -9,6 +9,7 @@
 #include "ComObject.h"
 #include "FileStream.h"
 #include "HostAssemblyManager.h"
+#include "utils.h"
 
 extern const wchar_t* AppDomainManagerAssemblyName;
 
@@ -18,25 +19,33 @@ struct ApplicationMainInfo
 
     /* in */ ApplicationMainDelegate ApplicationMain;
 
+    /* out */ BSTR OperatingSystem;
+
+    /* out */ BSTR OsVersion;
+
+    /* out */ BSTR Architecture;
+
     /* out */ BSTR RuntimeDirectory;
 
     /* out */ BSTR ApplicationBase;
+
+    /* out */ bool HandleExceptions;
 };
 
-class __declspec(uuid("7E9C5238-60DC-49D3-94AA-53C91FA79F7C")) IKatanaManager : public IUnknown
+class __declspec(uuid("7E9C5238-60DC-49D3-94AA-53C91FA79F7C")) IClrBootstrapper : public IUnknown
 {
 public:
-    virtual HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase) = 0;
+    virtual HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase, bool handleExceptions) = 0;
 
     virtual HRESULT BindApplicationMain(ApplicationMainInfo* pInfo) = 0;
 
     virtual HRESULT CallApplicationMain(int argc, PCWSTR* argv) = 0;
 };
 
-_COM_SMARTPTR_TYPEDEF(IKatanaManager, __uuidof(IKatanaManager));
+_COM_SMARTPTR_TYPEDEF(IClrBootstrapper, __uuidof(IClrBootstrapper));
 
-class KatanaManager :
-    public IKatanaManager,
+class ClrBootstrapper :
+    public IClrBootstrapper,
     public IHostControl
 {
     CriticalSection _crit;
@@ -55,19 +64,20 @@ class KatanaManager :
 
     _bstr_t _applicationBase;
     _bstr_t _runtimeDirectory;
+    bool _handleExceptions;
 
     ApplicationMainInfo _applicationMainInfo;
 
 public:
 
-    KatanaManager()
+    ClrBootstrapper()
         : m_pHostAssemblyManager{nullptr}
     {
         _calledInitializeRuntime = false;
         _hrInitializeRuntime = E_PENDING;
     }
 
-    ~KatanaManager()
+    ~ClrBootstrapper()
     {
         if (m_pHostAssemblyManager)
         {
@@ -77,8 +87,8 @@ public:
 
     IUnknown* CastInterface(REFIID riid)
     {
-        if (riid == __uuidof(IKatanaManager))
-            return static_cast<IKatanaManager*>(this);
+        if (riid == __uuidof(IClrBootstrapper))
+            return static_cast<IClrBootstrapper*>(this);
         if (riid == __uuidof(IHostControl))
             return static_cast<IHostControl*>(this);
         if (riid == __uuidof(IHostAssemblyManager))
@@ -87,16 +97,19 @@ public:
         return NULL;
     }
 
-    HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase)
+    HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase, bool handleExceptions)
     {
         Lock lock(&_crit);
         if (_calledInitializeRuntime)
+        {
             return _hrInitializeRuntime;
+        }
 
         HRESULT hr = S_OK;
 
         _applicationBase = applicationBase;
         _runtimeDirectory = runtimeDirectory;
+        _handleExceptions = handleExceptions;
 
         m_pHostAssemblyManager = new HostAssemblyManager(runtimeDirectory);
         m_pHostAssemblyManager->AddRef();
@@ -146,6 +159,17 @@ public:
         _applicationMainInfo = *pInfo;
         pInfo->RuntimeDirectory = _runtimeDirectory.copy();
         pInfo->ApplicationBase = _applicationBase.copy();
+        pInfo->OperatingSystem = _bstr_t(L"Windows").copy();
+        pInfo->OsVersion = _bstr_t(dnx::utils::get_windows_version()).copy();
+        pInfo->Architecture =
+#if defined(AMD64)
+            _bstr_t(L"x64")
+#else
+            _bstr_t(L"x86")
+#endif
+            .copy();
+        pInfo->HandleExceptions = _handleExceptions;
+
         return S_OK;
     }
 
@@ -162,7 +186,7 @@ public:
         /* [out] */ void **ppObject)
     {
         HRESULT hr = S_OK;
-        _HR(static_cast<IKatanaManager*>(this)->QueryInterface(riid, ppObject));
+        _HR(static_cast<IClrBootstrapper*>(this)->QueryInterface(riid, ppObject));
         return hr;
     }
 
