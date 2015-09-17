@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
 
@@ -14,17 +13,10 @@ namespace Microsoft.Dnx.Runtime.Helpers
         {
             if (targetFramework.Contains("+"))
             {
-                var profile = targetFramework;
-                if (targetFramework.StartsWith("portable-"))
-                {
-                    // Strip the "portable-" prefix before passing to the profile parser
-                    profile = profile.Substring(9);
-                }
-                var portableProfile = NetPortableProfile.Parse(profile);
+                var portableProfile = NetPortableProfile.Parse(targetFramework);
 
-                // Only support it if it parsed to a real PCL number
                 if (portableProfile != null &&
-                    portableProfile.FrameworkName.Profile != profile)
+                    portableProfile.FrameworkName.Profile != targetFramework)
                 {
                     return portableProfile.FrameworkName;
                 }
@@ -44,31 +36,15 @@ namespace Microsoft.Dnx.Runtime.Helpers
 
         public static string MakeDefaultTargetFrameworkDefine(Tuple<string, FrameworkName> frameworkDefinition)
         {
-            var shortName = VersionUtility.GetShortFrameworkName(frameworkDefinition.Item2);
+            var shortName = frameworkDefinition.Item1;
             var targetFramework = frameworkDefinition.Item2;
 
-            if (targetFramework.IsPortableFramework())
+            if (VersionUtility.IsPortableFramework(targetFramework))
             {
                 return null;
             }
 
-            var candidateName = shortName.ToUpperInvariant();
-
-            // Replace '-', '.', and '+' in the candidate name with '_' because TFMs with profiles use those (like "net40-client")
-            // and we want them representable as defines (i.e. "NET40_CLIENT")
-            candidateName = candidateName.Replace('-', '_').Replace('+', '_').Replace('.', '_');
-
-            // We require the following from our Target Framework Define names
-            // Starts with A-Z or _
-            // Contains only A-Z, 0-9 and _
-            if (!string.IsNullOrEmpty(candidateName) &&
-                (char.IsLetter(candidateName[0]) || candidateName[0] == '_') &&
-                candidateName.All(c => Char.IsLetterOrDigit(c) || c == '_'))
-            {
-                return candidateName;
-            }
-
-            return null;
+            return shortName.ToUpperInvariant();
         }
     }
 }

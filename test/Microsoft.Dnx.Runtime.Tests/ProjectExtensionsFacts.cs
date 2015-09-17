@@ -58,28 +58,6 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.Equal("x86", options.Platform);
         }
 
-        [Theory]
-        [InlineData("net40", "NET40")]
-        [InlineData(".NETFramework,Version=v4.0", "NET40")]
-        [InlineData(".NETFramework,Version=v4.0,Profile=Client", "NET40_CLIENT")]
-        [InlineData("DOTNET5.1", "DOTNET5_1")]
-        [InlineData(".NETPortable,Version=v4.5,Profile=Profile123", null)]
-        [InlineData("portable-net45+win81", null)]
-        public void GetCompilerOptionsGeneratesTFMDefineForShortName(string tfm, string define)
-        {
-            // Arrange
-            var projectContent = @"{ ""frameworks"": { """ + tfm + @""": {} } }";
-            var project = ProjectUtilities.GetProject(projectContent, "TestProj", "project.json");
-            var targetFramework = FrameworkNameHelper.ParseFrameworkName(tfm);
-
-            // Act
-            var options = project.GetCompilerOptions(targetFramework, configurationName: "Debug");
-
-            // Assert
-            var expectedDefines = define == null ? new[] { "DEBUG", "TRACE" } : new[] { "DEBUG", "TRACE", define };
-            Assert.Equal(expectedDefines, options.Defines);
-        }
-
         [Fact]
         public void GetCompilerOptionsCombinesConfigurationAndTargetFrameworkfNotNull()
         {
