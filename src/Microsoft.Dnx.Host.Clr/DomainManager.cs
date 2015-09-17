@@ -103,7 +103,7 @@ public class DomainManager : AppDomainManager
         },
         null);
 
-        return RuntimeBootstrapper.Execute(argv, _dnxTfm);
+        return RuntimeBootstrapper.Execute(argv, _dnxTfm, _info);
     }
 
     private Version SelectHighestSupportedDnxVersion(string applicationBase)
@@ -163,17 +163,28 @@ public class DomainManager : AppDomainManager
     [DllImport(Constants.BootstrapperClrName + ".dll")]
     private extern static void BindApplicationMain(ref ApplicationMainInfo info);
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct ApplicationMainInfo
     {
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public MainDelegate Main;
 
         [MarshalAs(UnmanagedType.BStr)]
+        public string OperatingSystem;
+
+        [MarshalAs(UnmanagedType.BStr)]
+        public string OsVersion;
+
+        [MarshalAs(UnmanagedType.BStr)]
+        public string Architecture;
+
+        [MarshalAs(UnmanagedType.BStr)]
         public string RuntimeDirectory;
 
         [MarshalAs(UnmanagedType.BStr)]
         public string ApplicationBase;
+
+        public bool HandleExceptions;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
