@@ -991,12 +991,8 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
 
 - // ===================== SHARED UTILITIES ===================== 
 macro name='DoRestore'
-    for each='var projectFile in Files.Include("src/*/project.json")'
-        k-restore restoreDir="${ Path.GetDirectoryName(projectFile) }"
-    for each='var projectFile in Files.Include("test/*/project.json")'
-        k-restore restoreDir="${ Path.GetDirectoryName(projectFile) }"
-    for each='var projectFile in Files.Include("samples/*/project.json")'
-        k-restore restoreDir="${ Path.GetDirectoryName(projectFile) }"
+    exec program='cmd' commandline='/C dnu restore --parallel src test samples' workingdir='${Directory.GetCurrentDirectory()}' if='CanBuildForWindows'
+    exec program='dnu' commandline='restore src test samples' workingdir='${Directory.GetCurrentDirectory()}' if='CanBuildForLinux || CanBuildForDarwin'
 
 #update-tpa .copy-coreclr
     @{
