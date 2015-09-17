@@ -5,24 +5,24 @@
 
 #include "stdafx.h"
 
-#include "KatanaManager.h"
+#include "ClrBootstrapper.h"
 #include "app_main.h"
 
-IKatanaManagerPtr g_katanaManager;
+IClrBootstrapperPtr g_clrBootstrapper;
 
 extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 {
     HRESULT hr = S_OK;
 
-    IKatanaManagerPtr manager = new ComObject<KatanaManager, IKatanaManager>();
+    IClrBootstrapperPtr bootstrapper = new ComObject<ClrBootstrapper, IClrBootstrapper>();
 
-    g_katanaManager = manager;
+    g_clrBootstrapper = bootstrapper;
 
-    hr = manager->InitializeRuntime(data->runtimeDirectory, data->applicationBase);
+    hr = bootstrapper->InitializeRuntime(data->runtimeDirectory, data->applicationBase, data->handleExceptions);
     if (SUCCEEDED(hr))
     {
-        g_katanaManager = NULL;
-        data->exitcode = manager->CallApplicationMain(data->argc, data->argv);
+        g_clrBootstrapper = NULL;
+        data->exitcode = bootstrapper->CallApplicationMain(data->argc, data->argv);
     }
     else
     {
@@ -38,8 +38,8 @@ extern "C" __declspec(dllexport) HRESULT __stdcall BindApplicationMain(Applicati
     HRESULT hr = S_OK;
 
     // LOCK g_
-    IKatanaManagerPtr katanaManager = g_katanaManager;
+    IClrBootstrapperPtr bootstrapper = g_clrBootstrapper;
 
-    _HR(katanaManager->BindApplicationMain(pInfo));
+    _HR(bootstrapper->BindApplicationMain(pInfo));
     return hr;
 }
