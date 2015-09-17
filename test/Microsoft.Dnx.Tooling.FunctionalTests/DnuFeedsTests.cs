@@ -73,8 +73,8 @@ namespace Microsoft.Dnx.Tooling
             {
                 var projectPath = testEnv.ProjectPath;
                 DirTree.CreateFromJson(projectStructure)
-                    .WithFileContents("root/NuGet.Config", rootConfig)
-                    .WithFileContents("root/sub/NuGet.Config", subConfig)
+                    .WithFileContents("root/nuget.config", rootConfig)
+                    .WithFileContents("root/sub/nuget.config", subConfig)
                     .WriteTo(projectPath);
 
                 string output;
@@ -93,9 +93,9 @@ namespace Microsoft.Dnx.Tooling
 
                 // CI Machines and such have different sources in the user-global config
                 // So we can't actually assert the exact content of the output.
-                Assert.Contains($"https://source1 [Disabled]{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "NuGet.Config")}", output);
-                Assert.Contains($"https://source2{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "NuGet.Config")}", output);
-                Assert.Contains($"https://source3{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "sub", "NuGet.Config")}", output);
+                Assert.Contains($"https://source1 [Disabled]{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "nuget.config")}", output);
+                Assert.Contains($"https://source2{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "nuget.config")}", output);
+                Assert.Contains($"https://source3{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "sub", "nuget.config")}", output);
             }
         }
     }

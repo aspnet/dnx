@@ -9,14 +9,23 @@ using System.Linq;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
-using NuGet.Resources;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Tooling;
+using NuGet.Resources;
 
 namespace NuGet
 {
     public class Settings : ISettings
     {
+        private static readonly string[] SettingsFileNames = RuntimeEnvironmentHelper.IsWindows ?
+            new[] { "nuget.config" } :
+            new[]
+            {
+                "nuget.config", // preferred style
+                "NuGet.config", // NuGet v3 style
+                "NuGet.Config"  // NuGet v2 style
+            };
+
         private readonly XDocument _config;
         private readonly IFileSystem _fileSystem;
         private readonly string _fileName;
@@ -25,11 +34,6 @@ namespace NuGet
         private Settings _redirect;
 
         private readonly bool _isMachineWideSettings;
-
-        public Settings(IFileSystem fileSystem)
-            : this(fileSystem, Constants.SettingsFileName, false)
-        {
-        }
 
         public Settings(IFileSystem fileSystem, string fileName)
             : this(fileSystem, fileName, false)
@@ -716,26 +720,31 @@ namespace NuGet
             // otherwise we'd end up creating them.
             foreach (var dir in GetSettingsFilePaths(fileSystem))
             {
-                string fileName = Path.Combine(dir, Constants.SettingsFileName);
+                var fileName = SettingsFileNames
+                    .Select(settingsFileName => Path.Combine(dir, settingsFileName))
+                    .FirstOrDefault(fileSystem.FileExists);
 
                 // This is to workaround limitations in the filesystem mock implementations that assume relative paths.
                 // For example MockFileSystem.Paths is holding relative paths, which whould be responsible for hundreds
                 // of failures should this code could go away
-                if (fileName.StartsWith(fileSystem.Root, StringComparison.OrdinalIgnoreCase))
+                if (fileName != null)
                 {
-                    int count = fileSystem.Root.Length;
-                    // if fileSystem.Root ends with \ (ex: c:\foo\) then we've removed all we needed
-                    // otherwise, remove one more char
-                    if (!(fileSystem.Root.EndsWith("\\") || fileSystem.Root.EndsWith("/")))
+                    if (fileName.StartsWith(fileSystem.Root, StringComparison.OrdinalIgnoreCase))
                     {
-                        count++;
+                        int count = fileSystem.Root.Length;
+                        // if fileSystem.Root ends with \ (ex: c:\foo\) then we've removed all we needed
+                        // otherwise, remove one more char
+                        if (!(fileSystem.Root.EndsWith("\\") || fileSystem.Root.EndsWith("/")))
+                        {
+                            count++;
+                        }
+                        fileName = fileName.Substring(count);
                     }
-                    fileName = fileName.Substring(count);
-                }
 
-                if (fileSystem.FileExists(fileName))
-                {
-                    yield return fileName;
+                    if (fileName != null)
+                    {
+                        yield return fileName;
+                    }
                 }
             }
         }
