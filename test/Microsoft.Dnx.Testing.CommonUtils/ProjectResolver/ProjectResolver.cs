@@ -34,7 +34,7 @@ namespace Microsoft.Dnx.Testing
             }
         }
 
-        public bool TryResolveProject(string name, out Runtime.Project project)
+        public bool TryResolveProject(string name, out Project project)
         {
             project = null;
 
@@ -100,7 +100,7 @@ namespace Microsoft.Dnx.Testing
 
         private class ProjectInformation
         {
-            private Runtime.Project _project;
+            private Project _project;
             private bool _initialized;
             private object _lockObj = new object();
 
@@ -108,14 +108,14 @@ namespace Microsoft.Dnx.Testing
 
             public string FullPath { get; set; }
 
-            public Runtime.Project Project
+            public Project Project
             {
                 get
                 {
                     return LazyInitializer.EnsureInitialized(ref _project, ref _initialized, ref _lockObj, () =>
                     {
-                        Runtime.Project project;
-                        Runtime.Project.TryGetProject(FullPath, out project);
+                        Project project;
+                        Project.TryGetProject(FullPath, out project);
                         return project;
                     });
                 }
