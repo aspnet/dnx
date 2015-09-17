@@ -171,8 +171,11 @@ namespace Microsoft.Dnx.Runtime
 
             // Skip this on mono since it has a slightly different set of reference assemblies at a different
             // location
-            if (!RuntimeEnvironmentHelper.IsMono
-                && FrameworkDefinitions.TryPopulateFrameworkFastPath(targetFramework.Identifier, targetFramework.Version, referenceAssembliesPath, out frameworkInfo))
+            // Also, if the framework we're targetting has a profile (Client profile, basically), don't use the
+            // fast path because it will be wrong.
+            if (!RuntimeEnvironmentHelper.IsMono &&
+                string.IsNullOrEmpty(targetFramework.Profile) &&
+                FrameworkDefinitions.TryPopulateFrameworkFastPath(targetFramework.Identifier, targetFramework.Version, referenceAssembliesPath, out frameworkInfo))
             {
                 return frameworkInfo;
             }
@@ -245,6 +248,10 @@ namespace Microsoft.Dnx.Runtime
                     if (targetFramework.Version.Minor == 5)
                     {
                         var refAsms35Dir = Path.Combine(referenceAssembliesPath, "v3.5");
+                        if(!string.IsNullOrEmpty(targetFramework.Profile))
+                        {
+                            refAsms35Dir = Path.Combine(refAsms35Dir, "Profile", targetFramework.Profile);
+                        }
                         if (Directory.Exists(refAsms35Dir))
                         {
                             searchPaths.Add(refAsms35Dir);
