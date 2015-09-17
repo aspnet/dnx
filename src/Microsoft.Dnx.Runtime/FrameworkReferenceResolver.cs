@@ -250,7 +250,8 @@ namespace Microsoft.Dnx.Runtime
                         var refAsms35Dir = Path.Combine(referenceAssembliesPath, "v3.5");
                         if(!string.IsNullOrEmpty(targetFramework.Profile))
                         {
-                            refAsms35Dir = Path.Combine(refAsms35Dir, "Profile", targetFramework.Profile);
+                            // The 3.5 Client Profile assemblies ARE in .NETFramework... it's weird.
+                            refAsms35Dir = Path.Combine(referenceAssembliesPath, ".NETFramework", "v3.5", "Profile", targetFramework.Profile);
                         }
                         if (Directory.Exists(refAsms35Dir))
                         {
@@ -259,15 +260,23 @@ namespace Microsoft.Dnx.Runtime
                     }
 
                     // Always search the 3.0 reference assemblies
-                    var refAsms30Dir = Path.Combine(referenceAssembliesPath, "v3.0");
-                    if (Directory.Exists(refAsms30Dir))
+                    if (string.IsNullOrEmpty(targetFramework.Profile))
                     {
-                        searchPaths.Add(refAsms30Dir);
+                        // a) 3.0 didn't have profiles
+                        // b) When using a profile, we don't want to fall back to 3.0 or 2.0
+                        var refAsms30Dir = Path.Combine(referenceAssembliesPath, "v3.0");
+                        if (Directory.Exists(refAsms30Dir))
+                        {
+                            searchPaths.Add(refAsms30Dir);
+                        }
                     }
                 }
 
-                // .NET 2.0 reference assemblies go last
-                searchPaths.Add(net20Dir);
+                // .NET 2.0 reference assemblies go last (but only if there's no profile in the TFM)
+                if (string.IsNullOrEmpty(targetFramework.Profile))
+                {
+                    searchPaths.Add(net20Dir);
+                }
 
                 frameworkInfo.Exists = true;
                 frameworkInfo.Path = searchPaths.First();
@@ -305,7 +314,10 @@ namespace Microsoft.Dnx.Runtime
                 string versionString = targetFramework.Version.Minor == 0 ?
                     targetFramework.Version.Major.ToString() :
                     targetFramework.Version.ToString();
-                return ".NET Framework " + versionString;
+                string profileString = string.IsNullOrEmpty(targetFramework.Profile) ?
+                    string.Empty :
+                    $" {targetFramework.Profile} Profile";
+                return ".NET Framework " + versionString + profileString;
             }
             return targetFramework.ToString();
         }
