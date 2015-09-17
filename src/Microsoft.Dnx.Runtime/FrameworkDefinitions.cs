@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -8,50 +9,57 @@ namespace Microsoft.Dnx.Runtime
     {
         private const string NetFrameworkIdentifier = ".NETFramework";
 
-        public static bool TryPopulateFrameworkFastPath(string identifier, Version version, string referenceAssembliesPath, out FrameworkInformation frameworkInfo)
+        public static bool TryPopulateFrameworkFastPath(FrameworkName framework, string referenceAssembliesPath, out FrameworkInformation frameworkInfo)
         {
+            if(!string.IsNullOrEmpty(framework.Profile))
+            {
+                // We don't have embedded framework info for Client Profile
+                frameworkInfo = null;
+                return false;
+            }
+
             // 4.6
-            if (identifier == NetFrameworkIdentifier &&
-                version.Major == 4 &&
-                version.Minor == 6)
+            if (framework.Identifier == NetFrameworkIdentifier &&
+                framework.Version.Major == 4 &&
+                framework.Version.Minor == 6)
             {
                 frameworkInfo = PopulateNet46(referenceAssembliesPath);
                 return true;
             }
 
             // 4.5.2
-            if (identifier == NetFrameworkIdentifier &&
-                version.Major == 4 &&
-                version.Minor == 5 &&
-                version.Build == 2)
+            if (framework.Identifier == NetFrameworkIdentifier &&
+                framework.Version.Major == 4 &&
+                framework.Version.Minor == 5 &&
+                framework.Version.Build == 2)
             {
                 frameworkInfo = PopulateNet452(referenceAssembliesPath);
                 return true;
             }
 
             // 4.5.1
-            if (identifier == NetFrameworkIdentifier &&
-                version.Major == 4 &&
-                version.Minor == 5 &&
-                version.Build == 1)
+            if (framework.Identifier == NetFrameworkIdentifier &&
+                framework.Version.Major == 4 &&
+                framework.Version.Minor == 5 &&
+                framework.Version.Build == 1)
             {
                 frameworkInfo = PopulateNet451(referenceAssembliesPath);
                 return true;
             }
 
             // 4.5
-            if (identifier == NetFrameworkIdentifier &&
-                version.Major == 4 &&
-                version.Minor == 5)
+            if (framework.Identifier == NetFrameworkIdentifier &&
+                framework.Version.Major == 4 &&
+                framework.Version.Minor == 5)
             {
                 frameworkInfo = PopulateNet45(referenceAssembliesPath);
                 return true;
             }
 
             // 4.0
-            if (identifier == NetFrameworkIdentifier &&
-                version.Major == 4 &&
-                version.Minor == 0)
+            if (framework.Identifier == NetFrameworkIdentifier &&
+                framework.Version.Major == 4 &&
+                framework.Version.Minor == 0)
             {
                 frameworkInfo = PopulateNet40(referenceAssembliesPath);
                 return true;
