@@ -146,7 +146,7 @@ namespace Microsoft.Dnx.Compilation
                 {
                     var childNode = new Node
                     {
-                        Library =  dependency.Library,
+                        Library = dependency.Library,
                         Parent = node
                     };
 
@@ -234,10 +234,9 @@ namespace Microsoft.Dnx.Compilation
                 // Create the compilation context
                 var compilationContext = project.Project.ToCompilationContext(project.Framework, _configuration, aspect);
 
-                if (!string.IsNullOrEmpty(project.TargetFrameworkInfo.AssemblyPath))
+                if (!string.IsNullOrEmpty(project.TargetFrameworkInfo?.AssemblyPath))
                 {
                     // Project specifies a pre-compiled binary. We're done!
-
                     var assemblyPath = ResolvePath(project.Project, _configuration, project.TargetFrameworkInfo.AssemblyPath);
                     var pdbPath = ResolvePath(project.Project, _configuration, project.TargetFrameworkInfo.PdbPath);
 

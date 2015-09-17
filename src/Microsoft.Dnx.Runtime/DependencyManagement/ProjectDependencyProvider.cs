@@ -1,9 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
@@ -12,14 +10,14 @@ namespace Microsoft.Dnx.Runtime
 {
     public class ProjectDependencyProvider
     {
-        public ProjectDescription GetDescription(string path, LockFileTargetLibrary targetLibrary)
+        public ProjectDescription GetDescription(string name, string path, LockFileTargetLibrary targetLibrary)
         {
             Project project;
 
             // Can't find a project file with the name so bail
             if (!Project.TryGetProject(path, out project))
             {
-                return null;
+                return new ProjectDescription(name, path);
             }
 
             return GetDescription(targetLibrary.TargetFramework, project);

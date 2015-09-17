@@ -1,10 +1,31 @@
-﻿using System.Collections.Generic;
-using System.Runtime.Versioning;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.Dnx.Runtime
 {
     public class ProjectDescription : LibraryDescription
     {
+        /// <summary>
+        /// Constructs a unresolved project description
+        /// </summary>
+        public ProjectDescription(string name, string path)
+            : base(new LibraryRange(name, frameworkReference: false),
+                   new LibraryIdentity(name, new NuGet.SemanticVersion("1.0.0"), isGacOrFrameworkReference: false),
+                   path: path,
+                   type: LibraryTypes.Project,
+                   dependencies: Enumerable.Empty<LibraryDependency>(),
+                   assemblies: Enumerable.Empty<string>(),
+                   framework: null)
+        {
+            Project = null;
+            Resolved = false;
+            Compatible = false;
+            TargetFrameworkInfo = null;
+        }
+
         public ProjectDescription(
             LibraryRange libraryRange,
             Project project,
@@ -28,6 +49,7 @@ namespace Microsoft.Dnx.Runtime
         }
 
         public Project Project { get; }
+
         public TargetFrameworkInformation TargetFrameworkInfo { get; }
     }
 }

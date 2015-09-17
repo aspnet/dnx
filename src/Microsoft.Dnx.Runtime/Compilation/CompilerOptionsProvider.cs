@@ -25,7 +25,10 @@ namespace Microsoft.Dnx.Runtime.Compilation
             ProjectDescription projectDescription;
             if (_projects.TryGetValue(projectName, out projectDescription))
             {
-                return projectDescription.Project.GetCompilerOptions(targetFramework, configurationName);
+                if (projectDescription.Resolved)
+                {
+                    return projectDescription.Project.GetCompilerOptions(targetFramework, configurationName);
+                }
             }
 
             return new CompilerOptions();

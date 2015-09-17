@@ -46,7 +46,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             }
             else
             {
-                EmitSource(root);
+                success = EmitSource(root);
             }
 
             root.Reports.Quiet.WriteLine();
@@ -54,12 +54,17 @@ namespace Microsoft.Dnx.Tooling.Publish
             return success;
         }
 
-        private void EmitSource(PublishRoot root)
+        private bool EmitSource(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
                 _projectDescription.Type, _projectDescription.Identity.Name);
 
             var project = GetCurrentProject();
+            if (project == null)
+            {
+                return false;
+            }
+
             var targetName = project.Name;
             TargetPath = Path.Combine(
                 root.OutputPath,
@@ -85,6 +90,8 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             _relativeAppBase = Path.Combine("..", appBase);
             ApplicationBasePath = Path.Combine(root.OutputPath, appBase);
+
+            return true;
         }
 
         private bool EmitNupkg(PublishRoot root)
@@ -95,6 +102,11 @@ namespace Microsoft.Dnx.Tooling.Publish
             IsPackage = true;
 
             var project = GetCurrentProject();
+            if (project == null)
+            {
+                return false;
+            }
+
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);

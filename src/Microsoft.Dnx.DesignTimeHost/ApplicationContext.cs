@@ -1041,6 +1041,11 @@ namespace Microsoft.Dnx.DesignTimeHost
                 // Add shared files from projects
                 foreach (var reference in dependencyInfo.ProjectReferences)
                 {
+                    if (reference.Project == null)
+                    {
+                        continue;
+                    }
+
                     // Only add direct dependencies as sources
                     if (!project.Dependencies.Any(d => string.Equals(d.Name, reference.Name, StringComparison.OrdinalIgnoreCase)))
                     {
@@ -1161,10 +1166,11 @@ namespace Microsoft.Dnx.DesignTimeHost
                         var targetFrameworkInformation = referencedProject.TargetFrameworkInfo;
 
                         // If this is an assembly reference then treat it like a file reference
-                        if (!string.IsNullOrEmpty(targetFrameworkInformation.AssemblyPath) &&
-                            string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
+                        if (!string.IsNullOrEmpty(targetFrameworkInformation?.AssemblyPath) &&
+                             string.IsNullOrEmpty(targetFrameworkInformation?.WrappedProject))
                         {
-                            string assemblyPath = GetProjectRelativeFullPath(referencedProject.Project, targetFrameworkInformation.AssemblyPath);
+                            string assemblyPath = GetProjectRelativeFullPath(referencedProject.Project,
+                                                                             targetFrameworkInformation.AssemblyPath);
                             info.References.Add(assemblyPath);
 
                             description.Path = assemblyPath;
@@ -1174,7 +1180,8 @@ namespace Microsoft.Dnx.DesignTimeHost
                         {
                             string wrappedProjectPath = null;
 
-                            if (!string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
+                            if (!string.IsNullOrEmpty(targetFrameworkInformation?.WrappedProject) &&
+                                referencedProject.Project != null)
                             {
                                 wrappedProjectPath = GetProjectRelativeFullPath(referencedProject.Project, targetFrameworkInformation.WrappedProject);
                             }

@@ -295,5 +295,64 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 }
             }
         }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DthNegative_BrokenProjectPathInLockFile(string flavor, string os, string architecture)
+        {
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
+
+            using (var disposableDir = new DisposableDir())
+            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var client = new DthTestClient(server, 0))
+            {
+                // copy the project to difference location so that the project path in its lock file is invalid
+                var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
+                TestUtils.CopyFolder(testProject, targetPath);
+
+                client.Initialize(targetPath);
+                var messages = client.DrainAllMessages();
+
+                Assert.False(ContainsMessage(messages, "Error"));
+
+                var dependencyDiagnosticsMessage = RetrieveSingle(messages, "DependencyDiagnostics");
+                dependencyDiagnosticsMessage.EnsureSource(server, client);
+                var errors = (JArray)dependencyDiagnosticsMessage.Payload["Errors"];
+                Assert.Equal(1, errors.Count);
+                Assert.Contains("error NU1001: The dependency EmptyLibrary  could not be resolved.", errors[0].Value<string>());
+
+                var dependenciesMessage = RetrieveSingle(messages, "Dependencies");
+                dependenciesMessage.EnsureSource(server, client);
+                var dependency = dependenciesMessage.Payload["Dependencies"]["EmptyLibrary"] as JObject;
+                Assert.NotNull(dependency);
+                Assert.Equal("EmptyLibrary", dependency["Name"].Value<string>());
+                Assert.False(dependency["Resolved"].Value<bool>());
+            }
+        }
+
+        private bool ContainsMessage(IEnumerable<DthMessage> messages, string typename)
+        {
+            return messages.FirstOrDefault(msg => string.Equals(msg.MessageType, typename, StringComparison.Ordinal)) != null;
+        }
+
+        private DthMessage RetrieveSingle(IEnumerable<DthMessage> messages, string typename)
+        {
+            var result = messages.SingleOrDefault(msg => string.Equals(msg.MessageType, typename, StringComparison.Ordinal));
+
+            if (result == null)
+            {
+                if (ContainsMessage(messages, typename))
+                {
+                    Assert.False(true, $"More than one {typename} messages exist.");
+                }
+                else
+                {
+                    Assert.False(true, $"{typename} message doesn't exists.");
+                }
+            }
+
+            return result;
+        }
     }
 }
