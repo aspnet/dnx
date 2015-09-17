@@ -87,9 +87,9 @@ namespace Microsoft.Dnx.Runtime
 
         public ProjectFilesCollection Files { get; set; }
 
-        public IDictionary<string, string> Commands { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> Commands { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        public IDictionary<string, IEnumerable<string>> Scripts { get; } = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, IEnumerable<string>> Scripts { get; } = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
 
         public IEnumerable<TargetFrameworkInformation> GetTargetFrameworks()
         {

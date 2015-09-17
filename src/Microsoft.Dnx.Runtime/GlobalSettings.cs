@@ -79,6 +79,5 @@ namespace Microsoft.Dnx.Runtime
 
             return File.Exists(projectPath);
         }
-
     }
 }

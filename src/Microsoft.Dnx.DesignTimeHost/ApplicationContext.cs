@@ -424,8 +424,6 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 var projectWorld = new ProjectWorld
                 {
-                    ApplicationHostContext = project.DependencyInfo.HostContext,
-                    LibraryExporter = project.DependencyInfo.LibraryExporter,
                     TargetFramework = project.FrameworkName,
                     Sources = new SourcesMessage
                     {
@@ -1060,7 +1058,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
                                                  .ToCompilationSettings(frameworkName),
                     SourceFiles = dependencySources,
-                    Diagnostics = dependencyInfo.HostContext.LibraryManager.GetAllDiagnostics().ToList(),
+                    Diagnostics = dependencyInfo.Diagnostics,
                     DependencyInfo = dependencyInfo
                 };
 
@@ -1070,7 +1068,9 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 if (state.GlobalJsonPath == null)
                 {
-                    if (GlobalSettings.TryGetGlobalSettings(dependencyInfo.HostContext.RootDirectory, out settings))
+                    var root = ProjectRootResolver.ResolveRootDirectory(project.ProjectDirectory);
+
+                    if (GlobalSettings.TryGetGlobalSettings(root, out settings))
                     {
                         state.GlobalJsonPath = settings.FilePath;
                     }
@@ -1136,16 +1136,16 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var applicationHostContext = CreateApplicationHostContext(ctx, project, frameworkName, Enumerable.Empty<string>());
                 var libraryManager = applicationHostContext.LibraryManager;
+                var exporter = _compilationEngine.CreateProjectExporter(configuration);
 
                 var info = new DependencyInfo
                 {
                     Dependencies = new Dictionary<string, DependencyDescription>(),
                     ProjectReferences = new List<ProjectReference>(),
-                    HostContext = applicationHostContext,
-                    LibraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration),
                     References = new List<string>(),
                     RawReferences = new Dictionary<string, byte[]>(),
-                    ExportedSourcesFiles = new List<string>()
+                    ExportedSourcesFiles = new List<string>(),
+                    Diagnostics = libraryManager.GetAllDiagnostics().ToList()
                 };
 
                 foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
@@ -1159,8 +1159,12 @@ namespace Microsoft.Dnx.DesignTimeHost
                         continue;
                     }
 
-                    if (string.Equals(library.Type, LibraryTypes.Project) &&
-                       !string.Equals(library.Identity.Name, project.Name))
+                    if (applicationHostContext.MainProject == library)
+                    {
+                        continue;
+                    }
+
+                    if (string.Equals(library.Type, LibraryTypes.Project))
                     {
                         var referencedProject = (ProjectDescription)library;
 
@@ -1201,8 +1205,6 @@ namespace Microsoft.Dnx.DesignTimeHost
                         }
                     }
                 }
-
-                var exportWithoutProjects = info.LibraryExporter.GetNonProjectExports(project.Name);
 
                 foreach (var reference in exportWithoutProjects.MetadataReferences)
                 {
@@ -1292,19 +1294,19 @@ namespace Microsoft.Dnx.DesignTimeHost
         {
             public string Name { get; set; }
 
-            public IList<string> ProjectSearchPaths { get; set; }
+            public List<string> ProjectSearchPaths { get; set; }
 
             public string GlobalJsonPath { get; set; }
 
-            public IList<string> Configurations { get; set; }
+            public List<string> Configurations { get; set; }
 
-            public IList<FrameworkData> Frameworks { get; set; }
+            public List<FrameworkData> Frameworks { get; set; }
 
-            public IDictionary<string, string> Commands { get; set; }
+            public Dictionary<string, string> Commands { get; set; }
 
-            public IList<ProjectInfo> Projects { get; set; }
+            public List<ProjectInfo> Projects { get; set; }
 
-            public IList<DiagnosticMessage> Diagnostics { get; set; }
+            public List<DiagnosticMessage> Diagnostics { get; set; }
         }
 
         // Represents a project that should be used for intellisense
@@ -1320,28 +1322,26 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             public CompilationSettings CompilationSettings { get; set; }
 
-            public IList<string> SourceFiles { get; set; }
+            public List<string> SourceFiles { get; set; }
 
-            public IList<DiagnosticMessage> Diagnostics { get; set; }
+            public List<DiagnosticMessage> Diagnostics { get; set; }
 
             public DependencyInfo DependencyInfo { get; set; }
         }
 
         private class DependencyInfo
         {
-            public ApplicationHostContext HostContext { get; set; }
+            public Dictionary<string, byte[]> RawReferences { get; set; }
 
-            public IDictionary<string, byte[]> RawReferences { get; set; }
+            public Dictionary<string, DependencyDescription> Dependencies { get; set; }
 
-            public IDictionary<string, DependencyDescription> Dependencies { get; set; }
+            public List<string> References { get; set; }
 
-            public IList<string> References { get; set; }
+            public List<ProjectReference> ProjectReferences { get; set; }
 
-            public IList<ProjectReference> ProjectReferences { get; set; }
+            public List<string> ExportedSourcesFiles { get; set; }
 
-            public IList<string> ExportedSourcesFiles { get; set; }
-
-            public LibraryExporter LibraryExporter { get; set; }
+            public List<DiagnosticMessage> Diagnostics { get; set; } = new List<DiagnosticMessage>();
         }
 
         private class ProjectCompilation
@@ -1350,9 +1350,9 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             public IMetadataProjectReference ProjectReference { get; set; }
 
-            public IDictionary<string, byte[]> EmbeddedReferences { get; set; }
+            public Dictionary<string, byte[]> EmbeddedReferences { get; set; }
 
-            public IList<DiagnosticMessage> Diagnostics { get; set; }
+            public List<DiagnosticMessage> Diagnostics { get; set; }
 
             public bool HasOutputs
             {

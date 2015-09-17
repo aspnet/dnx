@@ -149,8 +149,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 _runtimeEnvironment,
                 loadContextAccessor.Default,
                 new CompilationCache(),
-                fileWatcher,
-                new ProjectGraphProvider());
+                fileWatcher);
 
             // Compilation services available only for runtime compilation
             compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
@@ -162,7 +161,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), new RuntimeLibraryManager(applicationHostContext));
 
-            _serviceProvider.Add(typeof(ILibraryExporter), new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration)));
+            _serviceProvider.Add(typeof(ILibraryExporter), new RuntimeLibraryExporter(compilationEngine, Project, _targetFramework, options.Configuration);
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
 
             if (options.CompilationServerPort.HasValue)
