@@ -274,7 +274,7 @@ namespace Microsoft.Dnx.CommonTestUtils
             File.WriteAllText(Path.Combine(tempDir, GlobalSettings.GlobalFileName), samplesGlobalJson.ToString());
 
             // Make sure package restore can be successful
-            const string nugetConfigName = "NuGet.Config";
+            const string nugetConfigName = "NuGet.config";
             File.Copy(Path.Combine(currentDnxSolutionRootDir, nugetConfigName), Path.Combine(tempDir, nugetConfigName));
 
             // Use the newly built runtime to generate lock files for samples

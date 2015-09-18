@@ -61,9 +61,9 @@ namespace Microsoft.Dnx.Tooling
             var projectStructure =
 @"{
     'root': {
-        'NuGet.Config': """",
+        'NuGet.config': """",
         'sub': {
-            'NuGet.Config': """"
+            'NuGet.config': """"
         }
     }
 }";
