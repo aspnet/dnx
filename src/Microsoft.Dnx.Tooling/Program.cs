@@ -79,6 +79,7 @@ namespace Microsoft.Dnx.Tooling
             RestoreConsoleCommand.Register(app, reportsFactory, _environment, _runtimeEnv);
             WrapConsoleCommand.Register(app, reportsFactory);
             FeedsConsoleCommand.Register(app, reportsFactory);
+            ClearCacheConsoleCommand.Register(app, reportsFactory);
 
             return app.Execute(args);
         }
