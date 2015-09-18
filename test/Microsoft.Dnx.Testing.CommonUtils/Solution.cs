@@ -89,7 +89,7 @@ namespace Microsoft.Dnx.Testing
         public string GetWrapperProjectPath(string name)
         {
             var path = Path.Combine(WrapFolderPath, name, Project.ProjectFileName);
-            if (!Directory.Exists(path))
+            if (!File.Exists(path))
             {
                 throw new InvalidOperationException($"Unable to find wrapper project {path}");
             }

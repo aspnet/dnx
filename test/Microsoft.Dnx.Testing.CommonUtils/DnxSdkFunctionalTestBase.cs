@@ -59,8 +59,7 @@ namespace Microsoft.Dnx.Testing
             }
         }
 
-
-        private static DnxSdk GetRuntime(string flavor, string os, string arch)
+        public static DnxSdk GetRuntime(string flavor, string os, string arch)
         {
             var dnxSolutionRoot = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var runtimeHome = Path.Combine(dnxSolutionRoot, "artifacts", "test", DnxSdk.GetRuntimeName(flavor, os, arch));

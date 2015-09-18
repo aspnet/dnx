@@ -141,7 +141,19 @@ namespace Microsoft.Dnx.Tooling.Publish
             if (root.Frameworks.Any())
             {
                 // Make sure we only emit the nupkgs for the specified frameworks
-                buildOptions.TargetFrameworks.AddRange(root.Frameworks);
+                // We need to pick actual project frameworks relevant to the publish
+                // but the project may not target exactly the right framework so we need
+                // to use a compatibility check.
+                foreach (var framework in root.Frameworks)
+                {
+                    var selectedFramework = project.GetCompatibleTargetFramework(framework.Key);
+                    if (selectedFramework == null)
+                    {
+                        root.Reports.WriteError($"Unable to build {project.Name}. It is not compatible with the requested target framework: {framework.Key}");
+                        return false;
+                    }
+                    buildOptions.TargetFrameworks.Add(selectedFramework.FrameworkName, VersionUtility.GetShortFrameworkName(selectedFramework.FrameworkName));
+                }
             }
 
             // Mute "dnu pack" completely if it is invoked by "dnu publish --quiet"

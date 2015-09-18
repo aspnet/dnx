@@ -34,6 +34,15 @@ namespace Microsoft.Dnx.Testing
         }
 
         public ExecResult Restore(
+            Project project,
+            string packagesDir = null,
+            IEnumerable<string> feeds = null,
+            string additionalArguments = null)
+        {
+            return Restore(project.ProjectDirectory, packagesDir, feeds, additionalArguments);
+        }
+
+        public ExecResult Restore(
             string restoreDir,
             string packagesDir = null,
             IEnumerable<string> feeds = null,
