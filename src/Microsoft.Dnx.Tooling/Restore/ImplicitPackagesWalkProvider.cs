@@ -32,7 +32,15 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("win10", "win81"),
             new RuntimeSpec("win10-x86", "win10", "win81-x86"),
             new RuntimeSpec("win10-x64", "win10", "win81-x64"),
-            new RuntimeSpec("win10-arm", "win10", "win81-arm"));
+            new RuntimeSpec("win10-arm", "win10", "win81-arm"),
+            new RuntimeSpec("unix", "any"),
+            new RuntimeSpec("osx.10.10", "unix"),
+            new RuntimeSpec("osx.10.10-x64", "osx.10.10"),
+            new RuntimeSpec("linux", "unix"),
+            new RuntimeSpec("centos.7.1", "linux"),
+            new RuntimeSpec("centos.7.1-x64", "centos.7.1"),
+            new RuntimeSpec("ubuntu.14.04", "linux"),
+            new RuntimeSpec("ubuntu.14.04-x64", "ubuntu.14.04"));
 
         public static readonly SemanticVersion ImplicitRuntimePackageVersion = new SemanticVersion("0.0.0");
         public static readonly string ImplicitRuntimePackageId = "Microsoft.NETCore.Platforms";
