@@ -12,6 +12,7 @@ namespace Microsoft.Dnx.Tooling
             cmdApp.Command("clear-cache", c =>
             {
                 c.Description = "Clears the package cache.";
+                c.HelpOption("-?|-h|--help");
                 c.OnExecute(() =>
                 {
                     var command = new ClearCacheCommand(
