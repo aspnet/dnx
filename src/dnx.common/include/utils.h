@@ -20,5 +20,9 @@ namespace dnx
         bool file_exists(const dnx::xstring_t& path);
         bool directory_exists(const dnx::xstring_t& path);
         dnx::xstring_t remove_file_from_path(const dnx::xstring_t& path);
+
+#if defined(_WIN32)
+        const wchar_t* get_windows_version();
+#endif
     }
 }

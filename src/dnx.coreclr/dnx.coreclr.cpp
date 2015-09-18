@@ -9,7 +9,7 @@
 #include "trace_writer.h"
 #include "app_main.h"
 
-typedef int (STDMETHODCALLTYPE *HostMain)(const int argc, const wchar_t** argv);
+typedef int (STDMETHODCALLTYPE *HostMain)(const int argc, const wchar_t** argv, const bootstrapper_context* ctx);
 
 std::wstring GetModuleDirectory(HMODULE module)
 {
@@ -242,8 +242,31 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
         return hr;
     }
 
+    auto windows_version = dnx::utils::get_windows_version();
+    if (!windows_version)
+    {
+        trace_writer.write(L"Unexpected windows version", false);
+        return -1;
+    }
+
+    bootstrapper_context ctx;
+    ctx.operating_system = L"Windows";
+    ctx.os_version = windows_version;
+    ctx.runtime_directory = data->runtimeDirectory;
+    ctx.application_base = data->applicationBase;
+#if defined(AMD64)
+    ctx.architecture = L"x64";
+#elif defined(ARM)
+    ctx.architecture = L"arm";
+#else
+    ctx.architecture = L"x86";
+#endif
+    // for coreclr we always want to handle exceptions because
+    // they cannot be marshalled from managed to native code
+    ctx.handle_exceptions = true;
+
     // Call main
-    data->exitcode = main_function(data->argc, data->argv);
+    data->exitcode = main_function(data->argc, data->argv, &ctx);
 
     pCLRRuntimeHost->UnloadAppDomain(domainId, true);
 

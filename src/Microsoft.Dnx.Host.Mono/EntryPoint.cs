@@ -57,7 +57,7 @@ public class EntryPoint
         // Set the default lib path to be next to the entry point location
         Environment.SetEnvironmentVariable(EnvironmentNames.DefaultLib, Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location));
         Environment.SetEnvironmentVariable(EnvironmentNames.ConsoleHost, "1");
-        
+
         var p = Environment.OSVersion.Platform;
         if (p != PlatformID.MacOSX && p != PlatformID.Unix)
         {
@@ -76,7 +76,8 @@ public class EntryPoint
 
         return RuntimeBootstrapper.Execute(arguments,
             // NOTE(anurse): Mono is always "dnx451" (for now).
-            new FrameworkName("DNX", new Version(4, 5, 1)));
+            new FrameworkName("DNX", new Version(4, 5, 1)),
+            null);
     }
 
     private static string[] ExpandCommandLineArguments(string[] arguments)
