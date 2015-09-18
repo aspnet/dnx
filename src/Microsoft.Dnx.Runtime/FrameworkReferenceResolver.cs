@@ -93,7 +93,7 @@ namespace Microsoft.Dnx.Runtime
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
-            if (information == null) 
+            if (information == null)
             {
                 return SynthesizeFrameworkFriendlyName(targetFramework);
             }
@@ -248,7 +248,7 @@ namespace Microsoft.Dnx.Runtime
                     if (targetFramework.Version.Minor == 5)
                     {
                         var refAsms35Dir = Path.Combine(referenceAssembliesPath, "v3.5");
-                        if(!string.IsNullOrEmpty(targetFramework.Profile))
+                        if (!string.IsNullOrEmpty(targetFramework.Profile))
                         {
                             // The 3.5 Client Profile assemblies ARE in .NETFramework... it's weird.
                             refAsms35Dir = Path.Combine(referenceAssembliesPath, ".NETFramework", "v3.5", "Profile", targetFramework.Profile);
