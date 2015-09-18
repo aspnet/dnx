@@ -23,32 +23,20 @@ namespace Microsoft.Dnx.Tooling
             {
                 Reports.Information.WriteLine($"Clearing cache directory {HttpCacheDirectory}");
 
-                Exception exception = null;
+                try
+                {
+                    DeleteDirectoryRecursively(HttpCacheDirectory, deleteBaseDirectory: false);
+                    Reports.Information.WriteLine("Cache cleared.");
+                    return 0;
+                }
+                catch (Exception e)
+                {
+                    Reports.Error.WriteLine($"Unable to clear cache directory: {e.Message}");
+                    return 1;
+                }
+            }
 
-                for (var i = 0; i < 3; i++)
-                {
-                    try
-                    {
-                        DeleteDirectoryRecursively(HttpCacheDirectory, deleteBaseDirectory: false);
-                        Reports.Information.WriteLine("Cache cleared.");
-                        return 0;
-                    }
-                    catch (Exception e)
-                    {
-                        exception = e;
-                    }
-                }
-                if (exception != null)
-                {
-                    Reports.Error.WriteLine($"Unable to clear cache directory: {exception.Message}");
-                }
-                return 1;
-            }
-            else
-            {
-                Reports.Error.WriteLine($"Cache directory {HttpCacheDirectory} does not exist.");
-                return 1;
-            }
+            return 0;
         }
         public void DeleteDirectoryRecursively(string baseDirectory, bool deleteBaseDirectory)
         {
