@@ -10,15 +10,16 @@ namespace Microsoft.Dnx.Tooling
     {
         public Reports Reports { get; }
         public string HttpCacheDirectory { get; }
+
         public ClearCacheCommand(Reports reports, string httpCacheDirectory)
         {
             Reports = reports;
             HttpCacheDirectory = httpCacheDirectory;
         }
-        
+
         public int Execute()
         {
-            if(Directory.Exists(HttpCacheDirectory))
+            if (Directory.Exists(HttpCacheDirectory))
             {
                 Reports.Information.WriteLine($"Clearing cache directory {HttpCacheDirectory}");
 
@@ -28,7 +29,7 @@ namespace Microsoft.Dnx.Tooling
                 {
                     try
                     {
-                        DeleteDirectoryRecursively(HttpCacheDirectory, false);
+                        DeleteDirectoryRecursively(HttpCacheDirectory, deleteBaseDirectory: false);
                         Reports.Information.WriteLine("Cache cleared.");
                         return 0;
                     }
@@ -59,12 +60,12 @@ namespace Microsoft.Dnx.Tooling
                 File.Delete(file);
             }
 
-            foreach(var subDirectory in subDirectories)
+            foreach (var subDirectory in subDirectories)
             {
-                DeleteDirectoryRecursively(subDirectory, true);
+                DeleteDirectoryRecursively(subDirectory, deleteBaseDirectory: true);
             }
 
-            if(deleteBaseDirectory)
+            if (deleteBaseDirectory)
             {
                 Directory.Delete(baseDirectory);
             }
