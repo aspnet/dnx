@@ -84,6 +84,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Dnx.Runtime",
     "Microsoft.Dnx.Runtime.Abstractions",
     "Microsoft.Dnx.Runtime.CommandParsing.Sources",
+    "Microsoft.Dnx.Runtime.Internals",
     "Microsoft.Dnx.Runtime.Json.Sources",
     "Microsoft.Dnx.Runtime.Sources",
     "Microsoft.Dnx.Project",
@@ -507,15 +508,6 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 
 #copy-required-dependencies
      @{
-        var runtimeProjects = new[]
-        {
-            "Microsoft.Dnx.ApplicationHost",
-            "Microsoft.Dnx.Compilation.CSharp",
-            "Microsoft.Dnx.Compilation.DesignTime",
-            BOOTSTRAPPER_HOST_NAME, 
-            BOOTSTRAPPER_CORECLR_MANAGED_NAME 
-        };
-
         var sdkProjects = new[]
         {
             "Microsoft.Dnx.DesignTimeHost",
@@ -535,98 +527,21 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
             var coreclrFolder = target.Flavor == "coreclr" ? Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch) : null;
 
             // Parse and copy runtime assemblies
-            var runtimeAssemblies = new HashSet<string>();
-
-            foreach (var project in runtimeProjects)
-            {
-                if (project == BOOTSTRAPPER_CORECLR_MANAGED_NAME && target.Flavor != "coreclr")
-                {
-                    continue;
-                }
-
-                var projectFolder = Path.Combine(ROOT, "src", project);
-                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, coreclrFolder);
-
-                try
-                {
-                    foreach (var file in projectAssemblies)
-                    {
-                        if (runtimeAssemblies.Add(file))
-                        {
-                            var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
-                            Log.Info("Copying " + file + " to " + targetFilePath);
-                            File.Copy(file, targetFilePath, true);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException(string.Format("Fail to copy runtime assemblies [{0}]", ex.Message));
-                }
-            }
+            var projectFolder = Path.Combine(ROOT, "src", "Microsoft.Dnx");
+            var runtimeAssemblies = CopyRequiredAssemblies(projectFolder, target.TargetFolder, ignoreDependencies: null, target: target);
 
             // Parse and copy lib assemblies
             foreach (var project in sdkProjects)
             {
-                var projectFolder = Path.Combine(ROOT, "src", project);
-                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, coreclrFolder);
-
-                projectAssemblies.ExceptWith(runtimeAssemblies);
-
+                var sdkFolder = Path.Combine(ROOT, "src", project);
                 var targetLibDir = Path.Combine(target.TargetFolder, "lib", project);
-
-                Directory.CreateDirectory(targetLibDir);
-
-                foreach (var file in projectAssemblies)
-                {
-                    var targetFilePath = Path.Combine(targetLibDir, Path.GetFileName(file));
-                    Log.Info("Copying " + file + " to " + targetFilePath);
-                    File.Copy(file, targetFilePath, true);
-                }
+                CopyRequiredAssemblies(sdkFolder, targetLibDir, runtimeAssemblies, target);
             }
 
             // Copy required CoreCLR assemblies
             if (target.Flavor == "coreclr")
             {
-                var extraBinaries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var nativeExtension = target.OS == "linux" ? ".so" : ".dylib";
-
-                if (target.OS != "win")
-                {
-                    // For now, we ship cross platform specific binaries as part of DNX for Linux and Darwin, since
-                    // the versions in NuGet are Windows specific.
-
-                    extraBinaries.Add("Microsoft.Win32.Primitives.dll");
-                    extraBinaries.Add("System.Console.dll");
-                    extraBinaries.Add("System.Data.SqlClient.dll");
-                    extraBinaries.Add("System.Diagnostics.Debug.dll");
-                    extraBinaries.Add("System.Diagnostics.FileVersionInfo.dll");
-                    extraBinaries.Add("System.Diagnostics.Process.dll");
-                    extraBinaries.Add("System.Diagnostics.TraceSource.dll");
-                    extraBinaries.Add("System.Globalization.Extensions.dll");
-                    extraBinaries.Add("System.IO.Compression.dll");
-                    extraBinaries.Add("System.IO.FileSystem.dll");
-                    extraBinaries.Add("System.IO.FileSystem.DriveInfo.dll");
-                    extraBinaries.Add("System.IO.FileSystem.Watcher.dll");
-                    extraBinaries.Add("System.IO.MemoryMappedFiles.dll");
-                    extraBinaries.Add("System.IO.Pipes.dll");
-                    extraBinaries.Add("System.Net.Security.dll");
-                    extraBinaries.Add("System.Runtime.Extensions.dll");
-                    extraBinaries.Add("System.Security.Cryptography.Encoding.dll");
-                    extraBinaries.Add("System.Security.Cryptography.Primitives.dll");
-                    extraBinaries.Add("System.Security.Cryptography.Algorithms.dll");
-                    extraBinaries.Add("System.Security.SecureString.dll");
-                    extraBinaries.Add("System.Text.Encoding.CodePages.dll");
-                    extraBinaries.Add("System.Threading.dll");
-                }
-
-                foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => extraBinaries.Contains(Path.GetFileName(f)) || !Path.GetFileName(f).StartsWith("System")
-                         || (Path.GetFileName(f).StartsWith("System") && Path.GetFileName(f).EndsWith(nativeExtension))))
-                {
-                    var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
-                    Log.Info("Copying " + file + " to " + targetFilePath);
-                    File.Copy(file, targetFilePath, true);
-                }
                 
                 if (target.OS != "win")
                 {
@@ -643,24 +558,6 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
                         {
                             Log.Warn(sourceFile + " does not exist");
                         }
-                    }
-                }
-
-                // Copy the managed resources the runtime needs for Linux
-                if (target.OS == "linux")
-                {
-                    foreach (var file in Files.BasePath(coreclrFolder).Include("**/*.mo"))
-                    {
-                        var sourceFile = Path.Combine(coreclrFolder, file);
-                        var outputFile = Path.Combine(target.TargetFolder, file);
-
-                        if (!Directory.Exists(Path.GetDirectoryName(outputFile)))
-                        {
-                            Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
-                        }
-
-                        Log.Info("Copying " + sourceFile + " to " + outputFile);
-                        File.Copy(sourceFile, outputFile, true);
                     }
                 }
             }
@@ -947,7 +844,6 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                         var projectText = File.ReadAllText(projectFile);
                         var project = (JsonObject)Json.Deserialize(projectText);
 
-                        object configsObject;
                         var configs = project.ValueAsJsonObject("frameworks");
                         var targetFrameworks = configs.Keys.Where(k => k.StartsWith("dnx", StringComparison.OrdinalIgnoreCase));
                         foreach (var framework in targetFrameworks)
@@ -1001,27 +897,11 @@ macro name='DoRestore'
         try
         {
             var dotnetcoreclrDepFile = Path.Combine(BUILD_DIR2, "dotnetcoreclr-dependencies.txt");
-            var runtimeCandidates = new[] {
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "win", "x86"),
-            };
             
             Environment.SetEnvironmentVariable("DNX_TRACE", "0");
 
-            if (IsMono)
-            {
-                var args = string.Format(@"list {0} --assemblies --runtime {1}",
-                                        Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME), 
-                                        runtimeCandidates.First(Directory.Exists));
-
-                ExecuteAndRedirectOutput("dnu", args, dotnetcoreclrDepFile);
-            }
-            else
-            {
-                var args = string.Format(@"/C dnu list {0} --assemblies --runtime {1}",
-                                        Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
-                                        runtimeCandidates.First(Directory.Exists));
-                ExecuteAndRedirectOutput("cmd", args, dotnetcoreclrDepFile);
-            }
+            var target = RUNTIME_TARGETS.Where(t => t.Flavor == "coreclr").First();
+            File.WriteAllText(dotnetcoreclrDepFile, string.Join(Environment.NewLine, ListDependencyAssemblies(Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME), target)));
 
             var tpaProjects = new[] {
                 BOOTSTRAPPER_HOST_NAME,
@@ -1347,40 +1227,149 @@ functions @{
 
         return exitCode;
     }
-
-    HashSet<string> ListDependencyAssemblies(string projectFolder, string framework, string coreclrFolder = null)
+    
+    HashSet<string> CopyRequiredAssemblies(string projectFolder, string targetFolder, HashSet<string> ignoreDependencies, RuntimeTarget target)
     {
-        var tmpFile = Path.GetTempFileName();
-        var argument = string.Format("list {0} --framework {1} --assemblies", projectFolder, framework);
-
-        if (coreclrFolder != null)
+        var dependencies = ListDependencyAssemblies(projectFolder, target);
+        
+        if (!Directory.Exists(targetFolder))
         {
-            argument += (" --runtime " + coreclrFolder);
+            Directory.CreateDirectory(targetFolder);
         }
-
-        int result;
-        if (!IsMono)
-        {
-            result = ExecuteAndRedirectOutput("cmd", string.Format("/C dnu {0}", argument), tmpFile);
-        }
-        else 
-        {
-            result = ExecuteAndRedirectOutput("dnu", argument, tmpFile);
-        }
-
-        if (result != 0)
-        {
-            throw new InvalidOperationException(string.Format("Return value for the command listing assemblies for project under {0} is not zero ({1}). Results are in temp file {2}.", projectFolder, result, tmpFile));
-        }
-
+        
         try
         {
-            return new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
+            foreach (var file in dependencies)
+            {
+                if (!(ignoreDependencies != null && ignoreDependencies.Contains(Path.GetFileName(file))))
+                {
+                    var targetFilePath = Path.Combine(targetFolder, Path.GetFileName(file));
+                    Log.Info("Copying " + file + " to " + targetFilePath);
+                    File.Copy(file, targetFilePath, true);
+                }
+            }
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException(string.Format("Unexpected exception thrown while parsing assemblies list for project under {0}. ({1})", projectFolder, ex.Message));
+            throw new InvalidOperationException(string.Format("Fail to copy runtime assemblies [{0}]", ex.Message));
         }
+        
+        var dependencyNames = new HashSet<string>();
+        foreach (var file in dependencies)
+        {
+            dependencyNames.Add(Path.GetFileName(file));
+        }
+        
+        return dependencyNames;
+    }
+
+    HashSet<string> ListDependencyAssemblies(string projectFolder, RuntimeTarget target)
+    {
+        var runtimeTarget = "";
+        if(target.OS == "win")
+        {
+            runtimeTarget = "win7";
+        }
+        else if(target.OS == "linux")
+        {
+            runtimeTarget = "ubuntu.14.04";
+        }
+        else if(target.OS == "darwin")
+        {
+            runtimeTarget = "osx.10.10";
+        }
+
+        runtimeTarget += "-" + target.Arch;
+        var args = string.Format("--runtime {0}", runtimeTarget);
+
+        if (target.Flavor == "mono")
+        {
+            args = "";
+        }
+
+        string tmp;
+        var home = "USERPROFILE";
+        if (IsMono)
+        {
+            ExecuteAndRedirectOutput("dnu", string.Format("restore {0} {1}", projectFolder, args), out tmp);
+            home = "HOME";
+        }
+        else
+        {
+            ExecuteAndRedirectOutput("cmd", string.Format("/C dnu restore {0} {1}", projectFolder, args), out tmp);
+        }
+        
+        if (target.Flavor == "mono")
+        {
+            runtimeTarget = "DNX,Version=v4.5.1";
+        }
+        else
+        {
+            runtimeTarget = (target.Flavor == "coreclr" ? "DNXCore,Version=v5.0/" : "DNX,Version=v4.5.1/") + runtimeTarget;
+        }
+
+        var lockFile = File.ReadAllText(Path.Combine(projectFolder, "project.lock.json"));
+        var obj = (JsonObject)Json.Deserialize(lockFile);
+        var runtimePackages = obj.ValueAsJsonObject("targets").ValueAsJsonObject(runtimeTarget);
+        var projects = obj.ValueAsJsonObject("libraries");
+
+        var projectAssemblies = new HashSet<string>();
+        foreach (var package in runtimePackages.Keys)
+        {
+            var lib = runtimePackages.ValueAsJsonObject(package);
+            if(lib.ValueAsString("type") == "project")
+            {
+                var name = package.Substring(0, package.IndexOf('/'));
+                if (name.EndsWith(".Sources") || name.Contains("Microsoft.Dnx.Runtime.Internals"))
+                {
+                    continue;
+                }
+                projectAssemblies.Add(Path.Combine(Directory.GetCurrentDirectory(), "artifacts", "build", name, "dnxcore50", name + ".dll"));
+            }
+            
+            if (package.Contains(".Sources") || package.Contains("Microsoft.Dnx.Runtime.Internals"))
+            {
+                continue;
+            }
+
+            var runtime = lib.ValueAsJsonObject("runtime");
+            if (runtime != null)
+            {
+                foreach (var dll in runtime.Keys)
+                {
+                    projectAssemblies.Add(Path.Combine(Environment.GetEnvironmentVariable(home), ".dnx", Path.Combine("packages", Path.Combine(package, dll))));
+                }
+            }
+
+            var tools = "";
+            var native = lib.ValueAsJsonObject("native");
+            if (native != null)
+            {
+                foreach (var dll in native.Keys)
+                {
+                    projectAssemblies.Add(Path.Combine(Environment.GetEnvironmentVariable(home), ".dnx", Path.Combine("packages", Path.Combine(package, dll))));
+                    
+                    // this is to grab sos.dll and crossgen.exe
+                    if (dll.EndsWith("coreclr.dll") || dll.Contains("libcoreclr"))
+                    {
+                        tools = Path.Combine(Environment.GetEnvironmentVariable(home), ".dnx", Path.Combine("packages", Path.Combine(package, "tools")));
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(tools))
+            {
+                if (Directory.Exists(tools))
+                {
+                    foreach (var tool in Directory.EnumerateFiles(tools))
+                    {
+                        projectAssemblies.Add(tool);
+                    }
+                }
+            }
+        }
+
+        return projectAssemblies;
     }
 
     string[] FindAllProjects(params string[] folders)
