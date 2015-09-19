@@ -6,7 +6,7 @@
 #include <vector>
 #include <unordered_map>
 
-bool ExpandCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv, size_t& nExpandedArgc, dnx::char_t**& ppszExpandedArgv);
+bool ExpandCommandLineArguments(int nArgc, dnx::char_t** ppszArgv, size_t& nExpandedArgc, dnx::char_t**& ppszExpandedArgv);
 void FreeExpandedCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv);
 
 template <size_t arg_count>
@@ -33,7 +33,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_when_no_p
 {
     size_t expanded_arg_count;
     dnx::char_t** expanded_args = nullptr;
-    ASSERT_FALSE(ExpandCommandLineArguments(0u, nullptr, expanded_arg_count, expanded_args));
+    ASSERT_FALSE(ExpandCommandLineArguments(0, nullptr, expanded_arg_count, expanded_args));
     ASSERT_EQ(nullptr, expanded_args);
 }
 
@@ -63,7 +63,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_params_if
     size_t expanded_arg_count;
     dnx::char_t** expanded_args = nullptr;
 
-    ASSERT_FALSE(ExpandCommandLineArguments(0u, args, expanded_arg_count, expanded_args));
+    ASSERT_FALSE(ExpandCommandLineArguments(0, args, expanded_arg_count, expanded_args));
     ASSERT_EQ(nullptr, expanded_args);
 }
 
@@ -152,7 +152,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_if_appbas
     dnx::char_t* args[] { _X("--port"), _X("1234"), _X("--appbase") };
     size_t expanded_arg_count;
     dnx::char_t** expanded_args = nullptr;
-    ASSERT_FALSE(ExpandCommandLineArguments(3u, args, expanded_arg_count, expanded_args));
+    ASSERT_FALSE(ExpandCommandLineArguments(3, args, expanded_arg_count, expanded_args));
     ASSERT_EQ(nullptr, expanded_args);
 }
 
@@ -241,7 +241,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_project_w
     dnx::char_t* args[] { _X("--project") };
     size_t expanded_arg_count;
     dnx::char_t** expanded_args = nullptr;
-    ASSERT_FALSE(ExpandCommandLineArguments(1u, args, expanded_arg_count, expanded_args));
+    ASSERT_FALSE(ExpandCommandLineArguments(1, args, expanded_arg_count, expanded_args));
     ASSERT_EQ(nullptr, expanded_args);
 }
 
@@ -250,7 +250,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_p_without
     dnx::char_t* args[]{ _X("-p") };
     size_t expanded_arg_count;
     dnx::char_t** expanded_args = nullptr;
-    ASSERT_FALSE(ExpandCommandLineArguments(1u, args, expanded_arg_count, expanded_args));
+    ASSERT_FALSE(ExpandCommandLineArguments(1, args, expanded_arg_count, expanded_args));
     ASSERT_EQ(nullptr, expanded_args);
 }
 
@@ -259,6 +259,6 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_if_both_p
     dnx::char_t* args[]{ _X("-p"), _X("MyFolder"), _X("--appbase"), _X("App"), _X("--Microsoft.Dnx.ApplicationHost"), _X("cmd") };
     size_t expanded_arg_count;
     dnx::char_t** expanded_args = nullptr;
-    ASSERT_FALSE(ExpandCommandLineArguments(6u, args, expanded_arg_count, expanded_args));
+    ASSERT_FALSE(ExpandCommandLineArguments(6, args, expanded_arg_count, expanded_args));
     ASSERT_EQ(nullptr, expanded_args);
 }

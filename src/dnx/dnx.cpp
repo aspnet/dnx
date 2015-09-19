@@ -7,15 +7,6 @@
 #include "utils.h"
 #include "app_main.h"
 
-bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2)
-{
-#if defined(_WIN32)
-    return _wcsicmp(s1, s2) == 0;
-#else
-    return strcasecmp(s1, s2) == 0;
-#endif
-}
-
 bool string_ends_with_ignore_case(const dnx::char_t* s, const dnx::char_t* suffix)
 {
     auto str_len = x_strlen(s);
@@ -26,7 +17,7 @@ bool string_ends_with_ignore_case(const dnx::char_t* s, const dnx::char_t* suffi
         return false;
     }
 
-    return strings_equal_ignore_case(s + str_len - suffix_len, suffix);
+    return dnx::utils::strings_equal_ignore_case(s + str_len - suffix_len, suffix);
 }
 
 int split_path(const dnx::char_t* path)
@@ -60,61 +51,12 @@ const dnx::char_t* allocate_and_copy(const dnx::char_t* value)
     return allocate_and_copy(value, x_strlen(value));
 }
 
-int BootstrapperOptionValueNum(const dnx::char_t* pszCandidate)
+dnx::char_t* GetOptionValue(int argc, dnx::char_t* argv[], const dnx::char_t* optionName)
 {
-    if (strings_equal_ignore_case(pszCandidate, _X("--appbase")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--lib")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--packages")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--configuration")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--framework")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--port")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--project")) ||
-        strings_equal_ignore_case(pszCandidate, _X("-p")))
-    {
-        return 1;
-    }
-
-    if (strings_equal_ignore_case(pszCandidate, _X("--watch")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--debug")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--help")) ||
-        strings_equal_ignore_case(pszCandidate, _X("-h")) ||
-        strings_equal_ignore_case(pszCandidate, _X("-?")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--version")))
-    {
-        return 0;
-    }
-
-    // It isn't a bootstrapper option
-    return -1;
-}
-
-size_t FindOption(size_t argc, dnx::char_t**argv, const dnx::char_t* optionName)
-{
-    for (size_t i = 0; i < argc; i++)
-    {
-        if (strings_equal_ignore_case(argv[i], optionName))
-        {
-            return i;
-        }
-
-        auto option_num_args = BootstrapperOptionValueNum(argv[i]);
-        if (option_num_args < 0)
-        {
-            return i;
-        }
-
-        i += option_num_args;
-    }
-
-    return argc;
-}
-
-dnx::char_t* GetOptionValue(size_t argc, dnx::char_t* argv[], const dnx::char_t* optionName)
-{
-    auto index = FindOption(argc, argv, optionName);
+    auto index = dnx::utils::find_bootstrapper_option_index(argc, argv, optionName);
 
     // no parameters or '--{optionName}' is the last value in the array or `--{optionName}` not found
-    if (argc == 0 || index >= argc - 1 || argv[index][0] != _X('-'))
+    if (index < 0 || index >= argc - 1)
     {
         return nullptr;
     }
@@ -144,7 +86,7 @@ void ExpandProject(const dnx::char_t* project_path, std::vector<const dnx::char_
 
     // note that we split the path first and check the file name to handle paths like c:\MyApp\my_project.json
     // (`split_idx + 1` works fine since `split_path` returns -1 if it does not find `\` or '/')
-    if (strings_equal_ignore_case(project_path + split_idx + 1, _X("project.json")))
+    if (dnx::utils::strings_equal_ignore_case(project_path + split_idx + 1, _X("project.json")))
     {
         // "dnx /path/project.json run" --> "dnx --appbase /path/ Microsoft.Dnx.ApplicationHost run"
         AppendAppbaseFromFile(project_path, expanded_args);
@@ -176,23 +118,29 @@ void ExpandNonHostArgument(const dnx::char_t* value, std::vector<const dnx::char
     expanded_args.push_back(allocate_and_copy(value));
 }
 
-bool ExpandCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv, size_t& nExpandedArgc, dnx::char_t**& ppszExpandedArgv)
+bool ExpandCommandLineArguments(int nArgc, dnx::char_t** ppszArgv, size_t& nExpandedArgc, dnx::char_t**& ppszExpandedArgv)
 {
-    auto param_idx = FindOption(nArgc, ppszArgv, _X("--appbase"));
+    // --appbase was found expansion not needed
+    if (dnx::utils::find_bootstrapper_option_index(nArgc, ppszArgv, _X("--appbase")) >= 0)
+    {
+        return false;
+    }
 
-    // either no non-bootstrapper option found or --appbase was found - in either case expansion is not needed
-    if (param_idx >= nArgc || ppszArgv[param_idx][0] == _X('-'))
+    // no non-bootstrapper option found expansion is not needed
+    auto param_idx = dnx::utils::find_first_non_bootstrapper_param_index(nArgc, ppszArgv);
+    if (param_idx < 0)
     {
         return false;
     }
 
     bool arg_expanded = false;
     std::vector<const dnx::char_t*> expanded_args_temp;
-    for (size_t source_idx = 0; source_idx < nArgc; source_idx++)
+    for (int source_idx = 0; source_idx < nArgc; source_idx++)
     {
         if (!arg_expanded)
         {
-            if (strings_equal_ignore_case(_X("-p"), ppszArgv[source_idx]) || (strings_equal_ignore_case(_X("--project"), ppszArgv[source_idx])))
+            if (dnx::utils::strings_equal_ignore_case(_X("-p"), ppszArgv[source_idx]) ||
+                dnx::utils::strings_equal_ignore_case(_X("--project"), ppszArgv[source_idx]))
             {
                 // Note that ++source_idx is safe here since if we had a trailing -p/--project we would have exited
                 // before entering the loop because we wouldn't have found any non host option
@@ -235,7 +183,7 @@ void FreeExpandedCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv)
     delete[] ppszArgv;
 }
 
-bool GetApplicationBase(const dnx::xstring_t& currentDirectory, size_t argc, dnx::char_t* argv[], /*out*/ dnx::char_t* fullAppBasePath)
+bool GetApplicationBase(const dnx::xstring_t& currentDirectory, int argc, dnx::char_t* argv[], /*out*/ dnx::char_t* fullAppBasePath)
 {
     dnx::char_t buffer[MAX_PATH];
     const dnx::char_t* appBase = GetOptionValue(argc, argv, _X("--appbase"));
@@ -251,7 +199,7 @@ bool GetApplicationBase(const dnx::xstring_t& currentDirectory, size_t argc, dnx
     return GetFullPath(appBase, fullAppBasePath) != 0;
 }
 
-int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer)
+int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer)
 {
     // Set the DNX_CONOSLE_HOST flag which will print exceptions to stderr instead of throwing
     SetConsoleHost();
@@ -270,7 +218,7 @@ int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writ
     }
 
     CALL_APPLICATION_MAIN_DATA data = { 0 };
-    data.argc = static_cast<int>(argc);
+    data.argc = argc;
     data.argv = const_cast<const dnx::char_t**>(argv);
     data.runtimeDirectory = currentDirectory.c_str();
     data.handleExceptions = true;

@@ -35,5 +35,8 @@
     <ClCompile Include="pal.tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="argument_search_tests.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

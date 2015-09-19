@@ -15,6 +15,7 @@ namespace dnx
         dnx::xstring_t to_xstring_t(const std::string& s);
         dnx::xstring_t to_xstring_t(const std::wstring& s);
         std::wstring to_wstring(const std::string& s);
+        bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2);
 
         dnx::xstring_t path_combine(const dnx::xstring_t& path1, const dnx::xstring_t& path2);
         bool file_exists(const dnx::xstring_t& path);
@@ -24,5 +25,7 @@ namespace dnx
 #if defined(_WIN32)
         const wchar_t* get_windows_version();
 #endif
+        int find_bootstrapper_option_index(int argc, dnx::char_t**argv, const dnx::char_t* optionName);
+        int find_first_non_bootstrapper_param_index(int argc, dnx::char_t**argv);
     }
 }
