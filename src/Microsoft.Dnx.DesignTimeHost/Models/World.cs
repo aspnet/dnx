@@ -30,7 +30,6 @@ namespace Microsoft.Dnx.DesignTimeHost.Models
 
     public class ProjectWorld
     {
-        public ApplicationHostContext ApplicationHostContext { get; set; }
         public LibraryExporter LibraryExporter { get; set; }
 
         // State
