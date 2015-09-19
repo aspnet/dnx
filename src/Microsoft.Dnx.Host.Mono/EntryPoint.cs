@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.Dnx.Host;
 using Microsoft.Dnx.Runtime;
@@ -74,10 +75,24 @@ public class EntryPoint
             Environment.SetEnvironmentVariable(EnvironmentNames.AppBase, arguments[appbaseIndex + 1]);
         }
 
+        string operatingSystem, osVersion, architecture;
+        GetOsDetails(out operatingSystem, out osVersion, out architecture);
+
+        var bootstrapperContext = new BootstrapperContext
+        {
+            OperatingSystem = operatingSystem,
+            OsVersion = osVersion,
+            Architecture = architecture,
+            RuntimeDirectory = Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location),
+            ApplicationBase = appbaseIndex >= 0 && (appbaseIndex < arguments.Length - 1) ? arguments[appbaseIndex + 1] : Directory.GetCurrentDirectory(),
+            TargetFramework = new FrameworkName("DNX", new Version(4, 5, 1)),
+            HandleExceptions = true
+        };
+
         return RuntimeBootstrapper.Execute(arguments,
             // NOTE(anurse): Mono is always "dnx451" (for now).
             new FrameworkName("DNX", new Version(4, 5, 1)),
-            null);
+            bootstrapperContext);
     }
 
     private static string[] ExpandCommandLineArguments(string[] arguments)
@@ -204,5 +219,83 @@ public class EntryPoint
 
         // It isn't a bootstrapper option
         return -1;
+    }
+
+    private static void GetOsDetails(out string operatingSystem, out string osVersion, out string architecture)
+    {
+        var unameOutput = RunProgram("uname", "-s -m").Split(' ');
+
+        operatingSystem = unameOutput[0];
+        architecture = TranslateArchitecture(unameOutput[1]);
+        if (operatingSystem == "Darwin")
+        {
+            // sw_vers returns versions in format "10.10.4" so ".4" needs to be removed
+            osVersion = RunProgram("sw_vers", "-productVersion");
+            var lastDot = osVersion.LastIndexOf('.');
+            osVersion = lastDot >= 0 ? osVersion.Substring(0, lastDot) : osVersion;
+            return;
+        }
+
+        try
+        {
+            var lsb_release = RunProgram("lsb_release", "-s -i -r");
+            if (!string.IsNullOrEmpty(lsb_release))
+            {
+                osVersion = lsb_release.Replace(Environment.NewLine, " ");
+                return;
+            }
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            // Red Hat based Linux without lsb_release
+            var redHatRelease = File.ReadAllText("/etc/redhat-release");
+            var m = Regex.Match(redHatRelease, @"^(?<distro>\S+) \S+ \S+ (?<version>\d+\.\d+)\..+$");
+            if (m.Success)
+            {
+                osVersion = string.Format("{0} {1}", m.Groups["distro"], m.Groups["version"]);
+                return;
+            }
+        }
+        catch
+        {
+        }
+
+        Console.WriteLine("Could determine OS version information. Defaulting to the empty string.");
+        osVersion = string.Empty;
+    }
+
+    private static string TranslateArchitecture(string architecture)
+    {
+        if (architecture == "x86_64")
+        {
+            return "x64";
+        }
+
+        if (architecture.StartsWith("armv7"))
+        {
+            return "arm";
+        }
+
+        return "x86";
+    }
+
+    private static string RunProgram(string name, string args)
+    {
+        var processStartInfo = new ProcessStartInfo
+        {
+            FileName = name,
+            Arguments = args,
+            RedirectStandardOutput = true,
+            UseShellExecute = false
+        };
+
+        var process = Process.Start(processStartInfo);
+        var output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        return output.Trim();
     }
 }
