@@ -449,7 +449,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                         FileReferences = project.DependencyInfo.References,
                         RawReferences = project.DependencyInfo.RawReferences
                     },
-                    DependencyDiagnostics = new DiagnosticsListMessage(project.Diagnostics, frameworkData)
+                    DependencyDiagnostics = new DiagnosticsListMessage(project.DependencyInfo.Diagnostics, frameworkData)
                 };
 
                 _local.Projects[project.FrameworkName] = projectWorld;
@@ -1064,7 +1064,6 @@ namespace Microsoft.Dnx.DesignTimeHost
                     CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
                                                  .ToCompilationSettings(frameworkName),
                     SourceFiles = dependencySources,
-                    Diagnostics = dependencyInfo.Diagnostics,
                     DependencyInfo = dependencyInfo
                 };
 
@@ -1331,8 +1330,6 @@ namespace Microsoft.Dnx.DesignTimeHost
             public CompilationSettings CompilationSettings { get; set; }
 
             public List<string> SourceFiles { get; set; }
-
-            public List<DiagnosticMessage> Diagnostics { get; set; }
 
             public DependencyInfo DependencyInfo { get; set; }
         }
