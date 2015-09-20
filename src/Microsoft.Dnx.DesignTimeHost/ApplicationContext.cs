@@ -399,6 +399,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             }
 
             _local = new World();
+            _local.Project = state.Project;
             _local.ProjectInformation = new ProjectMessage
             {
                 Name = state.Name,
@@ -424,7 +425,6 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 var projectWorld = new ProjectWorld
                 {
-                    LibraryExporter = project.DependencyInfo.LibraryExporter,
                     TargetFramework = project.FrameworkName,
                     Sources = new SourcesMessage
                     {
@@ -569,7 +569,8 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         private bool UpdateProjectCompilation(ProjectWorld project, out ProjectCompilation compilation)
         {
-            var export = project.LibraryExporter.GetExport(_local.ProjectInformation.Name);
+            var exporter = _compilationEngine.CreateProjectExporter(_local.Project, project.TargetFramework, _configuration.Value);
+            var export = exporter.GetExport(_local.ProjectInformation.Name);
 
             ProjectCompilation oldCompilation;
             if (!_compilations.TryGetValue(project.TargetFramework, out oldCompilation) ||
@@ -1005,6 +1006,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             }
 
             state.Name = project.Name;
+            state.Project = project;
             state.Configurations = project.GetConfigurations().ToList();
             state.Commands = project.Commands;
 
@@ -1141,12 +1143,12 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var applicationHostContext = CreateApplicationHostContext(ctx, project, frameworkName, Enumerable.Empty<string>());
                 var libraryManager = applicationHostContext.LibraryManager;
+                var libraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration);
 
                 var info = new DependencyInfo
                 {
                     Dependencies = new Dictionary<string, DependencyDescription>(),
                     ProjectReferences = new List<ProjectReference>(),
-                    LibraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration),
                     References = new List<string>(),
                     RawReferences = new Dictionary<string, byte[]>(),
                     ExportedSourcesFiles = new List<string>(),
@@ -1203,7 +1205,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     }
                 }
 
-                var exportWithoutProjects = info.LibraryExporter.GetNonProjectExports(project.Name);
+                var exportWithoutProjects = libraryExporter.GetNonProjectExports(project.Name);
 
                 foreach (var reference in exportWithoutProjects.MetadataReferences)
                 {
@@ -1314,6 +1316,8 @@ namespace Microsoft.Dnx.DesignTimeHost
             public List<ProjectInfo> Projects { get; set; }
 
             public List<DiagnosticMessage> Diagnostics { get; set; }
+
+            public Project Project { get; set; }
         }
 
         // Represents a project that should be used for intellisense
@@ -1347,8 +1351,6 @@ namespace Microsoft.Dnx.DesignTimeHost
             public List<ProjectReference> ProjectReferences { get; set; }
 
             public List<string> ExportedSourcesFiles { get; set; }
-
-            public LibraryExporter LibraryExporter { get; set; }
         }
 
         private class ProjectCompilation

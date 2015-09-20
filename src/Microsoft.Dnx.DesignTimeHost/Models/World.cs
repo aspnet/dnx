@@ -13,6 +13,8 @@ namespace Microsoft.Dnx.DesignTimeHost.Models
 {
     public class World
     {
+        public Project Project { get; set; }
+
         public ProjectMessage ProjectInformation { get; set; }
 
         public DiagnosticsListMessage ProjectDiagnostics { get; set; }
@@ -30,8 +32,6 @@ namespace Microsoft.Dnx.DesignTimeHost.Models
 
     public class ProjectWorld
     {
-        public LibraryExporter LibraryExporter { get; set; }
-
         // State
         public FrameworkName TargetFramework { get; set; }
         public CompilationOptionsMessage CompilerOptions { get; set; }
