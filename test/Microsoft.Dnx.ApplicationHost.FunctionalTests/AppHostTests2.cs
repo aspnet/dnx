@@ -29,7 +29,7 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
         }
 
         [Theory]
-        [MemberData(nameof(DnxSdks))]
+        [MemberData(nameof(ClrDnxSdks))]
         public void ApplicationWithEcmaEntryPoint(DnxSdk sdk)
         {
             // Arrange
