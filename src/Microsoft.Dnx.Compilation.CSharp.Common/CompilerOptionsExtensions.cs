@@ -16,7 +16,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
     public static class CompilerOptionsExtensions
     {
         private const string NetFrameworkIdentifier = ".NETFramework";
-        private const string AspNetFrameworkIdentifier = "Asp.Net";
 
         public static CompilationSettings ToCompilationSettings(this ICompilerOptions compilerOptions,
                                                                 FrameworkName targetFramework)
@@ -65,7 +64,9 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
         private static CSharpCompilationOptions GetCompilationOptions(ICompilerOptions compilerOptions)
         {
-            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+            var outputKind = compilerOptions.EmitExecutable.GetValueOrDefault() ?
+                OutputKind.ConsoleApplication : OutputKind.DynamicallyLinkedLibrary;
+            var options = new CSharpCompilationOptions(outputKind);
 
             string platformValue = compilerOptions.Platform;
             bool allowUnsafe = compilerOptions.AllowUnsafe ?? false;
@@ -91,7 +92,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
         private static bool IsDesktop(FrameworkName frameworkName)
         {
             return frameworkName.Identifier == NetFrameworkIdentifier ||
-                   frameworkName.Identifier == AspNetFrameworkIdentifier ||
                    frameworkName.Identifier == FrameworkNames.LongNames.Dnx;
         }
 

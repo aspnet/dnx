@@ -463,7 +463,8 @@ namespace Microsoft.Dnx.Runtime
                 Optimize = rawOptions.ValueAsNullableBoolean("optimize"),
                 KeyFile = rawOptions.ValueAsString("keyFile"),
                 DelaySign = rawOptions.ValueAsNullableBoolean("delaySign"),
-                StrongName = rawOptions.ValueAsNullableBoolean("strongName")
+                StrongName = rawOptions.ValueAsNullableBoolean("strongName"),
+                EmitExecutable = rawOptions.ValueAsNullableBoolean("emitExe")
             };
         }
     }

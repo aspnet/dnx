@@ -28,5 +28,7 @@ namespace Microsoft.Dnx.Runtime
         bool? DelaySign { get; }
 
         bool? StrongName { get; }
+
+        bool? EmitExecutable { get; }
     }
 }
