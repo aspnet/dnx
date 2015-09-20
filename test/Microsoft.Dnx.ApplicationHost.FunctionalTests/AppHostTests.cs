@@ -302,7 +302,7 @@ $@"{{
 
                 Assert.Equal(0, exitCode);
                 Assert.Empty(error);
-                Assert.Equal(expectedOutput, output);
+                Assert.Contains(expectedOutput, output);
             }
         }
     }

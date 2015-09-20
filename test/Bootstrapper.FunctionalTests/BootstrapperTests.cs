@@ -145,7 +145,7 @@ namespace ConfigTest
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
 
                 Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
+                Assert.Contains(@"Hello World!
 Hello, code!
 I
 can
@@ -177,7 +177,7 @@ command
                     workingDir: testAppPath);
 
                 Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
+                Assert.Contains(@"Hello World!
 Hello, code!
 I
 can
@@ -210,7 +210,7 @@ command
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
 
                 Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
+                Assert.Contains(@"Hello World!
 Hello, code!
 I
 can
@@ -256,7 +256,7 @@ command
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
 
                 Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
+                Assert.Contains(@"Hello World!
 Hello, code!
 ", stdOut);
             }
@@ -314,7 +314,7 @@ Hello, code!
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
                     workingDir: tempDir);
                 Assert.Equal(0, exitCode);
-                Assert.Equal("40501", stdOut.Trim());
+                Assert.Contains("40501", stdOut.Trim());
             }
         }
 
@@ -372,7 +372,7 @@ Hello, code!
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
                     workingDir: tempDir);
                 Assert.Equal(0, exitCode);
-                Assert.Equal("40502", stdOut.Trim());
+                Assert.Contains("40502", stdOut.Trim());
             }
         }
 
@@ -433,7 +433,7 @@ Hello, code!
                     workingDir: tempDir);
 
                 Assert.Equal(0, exitCode);
-                Assert.Equal("40600", stdOut.Trim());
+                Assert.Contains("40600", stdOut.Trim());
             }
         }
 
@@ -517,7 +517,7 @@ Hello, code!
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
                     workingDir: tempDir);
                 Assert.Equal(0, exitCode);
-                Assert.Equal(expectedOutput, stdOut.Trim());
+                Assert.Contains(expectedOutput, stdOut.Trim());
             }
         }
 
@@ -568,7 +568,7 @@ Hello, code!
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
                     workingDir: tempDir);
                 Assert.Equal(0, exitCode);
-                Assert.Equal("TheSetting=TheValue", stdOut.Trim());
+                Assert.Contains("TheSetting=TheValue", stdOut.Trim());
             }
         }
     }

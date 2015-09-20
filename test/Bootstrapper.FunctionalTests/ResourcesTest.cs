@@ -50,7 +50,7 @@ namespace Bootstrapper.FunctionalTests
                     workingDir: Path.Combine(appPath, "src", "ReadFromResources"));
 
                 Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
+                Assert.Contains(@"Hello World!
 Bonjour Monde!
 Bienvenue
 The name '{0}' is ambiguous.
@@ -81,7 +81,7 @@ Le nom '{0}' est ambigu.
                     workingDir: appPath);
 
                 Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello
+                Assert.Contains(@"Hello
 <html>
 Basic Test
 </html>
