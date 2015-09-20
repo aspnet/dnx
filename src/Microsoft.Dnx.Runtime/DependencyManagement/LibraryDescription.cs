@@ -33,6 +33,7 @@ namespace Microsoft.Dnx.Runtime
 
         public LibraryRange RequestedRange { get; set; }
         public LibraryIdentity Identity { get; }
+        public LibraryDescription Parent { get; set; }
 
         public string Type { get; }
         public FrameworkName Framework { get; set; }

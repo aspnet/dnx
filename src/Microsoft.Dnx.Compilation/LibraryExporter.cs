@@ -6,160 +6,162 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using NuGet;
 
 namespace Microsoft.Dnx.Compilation
 {
-    public class LibraryExporter : ILibraryExporter
+    public class ProjectExportContext
+    {
+        public ApplicationHostContext ApplicationHostContext { get; set; }
+        public IAssemblyLoadContext LoadContext { get; set; }
+    }
+
+    public class LibraryExporter
     {
         private readonly CompilationEngine _compilationEngine;
         private readonly string _configuration;
-        private readonly IAssemblyLoadContext _loadContext;
 
-        public LibraryExporter(LibraryManager manager, IAssemblyLoadContext loadContext, CompilationEngine compilationEngine, string configuration)
+        public LibraryExporter(CompilationEngine compilationEngine, string configuration)
         {
-            LibraryManager = manager;
             _compilationEngine = compilationEngine;
             _configuration = configuration;
-            _loadContext = loadContext;
         }
 
-        public LibraryManager LibraryManager { get; }
-
-        public LibraryExport GetExport(string name)
+        public LibraryExport GetExport(LibraryDescription library)
         {
-            return GetExport(name, aspect: null);
+            return GetExport(library, aspect: null);
         }
 
-        public LibraryExport GetExport(string name, string aspect)
+        public LibraryExport GetExport(LibraryDescription library, string aspect)
         {
-            var library = LibraryManager.GetLibraryDescription(name);
-            if (library == null)
+            // Don't even try to export unresolved libraries
+            if (!library.Resolved)
             {
                 return null;
             }
-            return GetExport(library, aspect);
-        }
 
-        public LibraryExport GetAllExports(string name)
-        {
-            return GetAllExports(name, aspect: null);
-        }
-
-        public LibraryExport GetAllExports(string name, string aspect)
-        {
-            return GetAllExports(name, aspect, l => true);
-        }
-
-        public LibraryExport GetNonProjectExports(string name)
-        {
-            return GetAllExports(
-                name,
-                aspect: null,
-                libraryFilter: l => l.Type != LibraryTypes.Project);
-        }
-
-        public LibraryExport GetAllDependencies(
-            string name,
-            string aspect)
-        {
-            return GetAllExports(name, aspect, library => !string.Equals(name, library.Identity.Name));
-        }
-
-        public LibraryExport GetAllExports(
-            string name,
-            string aspect,
-            Func<LibraryDescription, bool> libraryFilter)
-        {
-            var description = LibraryManager.GetLibraryDescription(name);
-            if (description == null)
+            if (string.Equals(LibraryTypes.Package, library.Type, StringComparison.Ordinal))
             {
-                return null;
+                return GetPackageExport((PackageDescription)library);
             }
-            return GetAllExports(description, aspect, libraryFilter);
+            else if (string.Equals(LibraryTypes.Project, library.Type, StringComparison.Ordinal))
+            {
+                return GetProjectExport((ProjectDescription)library, aspect);
+            }
+            else
+            {
+                return GetAssemblyExport(library);
+            }
         }
 
-        private LibraryExport GetAllExports(
-            LibraryDescription root,
-            string aspect,
-            Func<LibraryDescription, bool> include)
+        public LibraryExport GetProjectExport(ProjectDescription project, string aspect)
+        {
+            return GetProjectExport(project.Project, project.Framework, aspect);
+        }
+
+        public LibraryExport GetProjectExport(Project project, FrameworkName targetFramework, string aspect)
+        {
+            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: {nameof(GetProjectExport)}({project.Name}, {aspect}, {targetFramework}, {_configuration})");
+
+            var key = Tuple.Create(project.Name, targetFramework, _configuration, aspect);
+
+            return _compilationEngine.CompilationCache.Cache.Get<LibraryExport>(key, ctx =>
+            {
+                var metadataReferences = new List<IMetadataReference>();
+                var sourceReferences = new List<ISourceReference>();
+
+                var targetFrameworkInfo = project.GetTargetFramework(targetFramework);
+
+                // Create the compilation context
+                var compilationContext = project.ToCompilationContext(targetFramework, _configuration, aspect);
+
+                if (!string.IsNullOrEmpty(targetFrameworkInfo.AssemblyPath))
+                {
+                    // Project specifies a pre-compiled binary. We're done!
+
+                    var assemblyPath = ResolvePath(project, _configuration, targetFrameworkInfo.AssemblyPath);
+                    var pdbPath = ResolvePath(project, _configuration, targetFrameworkInfo.PdbPath);
+
+                    metadataReferences.Add(new CompiledProjectMetadataReference(compilationContext, assemblyPath, pdbPath));
+                }
+                else
+                {
+                    // We need to compile the project.
+                    var compilerTypeInfo = project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
+
+                    // Create the project exporter
+                    var context = _compilationEngine.CreateProjectExportContext(project, targetFramework);
+
+                    // Find the project compiler
+                    var projectCompiler = _compilationEngine.GetCompiler(compilerTypeInfo, context.LoadContext);
+
+                    Logger.TraceInformation($"[{nameof(LibraryExporter)}]: CompileProject({compilerTypeInfo.TypeName}, {project.Name}, {targetFramework}, {aspect})");
+
+                    // Resolve the project export
+                    IMetadataProjectReference projectReference = projectCompiler.CompileProject(
+                        compilationContext,
+                        () => ResolveReferences(context.ApplicationHostContext, aspect),
+                        () => CompositeResourceProvider.Default.GetResources(project));
+
+                    metadataReferences.Add(projectReference);
+
+                    // Shared sources
+                    foreach (var sharedFile in project.Files.SharedFiles)
+                    {
+                        sourceReferences.Add(new SourceFileReference(sharedFile));
+                    }
+                }
+
+                return new LibraryExport(metadataReferences, sourceReferences);
+            });
+        }
+
+        public LibraryExport ResolveReferences(ApplicationHostContext context, string aspect, Func<LibraryDescription, bool> processLibrary)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
-            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: Resolving references for '{root.Identity.Name}' {aspect}");
+            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: Resolving references for '{context.MainProject?.Identity.Name}' {aspect}");
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
             var sourceReferences = new Dictionary<string, ISourceReference>(StringComparer.OrdinalIgnoreCase);
 
-            // Walk the dependency tree and resolve the library export for all references to this project
-            var queue = new Queue<Node>();
-            var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            var rootNode = new Node
+            foreach (var library in context.LibraryManager.GetLibraryDescriptions())
             {
-                Library = root
-            };
-
-            queue.Enqueue(rootNode);
-
-            while (queue.Count > 0)
-            {
-                var node = queue.Dequeue();
-
-                // Skip it if we've already seen it
-                if (!processed.Add(node.Library.Identity.Name))
+                if (!processLibrary(library))
                 {
                     continue;
                 }
 
-                if (include(node.Library))
-                {
-                    LibraryExport libraryExport = null;
+                LibraryExport libraryExport = GetExport(library, aspect: null);
 
-                    if (node.Library == root && root.Type == LibraryTypes.Project)
+                if (libraryExport != null)
+                {
+                    if (library.Parent == context.MainProject)
                     {
-                        // We know it's a project so skip the lookup
-                        libraryExport = ExportProject((ProjectDescription)root, aspect: null, exporter: this);
+                        // Only export sources from first level dependencies
+                        ProcessExport(libraryExport, references, sourceReferences);
                     }
                     else
                     {
-                        libraryExport = GetExport(node.Library, aspect: null);
+                        // Skip source exports from anything else
+                        ProcessExport(libraryExport, references, sourceReferences: null);
                     }
-
-                    if (libraryExport != null)
-                    {
-                        if (node.Parent == rootNode)
-                        {
-                            // Only export sources from first level dependencies
-                            ProcessExport(libraryExport, references, sourceReferences);
-                        }
-                        else
-                        {
-                            // Skip source exports from anything else
-                            ProcessExport(libraryExport, references, sourceReferences: null);
-                        }
-                    }
-                }
-
-                foreach (var dependency in node.Library.Dependencies)
-                {
-                    var childNode = new Node
-                    {
-                        Library = dependency.Library,
-                        Parent = node
-                    };
-
-                    queue.Enqueue(childNode);
                 }
             }
 
             dependencyStopWatch.Stop();
-            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: Resolved {references.Count} references for '{root.Identity.Name}' in {dependencyStopWatch.ElapsedMilliseconds}ms");
+            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: Resolved {references.Count} references for '{context.MainProject.Identity.Name}' in {dependencyStopWatch.ElapsedMilliseconds}ms");
 
             return new LibraryExport(
                 references.Values.ToList(),
                 sourceReferences.Values.ToList());
+        }
+
+        public LibraryExport ResolveReferences(ApplicationHostContext context, string aspect)
+        {
+            return ResolveReferences(context, aspect, l => l != context.MainProject);
         }
 
         private void ProcessExport(LibraryExport export,
@@ -182,29 +184,7 @@ namespace Microsoft.Dnx.Compilation
             }
         }
 
-        private LibraryExport GetExport(LibraryDescription library, string aspect)
-        {
-            // Don't even try to export unresolved libraries
-            if (!library.Resolved)
-            {
-                return null;
-            }
-
-            if (string.Equals(LibraryTypes.Package, library.Type, StringComparison.Ordinal))
-            {
-                return ExportPackage((PackageDescription)library);
-            }
-            else if (string.Equals(LibraryTypes.Project, library.Type, StringComparison.Ordinal))
-            {
-                return ExportProject((ProjectDescription)library, aspect, exporter: null);
-            }
-            else
-            {
-                return ExportAssemblyLibrary(library);
-            }
-        }
-
-        private LibraryExport ExportPackage(PackageDescription package)
+        private LibraryExport GetPackageExport(PackageDescription package)
         {
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
 
@@ -218,63 +198,6 @@ namespace Microsoft.Dnx.Compilation
             }
 
             return new LibraryExport(references.Values.ToList(), sourceReferences);
-        }
-
-        private LibraryExport ExportProject(ProjectDescription project, string aspect, LibraryExporter exporter)
-        {
-            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: {nameof(ExportProject)}({project.Identity.Name}, {aspect}, {project.Framework}, {_configuration})");
-
-            var key = Tuple.Create(project.Identity.Name, project.Framework, _configuration, aspect);
-
-            return _compilationEngine.CompilationCache.Cache.Get<LibraryExport>(key, ctx =>
-            {
-                var metadataReferences = new List<IMetadataReference>();
-                var sourceReferences = new List<ISourceReference>();
-
-                // Create the compilation context
-                var compilationContext = project.Project.ToCompilationContext(project.Framework, _configuration, aspect);
-
-                if (!string.IsNullOrEmpty(project.TargetFrameworkInfo?.AssemblyPath))
-                {
-                    // Project specifies a pre-compiled binary. We're done!
-                    var assemblyPath = ResolvePath(project.Project, _configuration, project.TargetFrameworkInfo.AssemblyPath);
-                    var pdbPath = ResolvePath(project.Project, _configuration, project.TargetFrameworkInfo.PdbPath);
-
-                    metadataReferences.Add(new CompiledProjectMetadataReference(compilationContext, assemblyPath, pdbPath));
-                }
-                else
-                {
-                    // We need to compile the project.
-                    var compilerTypeInfo = project.Project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
-
-                    // Create the project exporter
-                    exporter = exporter ?? _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration);
-
-                    // Get the exports for the project dependencies
-                    var projectDependenciesExport = new Lazy<LibraryExport>(() => exporter.GetAllDependencies(project.Identity.Name, aspect));
-
-                    // Find the project compiler
-                    var projectCompiler = _compilationEngine.GetCompiler(compilerTypeInfo, exporter._loadContext);
-
-                    Logger.TraceInformation($"[{nameof(LibraryExporter)}]: GetProjectReference({compilerTypeInfo.TypeName}, {project.Identity.Name}, {project.Framework}, {aspect})");
-
-                    // Resolve the project export
-                    IMetadataProjectReference projectReference = projectCompiler.CompileProject(
-                        compilationContext,
-                        () => projectDependenciesExport.Value,
-                        () => CompositeResourceProvider.Default.GetResources(project.Project));
-
-                    metadataReferences.Add(projectReference);
-
-                    // Shared sources
-                    foreach (var sharedFile in project.Project.Files.SharedFiles)
-                    {
-                        sourceReferences.Add(new SourceFileReference(sharedFile));
-                    }
-                }
-
-                return new LibraryExport(metadataReferences, sourceReferences);
-            });
         }
 
         private static string ResolvePath(Project project, string configuration, string path)
@@ -291,7 +214,7 @@ namespace Microsoft.Dnx.Compilation
             return Path.Combine(project.ProjectDirectory, path);
         }
 
-        private LibraryExport ExportAssemblyLibrary(LibraryDescription library)
+        private LibraryExport GetAssemblyExport(LibraryDescription library)
         {
             if (string.IsNullOrEmpty(library.Path))
             {
@@ -329,13 +252,5 @@ namespace Microsoft.Dnx.Compilation
                 paths[name] = new MetadataFileReference(name, path);
             }
         }
-
-        private class Node
-        {
-            public LibraryDescription Library { get; set; }
-
-            public Node Parent { get; set; }
-        }
-
     }
 }

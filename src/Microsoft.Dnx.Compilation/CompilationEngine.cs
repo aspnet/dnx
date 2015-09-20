@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
@@ -26,10 +25,10 @@ namespace Microsoft.Dnx.Compilation
 
         public Assembly LoadProject(Project project, FrameworkName targetFramework, string aspect, IAssemblyLoadContext loadContext, AssemblyName assemblyName)
         {
-            var exporter = CreateProjectExporter(project, targetFramework, _context.ApplicationEnvironment.Configuration);
+            var exporter = CreateProjectExporter(_context.ApplicationEnvironment.Configuration);
 
             // Export the project
-            var export = exporter.GetExport(project.Name, aspect);
+            var export = exporter.GetProjectExport(project, targetFramework, aspect);
 
             if (export == null)
             {
@@ -48,28 +47,44 @@ namespace Microsoft.Dnx.Compilation
             return null;
         }
 
-        public LibraryExporter CreateProjectExporter(Project project, FrameworkName targetFramework, string configuration)
+        public LibraryExporter CreateProjectExporter(string configuration)
+        {
+            return new LibraryExporter(this, configuration);
+        }
+
+        public ProjectExportContext CreateProjectExportContext(Project project, FrameworkName targetFramework)
         {
             // This library manager represents the graph that will be used to resolve
             // references (compiler /r in csc terms)
-            var libraryManager = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework);
+            var compilationAppHost = new ApplicationHostContext
+            {
+                Project = project,
+                TargetFramework = targetFramework
+            };
+
+            ApplicationHostContext.Initialize(compilationAppHost);
 
             // Create an application host context to use to drive a Load Context used to load Precompilers
-            var context = new ApplicationHostContext
+            var runtimeAppHost = new ApplicationHostContext
             {
                 Project = project,
                 RuntimeIdentifiers = _context.RuntimeEnvironment.GetAllRuntimeIdentifiers(),
                 TargetFramework = _context.ApplicationEnvironment.RuntimeFramework
             };
 
-            var libraries = ApplicationHostContext.GetRuntimeLibraries(context);
+            var libraries = ApplicationHostContext.GetRuntimeLibraries(runtimeAppHost);
 
             // This load context represents the graph that will be used to *load* the compiler and other
             // build time related dependencies
             var loadContext = new RuntimeLoadContext(libraries, this, _context.DefaultLoadContext);
 
-            return new LibraryExporter(libraryManager, loadContext, this, configuration);
+            return new ProjectExportContext
+            {
+                ApplicationHostContext = compilationAppHost,
+                LoadContext = loadContext
+            };
         }
+
 
         public IProjectCompiler GetCompiler(TypeInformation provider, IAssemblyLoadContext loadContext)
         {

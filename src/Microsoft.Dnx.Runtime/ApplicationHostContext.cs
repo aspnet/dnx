@@ -103,6 +103,7 @@ namespace Microsoft.Dnx.Runtime
                     // Different ranges can resolve to this dependency but only one wins
                     dep.RequestedRange = dependency.LibraryRange;
                     dependency.Library = dep;
+                    dep.Parent = library;
                 }
             }
 

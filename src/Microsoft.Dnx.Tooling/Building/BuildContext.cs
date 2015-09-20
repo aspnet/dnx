@@ -32,10 +32,11 @@ namespace Microsoft.Dnx.Tooling
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
 
-            _libraryExporter = compilationEngine.CreateProjectExporter(
-                _project, _targetFramework, _configuration);
+            var projectContext = compilationEngine.CreateProjectExportContext(project, _targetFramework);
 
-            _libraryManager = _libraryExporter.LibraryManager;
+            _libraryExporter = compilationEngine.CreateProjectExporter(_configuration);
+
+            _libraryManager = projectContext.ApplicationHostContext.LibraryManager;
         }
 
         public void Initialize(IReport report)
@@ -45,7 +46,7 @@ namespace Microsoft.Dnx.Tooling
 
         public bool Build(List<DiagnosticMessage> diagnostics)
         {
-            var export = _libraryExporter.GetExport(_project.Name);
+            var export = _libraryExporter.GetProjectExport(_project, _targetFramework, aspect: null);
             if (export == null)
             {
                 return false;
@@ -170,41 +171,42 @@ namespace Microsoft.Dnx.Tooling
         private void ShowDependencyInformation(IReport report)
         {
             // Make lookup for actual package dependency assemblies
-            var projectExport = _libraryExporter.GetAllExports(_project.Name);
-            if (projectExport == null)
-            {
-                return;
-            }
-            var metadataFileRefs = projectExport.MetadataReferences
-                .OfType<IMetadataFileReference>();
+            // TODO: Fix
+            //var projectExport = _libraryExporter.GetProjectExport(_project.Name);
+            //if (projectExport == null)
+            //{
+            //    return;
+            //}
+            //var metadataFileRefs = projectExport.MetadataReferences
+            //    .OfType<IMetadataFileReference>();
 
-            foreach (var library in _libraryManager.GetLibraryDescriptions())
-            {
-                if (!library.Resolved)
-                {
-                    report.WriteLine("  Unable to resolve dependency {0}", library.Identity.ToString().Red().Bold());
-                    report.WriteLine();
-                    continue;
-                }
-                report.WriteLine("  Using {0} dependency {1}", library.Type, library.Identity);
-                report.WriteLine("    Source: {0}", HighlightFile(library.Path));
+            //foreach (var library in _libraryManager.GetLibraryDescriptions())
+            //{
+            //    if (!library.Resolved)
+            //    {
+            //        report.WriteLine("  Unable to resolve dependency {0}", library.Identity.ToString().Red().Bold());
+            //        report.WriteLine();
+            //        continue;
+            //    }
+            //    report.WriteLine("  Using {0} dependency {1}", library.Type, library.Identity);
+            //    report.WriteLine("    Source: {0}", HighlightFile(library.Path));
 
-                if (library.Type == LibraryTypes.Package)
-                {
-                    // TODO: temporarily use prefix to tell whether an assembly belongs to a package
-                    // Should expose LibraryName from IMetadataReference later for more efficient lookup
-                    var libraryPath = NormalizeDirectoryPath(library.Path);
-                    var packageAssemblies = metadataFileRefs.Where(x => Path.GetFullPath(x.Path).StartsWith(libraryPath));
-                    foreach (var assembly in packageAssemblies)
-                    {
-                        var relativeAssemblyPath = PathUtility.GetRelativePath(
-                            libraryPath,
-                            Path.GetFullPath(assembly.Path));
-                        report.WriteLine("    File: {0}", relativeAssemblyPath.Bold());
-                    }
-                }
-                report.WriteLine();
-            }
+            //    if (library.Type == LibraryTypes.Package)
+            //    {
+            //        // TODO: temporarily use prefix to tell whether an assembly belongs to a package
+            //        // Should expose LibraryName from IMetadataReference later for more efficient lookup
+            //        var libraryPath = NormalizeDirectoryPath(library.Path);
+            //        var packageAssemblies = metadataFileRefs.Where(x => Path.GetFullPath(x.Path).StartsWith(libraryPath));
+            //        foreach (var assembly in packageAssemblies)
+            //        {
+            //            var relativeAssemblyPath = PathUtility.GetRelativePath(
+            //                libraryPath,
+            //                Path.GetFullPath(assembly.Path));
+            //            report.WriteLine("    File: {0}", relativeAssemblyPath.Bold());
+            //        }
+            //    }
+            //    report.WriteLine();
+            //}
         }
 
         private static string NormalizeDirectoryPath(string path)

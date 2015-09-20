@@ -569,8 +569,8 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         private bool UpdateProjectCompilation(ProjectWorld project, out ProjectCompilation compilation)
         {
-            var exporter = _compilationEngine.CreateProjectExporter(_local.Project, project.TargetFramework, _configuration.Value);
-            var export = exporter.GetExport(_local.ProjectInformation.Name);
+            var exporter = _compilationEngine.CreateProjectExporter(_configuration.Value);
+            var export = exporter.GetProjectExport(_local.Project, project.TargetFramework, aspect: null);
 
             ProjectCompilation oldCompilation;
             if (!_compilations.TryGetValue(project.TargetFramework, out oldCompilation) ||
@@ -1143,7 +1143,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var applicationHostContext = CreateApplicationHostContext(ctx, project, frameworkName, Enumerable.Empty<string>());
                 var libraryManager = applicationHostContext.LibraryManager;
-                var libraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration);
+                var libraryExporter = _compilationEngine.CreateProjectExporter(configuration);
 
                 var info = new DependencyInfo
                 {
@@ -1155,10 +1155,15 @@ namespace Microsoft.Dnx.DesignTimeHost
                     Diagnostics = libraryManager.GetAllDiagnostics().ToList()
                 };
 
-                foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
+                var exportWithoutProjects = libraryExporter.ResolveReferences(applicationHostContext, aspect: null, processLibrary: library =>
                 {
                     var description = CreateDependencyDescription(library, ProtocolVersion);
                     info.Dependencies[description.Name] = description;
+
+                    if (library == applicationHostContext.MainProject)
+                    {
+                        return false;
+                    }
 
                     if (string.Equals(library.Type, LibraryTypes.Project) &&
                        !string.Equals(library.Identity.Name, project.Name))
@@ -1203,9 +1208,9 @@ namespace Microsoft.Dnx.DesignTimeHost
                             });
                         }
                     }
-                }
 
-                var exportWithoutProjects = libraryExporter.GetNonProjectExports(project.Name);
+                    return true;
+                });
 
                 foreach (var reference in exportWithoutProjects.MetadataReferences)
                 {
@@ -1311,7 +1316,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             public List<FrameworkData> Frameworks { get; set; }
 
-            public IDictionary<string, string> Commands { get; set; }
+            public Dictionary<string, string> Commands { get; set; }
 
             public List<ProjectInfo> Projects { get; set; }
 
