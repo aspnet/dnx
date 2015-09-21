@@ -85,14 +85,12 @@ public class EntryPoint
             Architecture = architecture,
             RuntimeDirectory = Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location),
             ApplicationBase = appbaseIndex >= 0 && (appbaseIndex < arguments.Length - 1) ? arguments[appbaseIndex + 1] : Directory.GetCurrentDirectory(),
+            // NOTE(anurse): Mono is always "dnx451" (for now).
             TargetFramework = new FrameworkName("DNX", new Version(4, 5, 1)),
             HandleExceptions = true
         };
 
-        return RuntimeBootstrapper.Execute(arguments,
-            // NOTE(anurse): Mono is always "dnx451" (for now).
-            new FrameworkName("DNX", new Version(4, 5, 1)),
-            bootstrapperContext);
+        return RuntimeBootstrapper.Execute(arguments, bootstrapperContext);
     }
 
     private static string[] ExpandCommandLineArguments(string[] arguments)

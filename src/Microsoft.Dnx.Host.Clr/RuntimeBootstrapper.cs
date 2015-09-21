@@ -13,9 +13,9 @@ namespace Microsoft.Dnx.Host.Clr
             var bootstrapperType = bootstrapperContext.GetType().Assembly.GetType("Microsoft.Dnx.Host.RuntimeBootstrapper");
 
             var executeMethodInfo = bootstrapperType.GetMethod("Execute", BindingFlags.Static | BindingFlags.Public, null,
-                    new[] { typeof(string[]), typeof(FrameworkName), bootstrapperContext.GetType() }, null);
+                    new[] { typeof(string[]), bootstrapperContext.GetType() }, null);
 
-            return (int)executeMethodInfo.Invoke(null, new object[] { argv, targetFramework, null });
+            return (int)executeMethodInfo.Invoke(null, new object[] { argv, bootstrapperContext });
         }
 
         private static object GetBootstrapperContext(FrameworkName targetFramework, DomainManager.ApplicationMainInfo info)

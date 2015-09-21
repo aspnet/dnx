@@ -49,10 +49,7 @@ sealed class DomainManager
             bootstrapperContext.TargetFramework = new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
             bootstrapperContext.HandleExceptions = context->HandleExceptions;
 
-            return RuntimeBootstrapper.Execute(
-                arguments,
-                bootstrapperContext.TargetFramework,
-                bootstrapperContext);
+            return RuntimeBootstrapper.Execute(arguments, bootstrapperContext);
         }
         catch (Exception ex)
         {

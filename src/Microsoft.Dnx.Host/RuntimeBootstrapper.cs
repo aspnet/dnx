@@ -16,14 +16,14 @@ namespace Microsoft.Dnx.Host
     {
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
-        public static int Execute(string[] args, FrameworkName targetFramework, BootstrapperContext context)
+        public static int Execute(string[] args, BootstrapperContext bootstrapperContext)
         {
             // If we're a console host then print exceptions to stderr
             var printExceptionsToStdError = Environment.GetEnvironmentVariable(EnvironmentNames.ConsoleHost) == "1";
 
             try
             {
-                return ExecuteAsync(args, targetFramework).GetAwaiter().GetResult();
+                return ExecuteAsync(args, bootstrapperContext).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -65,7 +65,7 @@ namespace Microsoft.Dnx.Host
             }
         }
 
-        public static Task<int> ExecuteAsync(string[] args, FrameworkName targetFramework)
+        public static Task<int> ExecuteAsync(string[] args, BootstrapperContext bootstrapperContext)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = Constants.BootstrapperExeName;
@@ -157,7 +157,7 @@ namespace Microsoft.Dnx.Host
             IEnumerable<string> searchPaths = ResolveSearchPaths(optionLib.Values, app.RemainingArguments);
 
             var bootstrapper = new Bootstrapper(searchPaths);
-            return bootstrapper.RunAsync(app.RemainingArguments, env, targetFramework);
+            return bootstrapper.RunAsync(app.RemainingArguments, env, bootstrapperContext.TargetFramework);
         }
 
         private static IEnumerable<string> ResolveSearchPaths(List<string> libPaths, List<string> remainingArgs)
