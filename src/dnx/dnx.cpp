@@ -201,13 +201,7 @@ bool GetApplicationBase(const dnx::xstring_t& currentDirectory, int argc, dnx::c
 
 int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer)
 {
-    // Set the DNX_CONOSLE_HOST flag which will print exceptions to stderr instead of throwing
-    SetConsoleHost();
-
     const auto currentDirectory = GetNativeBootstrapperDirectory();
-
-    // Set the DEFAULT_LIB environment variable to be the same directory as the exe
-    SetEnvironmentVariable(_X("DNX_DEFAULT_LIB"), currentDirectory.c_str());
 
     // Set the FRAMEWORK environment variable to the value provided on the command line
     //  (it needs to be available BEFORE the application main is called)
@@ -247,7 +241,6 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer&
             _X("dnx.coreclr.so");
 #else
             _X("dnx.clr.dll");
-        SetEnvironmentVariable(_X("DNX_IS_WINDOWS"), _X("1"));
 #endif
 
         // Note: need to keep as ASCII as GetProcAddress function takes ASCII params

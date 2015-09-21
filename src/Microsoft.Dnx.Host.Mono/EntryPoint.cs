@@ -55,25 +55,15 @@ public class EntryPoint
             }
         }
 
-        // Set the default lib path to be next to the entry point location
-        Environment.SetEnvironmentVariable(EnvironmentNames.DefaultLib, Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location));
-        Environment.SetEnvironmentVariable(EnvironmentNames.ConsoleHost, "1");
-
-        var p = Environment.OSVersion.Platform;
-        if (p != PlatformID.MacOSX && p != PlatformID.Unix)
-        {
-            Environment.SetEnvironmentVariable(EnvironmentNames.DnxIsWindows, "1");
-        }
-
         arguments = ExpandCommandLineArguments(arguments);
 
         // Set application base dir
         var appbaseIndex = arguments.ToList().FindIndex(arg =>
             string.Equals(arg, "--appbase", StringComparison.OrdinalIgnoreCase));
-        if (appbaseIndex >= 0 && (appbaseIndex < arguments.Length - 1))
-        {
-            Environment.SetEnvironmentVariable(EnvironmentNames.AppBase, arguments[appbaseIndex + 1]);
-        }
+
+        var appBase = appbaseIndex >= 0 && (appbaseIndex < arguments.Length - 1)
+                ? arguments[appbaseIndex + 1]
+                : Directory.GetCurrentDirectory();
 
         string operatingSystem, osVersion, architecture;
         GetOsDetails(out operatingSystem, out osVersion, out architecture);
@@ -84,7 +74,7 @@ public class EntryPoint
             OsVersion = osVersion,
             Architecture = architecture,
             RuntimeDirectory = Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location),
-            ApplicationBase = appbaseIndex >= 0 && (appbaseIndex < arguments.Length - 1) ? arguments[appbaseIndex + 1] : Directory.GetCurrentDirectory(),
+            ApplicationBase = appBase,
             // NOTE(anurse): Mono is always "dnx451" (for now).
             TargetFramework = new FrameworkName("DNX", new Version(4, 5, 1)),
             HandleExceptions = true

@@ -98,12 +98,14 @@ namespace Microsoft.Dnx.Runtime
                 {
                     ver = "10";
                 }
+
+                return os + ver;
             }
             else
             {
                 os = os.ToLowerInvariant(); // Just use the lower-case full name of the OS as the RID OS
             }
-            return os + ver;
+            return os;
         }
     }
 }

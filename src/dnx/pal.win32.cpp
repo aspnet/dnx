@@ -42,16 +42,6 @@ bool IsTracingEnabled()
     return GetEnvironmentVariable(L"DNX_TRACE", buff, 2) == 1 && buff[0] == L'1';
 }
 
-void SetConsoleHost()
-{
-    TCHAR szConsoleHost[2];
-    DWORD nEnvConsoleHostSize = GetEnvironmentVariable(_T("DNX_CONSOLE_HOST"), szConsoleHost, 2);
-    if (nEnvConsoleHostSize == 0)
-    {
-        SetEnvironmentVariable(_T("DNX_CONSOLE_HOST"), _T("1"));
-    }
-}
-
 bool GetAppBasePathFromEnvironment(LPTSTR pszAppBase)
 {
     DWORD dwAppBase = GetEnvironmentVariable(_T("DNX_APPBASE"), pszAppBase, MAX_PATH);
@@ -132,7 +122,6 @@ int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CAL
         if (runtime_new_path.length() > 0)
         {
             trace_writer.write(std::wstring(L"Redirecting runtime to: ").append(runtime_new_path), true);
-            SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), runtime_new_path.c_str());
             data->runtimeDirectory = runtime_new_path.c_str();
         }
 

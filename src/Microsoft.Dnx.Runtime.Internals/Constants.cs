@@ -10,12 +10,6 @@ namespace Microsoft.Dnx.Runtime
         public static readonly string Mono = nameof(Mono);
     }
 
-    internal static class RuntimeArchitectures
-    {
-        public static readonly string X86 = "x86";
-        public static readonly string X64 = "x64";
-    }
-
     internal static class RuntimeOperatingSystems
     {
         public static readonly string Windows = nameof(Windows);

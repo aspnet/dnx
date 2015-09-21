@@ -31,12 +31,6 @@ public class DomainManager : AppDomainManager
 
         _info.Main = Main;
         BindApplicationMain(ref _info);
-
-        if (!string.IsNullOrEmpty(_info.ApplicationBase))
-        {
-            Environment.SetEnvironmentVariable(EnvironmentNames.AppBase, _info.ApplicationBase);
-        }
-
         appDomainInfo.ApplicationBase = _info.RuntimeDirectory;
         appDomainInfo.TargetFrameworkName = DetermineAppDomainTargetFramework();
         appDomainInfo.ConfigurationFile = Path.Combine(_info.ApplicationBase, Constants.AppConfigurationFileName);

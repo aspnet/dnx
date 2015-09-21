@@ -4,14 +4,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
-using Microsoft.Dnx.Runtime.Common.Impl;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
 
@@ -26,7 +23,7 @@ namespace Microsoft.Dnx.Host
             _searchPaths = searchPaths;
         }
 
-        public Task<int> RunAsync(List<string> args, IRuntimeEnvironment env, FrameworkName targetFramework)
+        public Task<int> RunAsync(List<string> args, IRuntimeEnvironment env, string appBase, FrameworkName targetFramework)
         {
             var accessor = LoadContextAccessor.Instance;
             var container = new LoaderContainer();
@@ -48,17 +45,12 @@ namespace Microsoft.Dnx.Host
                 }
 
 #if DNX451
-                string applicationBaseDirectory = Environment.GetEnvironmentVariable(EnvironmentNames.AppBase);
-
-                if (string.IsNullOrEmpty(applicationBaseDirectory))
-                {
-                    applicationBaseDirectory = Directory.GetCurrentDirectory();
-                }
+                string applicationBaseDirectory = appBase;
 
                 // Set the app domain variable so that AppContext.BaseDirectory works on .NET Framework (and hopefully mono)
                 AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY", applicationBaseDirectory);
 #else
-                string applicationBaseDirectory = AppContext.BaseDirectory;
+                var applicationBaseDirectory = AppContext.BaseDirectory;
 #endif
 
                 var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";

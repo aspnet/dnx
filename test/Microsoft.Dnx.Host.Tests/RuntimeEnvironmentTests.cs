@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using Microsoft.AspNet.Testing.xunit;
+using Microsoft.Dnx.Host;
 using Microsoft.Dnx.Runtime;
 using Xunit;
 
@@ -12,43 +13,9 @@ namespace dnx.hostTests
     public class RuntimeEnvironmentTests
     {
         [Fact]
-        public void RuntimeEnvironment_OS()
-        {
-            RuntimeEnvironment runtimeEnv = new RuntimeEnvironment();
-
-            var os = NativeMethods.Uname();
-            if (os == null)
-            {
-                os = "Windows";
-                Assert.NotNull(runtimeEnv.OperatingSystemVersion);
-            }
-            else
-            {
-                Assert.Null(runtimeEnv.OperatingSystemVersion);
-            }
-
-            Assert.Equal(os, runtimeEnv.OperatingSystem);
-        }
-
-        [Fact]
-        public void RuntimeEnvironment_RuntimeVersion()
-        {
-            RuntimeEnvironment runtimeEnv = new RuntimeEnvironment();
-            Assert.NotNull(runtimeEnv.RuntimeVersion);
-        }
-
-        [Fact]
-        public void RuntimeEnvironment_RuntimeArchitecture()
-        {
-            RuntimeEnvironment runtimeEnv = new RuntimeEnvironment();
-            var runtimeArchitecture = IntPtr.Size == 8 ? "x64" : "x86";
-            Assert.Equal(runtimeArchitecture, runtimeEnv.RuntimeArchitecture);
-        }
-
-        [Fact]
         public void RuntimeEnvironment_RuntimeType()
         {
-            RuntimeEnvironment runtimeEnv = new RuntimeEnvironment();
+            RuntimeEnvironment runtimeEnv = new RuntimeEnvironment(new BootstrapperContext());
 #if DNXCORE50
             Assert.Equal("CoreCLR", runtimeEnv.RuntimeType);
 #else

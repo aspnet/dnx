@@ -18,16 +18,14 @@ namespace Microsoft.Dnx.Host
 
         public static int Execute(string[] args, BootstrapperContext bootstrapperContext)
         {
-            // If we're a console host then print exceptions to stderr
-            var printExceptionsToStdError = Environment.GetEnvironmentVariable(EnvironmentNames.ConsoleHost) == "1";
-
             try
             {
                 return ExecuteAsync(args, bootstrapperContext).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
-                if (printExceptionsToStdError)
+                // If we're a console host then print exceptions to stderr
+                if (bootstrapperContext.HandleExceptions)
                 {
                     PrintErrors(ex);
                     return 1;
@@ -87,7 +85,7 @@ namespace Microsoft.Dnx.Host
             var optionFramework = app.Option("--framework <FRAMEWORK_ID>", "Set the framework version to use when running (i.e. dnx451, dnx452, dnx46, ...)", CommandOptionType.SingleValue);
 #endif
 
-            var env = new RuntimeEnvironment();
+            var env = new RuntimeEnvironment(bootstrapperContext);
 
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version",
@@ -154,17 +152,17 @@ namespace Microsoft.Dnx.Host
             }
 
             // Resolve the lib paths
-            IEnumerable<string> searchPaths = ResolveSearchPaths(optionLib.Values, app.RemainingArguments);
+            IEnumerable<string> searchPaths =
+                ResolveSearchPaths(bootstrapperContext.RuntimeDirectory, optionLib.Values, app.RemainingArguments);
 
             var bootstrapper = new Bootstrapper(searchPaths);
-            return bootstrapper.RunAsync(app.RemainingArguments, env, bootstrapperContext.TargetFramework);
+
+            return bootstrapper.RunAsync(app.RemainingArguments, env, bootstrapperContext.ApplicationBase, bootstrapperContext.TargetFramework);
         }
 
-        private static IEnumerable<string> ResolveSearchPaths(List<string> libPaths, List<string> remainingArgs)
+        private static IEnumerable<string> ResolveSearchPaths(string defaultLibPath, List<string> libPaths, List<string> remainingArgs)
         {
             var searchPaths = new List<string>();
-
-            var defaultLibPath = Environment.GetEnvironmentVariable(EnvironmentNames.DefaultLib);
 
             if (!string.IsNullOrEmpty(defaultLibPath))
             {

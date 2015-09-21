@@ -3,6 +3,7 @@
 
 using System;
 using System.Reflection;
+using Microsoft.Dnx.Host;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -14,33 +15,22 @@ namespace Microsoft.Dnx.Runtime
 
         private string _runtimeVersion;
 
-        public RuntimeEnvironment()
+        public RuntimeEnvironment(BootstrapperContext bootstrapperContext)
         {
 #if DNXCORE50
             RuntimeType = RuntimeTypes.CoreCLR;
-            RuntimeArchitecture = IntPtr.Size == 8 ? RuntimeArchitectures.X64 : RuntimeArchitectures.X86;
 #else
             RuntimeType = Type.GetType("Mono.Runtime") == null ? RuntimeTypes.CLR : RuntimeTypes.Mono;
-            RuntimeArchitecture = Environment.Is64BitProcess ? RuntimeArchitectures.X64 : RuntimeArchitectures.X86;
 #endif
-
-            // This is a temporary workaround until we pass a struct with OS information from native code
-            if (Environment.GetEnvironmentVariable(EnvironmentNames.DnxIsWindows) == "1")
-            {
-                _osName = RuntimeOperatingSystems.Windows;
-            }
+            RuntimeArchitecture = bootstrapperContext.Architecture;
+            _osName = bootstrapperContext.OperatingSystem;
+            _osVersion = bootstrapperContext.OsVersion;
         }
 
         public string OperatingSystem
         {
             get
             {
-                if (_osName == null)
-                {
-                    string uname = NativeMethods.Uname();
-                    _osName = string.IsNullOrEmpty(uname) ? RuntimeOperatingSystems.Windows : uname;
-                }
-
                 return _osName;
             }
         }
@@ -49,20 +39,6 @@ namespace Microsoft.Dnx.Runtime
         {
             get
             {
-                if (OperatingSystem != RuntimeOperatingSystems.Windows)
-                {
-                    return null;
-                }
-
-                if (_osVersion == null)
-                {
-#if DNXCORE50
-                    _osVersion = NativeMethods.OSVersion.ToString();
-#else
-                    _osVersion = Environment.OSVersion.Version.ToString();
-#endif
-                }
-
                 return _osVersion;
             }
         }

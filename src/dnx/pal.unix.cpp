@@ -18,16 +18,6 @@ bool IsTracingEnabled()
     return dnxTraceEnv != NULL && (strcmp(dnxTraceEnv, "1") == 0);
 }
 
-void SetConsoleHost()
-{
-    char* dnxConsoleHostEnv = getenv("DNX_CONSOLE_HOST");
-
-    if (dnxConsoleHostEnv == NULL)
-    {
-        setenv("DNX_CONSOLE_HOST", "1", 1);
-    }
-}
-
 bool GetAppBasePathFromEnvironment(char* szPath)
 {
     char* appBaseEnv = getenv("DNX_APPBASE");

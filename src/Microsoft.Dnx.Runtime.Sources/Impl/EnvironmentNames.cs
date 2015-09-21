@@ -16,12 +16,9 @@ namespace Microsoft.Dnx.Runtime
         public const string AppBase = "DNX_APPBASE";
         public const string Framework = "DNX_FRAMEWORK";
         public const string Configuration = "DNX_CONFIGURATION";
-        public const string ConsoleHost = "DNX_CONSOLE_HOST";
-        public const string DefaultLib = "DNX_DEFAULT_LIB";
         public const string BuildKeyFile = "DNX_BUILD_KEY_FILE";
         public const string BuildDelaySign = "DNX_BUILD_DELAY_SIGN";
         public const string PortablePdb = "DNX_BUILD_PORTABLE_PDB";
-        public const string DnxIsWindows = "DNX_IS_WINDOWS";
         public const string AspNetLoaderPath = "DNX_ASPNET_LOADER_PATH";
         public const string DnxDisableMinVersionCheck = "DNX_NO_MIN_VERSION_CHECK";
     }

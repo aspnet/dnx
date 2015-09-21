@@ -127,7 +127,7 @@ namespace Microsoft.Dnx.ApplicationHost
                     arguments: "invalid",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, projectPath } },
+                    environment: new Dictionary<string, string> { },
                     workingDir: projectPath);
 
                 Assert.NotEqual(0, exitCode);
