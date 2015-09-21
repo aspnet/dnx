@@ -103,11 +103,13 @@ namespace NuGet
 
         public override int GetHashCode()
         {
-            return HashCodeCombiner.Start()
-                .Add(Name, StringComparer.OrdinalIgnoreCase)
-                .Add(Source, StringComparer.Ordinal)
-                .Add(UserName, StringComparer.Ordinal)
-                .Add(Password, StringComparer.Ordinal);
+            var hashCodeCombiner = HashCodeCombiner.Start();
+            hashCodeCombiner.Add(Name, StringComparer.OrdinalIgnoreCase);
+            hashCodeCombiner.Add(Source, StringComparer.Ordinal);
+            hashCodeCombiner.Add(UserName, StringComparer.Ordinal);
+            hashCodeCombiner.Add(Password, StringComparer.Ordinal);
+
+            return hashCodeCombiner;
         }
 
         public PackageSource Clone()

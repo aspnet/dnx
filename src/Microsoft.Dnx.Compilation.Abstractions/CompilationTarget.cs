@@ -36,11 +36,13 @@ namespace Microsoft.Dnx.Compilation
 
         public override int GetHashCode()
         {
-            return HashCodeCombiner.Start()
-                .Add(Name)
-                .Add(TargetFramework)
-                .Add(Configuration)
-                .Add(Aspect);
+            var hashCodeCombiner = HashCodeCombiner.Start();
+            hashCodeCombiner.Add(Name);
+            hashCodeCombiner.Add(TargetFramework);
+            hashCodeCombiner.Add(Configuration);
+            hashCodeCombiner.Add(Aspect);
+
+            return hashCodeCombiner;
         }
 
         public override string ToString()
