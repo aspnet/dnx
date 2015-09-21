@@ -8,14 +8,14 @@ namespace Microsoft.Dnx.Tooling
 {
     internal class ClearCacheCommand
     {
-        public Reports Reports { get; }
-        public string HttpCacheDirectory { get; }
-
         public ClearCacheCommand(Reports reports, string httpCacheDirectory)
         {
             Reports = reports;
             HttpCacheDirectory = httpCacheDirectory;
         }
+
+        public Reports Reports { get; }
+        public string HttpCacheDirectory { get; }
 
         public int Execute()
         {
@@ -25,9 +25,8 @@ namespace Microsoft.Dnx.Tooling
 
                 try
                 {
-                    DeleteDirectoryRecursively(HttpCacheDirectory, deleteBaseDirectory: false);
+                    FileOperationUtils.DeleteFolder(HttpCacheDirectory);
                     Reports.Information.WriteLine("Cache cleared.");
-                    return 0;
                 }
                 catch (Exception e)
                 {
@@ -37,26 +36,6 @@ namespace Microsoft.Dnx.Tooling
             }
 
             return 0;
-        }
-        public void DeleteDirectoryRecursively(string baseDirectory, bool deleteBaseDirectory)
-        {
-            var files = Directory.GetFiles(baseDirectory);
-            var subDirectories = Directory.GetDirectories(baseDirectory);
-
-            foreach (var file in files)
-            {
-                File.Delete(file);
-            }
-
-            foreach (var subDirectory in subDirectories)
-            {
-                DeleteDirectoryRecursively(subDirectory, deleteBaseDirectory: true);
-            }
-
-            if (deleteBaseDirectory)
-            {
-                Directory.Delete(baseDirectory);
-            }
         }
     }
 }

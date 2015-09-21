@@ -9,7 +9,7 @@ namespace Microsoft.Dnx.Tooling
     {
         public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory)
         {
-            cmdApp.Command("clear-cache", c =>
+            cmdApp.Command("clear-http-cache", c =>
             {
                 c.Description = "Clears the package cache.";
                 c.HelpOption("-?|-h|--help");
