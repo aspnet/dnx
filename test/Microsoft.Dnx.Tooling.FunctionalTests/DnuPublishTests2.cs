@@ -29,9 +29,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             sdk.Dnu.Restore(solution.GetWrapperProjectPath("ClassLibrary")).EnsureSuccess();
             sdk.Dnu.Restore(solution.GetProject("DnxConsoleApp")).EnsureSuccess();
 
-            // Build the console app
+            // Build the console app in Debug mode (we specify the config explicitly since dnx here defaults to a Debug 
+            // build but on the CI we might have the Configuration environment variable set so that MSBuild builds as Release by default).
             var msbuild = CommonTestUtils.TestUtils.ResolveMSBuildPath();
-            Exec.Run(msbuild, "", workingDir: Path.Combine(solution.SourcePath, "ClassLibrary")).EnsureSuccess(); ;
+            Exec.Run(msbuild, "/p:Configuration=Debug", workingDir: Path.Combine(solution.SourcePath, "ClassLibrary")).EnsureSuccess(); ;
 
             // Publish the console app
             sdk.Dnu.Publish(solution.GetProject("DnxConsoleApp").ProjectFilePath, solution.ArtifactsPath, "--framework dnx451").EnsureSuccess();
