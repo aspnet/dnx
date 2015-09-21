@@ -63,13 +63,13 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.C
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.FunctionalTests", "test\Microsoft.Dnx.Runtime.FunctionalTests\Microsoft.Dnx.Runtime.FunctionalTests.xproj", "{5DCA7A59-3B5E-4751-A563-B78201F97AE3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx", "src\dnx\dnx.vcxproj", "{D0E2FB09-0FEA-478A-9068-D6AA420C6DED}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.win32", "src\dnx\dnx.vcxproj", "{D0E2FB09-0FEA-478A-9068-D6AA420C6DED}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.clr", "src\dnx.clr\dnx.clr.vcxproj", "{0E4CB542-5E58-4D24-9CAE-DAC83D932DBE}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Host.Clr", "src\Microsoft.Dnx.Host.Clr\Microsoft.Dnx.Host.Clr.xproj", "{2D50D502-E10A-4B1C-8A49-DBC52B5CE9CB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.coreclr", "src\dnx.coreclr\dnx.coreclr.vcxproj", "{1F31D08E-DE21-48F6-ADE3-315EA6268DD1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.win32.coreclr", "src\dnx.coreclr\dnx.coreclr.vcxproj", "{1F31D08E-DE21-48F6-ADE3-315EA6268DD1}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Host.CoreClr", "src\Microsoft.Dnx.Host.CoreClr\Microsoft.Dnx.Host.CoreClr.xproj", "{1DEBD970-0B84-41F7-B247-D4E853432432}"
 EndProject
@@ -120,6 +120,8 @@ EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Testing.CommonUtils", "test\Microsoft.Dnx.Testing.CommonUtils\Microsoft.Dnx.Testing.CommonUtils.xproj", "{00E320EE-F8E7-40C2-9334-A02561EDAEAA}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Testing.SampleTests", "test\Microsoft.Dnx.Testing.SampleTests\Microsoft.Dnx.Testing.SampleTests.xproj", "{88FF8911-526C-4FBE-B4E2-707CDAF1DEC0}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Host.Mono", "src\Microsoft.Dnx.Host.Mono\Microsoft.Dnx.Host.Mono.xproj", "{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1145,6 +1147,30 @@ Global
 		{88FF8911-526C-4FBE-B4E2-707CDAF1DEC0}.Release|x64.Build.0 = Release|Any CPU
 		{88FF8911-526C-4FBE-B4E2-707CDAF1DEC0}.Release|x86.ActiveCfg = Release|Any CPU
 		{88FF8911-526C-4FBE-B4E2-707CDAF1DEC0}.Release|x86.Build.0 = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|ARM.Build.0 = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|Win32.Build.0 = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|x64.Build.0 = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Debug|x86.Build.0 = Debug|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|ARM.ActiveCfg = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|ARM.Build.0 = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|Win32.ActiveCfg = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|Win32.Build.0 = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|x64.ActiveCfg = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|x64.Build.0 = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|x86.ActiveCfg = Release|Any CPU
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1200,5 +1226,6 @@ Global
 		{F88EB033-3BCA-411A-987F-B705569F9317} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 		{00E320EE-F8E7-40C2-9334-A02561EDAEAA} = {C43EE429-DE10-4906-BB09-54E6A080948A}
 		{88FF8911-526C-4FBE-B4E2-707CDAF1DEC0} = {C43EE429-DE10-4906-BB09-54E6A080948A}
+		{D043986D-83EA-4FA8-BBC4-9B3353EEBB82} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 	EndGlobalSection
 EndGlobal
