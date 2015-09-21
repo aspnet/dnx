@@ -10,17 +10,15 @@ using System.Runtime.Versioning;
 using System.Threading;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
-using Microsoft.Dnx.Compilation.CSharp;
 using Microsoft.Dnx.Compilation.DesignTime;
+using Microsoft.Dnx.DesignTimeHost.InternalModels;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Common.Impl;
 using Microsoft.Dnx.Runtime.Loader;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NuGet;
 
 namespace Microsoft.Dnx.DesignTimeHost
 {
@@ -54,6 +52,8 @@ namespace Microsoft.Dnx.DesignTimeHost
         private readonly CompilationEngine _compilationEngine;
         private int? _contextProtocolVersion;
 
+        private ProjectStateResolver _projectStateResolver;
+
         public ApplicationContext(IServiceProvider services,
                                   IApplicationEnvironment applicationEnvironment,
                                   IRuntimeEnvironment runtimeEnvironment,
@@ -71,6 +71,11 @@ namespace Microsoft.Dnx.DesignTimeHost
             _compilationEngine = compilationEngine;
             _frameworkResolver = frameworkResolver;
             Id = id;
+
+            _projectStateResolver = new ProjectStateResolver(
+                _compilationEngine,
+                _frameworkResolver,
+                (ctx, project, frameworkName) => CreateApplicationHostContext(ctx, project, frameworkName, Enumerable.Empty<string>()));
         }
 
         public int Id { get; private set; }
@@ -369,7 +374,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         private bool ResolveDependencies()
         {
-            State state = null;
+            ProjectState state = null;
 
             if (_appPath.WasAssigned ||
                 _configuration.WasAssigned ||
@@ -390,7 +395,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                 // hasn't died yet
                 TriggerProjectOutputsChanged();
 
-                state = DoInitialWork(_appPath.Value, _configuration.Value, triggerBuildOutputs, triggerDependencies);
+                state = _projectStateResolver.Resolve(_appPath.Value, _configuration.Value, triggerBuildOutputs, triggerDependencies, ProtocolVersion);
             }
 
             if (state == null)
@@ -979,134 +984,6 @@ namespace Microsoft.Dnx.DesignTimeHost
             return !object.Equals(local, remote);
         }
 
-        private State DoInitialWork(string appPath, string configuration, bool triggerBuildOutputs, bool triggerDependencies)
-        {
-            var state = new State
-            {
-                Frameworks = new List<FrameworkData>(),
-                Projects = new List<ProjectInfo>(),
-                Diagnostics = new List<DiagnosticMessage>()
-            };
-
-            Project project;
-            if (!Project.TryGetProject(appPath, out project, state.Diagnostics))
-            {
-                throw new InvalidOperationException(string.Format("Unable to find project.json in '{0}'", appPath));
-            }
-
-            if (triggerBuildOutputs)
-            {
-                // Trigger the build outputs for this project
-                _compilationEngine.CompilationCache.NamedCacheDependencyProvider.Trigger(project.Name + "_BuildOutputs");
-            }
-
-            if (triggerDependencies)
-            {
-                _compilationEngine.CompilationCache.NamedCacheDependencyProvider.Trigger(project.Name + "_Dependencies");
-            }
-
-            state.Name = project.Name;
-            state.Project = project;
-            state.Configurations = project.GetConfigurations().ToList();
-            state.Commands = project.Commands;
-
-            var frameworks = new List<FrameworkName>(
-                project.GetTargetFrameworks()
-                .Select(tf => tf.FrameworkName));
-
-            if (!frameworks.Any())
-            {
-                frameworks.Add(VersionUtility.ParseFrameworkName(FrameworkNames.ShortNames.Dnx451));
-            }
-
-            var sourcesProjectWideSources = project.Files.SourceFiles.ToList();
-
-            foreach (var frameworkName in frameworks)
-            {
-                var dependencyInfo = ResolveProjectDependencies(project, configuration, frameworkName);
-                var dependencySources = new List<string>(sourcesProjectWideSources);
-
-                var frameworkData = new FrameworkData
-                {
-                    ShortName = VersionUtility.GetShortFrameworkName(frameworkName),
-                    FrameworkName = frameworkName.ToString(),
-                    FriendlyName = _frameworkResolver.GetFriendlyFrameworkName(frameworkName),
-                    RedistListPath = _frameworkResolver.GetFrameworkRedistListPath(frameworkName)
-                };
-
-                state.Frameworks.Add(frameworkData);
-
-                // Add shared files from packages
-                dependencySources.AddRange(dependencyInfo.ExportedSourcesFiles);
-
-                // Add shared files from projects
-                foreach (var reference in dependencyInfo.ProjectReferences)
-                {
-                    if (reference.Project == null)
-                    {
-                        continue;
-                    }
-
-                    // Only add direct dependencies as sources
-                    if (!project.Dependencies.Any(d => string.Equals(d.Name, reference.Name, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        continue;
-                    }
-
-                    dependencySources.AddRange(reference.Project.Files.SharedFiles);
-                }
-
-                var projectInfo = new ProjectInfo()
-                {
-                    Path = appPath,
-                    Configuration = configuration,
-                    TargetFramework = frameworkData,
-                    FrameworkName = frameworkName,
-                    // TODO: This shouldn't be roslyn specific compilation options
-                    CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
-                                                 .ToCompilationSettings(frameworkName),
-                    SourceFiles = dependencySources,
-                    DependencyInfo = dependencyInfo
-                };
-
-                state.Projects.Add(projectInfo);
-
-                GlobalSettings settings = null;
-
-                if (state.GlobalJsonPath == null)
-                {
-                    var root = ProjectRootResolver.ResolveRootDirectory(project.ProjectDirectory);
-
-                    if (GlobalSettings.TryGetGlobalSettings(root, out settings))
-                    {
-                        state.GlobalJsonPath = settings.FilePath;
-                    }
-                }
-
-                if (state.ProjectSearchPaths == null)
-                {
-                    var searchPaths = new HashSet<string>()
-                    {
-                        Directory.GetParent(project.ProjectDirectory).FullName
-                    };
-
-                    if (settings != null)
-                    {
-                        foreach (var searchPath in settings.ProjectSearchPaths)
-                        {
-                            var path = Path.Combine(settings.DirectoryPath, searchPath);
-                            searchPaths.Add(Path.GetFullPath(path));
-                        }
-                    }
-
-                    state.ProjectSearchPaths = searchPaths.ToList();
-                }
-
-            }
-
-            return state;
-        }
-
         private ApplicationHostContext CreateApplicationHostContext(CacheContext ctx, Project project, FrameworkName frameworkName, IEnumerable<string> runtimeIdentifiers)
         {
             var applicationHostContext = new ApplicationHostContext
@@ -1133,132 +1010,6 @@ namespace Microsoft.Dnx.DesignTimeHost
             ctx.Monitor(_compilationEngine.CompilationCache.NamedCacheDependencyProvider.GetNamedDependency(project.Name + "_Dependencies"));
 
             return applicationHostContext;
-        }
-
-        private DependencyInfo ResolveProjectDependencies(Project project, string configuration, FrameworkName frameworkName)
-        {
-            var cacheKey = Tuple.Create("DependencyInfo", project.Name, configuration, frameworkName);
-
-            return _compilationEngine.CompilationCache.Cache.Get<DependencyInfo>(cacheKey, ctx =>
-            {
-                var applicationHostContext = CreateApplicationHostContext(ctx, project, frameworkName, Enumerable.Empty<string>());
-                var libraryManager = applicationHostContext.LibraryManager;
-                var libraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration);
-
-                var info = new DependencyInfo
-                {
-                    Dependencies = new Dictionary<string, DependencyDescription>(),
-                    ProjectReferences = new List<ProjectReference>(),
-                    References = new List<string>(),
-                    RawReferences = new Dictionary<string, byte[]>(),
-                    ExportedSourcesFiles = new List<string>(),
-                    Diagnostics = libraryManager.GetAllDiagnostics().ToList()
-                };
-
-                foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
-                {
-                    var description = CreateDependencyDescription(library, ProtocolVersion);
-                    info.Dependencies[description.Name] = description;
-
-                    if (string.Equals(library.Type, LibraryTypes.Project) &&
-                       !string.Equals(library.Identity.Name, project.Name))
-                    {
-                        var referencedProject = (ProjectDescription)library;
-
-                        var targetFrameworkInformation = referencedProject.TargetFrameworkInfo;
-
-                        // If this is an assembly reference then treat it like a file reference
-                        if (!string.IsNullOrEmpty(targetFrameworkInformation?.AssemblyPath) &&
-                             string.IsNullOrEmpty(targetFrameworkInformation?.WrappedProject))
-                        {
-                            string assemblyPath = GetProjectRelativeFullPath(referencedProject.Project,
-                                                                             targetFrameworkInformation.AssemblyPath);
-                            info.References.Add(assemblyPath);
-
-                            description.Path = assemblyPath;
-                            description.Type = "Assembly";
-                        }
-                        else
-                        {
-                            string wrappedProjectPath = null;
-
-                            if (!string.IsNullOrEmpty(targetFrameworkInformation?.WrappedProject) &&
-                                referencedProject.Project != null)
-                            {
-                                wrappedProjectPath = GetProjectRelativeFullPath(referencedProject.Project, targetFrameworkInformation.WrappedProject);
-                            }
-
-                            info.ProjectReferences.Add(new ProjectReference
-                            {
-                                Name = referencedProject.Identity.Name,
-                                Framework = new FrameworkData
-                                {
-                                    ShortName = VersionUtility.GetShortFrameworkName(library.Framework),
-                                    FrameworkName = library.Framework.ToString(),
-                                    FriendlyName = _frameworkResolver.GetFriendlyFrameworkName(library.Framework)
-                                },
-                                Path = library.Path,
-                                WrappedProjectPath = wrappedProjectPath,
-                                Project = referencedProject.Project
-                            });
-                        }
-                    }
-                }
-
-                var exportWithoutProjects = libraryExporter.GetNonProjectExports(project.Name);
-
-                foreach (var reference in exportWithoutProjects.MetadataReferences)
-                {
-                    var fileReference = reference as IMetadataFileReference;
-                    if (fileReference != null)
-                    {
-                        info.References.Add(fileReference.Path);
-                    }
-
-                    var embedded = reference as IMetadataEmbeddedReference;
-                    if (embedded != null)
-                    {
-                        info.RawReferences[embedded.Name] = embedded.Contents;
-                    }
-                }
-
-                foreach (var sourceFileReference in exportWithoutProjects.SourceReferences.OfType<ISourceFileReference>())
-                {
-                    info.ExportedSourcesFiles.Add(sourceFileReference.Path);
-                }
-
-                return info;
-            });
-        }
-
-        private static string GetProjectRelativeFullPath(Project referencedProject, string path)
-        {
-            return Path.GetFullPath(Path.Combine(referencedProject.ProjectDirectory, path));
-        }
-
-        private static DependencyDescription CreateDependencyDescription(LibraryDescription library, int protocolVersion)
-        {
-            var result = new DependencyDescription
-            {
-                Name = library.Identity.Name,
-                DisplayName = library.Identity.IsGacOrFrameworkReference ? library.RequestedRange.GetReferenceAssemblyName() : library.Identity.Name,
-                Version = library.Identity.Version?.ToString(),
-                Type = library.Type,
-                Resolved = library.Resolved,
-                Path = library.Path,
-                Dependencies = library.Dependencies.Select(dependency => new DependencyItem
-                {
-                    Name = dependency.Name,
-                    Version = dependency.Library?.Identity?.Version?.ToString()
-                })
-            };
-
-            if (protocolVersion < 3 && !library.Resolved)
-            {
-                result.Type = "Unresolved";
-            }
-
-            return result;
         }
 
         private static string GetValue(JToken token, string name)
@@ -1297,60 +1048,6 @@ namespace Microsoft.Dnx.DesignTimeHost
                     _value = value;
                 }
             }
-        }
-
-        private class State
-        {
-            public string Name { get; set; }
-
-            public List<string> ProjectSearchPaths { get; set; }
-
-            public string GlobalJsonPath { get; set; }
-
-            public List<string> Configurations { get; set; }
-
-            public List<FrameworkData> Frameworks { get; set; }
-
-            public IDictionary<string, string> Commands { get; set; }
-
-            public List<ProjectInfo> Projects { get; set; }
-
-            public List<DiagnosticMessage> Diagnostics { get; set; }
-
-            public Project Project { get; set; }
-        }
-
-        // Represents a project that should be used for intellisense
-        private class ProjectInfo
-        {
-            public string Path { get; set; }
-
-            public string Configuration { get; set; }
-
-            public FrameworkName FrameworkName { get; set; }
-
-            public FrameworkData TargetFramework { get; set; }
-
-            public CompilationSettings CompilationSettings { get; set; }
-
-            public List<string> SourceFiles { get; set; }
-
-            public DependencyInfo DependencyInfo { get; set; }
-        }
-
-        private class DependencyInfo
-        {
-            public List<DiagnosticMessage> Diagnostics { get; set; }
-
-            public Dictionary<string, byte[]> RawReferences { get; set; }
-
-            public Dictionary<string, DependencyDescription> Dependencies { get; set; }
-
-            public List<string> References { get; set; }
-
-            public List<ProjectReference> ProjectReferences { get; set; }
-
-            public List<string> ExportedSourcesFiles { get; set; }
         }
 
         private class ProjectCompilation
