@@ -16,11 +16,15 @@ namespace Microsoft.Dnx.Runtime.Tests
         [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
 
         // NOTE(anurse): Disabled the tests that use frameworks less than .NET 4.0 because the CI doesn't have them installed :(
+        // for some reason, the reference assemblies for .NET 3.5 Client Profile ARE installed however, so we can test those.
+
         // mscorlib
         //[InlineData("net20", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
         //[InlineData("net30", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
         //[InlineData("net35", "mscorlib", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll", "2.0.0.0")]
+        [InlineData("net35-client", "mscorlib", @"REFASMSROOT\.NETFramework\v3.5\Profile\Client\mscorlib.dll", "2.0.0.0")]
         [InlineData("net40", "mscorlib", @"REFASMSROOT\.NETFramework\v4.0\mscorlib.dll", "4.0.0.0")]
+        [InlineData("net40-client", "mscorlib", @"REFASMSROOT\.NETFramework\v4.0\Profile\Client\mscorlib.dll", "4.0.0.0")]
         [InlineData("net45", "mscorlib", @"REFASMSROOT\.NETFramework\v4.5\mscorlib.dll", "4.0.0.0")]
         [InlineData("net451", "mscorlib", @"REFASMSROOT\.NETFramework\v4.5.1\mscorlib.dll", "4.0.0.0")]
         [InlineData("net452", "mscorlib", @"REFASMSROOT\.NETFramework\v4.5.2\mscorlib.dll", "4.0.0.0")]
@@ -55,17 +59,28 @@ namespace Microsoft.Dnx.Runtime.Tests
         //[InlineData("net30", "Microsoft.Build.Engine", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\Microsoft.Build.Engine.dll", "2.0.0.0")]
         //[InlineData("net35", "Microsoft.Build.Engine", @"REFASMSROOT\v3.5\Microsoft.Build.Engine.dll", "3.5.0.0")]
 
+        // Things not present in Client Profiles
+        [InlineData("net40", "System.Web", @"REFASMSROOT\.NETFramework\v4.0\System.Web.dll", "4.0.0.0")]
+        [InlineData("net40-client", "System.Web", "", "")]
         public void FrameworkResolverResolvesCorrectPaths(string shortFrameworkName, string assemblyName, string expectedPath, string expectedVersion)
         {
             var resolver = new FrameworkReferenceResolver();
 
             string actualPath;
             Version actualVersion;
-            Assert.True(resolver.TryGetAssembly(assemblyName, VersionUtility.ParseFrameworkName(shortFrameworkName), out actualPath, out actualVersion));
-            Assert.Equal(Environment.ExpandEnvironmentVariables(expectedPath).Replace("REFASMSROOT", FrameworkReferenceResolver.GetReferenceAssembliesPath()), actualPath);
+            var result = resolver.TryGetAssembly(assemblyName, VersionUtility.ParseFrameworkName(shortFrameworkName), out actualPath, out actualVersion);
 
-            // Having this be Version->Version equality caused some problems...
-            Assert.Equal(Version.Parse(expectedVersion).ToString(), actualVersion.ToString());
+            if (string.IsNullOrEmpty(expectedPath))
+            {
+                Assert.False(result);
+            }
+            else
+            {
+                Assert.True(result);
+                Assert.Equal(Environment.ExpandEnvironmentVariables(expectedPath).Replace("REFASMSROOT", FrameworkReferenceResolver.GetReferenceAssembliesPath()), actualPath);
+                // Having this be Version->Version equality caused some problems...
+                Assert.Equal(Version.Parse(expectedVersion).ToString(), actualVersion.ToString());
+            }
         }
 
         [ConditionalTheory]
@@ -88,7 +103,9 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("net20", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\{name}.dll")]
         [InlineData("net30", @"REFASMSROOT\v3.0\{name}.dll,%WINDIR%\Microsoft.NET\Framework\v2.0.50727\{name}.dll")]
         [InlineData("net35", @"REFASMSROOT\v3.5\{name}.dll,REFASMSROOT\v3.0\{name}.dll,%WINDIR%\Microsoft.NET\Framework\v2.0.50727\{name}.dll")]
+        [InlineData("net35-client", @"REFASMSROOT\.NETFramework\v3.5\Profile\Client\{name}.dll")]
         [InlineData("net40", @"REFASMSROOT\.NETFramework\v4.0\{name}.dll,REFASMSROOT\.NETFramework\v4.0\Facades\{name}.dll")]
+        [InlineData("net40-client", @"REFASMSROOT\.NETFramework\v4.0\Profile\Client\{name}.dll,REFASMSROOT\.NETFramework\v4.0\Profile\Client\Facades\{name}.dll")]
         [InlineData("net45", @"REFASMSROOT\.NETFramework\v4.5\{name}.dll,REFASMSROOT\.NETFramework\v4.5\Facades\{name}.dll")]
         [InlineData("net451", @"REFASMSROOT\.NETFramework\v4.5.1\{name}.dll,REFASMSROOT\.NETFramework\v4.5.1\Facades\{name}.dll")]
         [InlineData("net452", @"REFASMSROOT\.NETFramework\v4.5.2\{name}.dll,REFASMSROOT\.NETFramework\v4.5.2\Facades\{name}.dll")]
@@ -106,7 +123,9 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("net20", ".NET Framework 2")]
         [InlineData("net30", ".NET Framework 3")]
         [InlineData("net35", ".NET Framework 3.5")]
+        [InlineData("net35-client", ".NET Framework 3.5 Client Profile")]
         [InlineData("net40", ".NET Framework 4")]
+        [InlineData("net40-client", ".NET Framework 4 Client Profile")]
         [InlineData("net45", ".NET Framework 4.5")]
         [InlineData("net451", ".NET Framework 4.5.1")]
         [InlineData("net452", ".NET Framework 4.5.2")]
