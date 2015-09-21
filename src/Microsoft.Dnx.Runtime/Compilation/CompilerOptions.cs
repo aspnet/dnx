@@ -26,7 +26,7 @@ namespace Microsoft.Dnx.Runtime
 
         public bool? StrongName { get; set; }
 
-        public bool? EmitExecutable { get; set; }
+        public bool? EmitEntryPoint { get; set; }
 
         public static CompilerOptions Combine(params CompilerOptions[] options)
         {
@@ -86,9 +86,9 @@ namespace Microsoft.Dnx.Runtime
                     result.StrongName = option.StrongName;
                 }
 
-                if (option.EmitExecutable != null)
+                if (option.EmitEntryPoint != null)
                 {
-                    result.EmitExecutable = option.EmitExecutable;
+                    result.EmitEntryPoint = option.EmitEntryPoint;
                 }
             }
 

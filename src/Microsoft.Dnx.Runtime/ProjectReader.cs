@@ -464,7 +464,7 @@ namespace Microsoft.Dnx.Runtime
                 KeyFile = rawOptions.ValueAsString("keyFile"),
                 DelaySign = rawOptions.ValueAsNullableBoolean("delaySign"),
                 StrongName = rawOptions.ValueAsNullableBoolean("strongName"),
-                EmitExecutable = rawOptions.ValueAsNullableBoolean("emitExe")
+                EmitEntryPoint = rawOptions.ValueAsNullableBoolean("emitEntryPoint")
             };
         }
     }

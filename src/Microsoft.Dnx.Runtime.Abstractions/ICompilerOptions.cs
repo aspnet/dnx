@@ -29,6 +29,6 @@ namespace Microsoft.Dnx.Runtime
 
         bool? StrongName { get; }
 
-        bool? EmitExecutable { get; }
+        bool? EmitEntryPoint { get; }
     }
 }

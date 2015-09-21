@@ -64,7 +64,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
         private static CSharpCompilationOptions GetCompilationOptions(ICompilerOptions compilerOptions)
         {
-            var outputKind = compilerOptions.EmitExecutable.GetValueOrDefault() ?
+            var outputKind = compilerOptions.EmitEntryPoint.GetValueOrDefault() ?
                 OutputKind.ConsoleApplication : OutputKind.DynamicallyLinkedLibrary;
             var options = new CSharpCompilationOptions(outputKind);
 

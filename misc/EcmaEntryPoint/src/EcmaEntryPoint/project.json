@@ -1,6 +1,6 @@
 {
   "compilationOptions": {
-    "emitExe": true
+    "emitEntryPoint": true
   },
   "frameworks": {
     "dnx451": {},
