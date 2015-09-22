@@ -29,7 +29,6 @@ namespace Microsoft.Dnx.Host.Clr
             contextType.GetProperty("RuntimeDirectory").SetValue(bootstrapperContext, info.RuntimeDirectory);
             contextType.GetProperty("ApplicationBase").SetValue(bootstrapperContext, info.ApplicationBase);
             contextType.GetProperty("TargetFramework").SetValue(bootstrapperContext, targetFramework);
-            contextType.GetProperty("HandleExceptions").SetValue(bootstrapperContext, info.HandleExceptions);
 
             return bootstrapperContext;
         }

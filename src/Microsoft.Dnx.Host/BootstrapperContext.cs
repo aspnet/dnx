@@ -19,6 +19,5 @@ namespace Microsoft.Dnx.Host
 
         public FrameworkName TargetFramework { get; set; }
 
-        public bool HandleExceptions { get; set; }
     }
 }

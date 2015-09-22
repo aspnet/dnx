@@ -177,8 +177,6 @@ public class DomainManager : AppDomainManager
 
         [MarshalAs(UnmanagedType.BStr)]
         public string ApplicationBase;
-
-        public bool HandleExceptions;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

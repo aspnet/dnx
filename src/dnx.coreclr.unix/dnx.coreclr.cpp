@@ -338,9 +338,6 @@ bootstrapper_context initialize_context(const CALL_APPLICATION_MAIN_DATA* data)
     ctx.architecture = to_wchar_t("x64");
     ctx.runtime_directory = to_wchar_t(data->runtimeDirectory);
     ctx.application_base = to_wchar_t(data->applicationBase);
-    // we always want to handle exceptions since in CoreClr
-    // they cannot be marshalled from managed to native code
-    ctx.handle_exceptions = true;
 
     return ctx;
 }

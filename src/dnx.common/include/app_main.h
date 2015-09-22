@@ -9,7 +9,6 @@ typedef struct CALL_APPLICATION_MAIN_DATA
 {
     const dnx::char_t* applicationBase; // application base of managed domain
     const dnx::char_t* runtimeDirectory; // path to runtime helper directory
-    bool handleExceptions;
     int argc; // Number of args in argv
     const dnx::char_t** argv; // Array of arguments
     int exitcode; // Exit code from Managed Application
@@ -32,5 +31,4 @@ struct bootstrapper_context
     const wchar_t* architecture;
     const wchar_t* runtime_directory;
     const wchar_t* application_base;
-    bool handle_exceptions;
 };

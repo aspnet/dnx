@@ -18,7 +18,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
 
     g_clrBootstrapper = bootstrapper;
 
-    hr = bootstrapper->InitializeRuntime(data->runtimeDirectory, data->applicationBase, data->handleExceptions);
+    hr = bootstrapper->InitializeRuntime(data->runtimeDirectory, data->applicationBase);
     if (SUCCEEDED(hr))
     {
         g_clrBootstrapper = NULL;

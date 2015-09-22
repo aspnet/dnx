@@ -24,14 +24,8 @@ namespace Microsoft.Dnx.Host
             }
             catch (Exception ex)
             {
-                // If we're a console host then print exceptions to stderr
-                if (bootstrapperContext.HandleExceptions)
-                {
-                    PrintErrors(ex);
-                    return 1;
-                }
-
-                throw;
+                PrintErrors(ex);
+                return 1;
             }
         }
 

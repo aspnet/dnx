@@ -28,14 +28,12 @@ struct ApplicationMainInfo
     /* out */ BSTR RuntimeDirectory;
 
     /* out */ BSTR ApplicationBase;
-
-    /* out */ bool HandleExceptions;
 };
 
 class __declspec(uuid("7E9C5238-60DC-49D3-94AA-53C91FA79F7C")) IClrBootstrapper : public IUnknown
 {
 public:
-    virtual HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase, bool handleExceptions) = 0;
+    virtual HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase) = 0;
 
     virtual HRESULT BindApplicationMain(ApplicationMainInfo* pInfo) = 0;
 
@@ -64,7 +62,6 @@ class ClrBootstrapper :
 
     _bstr_t _applicationBase;
     _bstr_t _runtimeDirectory;
-    bool _handleExceptions;
 
     ApplicationMainInfo _applicationMainInfo;
 
@@ -97,7 +94,7 @@ public:
         return NULL;
     }
 
-    HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase, bool handleExceptions)
+    HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase)
     {
         Lock lock(&_crit);
         if (_calledInitializeRuntime)
@@ -109,7 +106,6 @@ public:
 
         _applicationBase = applicationBase;
         _runtimeDirectory = runtimeDirectory;
-        _handleExceptions = handleExceptions;
 
         m_pHostAssemblyManager = new HostAssemblyManager(runtimeDirectory);
         m_pHostAssemblyManager->AddRef();
@@ -168,7 +164,6 @@ public:
             _bstr_t(L"x86")
 #endif
             .copy();
-        pInfo->HandleExceptions = _handleExceptions;
 
         return S_OK;
     }

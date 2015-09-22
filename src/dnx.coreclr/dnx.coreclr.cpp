@@ -282,9 +282,6 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
 #else
     ctx.architecture = L"x86";
 #endif
-    // for coreclr we always want to handle exceptions because
-    // they cannot be marshalled from managed to native code
-    ctx.handle_exceptions = true;
 
     // Call main
     data->exitcode = main_function(data->argc, data->argv, &ctx);

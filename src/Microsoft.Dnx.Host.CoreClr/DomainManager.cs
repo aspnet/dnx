@@ -22,7 +22,6 @@ sealed class DomainManager
         public char* Architecture;
         public char* RuntimeDirectory;
         public char* ApplicationBase;
-        public bool HandleExceptions;
     }
 
     [SecurityCritical]
@@ -47,7 +46,6 @@ sealed class DomainManager
             bootstrapperContext.RuntimeDirectory = new string(context->RuntimeDirectory);
             bootstrapperContext.ApplicationBase = new string(context->ApplicationBase);
             bootstrapperContext.TargetFramework = new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
-            bootstrapperContext.HandleExceptions = context->HandleExceptions;
 
             return RuntimeBootstrapper.Execute(arguments, bootstrapperContext);
         }
