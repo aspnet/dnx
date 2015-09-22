@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
 using System.Runtime.Versioning;
 
 namespace Microsoft.Dnx.Testing
@@ -17,6 +18,8 @@ namespace Microsoft.Dnx.Testing
         public string OperationSystem { get; set; }
 
         public string Location { get; set; }
+
+        public string BinDir => Path.Combine(Location, "bin");
 
         public string FullName { get; set; }
 

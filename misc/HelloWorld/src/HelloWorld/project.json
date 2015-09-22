@@ -1,0 +1,17 @@
+{
+  "commands": {
+    "HelloWorld": "HelloWorld"
+  },
+  "dependencies": {
+    "Newtonsoft.Json": "7.0.1"
+  },
+  "frameworks": {
+    "dnx451": { },
+    "dnxcore50": {
+      "dependencies": {
+        "System.Collections": "4.0.11-*",
+        "System.Console": "4.0.0-*"
+      }
+    }
+  }
+}

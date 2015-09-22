@@ -108,7 +108,7 @@ namespace NuGet
         }
 
         [SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = "No reason to create a new type")]
-        public static XElement MergeWith(this XElement source, XElement target, IDictionary<XName, Action<XElement, XElement>> nodeActions)
+        public static XElement MergeWith(this XElement source, XElement target, Func<XName, XElement, XElement, bool> nodeActions)
         {
             if (target == null)
             {
@@ -155,14 +155,15 @@ namespace NuGet
                     }
                     else
                     {
-                        Action<XElement, XElement> nodeAction;
-                        if (nodeActions != null && nodeActions.TryGetValue(targetChild.Name, out nodeAction))
+                        if (nodeActions != null && 
+                            nodeActions(targetChild.Name, sourceChild, targetChild))
                         {
-                            nodeAction(source, targetChild);
+                            // Don't do the default behavior
                         }
                         else
                         {
                             // If that element is null then add that node
+                            targetChild.Remove();
                             source.Add(targetChild);
 
                             var newlyAddedElement = source.Elements().Last();

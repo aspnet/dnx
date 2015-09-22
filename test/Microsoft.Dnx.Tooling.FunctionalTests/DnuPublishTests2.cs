@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Runtime;
@@ -43,9 +44,9 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             // Run it
             var outputPath = Path.Combine(solution.ArtifactsPath, "approot", "src", "DnxConsoleApp");
             var result = clrSdk.Dnx.Execute(
-                commandLine: $"--appbase \"{outputPath}\" Microsoft.Dnx.ApplicationHost --configuration Debug DnxConsoleApp run")
+                commandLine: $"--project \"{outputPath}\" --configuration Debug DnxConsoleApp run")
                 .EnsureSuccess();
-            Assert.Equal($"Hello from the wrapped project{Environment.NewLine}", result.StandardOutput);
+            Assert.Contains($"Hello from the wrapped project{Environment.NewLine}", result.StandardOutput);
         }
 
         [Theory]
@@ -115,6 +116,126 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             var actualOutputStructure = new Dir(outputPath);
             DirAssert.Equal(expectedOutputStructure, actualOutputStructure);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppRunsFromSource(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorld");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorld");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath).EnsureSuccess();
+
+            var executable = Path.Combine(outputPath, "HelloWorld");
+
+            // Assert
+            var result = Exec.RunScript(executable, env =>
+            {
+                env["PATH"] = sdk.BinDir + ";" + Environment.GetEnvironmentVariable("PATH");
+            });
+
+            Assert.Equal(0, result.ExitCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppRunsNoSource(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorld");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorld");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath, "--no-source").EnsureSuccess();
+
+            var executable = Path.Combine(outputPath, "HelloWorld");
+
+            // Assert
+            var result = Exec.RunScript(executable, env =>
+            {
+                env["PATH"] = sdk.BinDir + ";" + Environment.GetEnvironmentVariable("PATH");
+            });
+
+            Assert.Equal(0, result.ExitCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppRunsNoSourceAndRuntime(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorld");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorld");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath, $"--no-source --runtime {sdk.Location}").EnsureSuccess();
+
+            var executable = Path.Combine(outputPath, "HelloWorld");
+
+            // Assert
+            var result = Exec.RunScript(executable, env =>
+            {
+                env["PATH"] = sdk.BinDir + ";" + Environment.GetEnvironmentVariable("PATH");
+            });
+
+            Assert.Equal(0, result.ExitCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppWithWebRootFailsIfIISCommandInvalid(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorldWithWebRoot");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorldWithWebRoot");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            var result = sdk.Dnu.Publish(project.ProjectDirectory, outputPath, $"--iis-command SomethingRandom");
+
+            Assert.NotEqual(0, result.ExitCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppWithWebRootDefaultsToOnlyIfNoneSpecified(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorldWithWebRoot");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorldWithWebRoot");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath).EnsureSuccess();
+
+            var config = File.ReadAllText(Path.Combine(outputPath, project.WebRoot, "web.config"));
+
+            var expected = @"<configuration>
+  <system.webServer>
+    <handlers>
+      <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
+    </handlers>
+    <httpPlatform processPath=""..\HelloWorld.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+  </system.webServer>
+</configuration>";
+
+            Assert.Equal(RemoveWhitespace(expected), RemoveWhitespace(config));
+        }
+
+        private static string RemoveWhitespace(string value)
+        {
+            return new string(value.ToCharArray().Where(ch => !char.IsWhiteSpace(ch)).ToArray());
         }
     }
 }

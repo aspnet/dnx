@@ -110,7 +110,7 @@ namespace Microsoft.Dnx.CommonTestUtils
             return this;
         }
 
-        public bool MatchDirectoryOnDisk(string dirPath, bool compareFileContents = true)
+        public bool MatchDirectoryOnDisk(string dirPath, bool compareFileContents = true, bool ignoreWhitespace = false)
         {
             dirPath = EnsureTrailingSeparator(dirPath);
 
@@ -137,20 +137,41 @@ namespace Microsoft.Dnx.CommonTestUtils
                 {
                     var fullPath = Path.Combine(dirPath, file);
                     var onDiskFileContents = File.ReadAllText(fullPath);
+                    var actual = onDiskFileContents;
+                    var expected = _pathToContents[file];
+
+                    if (ignoreWhitespace)
+                    {
+                        actual = RemoveWhitespace(actual);
+                        expected = RemoveWhitespace(expected);
+                    }
+                    else
+                    {
+                        actual = actual.Replace("\r\n", "\n");
+                        expected = expected.Replace("\r\n", "\n");
+                    }
+
+                    // ignoreWhitespace
                     // Ignore new lines for compare
-                    if (!string.Equals(onDiskFileContents.Replace("\r\n", "\n"), _pathToContents[file].Replace("\r\n", "\n")))
+                    if (!string.Equals(actual, expected))
                     {
                         Console.Error.WriteLine("The contents of '{0}' don't match expected contents.", fullPath);
                         Console.Error.WriteLine("Expected:");
-                        Console.Error.WriteLine(_pathToContents[file]);
+                        Console.Error.WriteLine(expected);
                         Console.Error.WriteLine("Actual:");
-                        Console.Error.WriteLine(onDiskFileContents);
+                        Console.Error.WriteLine(actual);
                         return false;
                     }
                 }
             }
 
             return true;
+        }
+
+        private static string RemoveWhitespace(string actual)
+        {
+            actual = new string(actual.ToCharArray().Where(ch => !char.IsWhiteSpace(ch)).ToArray());
+            return actual;
         }
 
         private void FlattenJsonToDictionary(JObject json)

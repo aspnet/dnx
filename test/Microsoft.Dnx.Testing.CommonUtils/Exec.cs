@@ -4,12 +4,32 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
+using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Testing
 {
     public class Exec
     {
+        public static ExecResult RunScript(string scriptPath,
+                                           Action<Dictionary<string, string>> envSetup = null,
+                                           string workingDir = null)
+        {
+            string program;
+            string commandLine = "";
+            if (RuntimeEnvironmentHelper.IsWindows)
+            {
+                program = "cmd";
+                commandLine = $"/c \"\"{scriptPath}\"";
+            }
+            else
+            {
+                program = scriptPath;
+            }
+            return Run(program, commandLine, envSetup, workingDir);
+        }
+
         public static ExecResult Run(
             string program,
             string commandLine,

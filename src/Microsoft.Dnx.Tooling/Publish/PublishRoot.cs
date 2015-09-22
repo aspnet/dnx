@@ -56,6 +56,8 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         public IServiceProvider HostServices { get; private set; }
 
+        public string IISCommand { get; set; }
+
         public bool Emit()
         {
             Reports.Information.WriteLine("Copying to output path {0}", OutputPath);
@@ -97,38 +99,51 @@ namespace Microsoft.Dnx.Tooling.Publish
             string relativeAppBase;
             if (NoSource)
             {
-                relativeAppBase = string.Format(@"{0}\{1}\{2}\{3}\{4}",
-                    AppRootName,
-                    "packages",
-                    _project.Name,
-                    _project.Version,
-                    "root");
+                relativeAppBase = $@"{AppRootName}\packages\{_project.Name}\{_project.Version}\root";
             }
             else
             {
-                relativeAppBase = string.Format(@"{0}\{1}\{2}", AppRootName, "src", _project.Name);
+                relativeAppBase = $@"{AppRootName}\src\{_project.Name}";
             }
-
-            const string template = @"
-@""{0}{1}.exe"" --appbase ""%~dp0{2}"" Microsoft.Dnx.ApplicationHost --configuration {3} {4} %*
-";
 
             foreach (var commandName in _project.Commands.Keys)
             {
                 var runtimeFolder = string.Empty;
                 if (Runtimes.Any())
                 {
-                    runtimeFolder = string.Format(@"%~dp0{0}\runtimes\{1}\bin\", AppRootName, Runtimes.First().Name);
+                    runtimeFolder = Runtimes.First().Name;
                 }
 
-                File.WriteAllText(
-                    Path.Combine(OutputPath, commandName + ".cmd"),
-                    string.Format(template,
-                                  runtimeFolder,
-                                  Runtime.Constants.BootstrapperExeName,
-                                  relativeAppBase,
-                                  Configuration,
-                                  commandName));
+                var cmdPath = Path.Combine(OutputPath, commandName + ".cmd");
+                var cmdScript = $@"
+@echo off
+SET DNX_FOLDER={runtimeFolder}
+SET ""LOCAL_DNX=%~dp0{AppRootName}\runtimes\%DNX_FOLDER%\bin\{Runtime.Constants.BootstrapperExeName}.exe""
+
+IF EXIST %LOCAL_DNX% (
+  SET ""DNX_PATH=%LOCAL_DNX%""
+)
+
+for %%a in (%DNX_HOME%) do (
+    IF EXIST %%a\runtimes\%DNX_FOLDER%\bin\{Runtime.Constants.BootstrapperExeName}.exe (
+        SET ""HOME_DNX=%%a\runtimes\%DNX_FOLDER%\bin\{Runtime.Constants.BootstrapperExeName}.exe""
+        goto :continue
+    )
+)
+
+:continue
+
+IF ""%HOME_DNX%"" NEQ """" (
+  SET ""DNX_PATH=%HOME_DNX%""
+)
+
+IF ""%DNX_PATH%"" == """" (
+  SET ""DNX_PATH={Runtime.Constants.BootstrapperExeName}.exe""
+)
+
+@""%DNX_PATH%"" --project ""%~dp0{relativeAppBase}"" --configuration {Configuration} {commandName} %*
+";
+                File.WriteAllText(cmdPath, cmdScript);
             }
         }
 
@@ -137,15 +152,24 @@ namespace Microsoft.Dnx.Tooling.Publish
             string relativeAppBase;
             if (NoSource)
             {
-                relativeAppBase = string.Format("{0}/{1}/{2}/{3}/{4}", AppRootName, "packages", _project.Name,
-                    _project.Version.ToString(), "root");
+                relativeAppBase = $"{AppRootName}/packages/{_project.Name}/{_project.Version}/root";
             }
             else
             {
-                relativeAppBase = string.Format("{0}/{1}/{2}", AppRootName, "src", _project.Name);
+                relativeAppBase = $"{AppRootName}/src/{_project.Name}";
             }
 
-            const string template = @"#!/usr/bin/env bash
+            foreach (var commandName in _project.Commands.Keys)
+            {
+                var runtimeFolder = string.Empty;
+                if (Runtimes.Any())
+                {
+                    var runtime = Runtimes.First().Name;
+                    runtimeFolder = $@"$DIR/{AppRootName}/runtimes/{runtime}/bin/";
+                }
+
+                var scriptPath = Path.Combine(OutputPath, commandName);
+                var scriptContents = $@"#!/usr/bin/env bash
 
 SOURCE=""${{BASH_SOURCE[0]}}""
 while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -155,25 +179,9 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-exec ""{1}{2}"" --appbase ""$DIR/{0}"" Microsoft.Dnx.ApplicationHost --configuration {3} {4} ""$@""";
+exec ""{runtimeFolder}{Runtime.Constants.BootstrapperExeName}"" --project ""$DIR/{relativeAppBase}"" --configuration {Configuration} {commandName} ""$@""";
 
-            foreach (var commandName in _project.Commands.Keys)
-            {
-                var runtimeFolder = string.Empty;
-                if (Runtimes.Any())
-                {
-                    runtimeFolder = string.Format(@"$DIR/{0}/runtimes/{1}/bin/",
-                        AppRootName, Runtimes.First().Name);
-                }
-
-                var scriptPath = Path.Combine(OutputPath, commandName);
-                File.WriteAllText(scriptPath,
-                    string.Format(template,
-                                  relativeAppBase,
-                                  runtimeFolder,
-                                  Runtime.Constants.BootstrapperExeName,
-                                  Configuration,
-                                  commandName).Replace("\r\n", "\n"));
+                File.WriteAllText(scriptPath, scriptContents.Replace("\r\n", "\n"));
 
                 if (!RuntimeEnvironmentHelper.IsWindows)
                 {
