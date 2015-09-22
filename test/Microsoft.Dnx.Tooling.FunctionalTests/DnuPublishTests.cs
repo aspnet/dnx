@@ -35,9 +35,7 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-export SET {0}=""$DIR/approot/src/{1}""
-
-exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration {4} {5} ""$@""".Replace("\r\n", "\n");
+exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost --configuration {3} {4} ""$@""".Replace("\r\n", "\n");
 
         private static readonly string BasicLockFileTemplate = @"{
   ""locked"": false,
@@ -1722,9 +1720,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
                     .WithFileContents("kestrel.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
                     .WithFileContents("run",
-                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, configuration, "run")
+                        BashScriptTemplate, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, configuration, "run")
                     .WithFileContents("kestrel",
-                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, configuration, "kestrel");
+                        BashScriptTemplate, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, configuration, "kestrel");
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
@@ -1843,9 +1841,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
                     .WithFileContents("kestrel.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
                     .WithFileContents("run",
-                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "run")
+                        BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "run")
                     .WithFileContents("kestrel",
-                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "kestrel")
+                        BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "kestrel")
                     .WithSubDir(Path.Combine("approot", "runtimes", runtimeName), runtimeSubDir);
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,

@@ -18,19 +18,6 @@ bool IsTracingEnabled()
     return dnxTraceEnv != NULL && (strcmp(dnxTraceEnv, "1") == 0);
 }
 
-bool GetAppBasePathFromEnvironment(char* szPath)
-{
-    char* appBaseEnv = getenv("DNX_APPBASE");
-
-    if (appBaseEnv != NULL && strlen(appBaseEnv) < PATH_MAX)
-    {
-        strcpy(szPath, appBaseEnv);
-        return true;
-    }
-
-    return false;
-}
-
 bool GetFullPath(const char* szPath, char* szNormalizedPath)
 {
     if (realpath(szPath, szNormalizedPath) == nullptr)
@@ -83,20 +70,4 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
 
         throw;
     }
-}
-
-bool SetEnvironmentVariable(const char* lpName, const char* lpValue)
-{
-    int ret;
-
-    if (lpValue != nullptr)
-    {
-        ret = setenv(lpName, lpValue, 1);
-    }
-    else
-    {
-        ret = unsetenv(lpName);
-    }
-
-    return ret == 0;
 }

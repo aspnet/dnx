@@ -172,14 +172,10 @@ void FreeExpandedCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv)
 
 bool GetApplicationBase(const dnx::xstring_t& currentDirectory, int argc, dnx::char_t* argv[], /*out*/ dnx::char_t* fullAppBasePath)
 {
-    dnx::char_t buffer[MAX_PATH];
     const dnx::char_t* appBase = dnx::utils::get_option_value(argc, argv, _X("--appbase"));
-
-    // Note: We use application base from DNX_APPBASE environment variable only if --appbase
-    // did not exist. if neither --appBase nor DNX_APPBASE existed we use current directory
     if (!appBase)
     {
-        appBase = GetAppBasePathFromEnvironment(buffer) ? buffer : currentDirectory.c_str();
+        appBase = currentDirectory.c_str();
     }
 
     // Prevent coreclr native bootstrapper from failing with relative appbase

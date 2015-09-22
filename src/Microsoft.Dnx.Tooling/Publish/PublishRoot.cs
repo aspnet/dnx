@@ -155,9 +155,7 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-export SET {0}=""$DIR/{1}""
-
-exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration {4} {5} ""$@""";
+exec ""{1}{2}"" --appbase ""$DIR/{0}"" Microsoft.Dnx.ApplicationHost --configuration {3} {4} ""$@""";
 
             foreach (var commandName in _project.Commands.Keys)
             {
@@ -171,7 +169,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                 var scriptPath = Path.Combine(OutputPath, commandName);
                 File.WriteAllText(scriptPath,
                     string.Format(template,
-                                  EnvironmentNames.AppBase,
                                   relativeAppBase,
                                   runtimeFolder,
                                   Runtime.Constants.BootstrapperExeName,

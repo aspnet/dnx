@@ -42,12 +42,6 @@ bool IsTracingEnabled()
     return GetEnvironmentVariable(L"DNX_TRACE", buff, 2) == 1 && buff[0] == L'1';
 }
 
-bool GetAppBasePathFromEnvironment(LPTSTR pszAppBase)
-{
-    DWORD dwAppBase = GetEnvironmentVariable(_T("DNX_APPBASE"), pszAppBase, MAX_PATH);
-    return dwAppBase != 0 && dwAppBase < MAX_PATH;
-}
-
 bool GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
 {
     DWORD dwFullAppBase = GetFullPathName(szPath, MAX_PATH, pszNormalizedPath, nullptr);
