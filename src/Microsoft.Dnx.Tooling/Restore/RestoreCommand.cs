@@ -400,11 +400,14 @@ namespace Microsoft.Dnx.Tooling
                         {
                             Reports.Verbose.WriteLine($"Restoring packages for {pair.context.FrameworkName} on {runtimeName}...");
                             var runtimeSpecs = new List<RuntimeSpec>();
+                            var runtimesw = Stopwatch.StartNew();
                             FindRuntimeSpecs(
                                 runtimeName,
                                 runtimeFiles,
                                 runtimeSpecs,
                                 _ => false);
+                            runtimesw.Stop();
+                            Reports.Verbose.WriteLine($" Scanned Runtime graph in {runtimesw.ElapsedMilliseconds:0.00}ms");
 
                             // If there are no runtime specs in the graph, we still want to restore for the specified runtime, so synthesize one
                             if (!runtimeSpecs.Any(r => r.Name.Equals(runtimeName)))

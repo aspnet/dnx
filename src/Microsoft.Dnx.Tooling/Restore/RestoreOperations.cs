@@ -27,41 +27,38 @@ namespace Microsoft.Dnx.Tooling
             sw.Start();
 
             var dependencies = new List<LibraryDependency>();
-            if (context.RuntimeSpecs != null && !string.IsNullOrEmpty(context.RuntimeName))
+
+
+            if (context.RuntimeSpecs != null && !string.IsNullOrEmpty(context.RuntimeName) && context.RuntimeDependencies != null)
             {
-                // HACK(davidfowl): This is making runtime.json support package redirects
-
-                // Look up any additional dependencies for this package
-                foreach (var runtimeSpec in context.RuntimeSpecs)
+                DependencySpec dependencyMapping;
+                if (context.RuntimeDependencies.TryGetValue(libraryRange.Name, out dependencyMapping))
                 {
-                    DependencySpec dependencyMapping;
-                    if (runtimeSpec.Dependencies.TryGetValue(libraryRange.Name, out dependencyMapping))
+                    foreach (var runtimeDependency in dependencyMapping.Implementations.Values)
                     {
-                        foreach (var runtimeDependency in dependencyMapping.Implementations.Values)
+                        var libraryDependency = new LibraryDependency
                         {
-                            var libraryDependency = new LibraryDependency
+                            LibraryRange = new LibraryRange(runtimeDependency.Name, frameworkReference: false)
                             {
-                                LibraryRange = new LibraryRange(runtimeDependency.Name, frameworkReference: false)
-                                {
-                                    VersionRange = VersionUtility.ParseVersionRange(runtimeDependency.Version)
-                                }
-                            };
+                                VersionRange = VersionUtility.ParseVersionRange(runtimeDependency.Version)
+                            }
+                        };
 
-                            if (libraryDependency.LibraryRange.Name == libraryRange.Name)
+                        // HACK(davidfowl): This is making runtime.json support package redirects
+                        if (libraryDependency.LibraryRange.Name == libraryRange.Name)
+                        {
+                            // It's replacing the current version, we need to override rather than adding a (potentially circular) dependency
+                            if (libraryRange.VersionRange != null &&
+                                libraryDependency.LibraryRange.VersionRange != null &&
+                                libraryRange.VersionRange.MinVersion < libraryDependency.LibraryRange.VersionRange.MinVersion)
                             {
-                                // It's replacing the current version, we need to override rather than adding a (potentially circular) dependency
-                                if (libraryRange.VersionRange != null &&
-                                    libraryDependency.LibraryRange.VersionRange != null &&
-                                    libraryRange.VersionRange.MinVersion < libraryDependency.LibraryRange.VersionRange.MinVersion)
-                                {
-                                    libraryRange = libraryDependency.LibraryRange;
-                                }
+                                libraryRange = libraryDependency.LibraryRange;
                             }
-                            else
-                            {
-                                // Otherwise it's a dependency of this node
-                                dependencies.Add(libraryDependency);
-                            }
+                        }
+                        else
+                        {
+                            // Otherwise it's a dependency of this node
+                            dependencies.Add(libraryDependency);
                         }
                     }
                 }
