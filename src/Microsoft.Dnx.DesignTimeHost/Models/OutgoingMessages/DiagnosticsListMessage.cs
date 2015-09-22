@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Framework.Internal;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Framework.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -18,7 +18,16 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
         {
         }
 
-        public DiagnosticsListMessage([NotNull] IList<DiagnosticMessage> diagnostics, FrameworkData frameworkData)
+        public DiagnosticsListMessage([NotNull] IList<DiagnosticMessage> diagnostics, FrameworkData frameworkData) :
+            this(diagnostics.Select(msg => new DiagnosticMessageView(msg)).ToList(), frameworkData)
+        {
+        }
+        public DiagnosticsListMessage([NotNull] IList<DiagnosticMessageView> diagnostics) :
+            this(diagnostics, frameworkData: null)
+        {
+        }
+
+        public DiagnosticsListMessage([NotNull] IList<DiagnosticMessageView> diagnostics, FrameworkData frameworkData)
         {
             Diagnostics = diagnostics;
             Errors = diagnostics.Where(msg => msg.Severity == DiagnosticMessageSeverity.Error).ToList();
@@ -29,11 +38,11 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
         public FrameworkData Framework { get; }
 
         [JsonIgnore]
-        public IList<DiagnosticMessage> Diagnostics { get; }
+        public IList<DiagnosticMessageView> Diagnostics { get; }
 
-        public IList<DiagnosticMessage> Errors { get; }
+        public IList<DiagnosticMessageView> Errors { get; }
 
-        public IList<DiagnosticMessage> Warnings { get; }
+        public IList<DiagnosticMessageView> Warnings { get; }
 
         public virtual JToken ConvertToJson(int protocolVersion)
         {
@@ -59,39 +68,14 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
             var other = obj as DiagnosticsListMessage;
 
             return other != null &&
-                Enumerable.SequenceEqual(Errors, other.Errors, Comparer.Default) &&
-                Enumerable.SequenceEqual(Warnings, other.Warnings, Comparer.Default) &&
+                Enumerable.SequenceEqual(Errors, other.Errors) &&
+                Enumerable.SequenceEqual(Warnings, other.Warnings) &&
                 object.Equals(Framework, other.Framework);
         }
 
         public override int GetHashCode()
         {
             return base.GetHashCode();
-        }
-
-        private class Comparer : IEqualityComparer<DiagnosticMessage>
-        {
-            public static readonly Comparer Default = new Comparer();
-
-            public bool Equals(DiagnosticMessage x, DiagnosticMessage y)
-            {
-                return x.StartLine == y.StartLine &&
-                       x.StartColumn == y.StartColumn &&
-                       string.Equals(x.Message, y.Message, StringComparison.OrdinalIgnoreCase) &&
-                       string.Equals(x.SourceFilePath, y.SourceFilePath, StringComparison.OrdinalIgnoreCase);
-            }
-
-            public int GetHashCode(DiagnosticMessage obj)
-            {
-                var hash = obj.StartLine.GetHashCode() ^ obj.StartColumn.GetHashCode() ^ obj.Message.GetHashCode();
-
-                if (obj.SourceFilePath != null)
-                {
-                    hash ^= obj.SourceFilePath.GetHashCode();
-                }
-
-                return hash;
-            }
         }
     }
 }

@@ -941,7 +941,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             }
         }
 
-        private static JArray ConvertToJArray(IList<DiagnosticMessage> diagnostics)
+        private static JArray ConvertToJArray(IList<DiagnosticMessageView> diagnostics)
         {
             var values = diagnostics.Select(diagnostic => new JObject
             {

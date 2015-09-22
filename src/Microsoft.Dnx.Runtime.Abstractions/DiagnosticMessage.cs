@@ -22,8 +22,38 @@ namespace Microsoft.Dnx.Runtime
                     startLine,
                     startColumn,
                     endLine: startLine,
-                    endColumn: startColumn)
+                    endColumn: startColumn,
+                    source: null)
         { }
+
+        public DiagnosticMessage(string errorCode, string message, string filePath, DiagnosticMessageSeverity severity, int startLine, int startColumn, object source)
+                : this(
+                    errorCode,
+                    message,
+                    $"{filePath}({startLine},{startColumn}): {severity.ToString().ToLowerInvariant()} {errorCode}: {message}",
+                    filePath,
+                    severity,
+                    startLine,
+                    startColumn,
+                    endLine: startLine,
+                    endColumn: startColumn,
+                    source: source)
+        { }
+
+        public DiagnosticMessage(string errorCode, string message, string formattedMessage, string filePath, 
+                                 DiagnosticMessageSeverity severity, int startLine, int startColumn, int endLine, int endColumn)
+            : this(errorCode, 
+                   message,
+                   formattedMessage,
+                   filePath,
+                   severity,
+                   startLine,
+                   startColumn,
+                   endLine,
+                   endColumn,
+                   source: null)
+        {
+        }
 
         public DiagnosticMessage(
             string errorCode,
@@ -34,7 +64,8 @@ namespace Microsoft.Dnx.Runtime
             int startLine,
             int startColumn,
             int endLine,
-            int endColumn)
+            int endColumn,
+            object source)
         {
             ErrorCode = errorCode;
             Message = message;
@@ -45,6 +76,7 @@ namespace Microsoft.Dnx.Runtime
             StartColumn = startColumn;
             EndColumn = endColumn;
             FormattedMessage = formattedMessage;
+            Source = source;
         }
 
         /// <summary>
@@ -91,5 +123,10 @@ namespace Microsoft.Dnx.Runtime
         /// Gets the formatted error message.
         /// </summary>
         public string FormattedMessage { get; }
+
+        /// <summary>
+        /// Gets the source of this message
+        /// </summary>
+        public object Source { get; }
     }
 }

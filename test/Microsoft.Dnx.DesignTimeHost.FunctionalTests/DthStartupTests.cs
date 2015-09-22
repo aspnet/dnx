@@ -43,6 +43,18 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
+        public static IEnumerable<object[]> RuntimeComponentsWithBothVersions
+        {
+            get
+            {
+                foreach (var combination in RuntimeComponents)
+                {
+                    yield return combination.Concat(new object[] { 2 }).ToArray();
+                    yield return combination.Concat(new object[] { 3 }).ToArray();
+                }
+            }
+        }
+
         public static IEnumerable<object[]> ProtocolNegotiationTestData
         {
             get
@@ -133,8 +145,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         }
 
         [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DthCompilation_GetDiagnostics_OnEmptyConsoleApp(string flavor, string os, string architecture)
+        [MemberData(nameof(RuntimeComponentsWithBothVersions))]
+        public void DthCompilation_GetDiagnostics_OnEmptyConsoleApp(string flavor, string os, string architecture, int protocolVersion)
         {
             var projectName = "EmptyConsoleApp";
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -144,7 +156,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             using (var client = new DthTestClient(server, 0))
             {
                 // Drain the inital messages
-                client.Initialize(testProject);
+                client.Initialize(testProject, protocolVersion);
                 client.SendPayLoad("GetDiagnostics");
 
                 var message = client.DrainTillFirst("AllDiagnostics");
@@ -165,8 +177,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         }
 
         [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DthCompilation_RestoreComplete_OnEmptyLibrary(string flavor, string os, string architecture)
+        [MemberData(nameof(RuntimeComponentsWithBothVersions))]
+        public void DthCompilation_RestoreComplete_OnEmptyLibrary(string flavor, string os, string architecture, int protocolVersion)
         {
             var projectName = "EmptyLibrary";
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -177,7 +189,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             using (var client = new DthTestClient(server, 0))
             {
                 // Drain the inital messages
-                client.Initialize(testProject);
+                client.Initialize(testProject, protocolVersion);
 
                 var before = client.DrainTillFirst("Dependencies");
                 before.EnsureSource(server, client);
@@ -298,7 +310,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
-        public void DthNegative_BrokenProjectPathInLockFile(string flavor, string os, string architecture)
+        public void DthNegative_BrokenProjectPathInLockFile_V1(string flavor, string os, string architecture)
         {
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
@@ -311,7 +323,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
                 TestUtils.CopyFolder(testProject, targetPath);
 
-                client.Initialize(targetPath);
+                client.Initialize(targetPath, protocolVersion: 1);
                 var messages = client.DrainAllMessages();
 
                 Assert.False(ContainsMessage(messages, "Error"));
@@ -328,6 +340,56 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 Assert.NotNull(dependency);
                 Assert.Equal("EmptyLibrary", dependency["Name"].Value<string>());
                 Assert.False(dependency["Resolved"].Value<bool>());
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DthNegative_BrokenProjectPathInLockFile_V2(string flavor, string os, string architecture)
+        {
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
+
+            using (var disposableDir = new DisposableDir())
+            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var client = new DthTestClient(server, 0))
+            {
+                // copy the project to difference location so that the project path in its lock file is invalid
+                var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
+                TestUtils.CopyFolder(testProject, targetPath);
+
+                client.Initialize(targetPath, protocolVersion: 2);
+                var messages = client.DrainAllMessages();
+
+                Assert.False(ContainsMessage(messages, "Error"));
+
+                var dependencyDiagnosticsMessage = RetrieveSingle(messages, "DependencyDiagnostics");
+                dependencyDiagnosticsMessage.EnsureSource(server, client);
+                var errors = (JArray)dependencyDiagnosticsMessage.Payload["Errors"];
+                Assert.Equal(1, errors.Count);
+
+                var formattedMessage = errors[0]["FormattedMessage"];
+                Assert.NotNull(formattedMessage);
+                Assert.Contains("error NU1001: The dependency EmptyLibrary  could not be resolved.", formattedMessage.Value<string>());
+
+                var source = errors[0]["Source"] as JObject;
+                Assert.NotNull(source);
+                Assert.Equal("EmptyLibrary", source["Name"].Value<string>());
+
+                var dependenciesMessage = RetrieveSingle(messages, "Dependencies");
+                dependenciesMessage.EnsureSource(server, client);
+                var dependency = dependenciesMessage.Payload["Dependencies"]["EmptyLibrary"] as JObject;
+                Assert.NotNull(dependency);
+                Assert.Equal("EmptyLibrary", dependency["Name"].Value<string>());
+                Assert.False(dependency["Resolved"].Value<bool>());
+
+                var dependencyErrors = dependency["Errors"] as JArray;
+                Assert.NotNull(dependencyErrors);
+                Assert.Equal(1, dependencyErrors.Count);
+
+                var dependencyWarnings = dependency["Warnings"] as JArray;
+                Assert.NotNull(dependencyWarnings);
+                Assert.Equal(0, dependencyWarnings.Count);
             }
         }
 

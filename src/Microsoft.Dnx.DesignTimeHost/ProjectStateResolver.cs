@@ -177,9 +177,13 @@ namespace Microsoft.Dnx.DesignTimeHost
                     Diagnostics = libraryManager.GetAllDiagnostics().ToList()
                 };
 
+                var diagnosticSources = info.Diagnostics.ToLookup(diagnostic => diagnostic.Source);
+
                 foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
                 {
-                    var description = CreateDependencyDescription(library, protocolVersion);
+                    var diagnostics = diagnosticSources[library];
+                    var description = CreateDependencyDescription(library, diagnostics, protocolVersion);
+
                     info.Dependencies[description.Name] = description;
 
                     if (string.Equals(library.Type, LibraryTypes.Project) &&
@@ -253,7 +257,9 @@ namespace Microsoft.Dnx.DesignTimeHost
             });
         }
 
-        private static DependencyDescription CreateDependencyDescription(LibraryDescription library, int protocolVersion)
+        private static DependencyDescription CreateDependencyDescription(LibraryDescription library,
+                                                                         IEnumerable<DiagnosticMessage> diagnostics,
+                                                                         int protocolVersion)
         {
             var result = new DependencyDescription
             {
@@ -267,7 +273,11 @@ namespace Microsoft.Dnx.DesignTimeHost
                 {
                     Name = dependency.Name,
                     Version = dependency.Library?.Identity?.Version?.ToString()
-                })
+                }),
+                Errors = diagnostics.Where(d => d.Severity == DiagnosticMessageSeverity.Error)
+                                    .Select(d => new DiagnosticMessageView(d)),
+                Warnings = diagnostics.Where(d => d.Severity == DiagnosticMessageSeverity.Warning)
+                                      .Select(d => new DiagnosticMessageView(d))
             };
 
             if (protocolVersion < 3 && !library.Resolved)

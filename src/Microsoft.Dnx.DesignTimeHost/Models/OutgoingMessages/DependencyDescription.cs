@@ -22,6 +22,10 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
 
         public IEnumerable<DependencyItem> Dependencies { get; set; }
 
+        public IEnumerable<DiagnosticMessageView> Errors { get; set; }
+
+        public IEnumerable<DiagnosticMessageView> Warnings { get; set; }
+
         public override bool Equals(object obj)
         {
             var other = obj as DependencyDescription;
@@ -32,7 +36,9 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
                    object.Equals(Version, other.Version) &&
                    string.Equals(Path, other.Path) &&
                    string.Equals(Type, other.Type) &&
-                   Enumerable.SequenceEqual(Dependencies, other.Dependencies);
+                   Enumerable.SequenceEqual(Dependencies, other.Dependencies) &&
+                   Enumerable.SequenceEqual(Errors, other.Errors) &&
+                   Enumerable.SequenceEqual(Warnings, other.Warnings);
         }
 
         public override int GetHashCode()

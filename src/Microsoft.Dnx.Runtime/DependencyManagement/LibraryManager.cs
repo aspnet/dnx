@@ -140,7 +140,8 @@ namespace Microsoft.Dnx.Runtime
                             projectPath,
                             DiagnosticMessageSeverity.Error,
                             library.RequestedRange.Line,
-                            library.RequestedRange.Column));
+                            library.RequestedRange.Column,
+                            library));
                 }
                 else
                 {
@@ -173,7 +174,8 @@ namespace Microsoft.Dnx.Runtime
                                 projectPath,
                                 DiagnosticMessageSeverity.Warning,
                                 library.RequestedRange.Line,
-                                library.RequestedRange.Column));
+                                library.RequestedRange.Column,
+                                library));
                     }
                 }
             }
