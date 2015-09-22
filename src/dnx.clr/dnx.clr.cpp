@@ -18,7 +18,9 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
 
     g_clrBootstrapper = bootstrapper;
 
-    hr = bootstrapper->InitializeRuntime(data->runtimeDirectory, data->applicationBase);
+    auto framework = dnx::utils::get_option_value(data->argc, const_cast<wchar_t**>(data->argv), L"--framework");
+
+    hr = bootstrapper->InitializeRuntime(data->runtimeDirectory, data->applicationBase, framework);
     if (SUCCEEDED(hr))
     {
         g_clrBootstrapper = NULL;

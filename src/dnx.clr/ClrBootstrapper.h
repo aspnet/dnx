@@ -28,12 +28,14 @@ struct ApplicationMainInfo
     /* out */ BSTR RuntimeDirectory;
 
     /* out */ BSTR ApplicationBase;
+
+    /* out */ BSTR Framework;
 };
 
 class __declspec(uuid("7E9C5238-60DC-49D3-94AA-53C91FA79F7C")) IClrBootstrapper : public IUnknown
 {
 public:
-    virtual HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase) = 0;
+    virtual HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase, LPCWSTR framework) = 0;
 
     virtual HRESULT BindApplicationMain(ApplicationMainInfo* pInfo) = 0;
 
@@ -62,6 +64,7 @@ class ClrBootstrapper :
 
     _bstr_t _applicationBase;
     _bstr_t _runtimeDirectory;
+    _bstr_t _framework;
 
     ApplicationMainInfo _applicationMainInfo;
 
@@ -94,7 +97,7 @@ public:
         return NULL;
     }
 
-    HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase)
+    HRESULT InitializeRuntime(LPCWSTR runtimeDirectory, LPCWSTR applicationBase, LPCWSTR framework)
     {
         Lock lock(&_crit);
         if (_calledInitializeRuntime)
@@ -106,6 +109,7 @@ public:
 
         _applicationBase = applicationBase;
         _runtimeDirectory = runtimeDirectory;
+        _framework = framework;
 
         m_pHostAssemblyManager = new HostAssemblyManager(runtimeDirectory);
         m_pHostAssemblyManager->AddRef();
@@ -164,6 +168,8 @@ public:
             _bstr_t(L"x86")
 #endif
             .copy();
+
+        pInfo->Framework = _framework.copy();
 
         return S_OK;
     }

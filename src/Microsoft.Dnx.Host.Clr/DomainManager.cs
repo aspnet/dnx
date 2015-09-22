@@ -32,14 +32,12 @@ public class DomainManager : AppDomainManager
         _info.Main = Main;
         BindApplicationMain(ref _info);
         appDomainInfo.ApplicationBase = _info.RuntimeDirectory;
-        appDomainInfo.TargetFrameworkName = DetermineAppDomainTargetFramework();
+        appDomainInfo.TargetFrameworkName = DetermineAppDomainTargetFramework(_info.Framework);
         appDomainInfo.ConfigurationFile = Path.Combine(_info.ApplicationBase, Constants.AppConfigurationFileName);
     }
 
-    private string DetermineAppDomainTargetFramework()
+    private string DetermineAppDomainTargetFramework(string frameworkName)
     {
-        // Check if the native bootstrapper gave us a framework name
-        string frameworkName = Environment.GetEnvironmentVariable(EnvironmentNames.Framework);
         FrameworkName framework;
         Version version = null;
         if (!string.IsNullOrEmpty(frameworkName))
@@ -177,6 +175,9 @@ public class DomainManager : AppDomainManager
 
         [MarshalAs(UnmanagedType.BStr)]
         public string ApplicationBase;
+
+        [MarshalAs(UnmanagedType.BStr)]
+        public string Framework;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

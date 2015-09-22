@@ -51,19 +51,6 @@ const dnx::char_t* allocate_and_copy(const dnx::char_t* value)
     return allocate_and_copy(value, x_strlen(value));
 }
 
-dnx::char_t* GetOptionValue(int argc, dnx::char_t* argv[], const dnx::char_t* optionName)
-{
-    auto index = dnx::utils::find_bootstrapper_option_index(argc, argv, optionName);
-
-    // no parameters or '--{optionName}' is the last value in the array or `--{optionName}` not found
-    if (index < 0 || index >= argc - 1)
-    {
-        return nullptr;
-    }
-
-    return argv[index + 1];
-}
-
 void AppendAppbaseFromFile(const dnx::char_t* path, std::vector<const dnx::char_t*>& expanded_args)
 {
     auto split_idx = split_path(path);
@@ -186,7 +173,7 @@ void FreeExpandedCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv)
 bool GetApplicationBase(const dnx::xstring_t& currentDirectory, int argc, dnx::char_t* argv[], /*out*/ dnx::char_t* fullAppBasePath)
 {
     dnx::char_t buffer[MAX_PATH];
-    const dnx::char_t* appBase = GetOptionValue(argc, argv, _X("--appbase"));
+    const dnx::char_t* appBase = dnx::utils::get_option_value(argc, argv, _X("--appbase"));
 
     // Note: We use application base from DNX_APPBASE environment variable only if --appbase
     // did not exist. if neither --appBase nor DNX_APPBASE existed we use current directory
@@ -202,14 +189,6 @@ bool GetApplicationBase(const dnx::xstring_t& currentDirectory, int argc, dnx::c
 int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer)
 {
     const auto currentDirectory = GetNativeBootstrapperDirectory();
-
-    // Set the FRAMEWORK environment variable to the value provided on the command line
-    //  (it needs to be available BEFORE the application main is called)
-    auto frameworkName = GetOptionValue(argc, argv, _X("--framework"));
-    if (frameworkName)
-    {
-        SetEnvironmentVariable(_X("DNX_FRAMEWORK"), frameworkName);
-    }
 
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     data.argc = argc;

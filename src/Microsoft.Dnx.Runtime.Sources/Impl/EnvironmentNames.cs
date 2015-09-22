@@ -14,7 +14,6 @@ namespace Microsoft.Dnx.Runtime
         public const string Home = "DNX_HOME";
         public const string GlobalPath = "DNX_GLOBAL_PATH";
         public const string AppBase = "DNX_APPBASE";
-        public const string Framework = "DNX_FRAMEWORK";
         public const string Configuration = "DNX_CONFIGURATION";
         public const string BuildKeyFile = "DNX_BUILD_KEY_FILE";
         public const string BuildDelaySign = "DNX_BUILD_DELAY_SIGN";

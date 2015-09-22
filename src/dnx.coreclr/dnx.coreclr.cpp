@@ -301,8 +301,6 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
 {
     auto trace_writer = dnx::trace_writer{ IsTracingEnabled() };
 
-    SetEnvironmentVariable(L"DNX_FRAMEWORK", L"dnxcore50");
-
     Win32KDisable(trace_writer);
 
     auto coreclr_module = LoadCoreClr(data->runtimeDirectory, trace_writer);

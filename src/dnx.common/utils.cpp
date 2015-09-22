@@ -230,5 +230,18 @@ namespace dnx
 
             return -1;
         }
+
+        dnx::char_t* get_option_value(int argc, dnx::char_t* argv[], const dnx::char_t* optionName)
+        {
+            auto index = dnx::utils::find_bootstrapper_option_index(argc, argv, optionName);
+
+            // no parameters or '--{optionName}' is the last value in the array or `--{optionName}` not found
+            if (index < 0 || index >= argc - 1)
+            {
+                return nullptr;
+            }
+
+            return argv[index + 1];
+        }
     }
 }

@@ -409,8 +409,6 @@ extern "C" int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data)
     }
     else
     {
-        setenv("DNX_FRAMEWORK", "dnxcore50", 1);
-
         result = CallMain(data);
     }
 
