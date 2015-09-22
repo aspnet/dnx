@@ -34,6 +34,8 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         public Reports Reports { get; set; }
 
+        public string IISCommand { get; set; }
+
         public void AddFrameworkMonikers(IEnumerable<string> monikers)
         {
             if (monikers != null)

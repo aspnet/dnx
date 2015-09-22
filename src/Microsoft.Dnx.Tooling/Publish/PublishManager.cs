@@ -90,7 +90,8 @@ namespace Microsoft.Dnx.Tooling.Publish
             {
                 Configuration = _options.Configuration,
                 NoSource = _options.NoSource,
-                IncludeSymbols = _options.IncludeSymbols
+                IncludeSymbols = _options.IncludeSymbols,
+                IISCommand = _options.IISCommand
             };
 
             Func<string, string> getVariable = key =>

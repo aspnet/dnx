@@ -26,6 +26,7 @@ namespace Microsoft.Dnx.Tooling
                     "--framework",
                     "Name of the frameworks to include.",
                     CommandOptionType.MultipleValue);
+                var optionIISCommand = c.Option("--iis-command", "Overrides the command name to use in the web.config for the httpPlatformHandler. The default is web.", CommandOptionType.SingleValue);
                 var optionRuntime = c.Option("--runtime <RUNTIME>", "Name or full path of the runtime folder to include, or \"active\" for current runtime on PATH",
                     CommandOptionType.MultipleValue);
                 var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
@@ -66,6 +67,7 @@ namespace Microsoft.Dnx.Tooling
                         Runtimes = optionRuntime.HasValue() ?
                             string.Join(";", optionRuntime.Values).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :
                             new string[0],
+                        IISCommand = optionIISCommand.Value(),
                         Native = optionNative.HasValue(),
                         IncludeSymbols = optionIncludeSymbols.HasValue(),
                         Reports = reports

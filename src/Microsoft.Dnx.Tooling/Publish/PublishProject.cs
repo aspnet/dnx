@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -10,7 +11,6 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Common.Impl;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -343,11 +343,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             // Copy content files (e.g. html, js and images) of main project into public app folder
             CopyContentFiles(root, project, wwwRootOutPath);
 
-            GenerateWebConfigFileForWwwRootOut(root, project, wwwRootOutPath);
-
-            CopyAspNetLoaderDll(root, wwwRootOutPath);
-
-            return true;
+            return GenerateWebConfigFileForWwwRootOut(root, project, wwwRootOutPath);
         }
 
         private bool PrunePackages(PublishRoot root)
@@ -489,7 +485,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             return tasks.All(t => t.Result);
         }
 
-        private void GenerateWebConfigFileForWwwRootOut(PublishRoot root, Runtime.Project project, string wwwRootOutPath)
+        private bool GenerateWebConfigFileForWwwRootOut(PublishRoot root, Runtime.Project project, string wwwRootOutPath)
         {
             // Generate web.config for public app folder
             var wwwRootOutWebConfigFilePath = Path.Combine(wwwRootOutPath, "web.config");
@@ -516,41 +512,66 @@ namespace Microsoft.Dnx.Tooling.Publish
                 throw new InvalidDataException("'configuration' is the only valid name for root element of web.config file");
             }
 
-            var appSettingsElement = GetOrAddElement(parent: xDoc.Root, name: "appSettings");
+            // <system.webServer>
+            //   <handlers>
+            //    <add name="httpplatformhandler" path="*" verb="*" modules="httpPlatformHandler" resourceType="Unspecified" />
+            //  </handlers>
+            //  <httpPlatform processPath="..\command.cmd"
+            //                arguments="" 
+            //                stdoutLogEnabled="true" 
+            //                stdoutLogFile="..\logs\stdout.log">
+            //  </httpPlatform>
+            // </system.webServer>
 
-            // Always generate \ since web.config is a IIS thing only
-            var relativeRuntimesPath = PathUtility.GetRelativePath(wwwRootOutWebConfigFilePath, root.TargetRuntimesPath)
-                                                  .Replace(Path.DirectorySeparatorChar, '\\');
+            // Look for specified command
 
-            var defaultRuntime = root.Runtimes.FirstOrDefault();
-            var appBase = _relativeAppBase.Replace(Path.DirectorySeparatorChar, '\\');
+            var command = root.IISCommand;
 
-            var keyValuePairs = new Dictionary<string, string>()
+            if (!string.IsNullOrEmpty(command) && !project.Commands.ContainsKey(command))
             {
-                { Runtime.Constants.WebConfigBootstrapperVersion, GetBootstrapperVersion(root) },
-                { Runtime.Constants.WebConfigRuntimePath, relativeRuntimesPath },
-                { Runtime.Constants.WebConfigRuntimeVersion, GetRuntimeVersion(defaultRuntime) },
-                { Runtime.Constants.WebConfigRuntimeFlavor, GetRuntimeFlavor(defaultRuntime) },
-                { Runtime.Constants.WebConfigRuntimeAppBase, appBase },
-            };
-
-            foreach (var pair in keyValuePairs)
+                root.Reports.Error.WriteLine($"Specified command {command} cannot be found.");
+                return false;
+            }
+            else if (project.Commands.Count == 1)
             {
-                var addElement = appSettingsElement.Elements()
-                    .Where(x => x.Name == "add" && x.Attribute("key").Value == pair.Key)
-                    .SingleOrDefault();
-                if (addElement == null)
-                {
-                    addElement = new XElement("add");
-                    addElement.SetAttributeValue("key", pair.Key);
-                    appSettingsElement.Add(addElement);
-                }
-
-                addElement.SetAttributeValue("value", pair.Value);
+                command = project.Commands.First().Key;
+            }
+            else if (project.Commands.Count == 0)
+            {
+                root.Reports.WriteWarning("No commands defined. Defaulting to web.");
+            }
+            else
+            {
+                root.Reports.WriteWarning("Multiple commands defined. Defaulting to web.");
             }
 
-            // Generate target framework information
-            ApplyTargetFramework(xDoc, project);
+            command = command ?? "web";
+
+            root.Reports.Information.WriteLine($"Using command '{command}' as the entry point for web.config.");
+
+            var targetDocument = XDocument.Parse($@"<configuration><system.webServer>
+  <handlers>
+    <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
+  </handlers>
+  <httpPlatform processPath=""..\{command}.cmd""
+                arguments="""" 
+                stdoutLogEnabled=""true"" 
+                stdoutLogFile=""..\logs\stdout.log"">
+  </httpPlatform>
+</system.webServer></configuration>");
+
+            var result = targetDocument.Root.MergeWith(xDoc.Root, (name, sourceChild, targetChild) =>
+            {
+                if (sourceChild != null)
+                {
+                    // REVIEW: Should we preserve other options?
+                    sourceChild.Parent.Add(targetChild);
+                    sourceChild.Remove();
+                    return true;
+                }
+
+                return false;
+            });
 
             var xmlWriterSettings = new XmlWriterSettings
             {
@@ -560,130 +581,13 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             using (var xmlWriter = XmlWriter.Create(File.Create(wwwRootOutWebConfigFilePath), xmlWriterSettings))
             {
-                xDoc.WriteTo(xmlWriter);
-            }
-        }
-
-        private void ApplyTargetFramework(XDocument xDoc, Runtime.Project project)
-        {
-            // Get the system.web element
-            var systemWeb = GetOrAddElement(xDoc.Root, "system.web");
-
-            var httpRuntime = systemWeb.Element("httpRuntime");
-
-            // No httpRuntime element, so create it
-            if (httpRuntime == null)
-            {
-                httpRuntime = new XElement("httpRuntime");
-                systemWeb.Add(httpRuntime);
-            }
-            // There is an httpRuntime element. The user may have already set this attribute...
-            else if (httpRuntime.Attribute("targetFramework") != null)
-            {
-                // User already had a target framework, leave it alone
-                return;
-            }
-            // Ok, now we have an httpRuntime element and we know we need to set thet targetFramework on it.
-
-            var bestDnxVersion = project.GetTargetFrameworks()
-                .Where(f => f.FrameworkName.Identifier.Equals(FrameworkNames.LongNames.Dnx))
-                .OrderByDescending(f => f.FrameworkName.Version)
-                .Select(f => f.FrameworkName.Version)
-                .FirstOrDefault();
-            if (bestDnxVersion != null)
-            {
-                httpRuntime.SetAttributeValue("targetFramework", bestDnxVersion.ToString());
-            }
-        }
-
-        private static XElement GetOrAddElement(XElement parent, string name)
-        {
-            var child = parent.Elements().Where(x => x.Name == name).FirstOrDefault();
-            if (child == null)
-            {
-                child = new XElement(name);
-                parent.Add(child);
-            }
-            return child;
-        }
-
-        private static string GetBootstrapperVersion(PublishRoot root)
-        {
-            // Use version of Microsoft.AspNet.Loader.IIS.Interop as version of bootstrapper
-            var package = root.Packages.SingleOrDefault(
-                x => string.Equals(x.Library.Name, "Microsoft.AspNet.Loader.IIS.Interop"));
-            return package == null ? string.Empty : package.Library.Version.ToString();
-        }
-
-        // Expected runtime name format: dnx-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
-        // Sample input: dnx-coreclr-win-x86.1.0.0.0
-        // Sample output: coreclr
-        private static string GetRuntimeFlavor(PublishRuntime runtime)
-        {
-            if (runtime == null)
-            {
-                return string.Empty;
+                result.WriteTo(xmlWriter);
             }
 
-            var segments = runtime.Name.Split(new[] { '.' }, 2);
-            segments = segments[0].Split(new[] { '-' }, 4);
-            return segments[1];
-        }
+            // Create the logs directory so the httpPlatformHandler can write there
+            Directory.CreateDirectory(Path.Combine(root.OutputPath, "logs"));
 
-        // Expected runtime name format: dnx-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
-        // Sample input: dnx-coreclr-win-x86.1.0.0.0
-        // Sample output: 1.0.0.0
-        private static string GetRuntimeVersion(PublishRuntime runtime)
-        {
-            if (runtime == null)
-            {
-                return string.Empty;
-            }
-
-            var segments = runtime.Name.Split(new[] { '.' }, 2);
-            return segments[1];
-        }
-
-        private static void CopyAspNetLoaderDll(PublishRoot root, string wwwRootOutPath)
-        {
-            // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
-            var wwwRootOutBinPath = Path.Combine(wwwRootOutPath, "bin");
-
-            // Check for an environment variable which can be used (generally in tests)
-            // to override where AspNet.Loader.dll is located.
-            var loaderPath = Environment.GetEnvironmentVariable(EnvironmentNames.AspNetLoaderPath);
-            if (string.IsNullOrEmpty(loaderPath))
-            {
-                // Copy Microsoft.AspNet.Loader.IIS.Interop/tools/*.dll into bin to support AspNet.Loader.dll
-                var package = root.Packages.SingleOrDefault(
-                    x => string.Equals(x.Library.Name, "Microsoft.AspNet.Loader.IIS.Interop"));
-                if (package == null)
-                {
-                    return;
-                }
-
-                var resolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
-                var packagePath = resolver.GetInstallPath(package.Library.Name, package.Library.Version);
-                loaderPath = Path.Combine(packagePath, "tools");
-            }
-
-            if (!string.IsNullOrEmpty(loaderPath) && Directory.Exists(loaderPath))
-            {
-                foreach (var packageToolFile in Directory.EnumerateFiles(loaderPath, "*.dll").Select(Path.GetFileName))
-                {
-                    // Create the bin folder only when we need to put something inside it
-                    if (!Directory.Exists(wwwRootOutBinPath))
-                    {
-                        Directory.CreateDirectory(wwwRootOutBinPath);
-                    }
-
-                    // Copy to bin folder under public app folder
-                    File.Copy(
-                        Path.Combine(loaderPath, packageToolFile),
-                        Path.Combine(wwwRootOutBinPath, packageToolFile),
-                        overwrite: true);
-                }
-            }
+            return true;
         }
 
         private void CopyContentFiles(PublishRoot root, Runtime.Project project, string targetFolderPath)
@@ -710,18 +614,6 @@ namespace Microsoft.Dnx.Tooling.Publish
             // If the value of '--wwwroot' is ".", we need to publish the project root dir
             // Use Path.GetFullPath() to get rid of the trailing "."
             return Path.GetFullPath(wwwRootSourcePath);
-        }
-
-        private bool IncludeRuntimeFileInOutput(string relativePath, string fileName)
-        {
-            return true;
-        }
-
-        private string BasePath(string relativePath)
-        {
-            var index1 = (relativePath + Path.DirectorySeparatorChar).IndexOf(Path.DirectorySeparatorChar);
-            var index2 = (relativePath + Path.AltDirectorySeparatorChar).IndexOf(Path.AltDirectorySeparatorChar);
-            return relativePath.Substring(0, Math.Min(index1, index2));
         }
 
         private Runtime.Project GetCurrentProject()

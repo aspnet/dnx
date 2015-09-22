@@ -56,6 +56,8 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         public IServiceProvider HostServices { get; private set; }
 
+        public string IISCommand { get; set; }
+
         public bool Emit()
         {
             Reports.Information.WriteLine("Copying to output path {0}", OutputPath);
