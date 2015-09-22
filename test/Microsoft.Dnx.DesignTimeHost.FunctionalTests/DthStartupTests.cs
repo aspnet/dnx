@@ -7,8 +7,10 @@ using System.IO;
 using System.Linq;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure;
+using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Testing;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -292,15 +294,15 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 client.Initialize(targetPath, protocolVersion: 1);
                 var messages = client.DrainAllMessages();
 
-                Assert.False(ContainsMessage(messages, "Error"));
+                Assert.False(messages.ContainsMessage("Error"));
 
-                var dependencyDiagnosticsMessage = RetrieveSingle(messages, "DependencyDiagnostics");
+                var dependencyDiagnosticsMessage = messages.RetrieveSingle("DependencyDiagnostics");
                 dependencyDiagnosticsMessage.EnsureSource(server, client);
                 var errors = (JArray)dependencyDiagnosticsMessage.Payload["Errors"];
                 Assert.Equal(1, errors.Count);
                 Assert.Contains("error NU1001: The dependency EmptyLibrary  could not be resolved.", errors[0].Value<string>());
 
-                var dependenciesMessage = RetrieveSingle(messages, "Dependencies");
+                var dependenciesMessage = messages.RetrieveSingle("Dependencies");
                 dependenciesMessage.EnsureSource(server, client);
                 var dependency = dependenciesMessage.Payload["Dependencies"]["EmptyLibrary"] as JObject;
                 Assert.NotNull(dependency);
@@ -326,9 +328,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 client.Initialize(targetPath, protocolVersion: 2);
                 var messages = client.DrainAllMessages();
 
-                Assert.False(ContainsMessage(messages, "Error"));
+                Assert.False(messages.ContainsMessage("Error"));
 
-                var dependencyDiagnosticsMessage = RetrieveSingle(messages, "DependencyDiagnostics");
+                var dependencyDiagnosticsMessage = messages.RetrieveSingle("DependencyDiagnostics");
                 dependencyDiagnosticsMessage.EnsureSource(server, client);
                 var errors = (JArray)dependencyDiagnosticsMessage.Payload["Errors"];
                 Assert.Equal(1, errors.Count);
@@ -341,7 +343,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 Assert.NotNull(source);
                 Assert.Equal("EmptyLibrary", source["Name"].Value<string>());
 
-                var dependenciesMessage = RetrieveSingle(messages, "Dependencies");
+                var dependenciesMessage = messages.RetrieveSingle("Dependencies");
                 dependenciesMessage.EnsureSource(server, client);
                 var dependency = dependenciesMessage.Payload["Dependencies"]["EmptyLibrary"] as JObject;
                 Assert.NotNull(dependency);
@@ -358,28 +360,54 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
-        private bool ContainsMessage(IEnumerable<DthMessage> messages, string typename)
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void DthDependencies_UpdateGlobalJson_RefreshDependencies(DnxSdk sdk)
         {
-            return messages.FirstOrDefault(msg => string.Equals(msg.MessageType, typename, StringComparison.Ordinal)) != null;
-        }
-
-        private DthMessage RetrieveSingle(IEnumerable<DthMessage> messages, string typename)
-        {
-            var result = messages.SingleOrDefault(msg => string.Equals(msg.MessageType, typename, StringComparison.Ordinal));
-
-            if (result == null)
+            using (var disposableDir = new DisposableDir())
+            using (var server = DthTestServer.Create(sdk, null))
+            using (var client = new DthTestClient(server, 0))
             {
-                if (ContainsMessage(messages, typename))
-                {
-                    Assert.False(true, $"More than one {typename} messages exist.");
-                }
-                else
-                {
-                    Assert.False(true, $"{typename} message doesn't exists.");
-                }
-            }
+                Testing.TestUtils.CopyFolder(
+                    _fixture.GetTestProjectPath("UpdateSearchPathSample"),
+                    Path.Combine(disposableDir, "UpdateSearchPathSample"));
 
-            return result;
+                var root = Path.Combine(disposableDir, "UpdateSearchPathSample", "home");
+                sdk.Dnu.Restore(root).EnsureSuccess();
+
+                client.Initialize(Path.Combine(root, "src", "MainProject"), protocolVersion: 2);
+                var messages = client.DrainAllMessages();
+
+                messages.RetrieveSingle("ProjectInformation")
+                        .EnsureObjectPayload()
+                        .EnsurePropertyAsArray("ProjectSearchPaths")
+                        .AssertJArrayCount(2);
+
+                messages.RetrieveSingle("Dependencies")
+                        .RetrieveDependency("Newtonsoft.Json")
+                        .AssertProperty("Type", "Project")
+                        .AssertProperty("Resolved", true);
+
+                // Overwrite the global.json to remove search path to ext
+                File.WriteAllText(
+                    Path.Combine(root, GlobalSettings.GlobalFileName),
+                    JsonConvert.SerializeObject(new { project = new string[] { "src" } }));
+
+                client.SendPayLoad("RefreshDependencies");
+                messages = client.DrainAllMessages();
+
+                messages.RetrieveSingle("ProjectInformation")
+                        .EnsureObjectPayload()
+                        .EnsurePropertyAsArray("ProjectSearchPaths")
+                        .AssertJArrayCount(1)
+                        .AssertJArrayElement(0, root);
+
+                messages.RetrieveSingle("Dependencies")
+                        .RetrieveDependency("Newtonsoft.Json")
+                        .AssertProperty("Type", "Project")
+                        .AssertProperty("Resolved", false);
+
+            }
         }
     }
 }
