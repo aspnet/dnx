@@ -8,14 +8,14 @@ using System.Linq;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Tooling;
+using Microsoft.Dnx.Testing;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 {
     [Collection(nameof(DthFunctionalTestCollection))]
-    public class DthStartupTests
+    public class DthStartupTests : DnxSdkFunctionalTestBase
     {
         private readonly DthFunctionalTestFixture _fixture;
 
@@ -24,30 +24,11 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             _fixture = fixture;
         }
 
-        public static IEnumerable<object[]> RuntimeComponents
-        {
-            get
-            {
-                foreach (var runtime in TestUtils.GetClrRuntimeComponents())
-                {
-                    yield return runtime;
-                }
-
-                if (!RuntimeEnvironmentHelper.IsMono)
-                {
-                    foreach (var runtime in TestUtils.GetCoreClrRuntimeComponents())
-                    {
-                        yield return runtime;
-                    }
-                }
-            }
-        }
-
         public static IEnumerable<object[]> RuntimeComponentsWithBothVersions
         {
             get
             {
-                foreach (var combination in RuntimeComponents)
+                foreach (var combination in DnxSdks)
                 {
                     yield return combination.Concat(new object[] { 2 }).ToArray();
                     yield return combination.Concat(new object[] { 3 }).ToArray();
@@ -59,7 +40,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         {
             get
             {
-                foreach (var combination in RuntimeComponents)
+                foreach (var combination in DnxSdks)
                 {
                     // The current max protocol version is 3
 
@@ -76,14 +57,13 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         }
 
         [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DthStartup_GetProjectInformation(string flavor, string os, string architecture)
+        [MemberData(nameof(DnxSdks))]
+        public void DthStartup_GetProjectInformation(DnxSdk sdk)
         {
             var projectName = "EmptyConsoleApp";
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var testProject = _fixture.GetTestProjectPath(projectName);
 
-            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var server = DthTestServer.Create(sdk, testProject))
             using (var client = new DthTestClient(server, 0))
             {
                 client.Initialize(testProject);
@@ -106,13 +86,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
         [Theory]
         [MemberData(nameof(ProtocolNegotiationTestData))]
-        public void DthStartup_ProtocolNegotiation(string flavor, string os, string architecture, int requestVersion, int expectVersion)
+        public void DthStartup_ProtocolNegotiation(DnxSdk sdk, int requestVersion, int expectVersion)
         {
             var projectName = "EmptyConsoleApp";
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var testProject = _fixture.GetTestProjectPath(projectName);
 
-            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var server = DthTestServer.Create(sdk, testProject))
             using (var client = new DthTestClient(server, 0))
             {
                 client.SetProtocolVersion(requestVersion);
@@ -125,14 +104,13 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         }
 
         [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DthStartup_ProtocolNegotiation_ZeroIsNoAllowed(string flavor, string os, string architecture)
+        [MemberData(nameof(DnxSdks))]
+        public void DthStartup_ProtocolNegotiation_ZeroIsNoAllowed(DnxSdk sdk)
         {
             var projectName = "EmptyConsoleApp";
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var testProject = _fixture.GetTestProjectPath(projectName);
 
-            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var server = DthTestServer.Create(sdk, testProject))
             using (var client = new DthTestClient(server, 0))
             {
                 client.SetProtocolVersion(0);
@@ -146,13 +124,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
         [Theory]
         [MemberData(nameof(RuntimeComponentsWithBothVersions))]
-        public void DthCompilation_GetDiagnostics_OnEmptyConsoleApp(string flavor, string os, string architecture, int protocolVersion)
+        public void DthCompilation_GetDiagnostics_OnEmptyConsoleApp(DnxSdk sdk, int protocolVersion)
         {
             var projectName = "EmptyConsoleApp";
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var testProject = _fixture.GetTestProjectPath(projectName);
 
-            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var server = DthTestServer.Create(sdk, testProject))
             using (var client = new DthTestClient(server, 0))
             {
                 // Drain the inital messages
@@ -178,14 +155,13 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
         [Theory]
         [MemberData(nameof(RuntimeComponentsWithBothVersions))]
-        public void DthCompilation_RestoreComplete_OnEmptyLibrary(string flavor, string os, string architecture, int protocolVersion)
+        public void DthCompilation_RestoreComplete_OnEmptyLibrary(DnxSdk sdk, int protocolVersion)
         {
             var projectName = "EmptyLibrary";
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             string testProject;
-            using (_fixture.CreateDisposableTestProject(projectName, runtimeHomePath, out testProject))
-            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (_fixture.CreateDisposableTestProject(projectName, sdk, out testProject))
+            using (var server = DthTestServer.Create(sdk, testProject))
             using (var client = new DthTestClient(server, 0))
             {
                 // Drain the inital messages
@@ -199,14 +175,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                           Path.Combine(testProject, "project.json"),
                           overwrite: true);
 
-                string stdOut, stdErr;
-                var restoreExitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomePath,
-                    subcommand: "restore",
-                    arguments: testProject,
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
-                Assert.Equal(0, restoreExitCode);
+                sdk.Dnu.Restore(testProject).EnsureSuccess();
 
                 client.SendPayLoad("RestoreComplete");
 
@@ -220,7 +189,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         {
             get
             {
-                foreach (var combination in RuntimeComponents)
+                foreach (var combination in DnxSdks)
                 {
                     yield return combination.Concat(new object[] { 1, "Project", "UnresolvedProjectSample", "EmptyLibrary", "Unresolved" }).ToArray();
 
@@ -247,14 +216,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
         [Theory]
         [MemberData(nameof(UnresolvedDependencyTestData))]
-        public void DthCompilation_Initialize_UnresolvedDependency(
-            string flavor, string os, string architecture, int protocolVersion, string referenceType,
-            string testProjectName, string expectedUnresolvedDependency, string expectedUnresolvedType)
+        public void DthCompilation_Initialize_UnresolvedDependency(DnxSdk sdk, int protocolVersion, string referenceType, string testProjectName,
+                                                                   string expectedUnresolvedDependency, string expectedUnresolvedType)
         {
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var testProject = _fixture.GetTestProjectPath(testProjectName);
 
-            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var server = DthTestServer.Create(sdk, testProject))
             using (var client = new DthTestClient(server, 0))
             {
                 client.Initialize(testProject, protocolVersion);
@@ -309,19 +276,18 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         }
 
         [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DthNegative_BrokenProjectPathInLockFile_V1(string flavor, string os, string architecture)
+        [MemberData(nameof(DnxSdks))]
+        public void DthNegative_BrokenProjectPathInLockFile_V1(DnxSdk sdk)
         {
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
 
             using (var disposableDir = new DisposableDir())
-            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var server = DthTestServer.Create(sdk, testProject))
             using (var client = new DthTestClient(server, 0))
             {
                 // copy the project to difference location so that the project path in its lock file is invalid
                 var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
-                TestUtils.CopyFolder(testProject, targetPath);
+                Testing.TestUtils.CopyFolder(testProject, targetPath);
 
                 client.Initialize(targetPath, protocolVersion: 1);
                 var messages = client.DrainAllMessages();
@@ -344,19 +310,18 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         }
 
         [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DthNegative_BrokenProjectPathInLockFile_V2(string flavor, string os, string architecture)
+        [MemberData(nameof(DnxSdks))]
+        public void DthNegative_BrokenProjectPathInLockFile_V2(DnxSdk sdk)
         {
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
 
             using (var disposableDir = new DisposableDir())
-            using (var server = DthTestServer.Create(runtimeHomePath, testProject))
+            using (var server = DthTestServer.Create(sdk, testProject))
             using (var client = new DthTestClient(server, 0))
             {
                 // copy the project to difference location so that the project path in its lock file is invalid
                 var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
-                TestUtils.CopyFolder(testProject, targetPath);
+                Testing.TestUtils.CopyFolder(testProject, targetPath);
 
                 client.Initialize(targetPath, protocolVersion: 2);
                 var messages = client.DrainAllMessages();
