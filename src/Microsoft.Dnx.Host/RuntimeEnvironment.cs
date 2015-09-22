@@ -9,43 +9,23 @@ namespace Microsoft.Dnx.Runtime
 {
     public class RuntimeEnvironment : IRuntimeEnvironment
     {
-        private string _osVersion;
-
-        private string _osName;
-
         private string _runtimeVersion;
 
         public RuntimeEnvironment(BootstrapperContext bootstrapperContext)
         {
-#if DNXCORE50
-            RuntimeType = RuntimeTypes.CoreCLR;
-#else
-            RuntimeType = Type.GetType("Mono.Runtime") == null ? RuntimeTypes.CLR : RuntimeTypes.Mono;
-#endif
+            RuntimeType = bootstrapperContext.RuntimeType;
             RuntimeArchitecture = bootstrapperContext.Architecture;
-            _osName = bootstrapperContext.OperatingSystem;
-            _osVersion = bootstrapperContext.OsVersion;
+            OperatingSystem = bootstrapperContext.OperatingSystem;
+            OperatingSystemVersion = bootstrapperContext.OsVersion;
         }
 
-        public string OperatingSystem
-        {
-            get
-            {
-                return _osName;
-            }
-        }
+        public string OperatingSystem { get; }
 
-        public string OperatingSystemVersion
-        {
-            get
-            {
-                return _osVersion;
-            }
-        }
+        public string OperatingSystemVersion { get; }
 
-        public string RuntimeType { get; private set; }
+        public string RuntimeType { get; }
 
-        public string RuntimeArchitecture { get; private set; }
+        public string RuntimeArchitecture { get; }
 
         public string RuntimeVersion
         {
@@ -61,7 +41,6 @@ namespace Microsoft.Dnx.Runtime
                 }
 
                 return _runtimeVersion;
-
             }
         }
     }

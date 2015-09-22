@@ -3,13 +3,6 @@
 
 namespace Microsoft.Dnx.Runtime
 {
-    internal static class RuntimeTypes
-    {
-        public static readonly string CoreCLR = nameof(CoreCLR);
-        public static readonly string CLR = nameof(CLR);
-        public static readonly string Mono = nameof(Mono);
-    }
-
     internal static class RuntimeOperatingSystems
     {
         public static readonly string Windows = nameof(Windows);

@@ -13,15 +13,22 @@ namespace dnx.hostTests
     public class RuntimeEnvironmentTests
     {
         [Fact]
-        public void RuntimeEnvironment_RuntimeType()
+        public void RuntimeEnvironment_InitializedCorrectly()
         {
-            RuntimeEnvironment runtimeEnv = new RuntimeEnvironment(new BootstrapperContext());
-#if DNXCORE50
-            Assert.Equal("CoreCLR", runtimeEnv.RuntimeType);
-#else
-            var runtime = Type.GetType("Mono.Runtime") == null ? "CLR" : "Mono";
-            Assert.Equal(runtime, runtimeEnv.RuntimeType);
-#endif
+            RuntimeEnvironment runtimeEnv =
+                new RuntimeEnvironment(
+                    new BootstrapperContext
+                    {
+                        OperatingSystem = "Windows",
+                        OsVersion = "10.0",
+                        Architecture = "x64",
+                        RuntimeType = "CoreClr"
+                    });
+
+            Assert.Equal(runtimeEnv.OperatingSystem, "Windows");
+            Assert.Equal(runtimeEnv.OperatingSystemVersion, "10.0");
+            Assert.Equal(runtimeEnv.RuntimeArchitecture, "x64");
+            Assert.Equal(runtimeEnv.RuntimeType, "CoreClr");
         }
 
         // Test RID generation
