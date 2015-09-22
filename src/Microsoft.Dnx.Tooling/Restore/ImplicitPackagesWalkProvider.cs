@@ -12,6 +12,20 @@ namespace Microsoft.Dnx.Tooling
     internal class ImplicitPackagesWalkProvider : IWalkProvider
     {
         // Based on values from the real Microsoft.NETCore.Platforms, but without 'aot' since DNX doesn't support .NET Native
+        // These are designed to be an in-memory equivalent to a runtime.json.
+        // Each "RuntimeSpec" defines a RID. The first parameter to the constructor is the name of the RID and the
+        // remaining parameters are the ordered list of RIDs that runtime imports. For example, the following constructor:
+        //
+        //      new RuntimeSpec("win10-x86", "win10", "win81-x86")
+        //
+        // Is equivalent to the following segment in runtime.json:
+        //
+        //      {
+        //          "win10-x86": {
+        //              "#import": [ "win10", "win81-x86" ]
+        //          }
+        //      }
+        //
         private static readonly RuntimeFile ImplicitRuntimeFile = new RuntimeFile(
             new RuntimeSpec("base"),
             new RuntimeSpec("any", "base"),
@@ -41,22 +55,22 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("osx-x64", "osx", "unix-x64"),
 
             new RuntimeSpec("osx.10.10", "osx"),
-            new RuntimeSpec("osx.10.10-x64", "osx-x64", "osx.10.10"),
+            new RuntimeSpec("osx.10.10-x64", "osx.10.10", "osx-x64"),
 
             new RuntimeSpec("linux", "unix"),
             new RuntimeSpec("linux-x64", "linux", "unix-x64"),
 
             new RuntimeSpec("centos", "linux"),
-            new RuntimeSpec("centos-x64", "centos", "linux"),
+            new RuntimeSpec("centos-x64", "centos", "linux-x64"),
 
             new RuntimeSpec("centos.7.1", "centos"),
-            new RuntimeSpec("centos.7.1-x64", "centos-x64", "centos.7.1"),
+            new RuntimeSpec("centos.7.1-x64", "centos.7.1", "centos-x64"),
 
             new RuntimeSpec("ubuntu", "linux"),
-            new RuntimeSpec("ubuntu-x64", "ubuntu", "linux"),
+            new RuntimeSpec("ubuntu-x64", "ubuntu", "linux-x64"),
 
             new RuntimeSpec("ubuntu.14.04", "ubuntu"),
-            new RuntimeSpec("ubuntu.14.04-x64", "ubuntu-x64", "ubuntu.14.04"));
+            new RuntimeSpec("ubuntu.14.04-x64", "ubuntu.14.04", "ubuntu-x64"));
 
         public static readonly SemanticVersion ImplicitRuntimePackageVersion = new SemanticVersion("0.0.0");
         public static readonly string ImplicitRuntimePackageId = "Microsoft.NETCore.Platforms";
