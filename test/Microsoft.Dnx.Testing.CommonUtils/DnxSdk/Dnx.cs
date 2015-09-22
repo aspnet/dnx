@@ -15,6 +15,11 @@ namespace Microsoft.Dnx.Testing
             _sdkPath = sdkPath;
         }
 
+        public ExecResult Execute(Project project, string commandLine = null, bool dnxTraceOn = false)
+        {
+            return Execute($"-p \"{project.ProjectDirectory}\" {commandLine ?? "run"}", dnxTraceOn);
+        }
+
         public ExecResult Execute(string commandLine, bool dnxTraceOn = false)
         {
             string command;

@@ -171,7 +171,7 @@ namespace Microsoft.Dnx.Tooling
 
         private async Task<WalkProviderMatch> FindLibraryMatch(RestoreContext context, LibraryRange libraryRange)
         {
-            var projectMatch = await FindProjectMatch(context, libraryRange.Name);
+            var projectMatch = await FindProjectMatch(context, libraryRange);
 
             if (projectMatch != null)
             {
@@ -277,10 +277,8 @@ namespace Microsoft.Dnx.Tooling
             }
         }
 
-        private async Task<WalkProviderMatch> FindProjectMatch(RestoreContext context, string name)
+        private async Task<WalkProviderMatch> FindProjectMatch(RestoreContext context, LibraryRange libraryRange)
         {
-            var libraryRange = new LibraryRange(name, frameworkReference: false);
-
             foreach (var provider in context.ProjectLibraryProviders)
             {
                 var match = await provider.FindLibrary(libraryRange, context.FrameworkName, includeUnlisted: false);

@@ -34,6 +34,7 @@ namespace Microsoft.Dnx.Tooling
             return Task.FromResult(new WalkProviderMatch
             {
                 Library = description.Identity,
+                LibraryType = description.Type,
                 Path = description.Path,
                 Provider = this,
             });

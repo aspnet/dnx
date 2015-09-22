@@ -28,9 +28,14 @@ namespace Microsoft.Dnx.Tooling
 
         public async Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, FrameworkName targetFramework, bool includeUnlisted)
         {
+            if (!DependencyTargets.SupportsPackage(libraryRange.Target))
+            {
+                return null;
+            }
+
             var results = await _source.FindPackagesByIdAsync(libraryRange.Name);
             PackageInfo bestResult = null;
-            if(!includeUnlisted)
+            if (!includeUnlisted)
             {
                 results = results.Where(p => p.Listed);
             }
@@ -54,6 +59,7 @@ namespace Microsoft.Dnx.Tooling
             return new WalkProviderMatch
             {
                 Library = new LibraryIdentity(bestResult.Id, bestResult.Version, isGacOrFrameworkReference: false),
+                LibraryType = LibraryTypes.Package,
                 Path = bestResult.ContentUri,
                 Provider = this,
             };

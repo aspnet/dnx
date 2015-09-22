@@ -463,12 +463,14 @@ namespace Microsoft.Dnx.Tooling
                         if (!IgnoreMissingDependencies)
                         {
                             if (!node.LibraryRange.IsGacOrFrameworkReference &&
-                                 node.LibraryRange.VersionRange != null &&
                                  missingItems.Add(node.LibraryRange))
                             {
-                                var errorMessage = string.Format("Unable to locate {0} {1}",
-                                    node.LibraryRange.Name.Red().Bold(),
-                                    node.LibraryRange.VersionRange);
+                                var versionString = node.LibraryRange.VersionRange == null ?
+                                    string.Empty :
+                                    (" " + node.LibraryRange.VersionRange.ToString());
+                                var errorMessage =
+                                    $"Unable to locate {DependencyTargets.GetDisplayForTarget(node.LibraryRange.Target)} " +
+                                    $"{node.LibraryRange.Name.Red().Bold()}{versionString}";
                                 summary.ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
                                 Reports.Error.WriteLine(errorMessage);
                                 success = false;
@@ -505,7 +507,7 @@ namespace Microsoft.Dnx.Tooling
                             graphItems.Add(node.Item);
                         }
 
-                        context.Libraries.Add(node.Item.Match.Library);
+                        context.Matches.Add(node.Item.Match);
                     }
                 });
             }
@@ -829,7 +831,7 @@ namespace Microsoft.Dnx.Tooling
             // Record all libraries used
             foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
             {
-                if (item.Match.Provider is ImplicitPackagesWalkProvider)
+                if (item.Match.LibraryType.Equals(LibraryTypes.Implicit))
                 {
                     continue;
                 }
@@ -840,19 +842,23 @@ namespace Microsoft.Dnx.Tooling
                     continue;
                 }
 
-                var packageInfo = repository.FindPackagesById(library.Name)
-                                            .FirstOrDefault(p => p.Version == library.Version);
-
-                var projectDependency = projectResolver.FindProject(library.Name);
-
-                if (projectDependency != null)
+                if (item.Match.LibraryType.Equals(LibraryTypes.Project))
                 {
+                    var projectDependency = projectResolver.FindProject(library.Name);
                     var projectLibrary = LockFileUtils.CreateLockFileProjectLibrary(project, projectDependency);
 
                     lockFile.ProjectLibraries.Add(projectLibrary);
                 }
-                else if (packageInfo != null)
+                else if (item.Match.LibraryType.Equals(LibraryTypes.Package))
                 {
+                    var packageInfo = repository.FindPackagesById(library.Name)
+                                                .FirstOrDefault(p => p.Version == library.Version);
+
+                    if (packageInfo == null)
+                    {
+                        throw new InvalidOperationException($"Unresolved package: {library.Name}");
+                    }
+
                     LockFilePackageLibrary previousLibrary = null;
                     previousPackageLibraries?.TryGetValue(Tuple.Create(library.Name, library.Version), out previousLibrary);
 
@@ -880,31 +886,31 @@ namespace Microsoft.Dnx.Tooling
                 target.TargetFramework = context.RestoreContext.FrameworkName;
                 target.RuntimeIdentifier = context.RestoreContext.RuntimeName;
 
-                foreach (var library in context.Libraries.OrderBy(x => x, new LibraryComparer()))
+                foreach (var match in context.Matches.OrderBy(x => x.Library, new LibraryComparer()))
                 {
-                    if (library.Name == project.Name)
+                    if (match.Library.Name == project.Name)
                     {
                         continue;
                     }
 
-                    var packageInfo = repository.FindPackagesById(library.Name)
-                                                .FirstOrDefault(p => p.Version == library.Version);
-
-                    var projectDependency = projectResolver.FindProject(library.Name);
-                    if (projectDependency != null)
+                    if (match.LibraryType.Equals(LibraryTypes.Project))
                     {
+                        var projectDependency = projectResolver.FindProject(match.Library.Name);
                         var projectTargetLibrary = LockFileUtils.CreateLockFileTargetLibrary(projectDependency, context.RestoreContext);
                         target.Libraries.Add(projectTargetLibrary);
                     }
-                    else if (packageInfo != null)
+                    else if (match.LibraryType.Equals(LibraryTypes.Package))
                     {
+                        var packageInfo = repository.FindPackagesById(match.Library.Name)
+                                                    .FirstOrDefault(p => p.Version == match.Library.Version);
+
                         var package = packageInfo.Package;
 
                         target.Libraries.Add(LockFileUtils.CreateLockFileTargetLibrary(
-                            packageLibraries[Tuple.Create(library.Name, library.Version)],
+                            packageLibraries[Tuple.Create(match.Library.Name, match.Library.Version)],
                             package,
                             context.RestoreContext,
-                            correctedPackageName: library.Name));
+                            correctedPackageName: match.Library.Name));
                     }
                 }
 
@@ -1053,7 +1059,7 @@ namespace Microsoft.Dnx.Tooling
         {
             public RestoreContext RestoreContext { get; set; }
 
-            public HashSet<LibraryIdentity> Libraries { get; set; } = new HashSet<LibraryIdentity>();
+            public HashSet<WalkProviderMatch> Matches { get; set; } = new HashSet<WalkProviderMatch>();
 
             public GraphNode Root { get; set; }
         }

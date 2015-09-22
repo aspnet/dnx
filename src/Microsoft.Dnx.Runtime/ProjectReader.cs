@@ -199,10 +199,11 @@ namespace Microsoft.Dnx.Runtime
                     var dependencyValue = dependencies.Value(dependencyKey);
                     var dependencyTypeValue = LibraryDependencyType.Default;
                     JsonString dependencyVersionAsString = null;
+                    string target = null;
 
                     if (dependencyValue is JsonObject)
                     {
-                        // "dependencies" : { "Name" : { "version": "1.0", "type": "build" } }
+                        // "dependencies" : { "Name" : { "version": "1.0", "type": "build", "target": "project" } }
                         var dependencyValueAsObject = (JsonObject)dependencyValue;
                         dependencyVersionAsString = dependencyValueAsObject.ValueAsString("version");
 
@@ -212,6 +213,9 @@ namespace Microsoft.Dnx.Runtime
                         {
                             dependencyTypeValue = LibraryDependencyType.Parse(type.Value);
                         }
+
+                        // Read the target if specified
+                        target = dependencyValueAsObject.ValueAsString("target")?.Value;
                     }
                     else if (dependencyValue is JsonString)
                     {
@@ -249,7 +253,8 @@ namespace Microsoft.Dnx.Runtime
                             VersionRange = dependencyVersionRange,
                             FileName = projectPath,
                             Line = dependencyValue.Line,
-                            Column = dependencyValue.Column
+                            Column = dependencyValue.Column,
+                            Target = target
                         },
                         Type = dependencyTypeValue
                     });

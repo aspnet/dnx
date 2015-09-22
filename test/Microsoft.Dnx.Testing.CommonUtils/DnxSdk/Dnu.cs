@@ -34,6 +34,15 @@ namespace Microsoft.Dnx.Testing
         }
 
         public ExecResult Restore(
+            Solution solution,
+            string packagesDir = null,
+            IEnumerable<string> feeds = null,
+            string additionalArguments = null)
+        {
+            return Restore(solution.RootPath, packagesDir, feeds, additionalArguments);
+        }
+        
+        public ExecResult Restore(
             Project project,
             string packagesDir = null,
             IEnumerable<string> feeds = null,

@@ -31,6 +31,11 @@ namespace Microsoft.Dnx.Tooling
                 return null;
             }
 
+            if (!DependencyTargets.SupportsProject(libraryRange.Target))
+            {
+                return null;
+            }
+
             string name = libraryRange.Name;
 
             Runtime.Project project;

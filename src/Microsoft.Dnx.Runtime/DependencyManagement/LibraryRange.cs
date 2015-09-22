@@ -22,6 +22,8 @@ namespace Microsoft.Dnx.Runtime
 
         public int Column { get; set; }
 
+        public string Target { get; set; }
+
         public LibraryRange(string name, bool frameworkReference)
         {
             Name = name;

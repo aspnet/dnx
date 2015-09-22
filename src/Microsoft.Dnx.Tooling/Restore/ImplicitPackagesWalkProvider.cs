@@ -97,6 +97,7 @@ namespace Microsoft.Dnx.Tooling
                 return Task.FromResult(new WalkProviderMatch()
                 {
                     Provider = this,
+                    LibraryType = LibraryTypes.Implicit,
                     Library = new LibraryIdentity(ImplicitRuntimePackageId, ImplicitRuntimePackageVersion, isGacOrFrameworkReference: false)
                 });
             }

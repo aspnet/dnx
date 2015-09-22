@@ -1,0 +1,18 @@
+﻿{
+    "version": "1.0.0",
+
+    "configurations": {
+        "package": {
+            "compilationOptions": { "define": [ "PACKAGE" ] }
+        }
+    },
+
+    "frameworks": {
+        "dnx451": { },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Runtime": "4.0.0-beta-*"
+            }
+        }
+    }
+}
