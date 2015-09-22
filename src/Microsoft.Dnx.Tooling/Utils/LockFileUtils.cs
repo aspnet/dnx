@@ -163,15 +163,15 @@ namespace Microsoft.Dnx.Tooling.Utils
             var criteriaBuilderWithTfm = new SelectionCriteriaBuilder(patterns.Properties.Definitions);
             var criteriaBuilderWithoutTfm = new SelectionCriteriaBuilder(patterns.Properties.Definitions);
 
-            if (context.RuntimeSpecs != null)
+            if (context.AllRuntimeNames != null)
             {
-                foreach (var runtimeSpec in context.RuntimeSpecs)
+                foreach (var runtimeName in context.AllRuntimeNames)
                 {
                     criteriaBuilderWithTfm = criteriaBuilderWithTfm
-                        .Add["tfm", framework]["rid", runtimeSpec.Name];
+                        .Add["tfm", framework]["rid", runtimeName];
 
                     criteriaBuilderWithoutTfm = criteriaBuilderWithoutTfm
-                        .Add["rid", runtimeSpec.Name];
+                        .Add["rid", runtimeName];
                 }
             }
 

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 
@@ -9,9 +10,9 @@ namespace Microsoft.Dnx.Tooling
     internal class ReportsFactory
     {
         private readonly IRuntimeEnvironment _runtimeEnv;
-        private readonly bool _defaultVerbose;
+        private readonly Func<bool> _defaultVerbose;
 
-        public ReportsFactory(IRuntimeEnvironment runtimeEnv, bool verbose)
+        public ReportsFactory(IRuntimeEnvironment runtimeEnv, Func<bool> verbose)
         {
             _runtimeEnv = runtimeEnv;
             _defaultVerbose = verbose;
@@ -19,7 +20,7 @@ namespace Microsoft.Dnx.Tooling
 
         public Reports CreateReports(bool quiet)
         {
-            return CreateReports(_defaultVerbose, quiet);
+            return CreateReports(_defaultVerbose(), quiet);
         }
 
         public Reports CreateReports(bool verbose, bool quiet)

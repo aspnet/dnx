@@ -67,7 +67,8 @@ namespace Microsoft.Dnx.Tooling
                 return 2;
             });
 
-            var reportsFactory = new ReportsFactory(_runtimeEnv, optionVerbose.HasValue());
+            // Defer reading option verbose until AFTER execute.
+            var reportsFactory = new ReportsFactory(_runtimeEnv, () => optionVerbose.HasValue());
 
             BuildConsoleCommand.Register(app, reportsFactory, _hostServices);
             CommandsConsoleCommand.Register(app, reportsFactory, _environment);

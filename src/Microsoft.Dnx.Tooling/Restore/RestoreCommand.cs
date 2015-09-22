@@ -398,21 +398,23 @@ namespace Microsoft.Dnx.Tooling
 
                         foreach (var runtimeName in restoreRuntimes)
                         {
-                            Reports.Verbose.WriteLine($"Restoring packages for {pair.context.FrameworkName} on {runtimeName}...");
-                            var runtimeSpecs = new List<RuntimeSpec>();
-                            var runtimesw = Stopwatch.StartNew();
-                            FindRuntimeSpecs(
+                            Reports.WriteVerbose($"Restoring packages for {pair.context.FrameworkName} on {runtimeName}...");
+                            var runtimeDependencies = new Dictionary<string, DependencySpec>();
+                            var runtimeNames = new HashSet<string>();
+                            var runtimeStopwatch = Stopwatch.StartNew();
+                            FindRuntimeDependencies(
                                 runtimeName,
                                 runtimeFiles,
-                                runtimeSpecs,
+                                runtimeDependencies,
+                                runtimeNames,
                                 _ => false);
-                            runtimesw.Stop();
-                            Reports.Verbose.WriteLine($" Scanned Runtime graph in {runtimesw.ElapsedMilliseconds:0.00}ms");
+                            runtimeStopwatch.Stop();
+                            Reports.WriteVerbose($" Scanned Runtime graph in {runtimeStopwatch.ElapsedMilliseconds:0.00}ms");
 
                             // If there are no runtime specs in the graph, we still want to restore for the specified runtime, so synthesize one
-                            if (!runtimeSpecs.Any(r => r.Name.Equals(runtimeName)))
+                            if (!runtimeNames.Any(r => r.Equals(runtimeName)))
                             {
-                                runtimeSpecs.Add(new RuntimeSpec() { Name = runtimeName });
+                                runtimeNames.Add(runtimeName);
                             }
 
                             var runtimeContext = new RestoreContext
@@ -422,13 +424,15 @@ namespace Microsoft.Dnx.Tooling
                                 LocalLibraryProviders = pair.context.LocalLibraryProviders,
                                 RemoteLibraryProviders = pair.context.RemoteLibraryProviders,
                                 RuntimeName = runtimeName,
-                                RuntimeSpecs = runtimeSpecs,
+                                AllRuntimeNames = runtimeNames,
+                                RuntimeDependencies = runtimeDependencies,
                                 MatchCache = cache
                             };
                             var projectLibrary = new LibraryRange(project.Name, frameworkReference: false)
                             {
                                 VersionRange = new SemanticVersionRange(project.Version)
                             };
+
                             runtimeTasks.Add(CreateGraphNode(restoreOperations, runtimeContext, projectLibrary, _ => true));
                         }
                     }
@@ -572,7 +576,10 @@ namespace Microsoft.Dnx.Tooling
 
         private async Task<TargetContext> CreateGraphNode(RestoreOperations restoreOperations, RestoreContext context, LibraryRange libraryRange, Func<object, bool> predicate)
         {
+            var walkStopwatch = Stopwatch.StartNew();
             var node = await restoreOperations.CreateGraphNode(context, libraryRange, predicate);
+            Reports.WriteVerbose($" Walked graph for {context.FrameworkName}/{context.RuntimeName} in {walkStopwatch.ElapsedMilliseconds:0.00}ms");
+            walkStopwatch.Stop();
             return new TargetContext
             {
                 RestoreContext = context,
@@ -580,14 +587,13 @@ namespace Microsoft.Dnx.Tooling
             };
         }
 
-        private void FindRuntimeSpecs(
+        private void FindRuntimeDependencies(
             string runtimeName,
             List<RuntimeFile> runtimeFiles,
-            List<RuntimeSpec> effectiveRuntimeSpecs,
+            Dictionary<string, DependencySpec> effectiveRuntimeSpecs,
+            HashSet<string> allRuntimeNames,
             Func<string, bool> circularImport)
         {
-            effectiveRuntimeSpecs.RemoveAll(spec => spec.Name == runtimeName);
-
             IEnumerable<string> imports = null;
             foreach (var runtimeFile in runtimeFiles)
             {
@@ -602,7 +608,16 @@ namespace Microsoft.Dnx.Tooling
                         }
                         imports = runtimeSpec.Import;
                     }
-                    effectiveRuntimeSpecs.Add(runtimeSpec);
+
+                    allRuntimeNames.Add(runtimeSpec.Name);
+
+                    // Load dependencies provided by this runtime file
+                    foreach (var dependencySpec in runtimeSpec.Dependencies.Values)
+                    {
+                        // New dependency specs replace existing ones
+                        // This matches the NuGet3 behavior: https://github.com/NuGet/NuGet3/blob/dev/src/NuGet.RuntimeModel/RuntimeDescription.cs#L99
+                        effectiveRuntimeSpecs[dependencySpec.Name] = dependencySpec;
+                    }
                 }
             }
             if (imports != null)
@@ -616,10 +631,11 @@ namespace Microsoft.Dnx.Tooling
                             throw new Exception(string.Format("Circular import for {0}", runtimeName));
                         }
                     }
-                    FindRuntimeSpecs(
+                    FindRuntimeDependencies(
                         import,
                         runtimeFiles,
                         effectiveRuntimeSpecs,
+                        allRuntimeNames,
                         name => string.Equals(name, runtimeName, StringComparison.Ordinal) || circularImport(name));
                 }
             }

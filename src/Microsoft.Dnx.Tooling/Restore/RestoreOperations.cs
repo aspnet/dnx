@@ -23,13 +23,9 @@ namespace Microsoft.Dnx.Tooling
 
         public async Task<GraphNode> CreateGraphNode(RestoreContext context, LibraryRange libraryRange, Func<string, bool> predicate)
         {
-            var sw = new Stopwatch();
-            sw.Start();
-
             var dependencies = new List<LibraryDependency>();
 
-
-            if (context.RuntimeSpecs != null && !string.IsNullOrEmpty(context.RuntimeName) && context.RuntimeDependencies != null)
+            if (context.RuntimeDependencies != null)
             {
                 DependencySpec dependencyMapping;
                 if (context.RuntimeDependencies.TryGetValue(libraryRange.Name, out dependencyMapping))
