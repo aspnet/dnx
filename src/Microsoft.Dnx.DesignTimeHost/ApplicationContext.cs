@@ -424,6 +424,12 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             _local.ProjectDiagnostics = new DiagnosticsListMessage(state.Diagnostics);
 
+            // If the search paths are updated all the projects dependences needs to be further verified,
+            // unless the it is during the initialization (_remote.ProjectInforamtion == null)
+            var searchPathUpdated = _remote.ProjectInformation != null &&
+                                    IsDifferent(_local.ProjectInformation.ProjectSearchPaths,
+                                                _remote.ProjectInformation.ProjectSearchPaths);
+
             foreach (var project in state.Projects)
             {
                 var frameworkData = project.TargetFramework;
@@ -456,6 +462,24 @@ namespace Microsoft.Dnx.DesignTimeHost
                     },
                     DependencyDiagnostics = new DiagnosticsListMessage(project.DependencyInfo.Diagnostics, frameworkData)
                 };
+
+                if (searchPathUpdated)
+                {
+                    var allResolvedProjects = projectWorld.Dependencies.Dependencies.Values
+                                                          .Where(description => description.Type == "Project" && description.Resolved);
+
+                    var searchPathSet = new HashSet<string>(_local.ProjectInformation.ProjectSearchPaths, StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var projectDescription in allResolvedProjects)
+                    {
+                        var ancestor = Path.GetDirectoryName(Path.GetDirectoryName(projectDescription.Path));
+                        if (!searchPathSet.Contains(ancestor))
+                        {
+                            projectDescription.Resolved = false;
+                        }
+                    }
+
+                }
 
                 _local.Projects[project.FrameworkName] = projectWorld;
             }
