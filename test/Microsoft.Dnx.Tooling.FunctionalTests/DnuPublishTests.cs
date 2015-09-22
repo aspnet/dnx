@@ -139,23 +139,14 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            var outputWebConfigTemplate = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-  <appSettings>
-    <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\runtimes"" />
-    <add key=""{2}"" value="""" />
-    <add key=""{3}"" value="""" />
-    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
-  </appSettings>
-  <system.web>
-    <httpRuntime targetFramework=""4.5.1"" />
-  </system.web>
-</configuration>", Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigRuntimePath,
-                Constants.WebConfigRuntimeVersion,
-                Constants.WebConfigRuntimeFlavor,
-                Constants.WebConfigRuntimeAppBase);
+            var outputWebConfigTemplate = @"<configuration>
+  <system.webServer>
+    <handlers>
+      <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
+    </handlers>
+    <httpPlatform processPath=""..\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+  </system.webServer>
+</configuration>";
 
             string runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -256,23 +247,14 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
     }
   }
 }".Replace("PROJECT_NAME", _projectName);
-            var outputWebConfigTemplate = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-  <appSettings>
-    <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\runtimes"" />
-    <add key=""{2}"" value="""" />
-    <add key=""{3}"" value="""" />
-    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
-  </appSettings>
-  <system.web>
-    <httpRuntime targetFramework=""4.5.1"" />
-  </system.web>
-</configuration>", Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigRuntimePath,
-                Constants.WebConfigRuntimeVersion,
-                Constants.WebConfigRuntimeFlavor,
-                Constants.WebConfigRuntimeAppBase);
+            var outputWebConfigTemplate = @"<configuration>
+  <system.webServer>
+    <handlers>
+      <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
+    </handlers>
+    <httpPlatform processPath=""..\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+  </system.webServer>
+</configuration>";
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
@@ -1220,111 +1202,6 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
             }
         }
 
-        // DNX on Mono does not yet support 4.6
-        [ConditionalTheory]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
-        [MemberData(nameof(ClrRuntimeComponents))]
-        public void DnuPublishWebApp_Dnx46(string flavor, string os, string architecture)
-        {
-            DnuPublishWebApp_TargetParticularFramework(flavor, os, architecture, "dnx46");
-        }
-
-        // DNX on Mono does not yet support 4.5.2
-        [ConditionalTheory]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
-        [MemberData(nameof(ClrRuntimeComponents))]
-        public void DnuPublishWebApp_Dnx452(string flavor, string os, string architecture)
-        {
-            DnuPublishWebApp_TargetParticularFramework(flavor, os, architecture, "dnx452");
-        }
-
-        [Theory]
-        [MemberData(nameof(ClrRuntimeComponents))]
-        public void DnuPublishWebApp_Dnx451(string flavor, string os, string architecture)
-        {
-            DnuPublishWebApp_TargetParticularFramework(flavor, os, architecture, "dnx451");
-        }
-
-        private void DnuPublishWebApp_TargetParticularFramework(string flavor, string os, string architecture, string framework)
-        {
-            var fx = NuGet.VersionUtility.ParseFrameworkName(framework);
-            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-
-            var projectStructure = @"{
-  '.': ['project.json', 'Program.cs'],
-  'public': ['index.html'],
-}";
-            var expectedOutputStructure = @"{
-  'wwwroot': ['web.config', 'index.html'],
-  'approot': {
-    'global.json': '',
-    'src': {
-      'PROJECT_NAME': {
-        '.': ['project.json', 'project.lock.json', 'Program.cs']
-      }
-    }
-  }
-}".Replace("PROJECT_NAME", _projectName);
-            var outputWebConfigTemplate = $@"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-  <appSettings>
-    <add key=""{Constants.WebConfigBootstrapperVersion}"" value="""" />
-    <add key=""{Constants.WebConfigRuntimePath}"" value=""..\approot\runtimes"" />
-    <add key=""{Constants.WebConfigRuntimeVersion}"" value="""" />
-    <add key=""{Constants.WebConfigRuntimeFlavor}"" value="""" />
-    <add key=""{Constants.WebConfigRuntimeAppBase}"" value=""..\approot\src\{{0}}"" />
-  </appSettings>
-  <system.web>
-    <httpRuntime targetFramework=""{fx.Version}"" />
-  </system.web>
-</configuration>";
-
-            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
-            {
-                DirTree.CreateFromJson(projectStructure)
-                    .WithFileContents("project.json", @"{
-  ""webroot"": ""public"",
-  ""frameworks"": {
-    """ + framework + @""": {}
-  }
-}")
-                    .WriteTo(testEnv.ProjectPath);
-
-                var environment = new Dictionary<string, string>()
-                {
-                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
-                };
-
-                var exitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomeDir,
-                    subcommand: "publish",
-                    arguments: string.Format("--out {0} --wwwroot-out wwwroot",
-                        testEnv.PublishOutputDirPath),
-                    environment: environment,
-                    workingDir: testEnv.ProjectPath);
-                Assert.Equal(0, exitCode);
-
-                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""webroot"": ""../../../wwwroot"",
-  ""frameworks"": {
-    """ + framework + @""": {}
-  }
-}")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFileTemplate.Replace("FRAMEWORK_NAME", fx.ToString()))
-                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""projects"": [
-    ""src""
-  ],
-  ""packages"": ""packages""
-}")
-                    .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
-                    compareFileContents: true));
-            }
-        }
-
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
         public void DnuPublishWebApp_CopyExistingWebConfig(string flavor, string os, string architecture)
@@ -1351,124 +1228,17 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
     <add key=""non-related-key"" value=""non-related-value"" />
   </nonRelatedElement>
 </configuration>";
-            var outputWebConfigTemplate = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
+            var outputWebConfigTemplate = @"<configuration>
   <nonRelatedElement>
     <add key=""non-related-key"" value=""non-related-value"" />
   </nonRelatedElement>
-  <appSettings>
-    <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\runtimes"" />
-    <add key=""{2}"" value="""" />
-    <add key=""{3}"" value="""" />
-    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
-  </appSettings>
-  <system.web>
-    <httpRuntime targetFramework=""4.5.1"" />
-  </system.web>
-</configuration>", Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigRuntimePath,
-                Constants.WebConfigRuntimeVersion,
-                Constants.WebConfigRuntimeFlavor,
-                Constants.WebConfigRuntimeAppBase);
-
-            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
-            {
-                DirTree.CreateFromJson(projectStructure)
-                    .WithFileContents("project.json", @"{
-  ""webroot"": ""public"",
-  ""frameworks"": {
-    ""dnx451"": {}
-  }
-}")
-                    .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
-                    .WriteTo(testEnv.ProjectPath);
-
-                var environment = new Dictionary<string, string>()
-                {
-                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
-                };
-
-                var exitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomeDir,
-                    subcommand: "publish",
-                    arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
-                        testEnv.PublishOutputDirPath),
-                    environment: environment,
-                    workingDir: testEnv.ProjectPath);
-                Assert.Equal(0, exitCode);
-
-                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""webroot"": ""../../../wwwroot"",
-  ""frameworks"": {
-    ""dnx451"": {}
-  }
-}")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
-                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""projects"": [
-    ""src""
-  ],
-  ""packages"": ""packages""
-}")
-                    .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
-                    compareFileContents: true));
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void DnuPublishWebApp_PreserveExistingFrameworkRequest(string flavor, string os, string architecture)
-        {
-            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-
-            var projectStructure = @"{
-  '.': ['project.json'],
-  'public': ['index.html', 'web.config'],
-  'packages': {}
-}";
-            var expectedOutputStructure = @"{
-  'wwwroot': ['web.config', 'index.html'],
-  'approot': {
-    'global.json': '',
-    'src': {
-      'PROJECT_NAME': ['project.json', 'project.lock.json']
-    }
-  }
-}".Replace("PROJECT_NAME", _projectName);
-            var originalWebConfigContents = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-  <nonRelatedElement>
-    <add key=""non-related-key"" value=""non-related-value"" />
-  </nonRelatedElement>
-  <system.web>
-    <httpRuntime targetFramework=""4.7.3"" /> <!-- Bogus framework name :) -->
-  </system.web>
+  <system.webServer>
+    <handlers>
+      <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
+    </handlers>
+    <httpPlatform processPath=""..\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+  </system.webServer>
 </configuration>";
-            var outputWebConfigTemplate = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-  <nonRelatedElement>
-    <add key=""non-related-key"" value=""non-related-value"" />
-  </nonRelatedElement>
-  <system.web>
-    <httpRuntime targetFramework=""4.7.3"" />
-    <!-- Bogus framework name :) -->
-  </system.web>
-  <appSettings>
-    <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\runtimes"" />
-    <add key=""{2}"" value="""" />
-    <add key=""{3}"" value="""" />
-    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
-  </appSettings>
-</configuration>", Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigRuntimePath,
-                Constants.WebConfigRuntimeVersion,
-                Constants.WebConfigRuntimeFlavor,
-                Constants.WebConfigRuntimeAppBase);
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
@@ -1537,46 +1307,30 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
     }
   }
 }".Replace("PROJECT_NAME", _projectName);
-            var originalWebConfigContents = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-  <nonRelatedElement>
-    <add key=""non-related-key"" value=""OLD_VALUE"" />
-  </nonRelatedElement>
-  <appSettings>
-    <add key=""non-related-key"" value=""OLD_VALUE"" />
-    <add key=""{0}"" value=""OLD_VALUE"" />
-    <add key=""{1}"" value=""OLD_VALUE"" />
-    <add key=""{2}"" value=""OLD_VALUE"" />
-    <add key=""{3}"" value=""OLD_VALUE"" />
-    <add key=""{4}"" value=""OLD_VALUE"" />
-  </appSettings>
-</configuration>", Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigRuntimePath,
-                Constants.WebConfigRuntimeVersion,
-                Constants.WebConfigRuntimeFlavor,
-                Constants.WebConfigRuntimeAppBase);
 
-            var outputWebConfigContents = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
+            var originalWebConfigContents = @"<configuration>
   <nonRelatedElement>
     <add key=""non-related-key"" value=""OLD_VALUE"" />
   </nonRelatedElement>
-  <appSettings>
+  <system.webServer>
+    <handlers>
+      <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
+    </handlers>
+    <httpPlatform processPath=""%DNX_PATH%"" arguments=""%DNX_ARGS%"" stdoutLogEnabled=""false"" rapidFailsPerMinute=""5""></httpPlatform>
+  </system.webServer>
+</configuration>";
+
+            var outputWebConfigContents = @"<configuration>
+  <nonRelatedElement>
     <add key=""non-related-key"" value=""OLD_VALUE"" />
-    <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\runtimes"" />
-    <add key=""{2}"" value="""" />
-    <add key=""{3}"" value="""" />
-    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
-  </appSettings>
-  <system.web>
-    <httpRuntime targetFramework=""4.5.1"" />
-  </system.web>
-</configuration>", Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigRuntimePath,
-                Constants.WebConfigRuntimeVersion,
-                Constants.WebConfigRuntimeFlavor,
-                Constants.WebConfigRuntimeAppBase);
+  </nonRelatedElement>
+  <system.webServer>
+    <handlers>
+      <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
+    </handlers>
+    <httpPlatform processPath=""..\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log"" rapidFailsPerMinute=""5""></httpPlatform>
+  </system.webServer>
+</configuration>";
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {

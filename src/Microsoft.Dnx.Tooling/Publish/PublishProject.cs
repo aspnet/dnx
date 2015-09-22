@@ -560,12 +560,32 @@ namespace Microsoft.Dnx.Tooling.Publish
   </httpPlatform>
 </system.webServer></configuration>");
 
-            var result = targetDocument.Root.MergeWith(xDoc.Root, (name, sourceChild, targetChild) =>
+            var attributesToOverwrite = new[]
+            {
+                "processPath",
+                "arguments",
+                "stdoutLogEnabled",
+                "stdoutLogFile"
+            };
+
+            var result = xDoc.Root.MergeWith(targetDocument.Root, (name, sourceChild, targetChild) =>
             {
                 if (sourceChild != null)
                 {
-                    // REVIEW: Should we preserve other options?
                     sourceChild.Parent.Add(targetChild);
+
+                    // We're only going to merge the httpPlatform element attributes we don't care about
+                    if (string.Equals(name.LocalName, "httpPlatform"))
+                    {
+                        foreach (var attr in sourceChild.Attributes())
+                        {
+                            if (!attributesToOverwrite.Contains(attr.Name.LocalName))
+                            {
+                                targetChild.SetAttributeValue(attr.Name, attr.Value);
+                            }
+                        }
+                    }
+
                     sourceChild.Remove();
                     return true;
                 }
