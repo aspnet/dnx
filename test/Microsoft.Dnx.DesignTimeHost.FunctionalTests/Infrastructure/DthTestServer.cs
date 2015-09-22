@@ -9,8 +9,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Testing;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 {
@@ -19,12 +19,11 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
         private const string DthName = "Microsoft.Dnx.DesignTimeHost";
         private Process _process;
 
-        public static DthTestServer Create(string runtimeHomePath, string projectPath, TimeSpan timeout)
+        public static DthTestServer Create(DnxSdk sdk, string projectPath, TimeSpan timeout)
         {
-            var runtimeRoot = GetRuntimeRoot(runtimeHomePath);
-            var bootstraperExe = Path.Combine(runtimeRoot, "bin", Constants.BootstrapperExeName);
+            var bootstraperExe = Path.Combine(sdk.Location, "bin", Constants.BootstrapperExeName);
 
-            var dthPath = Path.Combine(runtimeRoot, "bin", "lib", DthName, $"{DthName}.dll");
+            var dthPath = Path.Combine(sdk.Location, "bin", "lib", DthName, $"{DthName}.dll");
             if (!File.Exists(dthPath))
             {
                 throw new InvalidOperationException($"Can't find {DthName} at {dthPath}.");
@@ -54,7 +53,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             {
                 if (args.Data != null)
                 {
-                    stdout.AppendLine(TestUtils.RemoveAnsiColorCodes(args.Data));
+                    stdout.AppendLine(CommonTestUtils.TestUtils.RemoveAnsiColorCodes(args.Data));
 
                     if (string.Equals(args.Data, successOuput, StringComparison.Ordinal))
                     {
@@ -69,7 +68,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             {
                 if (args.Data != null)
                 {
-                    stderr.AppendLine(TestUtils.RemoveAnsiColorCodes(args.Data));
+                    stderr.AppendLine(CommonTestUtils.TestUtils.RemoveAnsiColorCodes(args.Data));
                 }
             };
 
@@ -96,9 +95,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             }
         }
 
-        public static DthTestServer Create(string runtimeHomePath, string projectPath)
+        public static DthTestServer Create(DnxSdk sdk, string projectPath)
         {
-            return Create(runtimeHomePath, projectPath, TimeSpan.FromSeconds(10));
+            return Create(sdk, projectPath, TimeSpan.FromSeconds(10));
         }
 
         public DthTestServer(Process process, int port, string hostId)
