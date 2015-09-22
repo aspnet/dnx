@@ -5,25 +5,25 @@ using System;
 using System.IO;
 using System.Linq;
 using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Testing;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 {
-    public class DthFunctionalTestFixture : DnxRuntimeFixture
+    public class DthFunctionalTestFixture : IDisposable
     {
         private readonly DisposableDir _context;
 
-        public DthFunctionalTestFixture() : base()
+        public DthFunctionalTestFixture()
         {
             _context = new DisposableDir();
 
             PrepareTestProjects();
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             _context?.Dispose();
-
-            base.Dispose();
         }
 
         public string GetTestProjectPath(string projectName)
@@ -31,20 +31,16 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             return Path.Combine(_context.DirPath, projectName);
         }
 
-        public IDisposable CreateDisposableTestProject(string projectName, string runtimeHomePath, out string testProjectDir)
+        public IDisposable CreateDisposableTestProject(string projectName, DnxSdk sdk, out string testProjectDir)
         {
-            var source = Path.Combine(TestUtils.GetMiscProjectsFolder(), "DthTestProjects", projectName);
+            var source = Path.Combine(GetMiscProjectsFolder(), "DthTestProjects", projectName);
             if (!Directory.Exists(source))
             {
                 throw new ArgumentException($"Test project {source} doesn't exist.", nameof(projectName));
             }
 
             var disposableDir = new DisposableDir();
-            var restoreExitCode = TestUtils.CreateDisposableTestProject(runtimeHomePath, disposableDir, source);
-            if (restoreExitCode != 0)
-            {
-                throw new InvalidOperationException($"Failed to restore project {projectName}");
-            }
+            CreateDisposableTestProject(sdk, disposableDir, source);
 
             testProjectDir = Path.Combine(disposableDir, projectName);
             return disposableDir;
@@ -52,17 +48,35 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 
         private void PrepareTestProjects()
         {
-            var runtime = TestUtils.GetClrRuntimeComponents().First();
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir((string)runtime[0], (string)runtime[1], (string)runtime[2]);
-            var dthTestProjectsSource = Path.Combine(TestUtils.GetMiscProjectsFolder(), "DthTestProjects");
+            var sdk = DnxSdkFunctionalTestBase.ClrDnxSdks.First();
+            var dthTestProjectsSource = Path.Combine(CommonTestUtils.TestUtils.GetMiscProjectsFolder(), "DthTestProjects");
 
             foreach (var testProject in Directory.GetDirectories(dthTestProjectsSource))
             {
-                TestUtils.CreateDisposableTestProject(
-                    runtimeHomeDir,
-                    _context.DirPath,
-                    testProject);
+                CreateDisposableTestProject((DnxSdk)sdk[0], _context.DirPath, testProject);
             }
+        }
+
+        private static void CreateDisposableTestProject(DnxSdk sdk, string targetDir, string sourceDir)
+        {
+            // Find the misc project to copy
+            var targetProjectDir = Path.Combine(targetDir, Path.GetFileName(sourceDir));
+            Testing.TestUtils.CopyFolder(sourceDir, targetProjectDir);
+
+            // Make sure package restore can be successful
+            var currentDnxSolutionRootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+
+            File.Copy(Path.Combine(currentDnxSolutionRootDir, NuGet.Constants.SettingsFileName),
+                      Path.Combine(targetProjectDir, NuGet.Constants.SettingsFileName));
+
+            // Use the newly built runtime to generate lock files for samples
+            sdk.Dnu.Restore(targetProjectDir);
+        }
+
+        private static string GetMiscProjectsFolder()
+        {
+            var dnxRuntimeRoot = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            return Path.Combine(dnxRuntimeRoot, "misc");
         }
     }
 }

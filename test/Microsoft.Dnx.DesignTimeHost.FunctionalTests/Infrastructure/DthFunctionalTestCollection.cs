@@ -6,8 +6,7 @@ using Xunit;
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 {
     [CollectionDefinition(nameof(DthFunctionalTestCollection))]
-    public class DthFunctionalTestCollection :
-        ICollectionFixture<DthFunctionalTestFixture>
+    public class DthFunctionalTestCollection : ICollectionFixture<DthFunctionalTestFixture>
     {
     }
 }
