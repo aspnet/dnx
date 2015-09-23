@@ -48,13 +48,13 @@ namespace Microsoft.Dnx.Runtime.CommandParsing
 
         public static string[] Process(string text, Func<string, string> variables, bool preserveSurroundingQuotes)
         {
-            var grammer = new CommandGrammar(variables, preserveSurroundingQuotes);
+            var grammar = new CommandGrammar(variables, preserveSurroundingQuotes);
             var cursor = new Cursor(text, 0, text.Length);
 
-            var result = grammer.Parse(cursor);
+            var result = grammar.Parse(cursor);
             if (!result.Remainder.IsEnd)
             {
-                throw new Exception("TODO: malformed command text");
+                throw new ArgumentException($"Malformed command text '{text}'", nameof(text));
             }
             return result.Value.ToArray();
         }

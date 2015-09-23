@@ -110,7 +110,7 @@ namespace NuGet.ContentModel.Infrastructure
                 ContentPropertyDefinition propertyDefinition;
                 if (!propertyDefinitions.TryGetValue(_token, out propertyDefinition))
                 {
-                    throw new Exception(string.Format("Unable to find property definition for {{{0}}}", _token));
+                    throw new InvalidOperationException($"Unable to find property definition for '{_token}'");
                 }
                 for (var scanIndex = startIndex; scanIndex != item.Path.Length;)
                 {

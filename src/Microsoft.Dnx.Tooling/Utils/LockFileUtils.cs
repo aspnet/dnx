@@ -747,7 +747,7 @@ namespace Microsoft.Dnx.Tooling.Utils
                         ContentPropertyDefinition propertyDefinition;
                         if (!propertyDefinitions.TryGetValue(key, out propertyDefinition))
                         {
-                            throw new Exception("Undefined property used for criteria");
+                            throw new ArgumentException($"Undefined property '{key}' used for criteria", nameof(key));
                         }
                         if (value == null)
                         {
@@ -762,7 +762,7 @@ namespace Microsoft.Dnx.Tooling.Utils
                             }
                             else
                             {
-                                throw new Exception("Undefined value used for criteria");
+                                throw new ArgumentException($"Undefined value '{value}' used for criteria", nameof(value));
                             }
                         }
                         return this;
@@ -775,7 +775,7 @@ namespace Microsoft.Dnx.Tooling.Utils
                         ContentPropertyDefinition propertyDefinition;
                         if (!propertyDefinitions.TryGetValue(key, out propertyDefinition))
                         {
-                            throw new Exception("Undefined property used for criteria");
+                            throw new ArgumentException($"Undefined property '{key}' used for criteria", nameof(key));
                         }
                         Entry.Properties[key] = value;
                         return this;

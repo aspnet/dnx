@@ -7,7 +7,7 @@ using Xunit;
 namespace Bootstrapper.FunctionalTests
 {
     [CollectionDefinition("BootstrapperTestCollection")]
-    public class BootstrapperTestCollection : ICollectionFixture<DnxRuntimeFixture>
+    public class BootstrapperTestCollection : ICollectionFixture<DnxRuntimeFixture>, ICollectionFixture<BootstrapperTestFixture>
     {
     }
 }

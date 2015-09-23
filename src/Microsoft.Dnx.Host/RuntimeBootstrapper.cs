@@ -33,6 +33,8 @@ namespace Microsoft.Dnx.Host
         {
             while (ex != null)
             {
+                var suppressStackTrace = (ex.Data["suppressStackTrace"] as bool? == true);
+
                 if (ex is TargetInvocationException ||
                     ex is AggregateException)
                 {
@@ -45,12 +47,12 @@ namespace Microsoft.Dnx.Host
 
                     foreach (var loaderException in typeLoadException.LoaderExceptions)
                     {
-                        Console.Error.WriteLine(loaderException);
+                        Console.Error.WriteLine(suppressStackTrace ? $"Error: {loaderException.Message}" : loaderException.ToString());
                     }
                 }
                 else
                 {
-                    Console.Error.WriteLine(ex);
+                    Console.Error.WriteLine(suppressStackTrace ? $"Error: {ex.Message}" : ex.ToString());
                 }
 
                 ex = ex.InnerException;

@@ -36,47 +36,55 @@ namespace Microsoft.Dnx.ApplicationHost
             RuntimeOptions options;
             string[] programArgs;
             int exitCode;
-
-            bool shouldExit = ParseArgs(args, out options, out programArgs, out exitCode);
-            if (shouldExit)
+            DefaultHost host;
+            
+            try
             {
-                return Task.FromResult(exitCode);
+                bool shouldExit = ParseArgs(args, out options, out programArgs, out exitCode);
+                if (shouldExit)
+                {
+                    return Task.FromResult(exitCode);
+                }
+
+                IFileWatcher watcher;
+                if (options.WatchFiles)
+                {
+                    watcher = new FileWatcher(ProjectRootResolver.ResolveRootDirectory(Path.GetFullPath(options.ApplicationBaseDirectory)));
+                }
+                else
+                {
+                    watcher = NoopWatcher.Instance;
+                }
+
+                host = new DefaultHost(options, _serviceProvider, _loadContextAccessor, watcher);
+
+                if (host.Project == null)
+                {
+                    return Task.FromResult(-1);
+                }
+
+                var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+                string replacementCommand;
+                if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
+                {
+                    // preserveSurroundingQuotes: false to imitate a shell. Shells remove quotation marks before calling
+                    // Main methods. Here however we are invoking Main() without involving a shell.
+                    var replacementArgs = CommandGrammar
+                        .Process(replacementCommand, GetVariable, preserveSurroundingQuotes: false)
+                        .ToArray();
+                    options.ApplicationName = replacementArgs.First();
+                    programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+                }
+
+                if (string.IsNullOrEmpty(options.ApplicationName) ||
+                    string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+                {
+                    options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
+                }
             }
-
-            IFileWatcher watcher;
-            if (options.WatchFiles)
+            catch (Exception ex)
             {
-                watcher = new FileWatcher(ProjectRootResolver.ResolveRootDirectory(Path.GetFullPath(options.ApplicationBaseDirectory)));
-            }
-            else
-            {
-                watcher = NoopWatcher.Instance;
-            }
-
-            var host = new DefaultHost(options, _serviceProvider, _loadContextAccessor, watcher);
-
-            if (host.Project == null)
-            {
-                return Task.FromResult(-1);
-            }
-
-            var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
-            string replacementCommand;
-            if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
-            {
-                // preserveSurroundingQuotes: false to imitate a shell. Shells remove quotation marks before calling
-                // Main methods. Here however we are invoking Main() without involving a shell.
-                var replacementArgs = CommandGrammar
-                    .Process(replacementCommand, GetVariable, preserveSurroundingQuotes: false)
-                    .ToArray();
-                options.ApplicationName = replacementArgs.First();
-                programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
-            }
-
-            if (string.IsNullOrEmpty(options.ApplicationName) ||
-                string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
-            {
-                options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
+                throw SuppressStackTrace(ex);
             }
 
             IDisposable disposable = null;
@@ -232,6 +240,8 @@ namespace Microsoft.Dnx.ApplicationHost
                         host,
                         applicationName,
                         ex.InnerException);
+
+                return Task.FromResult(-1);
             }
 
             if (assembly == null)
@@ -247,19 +257,16 @@ namespace Microsoft.Dnx.ApplicationHost
             string applicationName,
             Exception innerException)
         {
-            if (host.Project.Commands.Any())
-            {
-                // Throw a nicer exception message if the command
-                // can't be found
-                throw new InvalidOperationException(
-                    string.Format("Unable to load application or execute command '{0}'. Available commands: {1}.",
-                    applicationName,
-                    string.Join(", ", host.Project.Commands.Keys)), innerException);
-            }
+            var commands = host.Project.Commands;
+            throw SuppressStackTrace(new InvalidOperationException(
+                $"Unable to load application or execute command '{applicationName}'.{(commands.Any() ? $" Available commands: {string.Join(", ", commands.Keys)}.": "")}",
+                innerException));
+        }
 
-            throw new InvalidOperationException(
-                    string.Format("Unable to load application or execute command '{0}'.",
-                    applicationName), innerException);
+        private static T SuppressStackTrace<T>(T ex) where T : Exception
+        {
+            ex.Data["suppressStackTrace"] = true;
+            return ex;
         }
     }
 }

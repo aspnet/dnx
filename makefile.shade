@@ -199,13 +199,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 
         var sourceFiles = new string[] 
         {
-            Path.Combine("src", BOOTSTRAPPER_MONO_MANAGED_NAME, "EntryPoint.cs"),
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils.Sources", "CommandLine", "CommandArgument.cs"),
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils.Sources", "CommandLine", "CommandLineApplication.cs"), 
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils.Sources", "CommandLine", "CommandOption.cs"), 
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils.Sources", "CommandLine", "CommandOptionType.cs"),
-            Path.Combine("src", "Microsoft.Dnx.Runtime.Sources", "Impl", "EnvironmentNames.cs"),
-            Path.Combine("src", "Microsoft.Dnx.Runtime.Sources", "Impl", "Constants.cs")
+            Path.Combine("src", BOOTSTRAPPER_MONO_MANAGED_NAME, "EntryPoint.cs")
         };
 
         var arguments = string.Format(

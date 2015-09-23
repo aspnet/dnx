@@ -225,7 +225,13 @@ namespace Microsoft.Dnx.Tooling
             var diagnostics = new List<DiagnosticMessage>();
             if (!Runtime.Project.TryGetProject(projectJsonPath, out project, diagnostics))
             {
-                throw new Exception("TODO: project.json parse error");
+                var errorMessages = diagnostics
+                    .Where(x => x.Severity == DiagnosticMessageSeverity.Error)
+                    .Select(x => x.Message);
+
+                throw new InvalidOperationException(errorMessages.Any() ? 
+                    $"Errors occured when while parsing project.json:{Environment.NewLine}{string.Join(Environment.NewLine, errorMessages)}" : 
+                    "Invalid project.json");
             }
 
             if (diagnostics.HasErrors())
@@ -604,7 +610,7 @@ namespace Microsoft.Dnx.Tooling
                     {
                         if (imports != null)
                         {
-                            throw new Exception(string.Format("More than one runtime.json file has declared imports for {0}", runtimeName));
+                            throw new ArgumentException($"More than one runtime.json file has declared imports for '{runtimeName}'", nameof(runtimeName));
                         }
                         imports = runtimeSpec.Import;
                     }
@@ -628,7 +634,7 @@ namespace Microsoft.Dnx.Tooling
                     {
                         if (imports != null)
                         {
-                            throw new Exception(string.Format("Circular import for {0}", runtimeName));
+                            throw new ArgumentException($"Circular import for '{runtimeName}'", nameof(runtimeName));
                         }
                     }
                     FindRuntimeDependencies(
