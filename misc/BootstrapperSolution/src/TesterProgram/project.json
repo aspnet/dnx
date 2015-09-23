@@ -1,0 +1,17 @@
+﻿{
+  "dependencies": {
+  },
+
+  "commands": {
+    "TesterProgram": "TesterProgram"
+  },
+
+  "frameworks": {
+    "dnx451": { },
+    "dnxcore50": {
+      "dependencies": {
+        "Microsoft.CSharp": "4.0.1-beta-*"
+      }
+    }
+  }
+}

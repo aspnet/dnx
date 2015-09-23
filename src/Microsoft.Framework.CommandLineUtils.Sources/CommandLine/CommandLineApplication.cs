@@ -147,7 +147,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                             if (!option.TryParse(longOption[1]))
                             {
                                 command.ShowHint();
-                                throw new Exception(string.Format("TODO: Error: unexpected value '{0}' for option '{1}'", longOption[1], option.LongName));
+                                throw new CommandParsingException(command, $"Unexpected value '{longOption[1]}' for option '{option.LongName}'");
                             }
                             option = null;
                         }
@@ -192,7 +192,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                             if (!option.TryParse(shortOption[1]))
                             {
                                 command.ShowHint();
-                                throw new Exception(string.Format("TODO: Error: unexpected value '{0}' for option '{1}'", shortOption[1], option.LongName));
+                                throw new CommandParsingException(command, $"Unexpected value '{shortOption[1]}' for option '{option.LongName}'");
                             }
                             option = null;
                         }
@@ -211,7 +211,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                     if (!option.TryParse(arg))
                     {
                         command.ShowHint();
-                        throw new Exception(string.Format("TODO: Error: unexpected value '{0}' for option '{1}'", arg, option.LongName));
+                        throw new CommandParsingException(command, $"Unexpected value '{arg}' for option '{option.LongName}'");
                     }
                     option = null;
                 }
@@ -249,7 +249,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 }
                 if (!processed)
                 {
-                    HandleUnexpectedArg(command, args, index, argTypeName: "argument");
+                    HandleUnexpectedArg(command, args, index, argTypeName: "command or argument");
                     break;
                 }
             }
@@ -257,7 +257,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
             if (option != null)
             {
                 command.ShowHint();
-                throw new Exception(string.Format("TODO: Error: missing value for option"));
+                throw new CommandParsingException(command, $"Missing value for option '{option.LongName}'");
             }
 
             return command.Invoke();
@@ -470,7 +470,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
             if (command._throwOnUnexpectedArg)
             {
                 command.ShowHint();
-                throw new Exception(string.Format("TODO: Error: unrecognized {0} '{1}'", argTypeName, args[index]));
+                throw new CommandParsingException(command, $"Unrecognized {argTypeName} '{args[index]}'");
             }
             else
             {

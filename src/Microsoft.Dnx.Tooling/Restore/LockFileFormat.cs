@@ -522,7 +522,7 @@ namespace Microsoft.Dnx.Tooling
             var valueToken = json[property];
             if (valueToken == null)
             {
-                throw new Exception(string.Format("TODO: lock file missing required property {0}", property));
+                throw new ArgumentException($"lock file missing required property '{property}'", nameof(property));
             }
             return SemanticVersion.Parse(valueToken.Value<string>());
         }

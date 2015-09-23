@@ -10,7 +10,6 @@ using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.Dnx.Host;
-using Microsoft.Dnx.Runtime;
 
 public class EntryPoint
 {

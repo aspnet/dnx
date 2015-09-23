@@ -7,8 +7,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
-using NuGet;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
+using NuGet;
 
 namespace Microsoft.Dnx.Tooling
 {
@@ -108,7 +108,7 @@ namespace Microsoft.Dnx.Tooling
             {
                 if (item.Match.Library.Name == name)
                 {
-                    throw new Exception(string.Format("TODO: Circular dependency references not supported. Package '{0}'.", name));
+                    throw new InvalidOperationException($"A circular reference to '{name}' was detected.");
                 }
 
                 if (item.Dependencies.Any(d => d != dependency && d.Name == name))

@@ -41,13 +41,13 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 }
                 else
                 {
-                    throw new Exception("TODO: invalid template pattern " + template);
+                    throw new ArgumentException($"Invalid template pattern '{template}'", nameof(template));
                 }
             }
 
             if (string.IsNullOrEmpty(LongName) && string.IsNullOrEmpty(ShortName) && string.IsNullOrEmpty(SymbolName))
             {
-                throw new Exception("TODO: invalid template pattern " + template);
+                throw new ArgumentException($"Invalid template pattern '{template}'", nameof(template));
             }
         }
 

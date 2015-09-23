@@ -82,7 +82,28 @@ namespace Microsoft.Dnx.Tooling
             FeedsConsoleCommand.Register(app, reportsFactory);
             ClearCacheConsoleCommand.Register(app, reportsFactory);
 
-            return app.Execute(args);
+            try
+            {
+                return app.Execute(args);
+            }
+            catch (CommandParsingException ex)
+            {
+                AnsiConsole.GetError(useConsoleColor: _runtimeEnv.OperatingSystem == "Windows").WriteLine($"Error: {ex.Message}".Red().Bold());
+                ex.Command.ShowHelp();
+                return 1;
+            }
+#if DEBUG
+            catch
+            {
+                throw;
+            }
+#else
+            catch (Exception ex)
+            {
+                AnsiConsole.GetError(useConsoleColor: _runtimeEnv.OperatingSystem == "Windows").WriteLine($"Error: {ex.Message}".Red().Bold());
+                return 1;
+            }
+#endif
         }
     }
 }

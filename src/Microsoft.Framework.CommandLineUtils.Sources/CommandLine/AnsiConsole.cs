@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Text;
 
 namespace Microsoft.Dnx.Runtime.Common.CommandLine
 {

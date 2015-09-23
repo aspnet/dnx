@@ -27,13 +27,13 @@ namespace NuGet
                 throw new ArgumentNullException(nameof(fileSystem));
             }
 
-            if (String.IsNullOrEmpty(manifestPath))
+            if (string.IsNullOrEmpty(manifestPath))
             {
                 throw new ArgumentNullException(nameof(manifestPath));
             }
 
-            string manifestFullPath = fileSystem.GetFullPath(manifestPath);
-            string directory = Path.GetDirectoryName(manifestFullPath);
+            var manifestFullPath = fileSystem.GetFullPath(manifestPath);
+            var directory = Path.GetDirectoryName(manifestFullPath);
             _fileSystem = new PhysicalFileSystem(directory);
             _manifestPath = Path.GetFileName(manifestFullPath);
 
@@ -67,7 +67,7 @@ namespace NuGet
             }
             else
             {
-                throw new Exception("nupkg file missing from source");
+                throw new FileNotFoundException($"nupkg file missing from source '{nupkgName}'", Path.Combine(_fileSystem.Root, nupkgName));
             }
         }
 

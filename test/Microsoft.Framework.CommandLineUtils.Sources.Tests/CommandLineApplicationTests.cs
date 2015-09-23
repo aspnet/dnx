@@ -65,7 +65,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            var ex = Assert.Throws<Exception>(() => app.Execute("test", "one", "two", "three"));
+            var ex = Assert.Throws<CommandParsingException>(() => app.Execute("test", "one", "two", "three"));
 
             Assert.Contains("three", ex.Message);
         }
@@ -82,7 +82,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            var ex = Assert.Throws<Exception>(() => app.Execute("test2", "one", "two", "three"));
+            var ex = Assert.Throws<CommandParsingException>(() => app.Execute("test2", "one", "two", "three"));
 
             Assert.Contains("test2", ex.Message);
         }
@@ -174,9 +174,9 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            var ex = Assert.Throws<Exception>(() => app.Execute("test", "--first"));
+            var ex = Assert.Throws<CommandParsingException>(() => app.Execute("test", "--first"));
 
-            Assert.Contains("missing value for option", ex.Message);
+            Assert.Contains($"Missing value for option '{first.LongName}'", ex.Message);
         }
 
         [Fact]
@@ -222,7 +222,7 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
         }
 
         [Fact]
-        public void ThrowsExceptionOnUnexpectedArgumentByDefault()
+        public void ThrowsExceptionOnUnexpectedCommandOrArgumentByDefault()
         {
             var unexpectedArg = "UnexpectedArg";
             var app = new CommandLineApplication();
@@ -232,9 +232,8 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            var exception = Assert.Throws<Exception>(() => app.Execute("test", unexpectedArg));
-            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "argument", unexpectedArg),
-                exception.Message);
+            var exception = Assert.Throws<CommandParsingException>(() => app.Execute("test", unexpectedArg));
+            Assert.Equal($"Unrecognized command or argument '{unexpectedArg}'", exception.Message);
         }
 
         [Fact]
@@ -266,9 +265,8 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            var exception = Assert.Throws<Exception>(() => app.Execute("test", unexpectedOption));
-            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "option", unexpectedOption),
-                exception.Message);
+            var exception = Assert.Throws<CommandParsingException>(() => app.Execute("test", unexpectedOption));
+            Assert.Equal($"Unrecognized option '{unexpectedOption}'", exception.Message);
         }
 
         [Fact]
@@ -300,9 +298,8 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            var exception = Assert.Throws<Exception>(() => app.Execute("test", unexpectedOption));
-            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "option", unexpectedOption),
-                exception.Message);
+            var exception = Assert.Throws<CommandParsingException>(() => app.Execute("test", unexpectedOption));
+            Assert.Equal($"Unrecognized option '{unexpectedOption}'", exception.Message);
         }
 
         [Fact]
@@ -334,9 +331,8 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            var exception = Assert.Throws<Exception>(() => app.Execute("test", unexpectedOption));
-            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "option", unexpectedOption),
-                exception.Message);
+            var exception = Assert.Throws<CommandParsingException>(() => app.Execute("test", unexpectedOption));
+            Assert.Equal($"Unrecognized option '{unexpectedOption}'", exception.Message);
         }
 
         [Fact]
@@ -370,9 +366,8 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            var exception = Assert.Throws<Exception>(() => app.Execute("k", unexpectedOption, "run"));
-            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "option", unexpectedOption),
-                exception.Message);
+            var exception = Assert.Throws<CommandParsingException>(() => app.Execute("k", unexpectedOption, "run"));
+            Assert.Equal($"Unrecognized option '{unexpectedOption}'", exception.Message);
         }
 
         [Fact]
