@@ -572,8 +572,6 @@ namespace Microsoft.Dnx.Tooling.Publish
             {
                 if (sourceChild != null)
                 {
-                    sourceChild.Parent.Add(targetChild);
-
                     // We're only going to merge the httpPlatform element attributes we don't care about
                     if (string.Equals(name.LocalName, "httpPlatform"))
                     {
@@ -586,6 +584,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                         }
                     }
 
+                    sourceChild.Parent.Add(targetChild);
                     sourceChild.Remove();
                     return true;
                 }
