@@ -1,6 +1,6 @@
 {
     "version": "1.0.0-*",
-    "description": "",
+    "description": "List of dependencies to copy into DNX bin",
     "dependencies": {
         "Microsoft.Dnx.Host": "1.0.0-*",
         "Microsoft.Dnx.ApplicationHost": "1.0.0-*",
