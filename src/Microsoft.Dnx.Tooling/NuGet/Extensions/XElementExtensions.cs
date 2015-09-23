@@ -163,7 +163,7 @@ namespace NuGet
                         else
                         {
                             // If that element is null then add that node
-                            target.Remove();
+                            targetChild.Remove();
                             source.Add(targetChild);
 
                             var newlyAddedElement = source.Elements().Last();
