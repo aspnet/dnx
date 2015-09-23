@@ -99,38 +99,27 @@ namespace Microsoft.Dnx.Tooling.Publish
             string relativeAppBase;
             if (NoSource)
             {
-                relativeAppBase = string.Format(@"{0}\{1}\{2}\{3}\{4}",
-                    AppRootName,
-                    "packages",
-                    _project.Name,
-                    _project.Version,
-                    "root");
+                relativeAppBase = $@"{AppRootName}\packages\{_project.Name}\{_project.Version}\root";
             }
             else
             {
-                relativeAppBase = string.Format(@"{0}\{1}\{2}", AppRootName, "src", _project.Name);
+                relativeAppBase = $@"{AppRootName}\src\{_project.Name}";
             }
-
-            const string template = @"
-@""{0}{1}.exe"" --appbase ""%~dp0{2}"" Microsoft.Dnx.ApplicationHost --configuration {3} {4} %*
-";
 
             foreach (var commandName in _project.Commands.Keys)
             {
                 var runtimeFolder = string.Empty;
                 if (Runtimes.Any())
                 {
-                    runtimeFolder = string.Format(@"%~dp0{0}\runtimes\{1}\bin\", AppRootName, Runtimes.First().Name);
+                    var runtime = Runtimes.First().Name;
+                    runtimeFolder = $@"%~dp0{AppRootName}\runtimes\{runtime}\bin\";
                 }
 
-                File.WriteAllText(
-                    Path.Combine(OutputPath, commandName + ".cmd"),
-                    string.Format(template,
-                                  runtimeFolder,
-                                  Runtime.Constants.BootstrapperExeName,
-                                  relativeAppBase,
-                                  Configuration,
-                                  commandName));
+                var cmdPath = Path.Combine(OutputPath, commandName + ".cmd");
+                var cmdScript = $@"
+@""{runtimeFolder}{Runtime.Constants.BootstrapperExeName}.exe"" --project ""%~dp0{relativeAppBase}"" --configuration {Configuration} {commandName} %*
+";
+                File.WriteAllText(cmdPath, cmdScript);
             }
         }
 
@@ -139,12 +128,11 @@ namespace Microsoft.Dnx.Tooling.Publish
             string relativeAppBase;
             if (NoSource)
             {
-                relativeAppBase = string.Format("{0}/{1}/{2}/{3}/{4}", AppRootName, "packages", _project.Name,
-                    _project.Version.ToString(), "root");
+                relativeAppBase = $"{AppRootName}/packages/${_project.Name}/{_project.Version}/root";
             }
             else
             {
-                relativeAppBase = string.Format("{0}/{1}/{2}", AppRootName, "src", _project.Name);
+                relativeAppBase = $"{AppRootName}/src/{_project.Name}";
             }
 
             const string template = @"#!/usr/bin/env bash
@@ -164,8 +152,8 @@ exec ""{1}{2}"" --appbase ""$DIR/{0}"" Microsoft.Dnx.ApplicationHost --configura
                 var runtimeFolder = string.Empty;
                 if (Runtimes.Any())
                 {
-                    runtimeFolder = string.Format(@"$DIR/{0}/runtimes/{1}/bin/",
-                        AppRootName, Runtimes.First().Name);
+                    var runtime = Runtimes.First().Name;
+                    runtimeFolder = $@"$DIR/{AppRootName}/runtimes/{runtime}/bin/";
                 }
 
                 var scriptPath = Path.Combine(OutputPath, commandName);
