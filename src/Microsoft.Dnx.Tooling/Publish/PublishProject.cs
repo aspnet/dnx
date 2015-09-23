@@ -584,6 +584,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                         }
                     }
 
+                    targetChild.Remove();
                     sourceChild.Parent.Add(targetChild);
                     sourceChild.Remove();
                     return true;

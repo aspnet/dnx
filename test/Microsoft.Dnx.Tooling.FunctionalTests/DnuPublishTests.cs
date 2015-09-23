@@ -201,7 +201,7 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
-                    compareFileContents: true));
+                    compareFileContents: true, ignoreWhitespace: true));
             }
         }
 
@@ -300,7 +300,7 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
-                    compareFileContents: true));
+                    compareFileContents: true, ignoreWhitespace: true));
             }
         }
 
@@ -1283,7 +1283,7 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
-                    compareFileContents: true));
+                    compareFileContents: true, ignoreWhitespace: true));
             }
         }
 
@@ -1375,7 +1375,7 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigContents, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
-                    compareFileContents: true));
+                    compareFileContents: true, ignoreWhitespace: true));
             }
         }
 
