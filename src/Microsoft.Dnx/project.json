@@ -23,7 +23,7 @@
                 "Microsoft.Win32.Registry.AccessControl": "4.0.0-*",
                 "System.Data.SqlClient": "4.0.0-*",
                 "System.IO.FileSystem.Primitives": "4.0.1-*",
-                "System.Diagnostics.Process": "4.0.0-*",
+                "System.Diagnostics.Process": "4.1.0-*",
                 "System.IO.UnmanagedMemoryStream": "4.0.1-*"
             }
         }
