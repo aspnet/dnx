@@ -252,7 +252,7 @@ public class EntryPoint
         {
         }
 
-        Console.WriteLine("Could determine OS version information. Defaulting to the empty string.");
+        Console.WriteLine("Could not determine OS version information. Defaulting to the empty string.");
         osVersion = string.Empty;
     }
 
