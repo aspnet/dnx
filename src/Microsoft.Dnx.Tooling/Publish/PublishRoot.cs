@@ -111,13 +111,37 @@ namespace Microsoft.Dnx.Tooling.Publish
                 var runtimeFolder = string.Empty;
                 if (Runtimes.Any())
                 {
-                    var runtime = Runtimes.First().Name;
-                    runtimeFolder = $@"%~dp0{AppRootName}\runtimes\{runtime}\bin\";
+                    runtimeFolder = Runtimes.First().Name;
                 }
 
                 var cmdPath = Path.Combine(OutputPath, commandName + ".cmd");
                 var cmdScript = $@"
-@""{runtimeFolder}{Runtime.Constants.BootstrapperExeName}.exe"" --project ""%~dp0{relativeAppBase}"" --configuration {Configuration} {commandName} %*
+@echo off
+SET DNX_FOLDER={runtimeFolder}
+SET ""LOCAL_DNX=%~dp0{AppRootName}\runtimes\%DNX_FOLDER%\bin\{Runtime.Constants.BootstrapperExeName}.exe""
+
+IF EXIST %LOCAL_DNX% (
+  SET ""DNX_PATH=%LOCAL_DNX%""
+)
+
+for %%a in (%DNX_HOME%) do (
+    IF EXIST %%a\runtimes\%DNX_FOLDER%\bin\{Runtime.Constants.BootstrapperExeName}.exe (
+        SET ""HOME_DNX=%%a\runtimes\%DNX_FOLDER%\bin\{Runtime.Constants.BootstrapperExeName}.exe""
+        goto :continue
+    )
+)
+
+:continue
+
+IF ""%HOME_DNX%"" NEQ """" (
+  SET ""DNX_PATH=%HOME_DNX%""
+)
+
+IF ""%DNX_PATH%"" == """" (
+  SET ""DNX_PATH={Runtime.Constants.BootstrapperExeName}.exe""
+)
+
+@""%DNX_PATH%"" --project ""%~dp0{relativeAppBase}"" --configuration {Configuration} {commandName} %*
 ";
                 File.WriteAllText(cmdPath, cmdScript);
             }
@@ -135,18 +159,6 @@ namespace Microsoft.Dnx.Tooling.Publish
                 relativeAppBase = $"{AppRootName}/src/{_project.Name}";
             }
 
-            const string template = @"#!/usr/bin/env bash
-
-SOURCE=""${{BASH_SOURCE[0]}}""
-while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
-  SOURCE=""$(readlink ""$SOURCE"")""
-  [[ $SOURCE != /* ]] && SOURCE=""$DIR/$SOURCE"" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
-
-exec ""{1}{2}"" --appbase ""$DIR/{0}"" Microsoft.Dnx.ApplicationHost --configuration {3} {4} ""$@""";
-
             foreach (var commandName in _project.Commands.Keys)
             {
                 var runtimeFolder = string.Empty;
@@ -157,13 +169,19 @@ exec ""{1}{2}"" --appbase ""$DIR/{0}"" Microsoft.Dnx.ApplicationHost --configura
                 }
 
                 var scriptPath = Path.Combine(OutputPath, commandName);
-                File.WriteAllText(scriptPath,
-                    string.Format(template,
-                                  relativeAppBase,
-                                  runtimeFolder,
-                                  Runtime.Constants.BootstrapperExeName,
-                                  Configuration,
-                                  commandName).Replace("\r\n", "\n"));
+                var scriptContents = $@"#!/usr/bin/env bash
+
+SOURCE=""${{BASH_SOURCE[0]}}""
+while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
+  SOURCE=""$(readlink ""$SOURCE"")""
+  [[ $SOURCE != /* ]] && SOURCE=""$DIR/$SOURCE"" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
+
+exec ""{runtimeFolder}{Runtime.Constants.BootstrapperExeName}"" --project ""$DIR/{relativeAppBase}"" --configuration {Configuration} {commandName} ""$@""";
+
+                File.WriteAllText(scriptPath, scriptContents.Replace("\r\n", "\n"));
 
                 if (!RuntimeEnvironmentHelper.IsWindows)
                 {
