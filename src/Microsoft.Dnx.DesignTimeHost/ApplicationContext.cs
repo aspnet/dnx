@@ -395,7 +395,12 @@ namespace Microsoft.Dnx.DesignTimeHost
                 // hasn't died yet
                 TriggerProjectOutputsChanged();
 
-                state = _projectStateResolver.Resolve(_appPath.Value, _configuration.Value, triggerBuildOutputs, triggerDependencies, ProtocolVersion);
+                state = _projectStateResolver.Resolve(_appPath.Value,
+                                                      _configuration.Value,
+                                                      triggerBuildOutputs,
+                                                      triggerDependencies,
+                                                      ProtocolVersion,
+                                                      _remote.ProjectInformation?.ProjectSearchPaths);
             }
 
             if (state == null)

@@ -13,6 +13,7 @@ using Microsoft.Dnx.DesignTimeHost.InternalModels;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.Impl;
+using Microsoft.Dnx.Runtime.Internals;
 using NuGet;
 
 namespace Microsoft.Dnx.DesignTimeHost
@@ -32,7 +33,12 @@ namespace Microsoft.Dnx.DesignTimeHost
             _applicationHostContextCreator = applicaitonHostContextCreator;
         }
 
-        public ProjectState Resolve(string appPath, string configuration, bool triggerBuildOutputs, bool triggerDependencies, int protocolVersion)
+        public ProjectState Resolve(string appPath,
+                                    string configuration,
+                                    bool triggerBuildOutputs,
+                                    bool triggerDependencies,
+                                    int protocolVersion,
+                                    IList<string> currentSearchPaths)
         {
             var state = new ProjectState
             {
@@ -72,9 +78,18 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             var sourcesProjectWidesources = project.Files.SourceFiles.ToList();
 
+            ResolveSearchPaths(state);
+
+            var searchPathUpdated = currentSearchPaths != null &&
+                                    !Enumerable.SequenceEqual(state.ProjectSearchPaths, currentSearchPaths);
+
             foreach (var frameworkName in frameworks)
             {
-                var dependencyInfo = ResolveProjectDependencies(project, configuration, frameworkName, protocolVersion);
+                var dependencyInfo = ResolveProjectDependencies(project,
+                                                                configuration,
+                                                                frameworkName,
+                                                                protocolVersion,
+                                                                searchPathUpdated ? state.ProjectSearchPaths : null);
                 var dependencySources = new List<string>(sourcesProjectWidesources);
 
                 var frameworkData = new FrameworkData
@@ -121,48 +136,26 @@ namespace Microsoft.Dnx.DesignTimeHost
                 };
 
                 state.Projects.Add(projectInfo);
-
-                GlobalSettings settings = null;
-
-                if (state.GlobalJsonPath == null)
-                {
-                    var root = ProjectRootResolver.ResolveRootDirectory(project.ProjectDirectory);
-
-                    if (GlobalSettings.TryGetGlobalSettings(root, out settings))
-                    {
-                        state.GlobalJsonPath = settings.FilePath;
-                    }
-                }
-
-                if (state.ProjectSearchPaths == null)
-                {
-                    var searchPaths = new HashSet<string>()
-                    {
-                        Directory.GetParent(project.ProjectDirectory).FullName
-                    };
-
-                    if (settings != null)
-                    {
-                        foreach (var searchPath in settings.ProjectSearchPaths)
-                        {
-                            var path = Path.Combine(settings.DirectoryPath, searchPath);
-                            searchPaths.Add(Path.GetFullPath(path));
-                        }
-                    }
-
-                    state.ProjectSearchPaths = searchPaths.ToList();
-                }
             }
 
             return state;
         }
 
-        private DependencyInfo ResolveProjectDependencies(Project project, string configuration, FrameworkName frameworkName, int protocolVersion)
+        private DependencyInfo ResolveProjectDependencies(Project project,
+                                                          string configuration,
+                                                          FrameworkName frameworkName,
+                                                          int protocolVersion,
+                                                          List<string> updatedSearchPath)
         {
             var cacheKey = Tuple.Create("DependencyInfo", project.Name, configuration, frameworkName);
 
             return _compilationEngine.CompilationCache.Cache.Get<DependencyInfo>(cacheKey, ctx =>
             {
+                var projectCandiates = updatedSearchPath?.Where(path => Directory.Exists(path))
+                                                        ?.SelectMany(path => Directory.GetDirectories(path))
+                                                        ?.Where(path => File.Exists(Path.Combine(path, Project.ProjectFileName)))
+                                                        ?.ToDictionary(path => Path.GetFileName(path));
+
                 var applicationHostContext = _applicationHostContextCreator(ctx, project, frameworkName);
                 var libraryManager = applicationHostContext.LibraryManager;
                 var libraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration);
@@ -183,6 +176,12 @@ namespace Microsoft.Dnx.DesignTimeHost
                 {
                     var diagnostics = diagnosticSources[library];
                     var description = CreateDependencyDescription(library, diagnostics, protocolVersion);
+
+                    if (projectCandiates != null)
+                    {
+                        // Validate
+                        ValidateDependency(library, description, info.Diagnostics, projectCandiates);
+                    }
 
                     info.Dependencies[description.Name] = description;
 
@@ -255,6 +254,73 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 return info;
             });
+        }
+
+        private void ValidateDependency(LibraryDescription library, DependencyDescription description, List<DiagnosticMessage> diagnostics, Dictionary<string, string> projectCandidates)
+        {
+            if (!description.Resolved)
+            {
+                return;
+            }
+
+            string newPath;
+            var foundCandidate = projectCandidates.TryGetValue(description.Name, out newPath);
+
+            if ((description.Type == LibraryTypes.Project && !foundCandidate) ||
+                (description.Type == LibraryTypes.Package && foundCandidate))
+            {
+                description.Resolved = false;
+                description.Type = LibraryTypes.Unresolved;
+
+                var newDiagnostic = new DiagnosticMessage(
+                    DiagnosticMonikers.NU1001,
+                    $"The dependency {description.Name} could not be resolved since the search paths are updated.",
+                    library.RequestedRange.FileName,
+                    DiagnosticMessageSeverity.Error,
+                    library.RequestedRange.Line,
+                    library.RequestedRange.Column,
+                    library);
+
+                var newErros = new List<DiagnosticMessageView>(description.Errors);
+                newErros.Add(new DiagnosticMessageView(newDiagnostic));
+                description.Errors = newErros;
+
+                diagnostics.Add(newDiagnostic);
+            }
+        }
+
+        private static void ResolveSearchPaths(ProjectState state)
+        {
+            GlobalSettings settings = null;
+
+            if (state.GlobalJsonPath == null)
+            {
+                var root = ProjectRootResolver.ResolveRootDirectory(state.Project.ProjectDirectory);
+
+                if (GlobalSettings.TryGetGlobalSettings(root, out settings))
+                {
+                    state.GlobalJsonPath = settings.FilePath;
+                }
+            }
+
+            if (state.ProjectSearchPaths == null)
+            {
+                var searchPaths = new HashSet<string>()
+                    {
+                        Directory.GetParent(state.Project.ProjectDirectory).FullName
+                    };
+
+                if (settings != null)
+                {
+                    foreach (var searchPath in settings.ProjectSearchPaths)
+                    {
+                        var path = Path.Combine(settings.DirectoryPath, searchPath);
+                        searchPaths.Add(Path.GetFullPath(path));
+                    }
+                }
+
+                state.ProjectSearchPaths = searchPaths.ToList();
+            }
         }
 
         private static DependencyDescription CreateDependencyDescription(LibraryDescription library,
