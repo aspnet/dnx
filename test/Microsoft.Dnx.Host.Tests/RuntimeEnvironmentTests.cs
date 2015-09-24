@@ -51,15 +51,15 @@ namespace dnx.hostTests
         [InlineData("Linux", "", "x86", "linux-x86")]
         [InlineData("Linux", "", "x64", "linux-x64")]
         [InlineData("Linux", "", "arm", "linux-arm")]
-        [InlineData("Darwin", "", "x86", "darwin-x86")]
-        [InlineData("Darwin", "", "x64", "darwin-x64")]
-        [InlineData("Darwin", "", "arm", "darwin-arm")]
+        [InlineData("Darwin", "", "x86", "osx-x86")]
+        [InlineData("Darwin", "", "x64", "osx-x64")]
+        [InlineData("Darwin", "", "arm", "osx-arm")]
 
         // Our Darwin RIDs are in flux a bit, but this is just testing that whatever we decide on, we can render the right RID from the right input data :)
         // See: https://github.com/aspnet/dnx/issues/2792
-        [InlineData("Darwin", "6.10", "x86", "darwin.6.10-x86")]
-        [InlineData("Darwin", "6.10", "x64", "darwin.6.10-x64")]
-        [InlineData("Darwin", "6.10", "arm", "darwin.6.10-arm")]
+        [InlineData("Darwin", "10.10", "x86", "osx.10.10-x86")]
+        [InlineData("Darwin", "10.10", "x64", "osx.10.10-x64")]
+        [InlineData("Darwin", "10.10", "arm", "osx.10.10-arm")]
         [InlineData("OSX", "10.10", "x86", "osx.10.10-x86")]
         [InlineData("OSX", "10.10", "x64", "osx.10.10-x64")]
         [InlineData("OSX", "10.10", "arm", "osx.10.10-arm")]
@@ -98,9 +98,9 @@ namespace dnx.hostTests
 
         // Our Darwin RIDs are in flux a bit, but this is just testing that whatever we decide on, we can render the right RID from the right input data :)
         // See: https://github.com/aspnet/dnx/issues/2792
-        [InlineData("Darwin", "6.10", "x86", "darwin.6.10-x86")]
-        [InlineData("Darwin", "6.10", "x64", "darwin.6.10-x64")]
-        [InlineData("Darwin", "6.10", "arm", "darwin.6.10-arm")]
+        [InlineData("Darwin", "10.10", "x86", "osx.10.10-x86")]
+        [InlineData("Darwin", "10.10", "x64", "osx.10.10-x64")]
+        [InlineData("Darwin", "10.10", "arm", "osx.10.10-arm")]
         [InlineData("OSX", "10.10", "x86", "osx.10.10-x86")]
         [InlineData("OSX", "10.10", "x64", "osx.10.10-x64")]
         [InlineData("OSX", "10.10", "arm", "osx.10.10-arm")]
@@ -136,12 +136,10 @@ namespace dnx.hostTests
         public void MacRuntimeIdIsCorrect()
         {
             var arch = RuntimeEnvironmentHelper.RuntimeEnvironment.RuntimeArchitecture.ToLowerInvariant();
-            Assert.Equal($"darwin-{arch}", RuntimeEnvironmentHelper.RuntimeEnvironment.GetRuntimeIdentifier());
+            Assert.Equal($"osx.10.10-{arch}", RuntimeEnvironmentHelper.RuntimeEnvironment.GetRuntimeIdentifier());
         }
 
-        [ConditionalFact]
-        [OSSkipCondition(OperatingSystems.MacOSX)]
-        [FrameworkSkipCondition(RuntimeFrameworks.CLR | RuntimeFrameworks.CoreCLR)] // We don't have an OS skip condition for all Windows yet
+        [Fact(Skip = "Our linux builds don't quite sync up with RIDs yet")]
         public void LinuxRuntimeIdIsCorrect()
         {
             var arch = RuntimeEnvironmentHelper.RuntimeEnvironment.RuntimeArchitecture.ToLowerInvariant();
