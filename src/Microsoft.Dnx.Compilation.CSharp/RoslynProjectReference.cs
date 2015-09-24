@@ -314,10 +314,13 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 references: CompilationContext.Compilation.References,
                 options: compilationOptions);
 
-            compilation = compilation.AddSyntaxTrees(new[]
-                {
-                    CSharpSyntaxTree.ParseText($"[assembly:{assemblyCultureName}(\"{assemblyName.CultureName}\")]")
-                });
+            if (!string.IsNullOrEmpty(assemblyName.CultureName))
+            {
+                compilation = compilation.AddSyntaxTrees(new[]
+                    {
+                        CSharpSyntaxTree.ParseText($"[assembly:{assemblyCultureName}(\"{assemblyName.CultureName}\")]")
+                    });
+            }
 
             Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
 
