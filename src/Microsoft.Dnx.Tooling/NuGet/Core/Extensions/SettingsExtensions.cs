@@ -43,32 +43,6 @@ namespace NuGet
             return EncryptionUtility.DecryptString(encryptedString);
         }
 
-        public static void SetEncryptedValue(this ISettings settings, string section, string key, string value)
-        {
-            if (String.IsNullOrEmpty(section))
-            {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
-            }
-            if (String.IsNullOrEmpty(key))
-            {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(key));
-            }
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            if (String.IsNullOrEmpty(value))
-            {
-                settings.SetValue(section, key, String.Empty);
-            }
-            else
-            {
-                var encryptedString = EncryptionUtility.EncryptString(value);
-                settings.SetValue(section, key, encryptedString);
-            }
-        }
-
         /// <summary>
         /// Retrieves a config value for the specified key
         /// </summary>
@@ -82,36 +56,6 @@ namespace NuGet
             return decrypt ? 
                 settings.GetDecryptedValue(ConfigSection, key, isPath) : 
                 settings.GetValue(ConfigSection, key, isPath);
-        }
-
-        /// <summary>
-        /// Sets a config value in the setting.
-        /// </summary>
-        /// <param name="settings">The settings instance to store the key-value in.</param>
-        /// <param name="key">The key to store.</param>
-        /// <param name="value">The value to store.</param>
-        /// <param name="encrypt">Determines if the value needs to be encrypted prior to storing.</param>
-        public static void SetConfigValue(this ISettings settings, string key, string value, bool encrypt = false)
-        {
-            if (encrypt == true)
-            {
-                settings.SetEncryptedValue(ConfigSection, key, value);
-            }
-            else
-            {
-                settings.SetValue(ConfigSection, key, value);
-            }
-        }
-
-        /// <summary>
-        /// Deletes a config value from settings
-        /// </summary>
-        /// <param name="settings">The settings instance to delete the key from.</param>
-        /// <param name="key">The key to delete.</param>
-        /// <returns>True if the value was deleted, false otherwise.</returns>
-        public static bool DeleteConfigValue(this ISettings settings, string key)
-        {
-            return settings.DeleteValue(ConfigSection, key);
         }
     }
 }

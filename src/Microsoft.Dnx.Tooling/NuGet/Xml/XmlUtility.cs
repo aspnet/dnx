@@ -9,13 +9,6 @@ namespace NuGet
 {
     public static class XmlUtility
     {
-        public static XDocument LoadSafe(Stream input)
-        {
-            var settings = CreateSafeSettings();
-            var reader = XmlReader.Create(input, settings);
-            return XDocument.Load(reader);
-        }
-
         public static XDocument LoadSafe(Stream input, bool ignoreWhiteSpace)
         {
             var settings = CreateSafeSettings(ignoreWhiteSpace);
@@ -70,20 +63,6 @@ namespace NuGet
             using (Stream configStream = fileSystem.OpenFile(path))
             {
                 return XmlUtility.LoadSafe(configStream, LoadOptions.PreserveWhitespace);
-            }
-        }
-
-        internal static bool TryParseDocument(string content, out XDocument document)
-        {
-            document = null;
-            try
-            {
-                document = XDocument.Parse(content);
-                return true;
-            }
-            catch (XmlException)
-            {
-                return false;
             }
         }
     }
