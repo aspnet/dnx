@@ -182,14 +182,14 @@ namespace Microsoft.Dnx.Runtime
             if (lockFileLookup != null)
             {
                 var target = SelectTarget(context, context.LockFile);
-                if (Logger.IsEnabled && string.IsNullOrEmpty(target.RuntimeIdentifier))
-                {
-                    // REVIEW(anurse): Is there ever a reason we want to use the RID-less target now?
-                    Logger.TraceWarning($"[{nameof(ApplicationHostContext)}] Lock File Target is Runtime-agnostic! This is generally not good.");
-                }
-
                 if (target != null)
                 {
+                    if (Logger.IsEnabled && string.IsNullOrEmpty(target.RuntimeIdentifier))
+                    {
+                        // REVIEW(anurse): Is there ever a reason we want to use the RID-less target now?
+                        Logger.TraceWarning($"[{nameof(ApplicationHostContext)}] Lock File Target is Runtime-agnostic! This is generally not good.");
+                    }
+
                     Logger.TraceInformation($"[{nameof(ApplicationHostContext)}] Using Lock File Target: {target.TargetFramework}/{target.RuntimeIdentifier}");
                     foreach (var library in target.Libraries)
                     {
