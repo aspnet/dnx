@@ -130,9 +130,10 @@ namespace dnx.hostTests
             Assert.Equal(expectedArch, arch);
         }
 
-        [ConditionalFact]
-        [OSSkipCondition(OperatingSystems.Linux)]
-        [FrameworkSkipCondition(RuntimeFrameworks.CLR | RuntimeFrameworks.CoreCLR)] // We don't have an OS skip condition for all Windows yet
+        [Fact(Skip = "This fails on Travis because Travis runs on Darwin 10.9")]
+        //[ConditionalFact]
+        //[OSSkipCondition(OperatingSystems.Linux)]
+        //[FrameworkSkipCondition(RuntimeFrameworks.CLR | RuntimeFrameworks.CoreCLR)] // We don't have an OS skip condition for all Windows yet
         public void MacRuntimeIdIsCorrect()
         {
             var arch = RuntimeEnvironmentHelper.RuntimeEnvironment.RuntimeArchitecture.ToLowerInvariant();
