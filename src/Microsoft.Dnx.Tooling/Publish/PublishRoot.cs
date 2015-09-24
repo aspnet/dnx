@@ -152,7 +152,7 @@ IF ""%DNX_PATH%"" == """" (
             string relativeAppBase;
             if (NoSource)
             {
-                relativeAppBase = $"{AppRootName}/packages/${_project.Name}/{_project.Version}/root";
+                relativeAppBase = $"{AppRootName}/packages/{_project.Name}/{_project.Version}/root";
             }
             else
             {
