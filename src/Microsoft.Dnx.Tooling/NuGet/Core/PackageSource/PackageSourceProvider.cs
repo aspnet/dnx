@@ -20,11 +20,6 @@ namespace NuGet
         private readonly IDictionary<PackageSource, PackageSource> _migratePackageSources;
         private readonly IEnumerable<PackageSource> _configurationDefaultSources;
 
-        public PackageSourceProvider(ISettings settingsManager)
-            : this(settingsManager, providerDefaultSources: null)
-        {
-        }
-
         /// <summary>
         /// Creates a new PackageSourceProvider instance.
         /// </summary>
@@ -167,7 +162,6 @@ namespace NuGet
 
         private void MigrateSources(List<PackageSource> loadedPackageSources)
         {
-            bool hasChanges = false;
             List<PackageSource> packageSourcesToBeRemoved = new List<PackageSource>();
 
             // doing migration
@@ -187,18 +181,12 @@ namespace NuGet
                         // make sure we preserve the IsEnabled property when migrating package sources
                         loadedPackageSources[i].IsEnabled = ps.IsEnabled;
                     }
-                    hasChanges = true;
                 }
             }
 
             foreach (PackageSource packageSource in packageSourcesToBeRemoved)
             {
                 loadedPackageSources.Remove(packageSource);
-            }
-
-            if (hasChanges)
-            {
-                SavePackageSources(loadedPackageSources);
             }
         }
 
@@ -263,56 +251,6 @@ namespace NuGet
                 packageSource.IsEnabled = areProviderDefaultSourcesEnabled;
                 packageSource.IsOfficial = true;
             }
-        }
-
-        public void SavePackageSources(IEnumerable<PackageSource> sources)
-        {
-            // clear the old values
-            _settingsManager.DeleteSection(PackageSourcesSectionName);
-
-            // and write the new ones
-            _settingsManager.SetValues(
-                PackageSourcesSectionName,
-                sources.Where(p => !p.IsMachineWide)
-                    .Select(p => new KeyValuePair<string, string>(p.Name, p.Source))
-                    .ToList());
-
-            // overwrite new values for the <disabledPackageSources> section
-            _settingsManager.DeleteSection(DisabledPackageSourcesSectionName);
-
-            _settingsManager.SetValues(
-                DisabledPackageSourcesSectionName,
-                sources.Where(p => !p.IsEnabled).Select(p => new KeyValuePair<string, string>(p.Name, "true")).ToList());
-
-            // Overwrite the <packageSourceCredentials> section
-            _settingsManager.DeleteSection(CredentialsSectionName);
-
-            var sourceWithCredentials = sources.Where(s => !String.IsNullOrEmpty(s.UserName) && !String.IsNullOrEmpty(s.Password));
-            foreach (var source in sourceWithCredentials)
-            {
-                _settingsManager.SetNestedValues(CredentialsSectionName, source.Name, new[] {
-                    new KeyValuePair<string, string>(UsernameToken, source.UserName),
-                    ReadPasswordValues(source)
-                });
-            }
-        }
-
-        private static KeyValuePair<string, string> ReadPasswordValues(PackageSource source)
-        {
-            string passwordToken = source.IsPasswordClearText ? ClearTextPasswordToken : PasswordToken;
-            string passwordValue = source.IsPasswordClearText ? source.Password : EncryptionUtility.EncryptString(source.Password);
-
-            return new KeyValuePair<string, string>(passwordToken, passwordValue);
-        }
-
-        public void DisablePackageSource(PackageSource source)
-        {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            _settingsManager.SetValue(DisabledPackageSourcesSectionName, source.Name, "true");
         }
 
         public bool IsPackageSourceEnabled(PackageSource source)
