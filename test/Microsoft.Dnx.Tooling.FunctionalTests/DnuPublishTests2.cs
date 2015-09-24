@@ -43,9 +43,9 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             // Run it
             var outputPath = Path.Combine(solution.ArtifactsPath, "approot", "src", "DnxConsoleApp");
             var result = clrSdk.Dnx.Execute(
-                commandLine: $"--appbase \"{outputPath}\" Microsoft.Dnx.ApplicationHost --configuration Debug DnxConsoleApp run")
+                commandLine: $"--project \"{outputPath}\" --configuration Debug DnxConsoleApp run")
                 .EnsureSuccess();
-            Assert.Equal($"Hello from the wrapped project{Environment.NewLine}", result.StandardOutput);
+            Assert.Contains($"Hello from the wrapped project{Environment.NewLine}", result.StandardOutput);
         }
 
         [Theory]
