@@ -427,88 +427,6 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 
 - // ===================== PACKAGE ===================== 
 
-#copy-coreclr
-    @{
-        var extras = "-pre";
-        var coreCLRPackageSource = E("CORECLR_PACKAGE_SOURCE");
-        if (!string.IsNullOrEmpty(coreCLRPackageSource))
-        {
-            extras += " -source " + coreCLRPackageSource;
-        }
-
-        if (IsTeamCity)
-        {
-            extras += " -nocache";
-        }
-
-        var downloadComplete = false;
-        // Travis ci has a timelimit for no activity and the CoreCLR pacakge is
-        // about 51MB. We're going to print to the console while this is happening 
-        // so the build doesn't timeout
-        if (IsTravis)
-        {
-            new System.Threading.Thread(() => 
-            {
-                while (!downloadComplete)
-                {
-                    Console.Write(".");
-                    System.Threading.Thread.Sleep(1000);
-                }
-
-                Console.WriteLine();
-            }) 
-            {
-                IsBackground = true
-            }
-            .Start();
-        }
-    }
-
-    nuget-install package='DnxCoreCLR' outputDir='packages' extra='${extras}' once='DnxCoreCLR' nugetPath='.nuget/nuget.exe' if='!Directory.Exists(CORECLR_TARGET_PATH)'
-
-    var CoreCLR_DIR='${""}'
-    @{
-        downloadComplete = true;
-
-        Func<string, long> getVersion = version => {
-            var dash = version.LastIndexOf('-');
-            var parsedVersion = Int64.MaxValue;
-
-            if(dash != -1)
-            {
-                var lastToken = version.Substring(dash + 1);
-                var flag = false;
-
-                if(lastToken.StartsWith("t"))
-                {
-                    flag = Int64.TryParse(lastToken.Substring(1), out parsedVersion);
-                }
-                else
-                {
-                    flag = Int64.TryParse(lastToken, out parsedVersion);
-                }
-
-                if(!flag)
-                {
-                    Log.Info(string.Format("Version does not have build number: {0}", version));
-                    parsedVersion = Int64.MaxValue;
-                }
-            }
-            
-            return parsedVersion;
-        };
-
-        string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages");
-        CoreCLR_DIR = Directory.EnumerateDirectories(packagesDir, "DnxCoreCLR*")
-                                .OrderByDescending(getVersion)
-                                .First();
-                                      
-        Log.Info("Using " + CoreCLR_DIR);
-    }
-    
-    -// Copy to target
-    copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}' if='!Directory.Exists(CORECLR_TARGET_PATH)'
-
 #copy-required-dependencies
      @{
         var sdkProjects = new[]
@@ -527,8 +445,6 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 
         foreach (var target in RUNTIME_TARGETS)
         {
-            var coreclrFolder = target.Flavor == "coreclr" ? Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch) : null;
-
             // Parse and copy runtime assemblies
             var projectFolder = Path.Combine(ROOT, "src", "Microsoft.Dnx");
             var runtimeAssemblies = CopyRequiredAssemblies(projectFolder, target.TargetFolder, ignoreDependencies: null, target: target);
@@ -567,8 +483,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
         }
     }
 
-
-#copy-common .copy-coreclr .copy-required-dependencies target='package-common'
+#copy-common .copy-required-dependencies target='package-common'
     copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${RUNTIME_MONO_BIN}' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}' outputDir='${RUNTIME_MONO_BIN}' include='*.dll' overwrite='${true}'
     @{
@@ -893,7 +808,7 @@ macro name='DoRestore'
     exec program='cmd' commandline='/C dnu restore --parallel src test samples' workingdir='${Directory.GetCurrentDirectory()}' if='CanBuildForWindows'
     exec program='dnu' commandline='restore src test samples' workingdir='${Directory.GetCurrentDirectory()}' if='CanBuildForLinux || CanBuildForDarwin'
 
-#update-tpa .copy-coreclr
+#update-tpa
     @{
         var envTrace = Environment.GetEnvironmentVariable("DNX_TRACE");
 
