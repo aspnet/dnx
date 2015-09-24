@@ -174,8 +174,16 @@ namespace NuGet
             {
                 // load %AppData%\NuGet\NuGet.config
                 var userSettingsDir = DnuEnvironment.GetFolderPath(DnuFolderPath.UserSettingsDirectory);
-                appDataSettings = ReadSettings(new PhysicalFileSystem(userSettingsDir),
-                    Constants.SettingsFileName);
+                var fileName = SettingsFileNames
+                    .Select(settingsFileName => Path.Combine(userSettingsDir, settingsFileName))
+                    .FirstOrDefault(fileSystem.FileExists);
+
+                if (fileName != null)
+                {
+                    appDataSettings = ReadSettings(
+                        new PhysicalFileSystem(userSettingsDir),
+                        fileName);
+                }
             }
             else
             {

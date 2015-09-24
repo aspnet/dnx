@@ -310,8 +310,8 @@ namespace Microsoft.Dnx.CommonTestUtils
             // Make sure package restore can be successful
             var currentDnxSolutionRootDir = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
 
-            File.Copy(Path.Combine(currentDnxSolutionRootDir, NuGet.Constants.SettingsFileName),
-                      Path.Combine(targetProjectDir, NuGet.Constants.SettingsFileName));
+            File.Copy(Path.Combine(currentDnxSolutionRootDir, "NuGet.config"),
+                      Path.Combine(targetProjectDir, "NuGet.config"));
 
             // Use the newly built runtime to generate lock files for samples
             string stdOut, stdErr;
