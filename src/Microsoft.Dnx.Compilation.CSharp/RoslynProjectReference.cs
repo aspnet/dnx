@@ -304,6 +304,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
             CSharpCompilationOptions compilationOptions,
             Stream assemblyStream)
         {
+            const string assemblyCultureName = "System.Reflection.AssemblyCultureAttribute";
+
             var resources = resourceDescriptors
                 .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true));
 
@@ -311,6 +313,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 assemblyName.Name,
                 references: CompilationContext.Compilation.References,
                 options: compilationOptions);
+
+            if (!string.IsNullOrEmpty(assemblyName.CultureName))
+            {
+                compilation = compilation.AddSyntaxTrees(new[]
+                    {
+                        CSharpSyntaxTree.ParseText($"[assembly:{assemblyCultureName}(\"{assemblyName.CultureName}\")]")
+                    });
+            }
 
             Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
 

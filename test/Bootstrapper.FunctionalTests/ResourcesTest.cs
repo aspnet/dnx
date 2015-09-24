@@ -52,6 +52,7 @@ namespace Bootstrapper.FunctionalTests
                 Assert.Equal(0, exitCode);
                 Assert.Contains(@"Hello World!
 Bonjour Monde!
+Hallo Welt
 Bienvenue
 The name '{0}' is ambiguous.
 Le nom '{0}' est ambigu.
