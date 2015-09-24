@@ -33,21 +33,36 @@ namespace dnx.hostTests
 
         // Test RID generation
         [Theory]
-        [InlineData("Windows", "6.1.1234", "x86", "win7-x86")] // 1234 => We only care about major and minor
-        [InlineData("Windows", "6.1.1234", "x64", "win7-x64")]
-        [InlineData("Windows", "6.2.1234", "x86", "win8-x86")]
-        [InlineData("Windows", "6.2.1234", "x64", "win8-x64")]
-        [InlineData("Windows", "6.3.1234", "x86", "win81-x86")]
-        [InlineData("Windows", "6.3.1234", "x64", "win81-x64")]
-        [InlineData("Windows", "10.0.1234", "x86", "win10-x86")]
-        [InlineData("Windows", "10.0.1234", "x64", "win10-x64")]
-        [InlineData("Windows", "10.0.1234", "arm", "win10-arm")]
+        [InlineData("Windows", "7.0", "x86", "win7-x86")] // 1234 => We only care about major and minor
+        [InlineData("Windows", "7.0", "x64", "win7-x64")]
+        [InlineData("Windows", "8.0", "x86", "win8-x86")]
+        [InlineData("Windows", "8.0", "x64", "win8-x64")]
+        [InlineData("Windows", "8.1", "x86", "win81-x86")]
+        [InlineData("Windows", "8.1", "x64", "win81-x64")]
+        [InlineData("Windows", "10.0", "x86", "win10-x86")]
+        [InlineData("Windows", "10.0", "x64", "win10-x64")]
+        [InlineData("Windows", "10.0", "arm", "win10-arm")]
+        [InlineData("Ubuntu", "14.04", "x86", "ubuntu.14.04-x86")]
+        [InlineData("Ubuntu", "14.04", "x64", "ubuntu.14.04-x64")]
+        [InlineData("Ubuntu", "14.04", "arm", "ubuntu.14.04-arm")]
+        [InlineData("CentOS", "7.1", "x86", "centos.7.1-x86")]
+        [InlineData("CentOS", "7.1", "x64", "centos.7.1-x64")]
+        [InlineData("CentOS", "7.1", "arm", "centos.7.1-arm")]
         [InlineData("Linux", "", "x86", "linux-x86")]
         [InlineData("Linux", "", "x64", "linux-x64")]
         [InlineData("Linux", "", "arm", "linux-arm")]
         [InlineData("Darwin", "", "x86", "darwin-x86")]
         [InlineData("Darwin", "", "x64", "darwin-x64")]
         [InlineData("Darwin", "", "arm", "darwin-arm")]
+
+        // Our Darwin RIDs are in flux a bit, but this is just testing that whatever we decide on, we can render the right RID from the right input data :)
+        // See: https://github.com/aspnet/dnx/issues/2792
+        [InlineData("Darwin", "6.10", "x86", "darwin.6.10-x86")]
+        [InlineData("Darwin", "6.10", "x64", "darwin.6.10-x64")]
+        [InlineData("Darwin", "6.10", "arm", "darwin.6.10-arm")]
+        [InlineData("OSX", "10.10", "x86", "osx.10.10-x86")]
+        [InlineData("OSX", "10.10", "x64", "osx.10.10-x64")]
+        [InlineData("OSX", "10.10", "arm", "osx.10.10-arm")]
         public void RuntimeIdIsGeneratedCorrectly(string osName, string version, string architecture, string expectedRid)
         {
             var runtimeEnv = new DummyRuntimeEnvironment()
@@ -60,18 +75,35 @@ namespace dnx.hostTests
         }
 
         [Theory]
-        [InlineData("Windows", "6.1.1234", "x86", "win7-x86")] // 1234 => We only care about major and minor
-        [InlineData("Windows", "6.1.1234", "x64", "win7-x64")]
-        [InlineData("Windows", "6.2.1234", "x86", "win8-x86,win7-x86")]
-        [InlineData("Windows", "6.2.1234", "x64", "win8-x64,win7-x64")]
-        [InlineData("Windows", "6.3.1234", "x86", "win81-x86,win8-x86,win7-x86")]
-        [InlineData("Windows", "6.3.1234", "x64", "win81-x64,win8-x64,win7-x64")]
-        [InlineData("Windows", "10.0.1234", "x86", "win10-x86,win81-x86,win8-x86,win7-x86")]
-        [InlineData("Windows", "10.0.1234", "x64", "win10-x64,win81-x64,win8-x64,win7-x64")]
+        [InlineData("Windows", "7.0", "x86", "win7-x86")] // 1234 => We only care about major and minor
+        [InlineData("Windows", "7.0", "x64", "win7-x64")]
+        [InlineData("Windows", "8.0", "x86", "win8-x86,win7-x86")]
+        [InlineData("Windows", "8.0", "x64", "win8-x64,win7-x64")]
+        [InlineData("Windows", "8.1", "x86", "win81-x86,win8-x86,win7-x86")]
+        [InlineData("Windows", "8.1", "x64", "win81-x64,win8-x64,win7-x64")]
+        [InlineData("Windows", "10.0", "x86", "win10-x86,win81-x86,win8-x86,win7-x86")]
+        [InlineData("Windows", "10.0", "x64", "win10-x64,win81-x64,win8-x64,win7-x64")]
+        [InlineData("Ubuntu", "14.04", "x86", "ubuntu.14.04-x86")]
+        [InlineData("Ubuntu", "14.04", "x64", "ubuntu.14.04-x64")]
+        [InlineData("Ubuntu", "14.04", "arm", "ubuntu.14.04-arm")]
+        [InlineData("CentOS", "7.1", "x86", "centos.7.1-x86")]
+        [InlineData("CentOS", "7.1", "x64", "centos.7.1-x64")]
+        [InlineData("CentOS", "7.1", "arm", "centos.7.1-arm")]
         [InlineData("Linux", "", "x86", "linux-x86")]
         [InlineData("Linux", "", "x64", "linux-x64")]
+        [InlineData("Linux", "", "arm", "linux-arm")]
         [InlineData("Darwin", "", "x86", "darwin-x86")]
         [InlineData("Darwin", "", "x64", "darwin-x64")]
+        [InlineData("Darwin", "", "arm", "darwin-arm")]
+
+        // Our Darwin RIDs are in flux a bit, but this is just testing that whatever we decide on, we can render the right RID from the right input data :)
+        // See: https://github.com/aspnet/dnx/issues/2792
+        [InlineData("Darwin", "6.10", "x86", "darwin.6.10-x86")]
+        [InlineData("Darwin", "6.10", "x64", "darwin.6.10-x64")]
+        [InlineData("Darwin", "6.10", "arm", "darwin.6.10-arm")]
+        [InlineData("OSX", "10.10", "x86", "osx.10.10-x86")]
+        [InlineData("OSX", "10.10", "x64", "osx.10.10-x64")]
+        [InlineData("OSX", "10.10", "arm", "osx.10.10-arm")]
         public void AllRuntimeIdsAreGeneratedCorrectly(string osName, string version, string architecture, string expectedRids)
         {
             var runtimeEnv = new DummyRuntimeEnvironment()

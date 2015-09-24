@@ -46,23 +46,22 @@ namespace Microsoft.Dnx.Runtime
             else
             {
                 var arch = env.RuntimeArchitecture.ToLowerInvariant();
-                var parsedVersion = Version.Parse(env.OperatingSystemVersion);
-                if (parsedVersion.Major == 6 && parsedVersion.Minor == 1)
+                if(env.OperatingSystemVersion.Equals("7.0", StringComparison.Ordinal))
                 {
                     yield return "win7-" + arch;
                 }
-                else if (parsedVersion.Major == 6 && parsedVersion.Minor == 2)
+                else if(env.OperatingSystemVersion.Equals("8.0", StringComparison.Ordinal))
                 {
                     yield return "win8-" + arch;
                     yield return "win7-" + arch;
                 }
-                else if (parsedVersion.Major == 6 && parsedVersion.Minor == 3)
+                else if(env.OperatingSystemVersion.Equals("8.1", StringComparison.Ordinal))
                 {
                     yield return "win81-" + arch;
                     yield return "win8-" + arch;
                     yield return "win7-" + arch;
                 }
-                else if (parsedVersion.Major == 10 && parsedVersion.Minor == 0)
+                else if(env.OperatingSystemVersion.Equals("10.0", StringComparison.Ordinal))
                 {
                     yield return "win10-" + arch;
                     yield return "win81-" + arch;
@@ -82,28 +81,31 @@ namespace Microsoft.Dnx.Runtime
 
                 // Convert 6.x to the correct branding version for the RID
                 var parsedVersion = Version.Parse(ver);
-                if (parsedVersion.Major == 6 && parsedVersion.Minor == 1)
+                if(env.OperatingSystemVersion.Equals("7.0", StringComparison.Ordinal))
                 {
                     ver = "7";
                 }
-                else if (parsedVersion.Major == 6 && parsedVersion.Minor == 2)
+                else if(env.OperatingSystemVersion.Equals("8.0", StringComparison.Ordinal))
                 {
                     ver = "8";
                 }
-                else if (parsedVersion.Major == 6 && parsedVersion.Minor == 3)
+                else if(env.OperatingSystemVersion.Equals("8.1", StringComparison.Ordinal))
                 {
                     ver = "81";
                 }
-                else if (parsedVersion.Major == 10 && parsedVersion.Minor == 0)
+                else if(env.OperatingSystemVersion.Equals("10.0", StringComparison.Ordinal))
                 {
                     ver = "10";
                 }
 
                 return os + ver;
             }
-            else
+
+            // Just use the lower-case full name of the OS as the RID OS and tack on the version number
+            os = os.ToLowerInvariant();
+            if(!string.IsNullOrEmpty(ver))
             {
-                os = os.ToLowerInvariant(); // Just use the lower-case full name of the OS as the RID OS
+                os = os + "." + ver;
             }
             return os;
         }
