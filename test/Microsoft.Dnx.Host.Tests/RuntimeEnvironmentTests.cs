@@ -92,9 +92,9 @@ namespace dnx.hostTests
         [InlineData("Linux", "", "x86", "linux-x86")]
         [InlineData("Linux", "", "x64", "linux-x64")]
         [InlineData("Linux", "", "arm", "linux-arm")]
-        [InlineData("Darwin", "", "x86", "darwin-x86")]
-        [InlineData("Darwin", "", "x64", "darwin-x64")]
-        [InlineData("Darwin", "", "arm", "darwin-arm")]
+        [InlineData("Darwin", "", "x86", "osx-x86")]
+        [InlineData("Darwin", "", "x64", "osx-x64")]
+        [InlineData("Darwin", "", "arm", "osx-arm")]
 
         // Our Darwin RIDs are in flux a bit, but this is just testing that whatever we decide on, we can render the right RID from the right input data :)
         // See: https://github.com/aspnet/dnx/issues/2792
