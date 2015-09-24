@@ -23,6 +23,8 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     hr = bootstrapper->InitializeRuntime(data->runtimeDirectory, data->applicationBase, framework);
     if (SUCCEEDED(hr))
     {
+        dnx::utils::wait_for_debugger(data->argc, data->argv);
+
         g_clrBootstrapper = NULL;
         data->exitcode = bootstrapper->CallApplicationMain(data->argc, data->argv);
     }

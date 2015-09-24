@@ -11,11 +11,7 @@ bool ExpandCommandLineArguments(int argc, dnx::char_t** ppszArgv, size_t& expand
 
 void WaitForDebugger(int argc, dnx::char_t** argv)
 {
-    if (dnx::utils::find_bootstrapper_option_index(argc, argv, _X("--bootstrapper-debug")) >= 0
-#if !defined(CORECLR_WIN) && !defined(CORECLR_LINUX) && !defined(CORECLR_DARWIN)
-        || dnx::utils::find_bootstrapper_option_index(argc, argv, _X("--debug")) >= 0
-#endif
-        )
+    if (dnx::utils::find_bootstrapper_option_index(argc, argv, _X("--bootstrapper-debug")) >= 0)
     {
         WaitForDebuggerToAttach();
     }

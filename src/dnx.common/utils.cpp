@@ -243,5 +243,30 @@ namespace dnx
 
             return argv[index + 1];
         }
+#if defined(_WIN32)
+        void wait_for_debugger(int argc, const wchar_t** argv)
+        {
+            wchar_t buff[MAX_PATH];
+            auto result = GetEnvironmentVariable(L"DNX_DEBUG_PID_PATH", buff, MAX_PATH);
+            auto env_debug = result > 0 && result <= MAX_PATH;
+
+            // Check for the debug flag before doing anything else
+            if (env_debug || dnx::utils::find_bootstrapper_option_index(argc, const_cast<wchar_t**>(argv), _X("--debug")) >= 0)
+            {
+                if (!IsDebuggerPresent())
+                {
+                    std::wcout << L"Process Id: " << GetCurrentProcessId() << std::endl;
+                    std::wcout << L"Waiting for the debugger to attach..." << std::endl;
+
+                    while (!IsDebuggerPresent())
+                    {
+                        Sleep(250);
+                    }
+
+                    std::wcout << L"Debugger attached." << std::endl;
+                }
+            }
+        }
+#endif
     }
 }

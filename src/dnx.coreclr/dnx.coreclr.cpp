@@ -161,26 +161,6 @@ HRESULT StopClrHost(ICLRRuntimeHost2* pCLRRuntimeHost)
     return pCLRRuntimeHost->Stop();
 }
 
-void WaitForDebugger(int argc, const wchar_t** argv)
-{
-    // Check for the debug flag before doing anything else
-    if (dnx::utils::find_bootstrapper_option_index(argc, const_cast<wchar_t**>(argv), _X("--debug")) >= 0)
-    {
-        if (!IsDebuggerPresent())
-        {
-            std::wcout << L"Process Id: " << GetCurrentProcessId() << std::endl;
-            std::wcout << L"Waiting for the debugger to attach..." << std::endl;
-
-            while (!IsDebuggerPresent())
-            {
-                Sleep(250);
-            }
-
-            std::wcout << L"Debugger attached." << std::endl;
-        }
-    }
-}
-
 HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data, dnx::trace_writer& trace_writer)
 {
     const wchar_t* property_keys[] =
@@ -268,7 +248,7 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
         return -1;
     }
 
-    WaitForDebugger(data->argc, data->argv);
+    dnx::utils::wait_for_debugger(data->argc, data->argv);
 
     bootstrapper_context ctx;
     ctx.operating_system = L"Windows";

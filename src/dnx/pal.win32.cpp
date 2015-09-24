@@ -9,6 +9,8 @@
 #include "servicing.h"
 #include <sstream>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 std::wstring GetNativeBootstrapperDirectory()
 {
@@ -105,6 +107,33 @@ namespace
 
         return std::wstring{};
     }
+
+    void write_pid()
+    {
+        wchar_t buff[MAX_PATH];
+        auto result = GetEnvironmentVariable(L"DNX_DEBUG_PID_PATH", buff, MAX_PATH);
+
+        if (result == 0)
+        {
+            return;
+        }
+
+        if (result > MAX_PATH)
+        {
+            throw std::runtime_error("The value of the DNX_DEBUG_PID_PATH variable is not valid.");
+        }
+
+        std::ofstream pid_file;
+        pid_file.open(buff, std::ios::out);
+        if (!pid_file.is_open())
+        {
+            throw std::runtime_error(
+                dnx::utils::to_string(std::wstring(L"Cannot open DNX_DEBUG_PID_PATH file: ").append(buff)));
+        }
+
+        pid_file << GetCurrentProcessId() << std::endl;
+        pid_file.close();
+    }
 }
 
 int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, dnx::trace_writer& trace_writer)
@@ -112,6 +141,8 @@ int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CAL
     HMODULE hostModule = nullptr;
     try
     {
+        write_pid();
+
         const auto runtime_new_path = get_runtime_path(trace_writer);
         if (runtime_new_path.length() > 0)
         {
