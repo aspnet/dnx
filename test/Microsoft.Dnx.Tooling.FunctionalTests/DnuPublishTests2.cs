@@ -208,7 +208,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
         [Theory]
         [MemberData(nameof(DnxSdks))]
-        public void PublishedAppWithWebRootDefaultsToOnlyIfNoneSpecified(DnxSdk sdk)
+        public void PublishedAppWithWebRootDefaults(DnxSdk sdk)
         {
             // Arrange
             var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorldWithWebRoot");
