@@ -22,7 +22,32 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         private static readonly string[] ConfigurationOptions = new string[] { "Debug", "Release", null };
 
         private static readonly string BatchFileTemplate = @"
-@""{0}{1}.exe"" --appbase ""%~dp0approot\src\{2}"" Microsoft.Dnx.ApplicationHost --configuration {3} {4} %*
+@echo off
+SET DNX_FOLDER={0}
+SET ""LOCAL_DNX=%~dp0approot\runtimes\%DNX_FOLDER%\bin\{1}.exe""
+
+IF EXIST %LOCAL_DNX% (
+  SET ""DNX_PATH=%LOCAL_DNX%""
+)
+
+for %%a in (%DNX_HOME%) do (
+    IF EXIST %%a\runtimes\%DNX_FOLDER%\bin\{1}.exe (
+        SET ""HOME_DNX=%%a\runtimes\%DNX_FOLDER%\bin\{1}.exe""
+        goto :continue
+    )
+)
+
+:continue
+
+IF ""%HOME_DNX%"" NEQ """" (
+  SET ""DNX_PATH=%HOME_DNX%""
+)
+
+IF ""%DNX_PATH%"" == """" (
+  SET ""DNX_PATH={1}.exe""
+)
+
+@""%DNX_PATH%"" --project ""%~dp0approot\src\{2}"" --configuration {3} {4} %*
 ";
 
         private static readonly string BashScriptTemplate = @"#!/usr/bin/env bash
@@ -35,7 +60,7 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost --configuration {3} {4} ""$@""".Replace("\r\n", "\n");
+exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@""".Replace("\r\n", "\n");
 
         private static readonly string BasicLockFileTemplate = @"{
   ""locked"": false,
@@ -1592,8 +1617,8 @@ exec ""{1}{2}"" --appbase ""$DIR/approot/src/{0}"" Microsoft.Dnx.ApplicationHost
   ],
   ""packages"": ""packages""
 }")
-                    .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
-                    .WithFileContents("kestrel.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
+                    .WithFileContents("run.cmd", BatchFileTemplate, runtimeName, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
+                    .WithFileContents("kestrel.cmd", BatchFileTemplate, runtimeName, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
                     .WithFileContents("run",
                         BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "run")
                     .WithFileContents("kestrel",
