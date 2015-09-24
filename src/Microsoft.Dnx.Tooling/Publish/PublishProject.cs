@@ -529,7 +529,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             if (!string.IsNullOrEmpty(command) && !project.Commands.ContainsKey(command))
             {
-                root.Reports.Error.WriteLine($"Specified command {command} cannot be found.");
+                root.Reports.WriteError($"Specified command {command} cannot be found.");
                 return false;
             }
             else if (project.Commands.Count == 1)

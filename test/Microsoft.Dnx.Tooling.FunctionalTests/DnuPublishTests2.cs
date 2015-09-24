@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Runtime;
@@ -187,6 +188,54 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             });
 
             Assert.Equal(0, result.ExitCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppWithWebRootFailsIfIISCommandInvalid(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorldWithWebRoot");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorldWithWebRoot");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            var result = sdk.Dnu.Publish(project.ProjectDirectory, outputPath, $"--iis-command SomethingRandom");
+
+            Assert.NotEqual(0, result.ExitCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppWithWebRootDefaultsToOnlyIfNoneSpecified(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorldWithWebRoot");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorldWithWebRoot");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath).EnsureSuccess();
+
+            var config = File.ReadAllText(Path.Combine(outputPath, project.WebRoot, "web.config"));
+
+            var expected = @"<configuration>
+  <system.webServer>
+    <handlers>
+      <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
+    </handlers>
+    <httpPlatform processPath=""..\HelloWorld.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+  </system.webServer>
+</configuration>";
+
+            Assert.Equal(RemoveWhitespace(expected), RemoveWhitespace(config));
+        }
+
+        private static string RemoveWhitespace(string value)
+        {
+            return new string(value.ToCharArray().Where(ch => !char.IsWhiteSpace(ch)).ToArray());
         }
     }
 }
