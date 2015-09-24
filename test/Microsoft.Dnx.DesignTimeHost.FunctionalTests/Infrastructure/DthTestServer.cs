@@ -34,9 +34,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             var processStartInfo = new ProcessStartInfo()
             {
                 UseShellExecute = false,
-                WorkingDirectory = projectPath,
+                WorkingDirectory = sdk.Location,
                 FileName = bootstraperExe,
-                Arguments = $"--appbase \"{projectPath}\" \"{dthPath}\" {port} {Process.GetCurrentProcess().Id} {hostId}",
+                Arguments = $"--appbase \"{sdk.Location}\" \"{dthPath}\" {port} {Process.GetCurrentProcess().Id} {hostId}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };

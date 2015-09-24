@@ -31,5 +31,8 @@ namespace Microsoft.Dnx.Runtime.Internals
 
         // The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.
         public static readonly string NU1009 = nameof(NU1009);
+
+        // The dependency type was changed
+        public static readonly string NU1010 = nameof(NU1010);
     }
 }
