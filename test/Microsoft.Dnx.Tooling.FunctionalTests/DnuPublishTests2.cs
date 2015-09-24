@@ -116,5 +116,77 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             var actualOutputStructure = new Dir(outputPath);
             DirAssert.Equal(expectedOutputStructure, actualOutputStructure);
         }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppRunsFromSource(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorld");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorld");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath).EnsureSuccess();
+
+            var executable = Path.Combine(outputPath, "HelloWorld");
+
+            // Assert
+            var result = Exec.RunScript(executable, env =>
+            {
+                env["PATH"] = sdk.BinDir + ";" + Environment.GetEnvironmentVariable("PATH");
+            });
+
+            Assert.Equal(0, result.ExitCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppRunsNoSource(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorld");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorld");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath, "--no-source").EnsureSuccess();
+
+            var executable = Path.Combine(outputPath, "HelloWorld");
+
+            // Assert
+            var result = Exec.RunScript(executable, env =>
+            {
+                env["PATH"] = sdk.BinDir + ";" + Environment.GetEnvironmentVariable("PATH");
+            });
+
+            Assert.Equal(0, result.ExitCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void PublishedAppRunsNoSourceAndRuntime(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorld");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorld");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath, $"--no-source --runtime {sdk.Location}").EnsureSuccess();
+
+            var executable = Path.Combine(outputPath, "HelloWorld");
+
+            // Assert
+            var result = Exec.RunScript(executable, env =>
+            {
+                env["PATH"] = sdk.BinDir + ";" + Environment.GetEnvironmentVariable("PATH");
+            });
+
+            Assert.Equal(0, result.ExitCode);
+        }
     }
 }
