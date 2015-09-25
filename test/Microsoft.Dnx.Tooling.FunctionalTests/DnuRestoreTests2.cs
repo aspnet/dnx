@@ -11,7 +11,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
     {
         [Theory]
         [MemberData(nameof(DnxSdks))]
-        public void DnuRestore_DoesNotAllowProjectToSatisfyPackageDependency(DnxSdk sdk)
+        public void Restore_PackageOverProjectTarget(DnxSdk sdk)
         {
             var solution = TestUtils.GetSolution<DnuRestoreTests2>(sdk, "DependencyTargets");
             var bOutputPath = Path.Combine(solution.ArtifactsPath, "B");
@@ -40,7 +40,7 @@ B: This is Package B
 
         [Theory]
         [MemberData(nameof(DnxSdks))]
-        public void DnuRestore_DoesNotAllowPackageToSatisfyProjectDependency(DnxSdk sdk)
+        public void Restore_ProjectOverPackageTarget(DnxSdk sdk)
         {
             var solution = TestUtils.GetSolution<DnuRestoreTests2>(sdk, "DependencyTargets");
             var aOutputPath = Path.Combine(solution.ArtifactsPath, "A");
