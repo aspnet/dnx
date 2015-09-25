@@ -8,7 +8,7 @@ namespace Microsoft.Dnx.Compilation
 {
     // This load context isn't tracked in the dictionary, it's a shim
     // so that we don't allocte a real load context until absolutely necessary
-    internal class BuildLoadContext : LoadContext
+    internal class BuildLoadContext : LoadContext, IAssemblyLoadContext
     {
         private readonly Project _project;
         private readonly CompilationEngine _compilationEngine;
@@ -41,7 +41,7 @@ namespace Microsoft.Dnx.Compilation
             }
         }
 
-        public override Assembly LoadAssembly(AssemblyName assemblyName)
+        Assembly IAssemblyLoadContext.Load(AssemblyName assemblyName)
         {
             try
             {
@@ -51,6 +51,11 @@ namespace Microsoft.Dnx.Compilation
             {
                 return LoadContext.LoadWithoutDefault(assemblyName);
             }
+        }
+
+        public override Assembly LoadAssembly(AssemblyName assemblyName)
+        {
+            throw new NotImplementedException();
         }
 
         private RuntimeLoadContext InitializeProjectLoadContext()
