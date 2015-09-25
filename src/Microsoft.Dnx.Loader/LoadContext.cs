@@ -14,6 +14,16 @@ namespace Microsoft.Dnx.Runtime.Loader
     public abstract class LoadContext : AssemblyLoadContext, IAssemblyLoadContext
     {
         private readonly AssemblyLoaderCache _cache = new AssemblyLoaderCache();
+        private readonly string _friendlyName;
+
+        public LoadContext()
+        {
+        }
+
+        public LoadContext(string friendlyName)
+        {
+            _friendlyName = friendlyName;
+        }
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
@@ -80,7 +90,7 @@ namespace Microsoft.Dnx.Runtime.Loader
             return null;
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
 
         }
@@ -103,7 +113,11 @@ namespace Microsoft.Dnx.Runtime.Loader
 
         public LoadContext()
         {
-            _contextId = Guid.NewGuid().ToString();
+        }
+
+        public LoadContext(string friendlyName)
+        {
+            _contextId = friendlyName + "_" + Guid.NewGuid().ToString();
 
             _contexts.TryAdd(_contextId, this);
         }
@@ -119,8 +133,13 @@ namespace Microsoft.Dnx.Runtime.Loader
             loadContext._contextId = null;
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
+            if (string.IsNullOrEmpty(_contextId))
+            {
+                return;
+            }
+
             LoadContext context;
             _contexts.TryRemove(_contextId, out context);
             _contextId = null;

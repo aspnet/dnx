@@ -16,14 +16,12 @@ namespace Microsoft.Dnx.Compilation
     {
         private readonly CompilationEngine _compilationEngine;
         private readonly string _configuration;
-        private readonly IAssemblyLoadContext _loadContext;
 
-        public LibraryExporter(LibraryManager manager, IAssemblyLoadContext loadContext, CompilationEngine compilationEngine, string configuration)
+        public LibraryExporter(LibraryManager manager, CompilationEngine compilationEngine, string configuration)
         {
             LibraryManager = manager;
             _compilationEngine = compilationEngine;
             _configuration = configuration;
-            _loadContext = loadContext;
         }
 
         public LibraryManager LibraryManager { get; }
@@ -115,17 +113,7 @@ namespace Microsoft.Dnx.Compilation
 
                 if (include(node.Library))
                 {
-                    LibraryExport libraryExport = null;
-
-                    if (node.Library == root && root.Type == LibraryTypes.Project)
-                    {
-                        // We know it's a project so skip the lookup
-                        libraryExport = ExportProject((ProjectDescription)root, aspect: null, exporter: this);
-                    }
-                    else
-                    {
-                        libraryExport = GetExport(node.Library, aspect: null);
-                    }
+                    var libraryExport = GetExport(node.Library, aspect: null);
 
                     if (libraryExport != null)
                     {
@@ -196,7 +184,7 @@ namespace Microsoft.Dnx.Compilation
             }
             else if (string.Equals(LibraryTypes.Project, library.Type, StringComparison.Ordinal))
             {
-                return ExportProject((ProjectDescription)library, aspect, exporter: null);
+                return ExportProject((ProjectDescription)library, aspect);
             }
             else
             {
@@ -220,16 +208,17 @@ namespace Microsoft.Dnx.Compilation
             return new LibraryExport(references.Values.ToList(), sourceReferences);
         }
 
-        private LibraryExport ExportProject(ProjectDescription project, string aspect, LibraryExporter exporter)
+        private LibraryExport ExportProject(ProjectDescription project, string aspect)
         {
             Logger.TraceInformation($"[{nameof(LibraryExporter)}]: {nameof(ExportProject)}({project.Identity.Name}, {aspect}, {project.Framework}, {_configuration})");
 
             var key = Tuple.Create(project.Identity.Name, project.Framework, _configuration, aspect);
 
-            return _compilationEngine.CompilationCache.Cache.Get<LibraryExport>(key, ctx =>
+            return _compilationEngine.CompilationCache.Cache.Get<ProjectExportContext>(key, ctx =>
             {
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
+                var context = new ProjectExportContext();
 
                 // Create the compilation context
                 var compilationContext = project.Project.ToCompilationContext(project.Framework, _configuration, aspect);
@@ -248,13 +237,14 @@ namespace Microsoft.Dnx.Compilation
                     var compilerTypeInfo = project.Project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
 
                     // Create the project exporter
-                    exporter = exporter ?? _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration);
+                    var exporter = _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration);
+                    context.LoadContext = _compilationEngine.CreateBuildLoadContext(project.Project);
 
                     // Get the exports for the project dependencies
                     var projectDependenciesExport = new Lazy<LibraryExport>(() => exporter.GetAllDependencies(project.Identity.Name, aspect));
 
                     // Find the project compiler
-                    var projectCompiler = _compilationEngine.GetCompiler(compilerTypeInfo, exporter._loadContext);
+                    var projectCompiler = _compilationEngine.GetCompiler(compilerTypeInfo, context.LoadContext);
 
                     Logger.TraceInformation($"[{nameof(LibraryExporter)}]: GetProjectReference({compilerTypeInfo.TypeName}, {project.Identity.Name}, {project.Framework}, {aspect})");
 
@@ -273,8 +263,9 @@ namespace Microsoft.Dnx.Compilation
                     }
                 }
 
-                return new LibraryExport(metadataReferences, sourceReferences);
-            });
+                context.Export = new LibraryExport(metadataReferences, sourceReferences);
+                return context;
+            }).Export;
         }
 
         private static string ResolvePath(Project project, string configuration, string path)
@@ -337,5 +328,17 @@ namespace Microsoft.Dnx.Compilation
             public Node Parent { get; set; }
         }
 
+        private class ProjectExportContext : IDisposable
+        {
+            public LibraryExport Export { get; set; }
+
+            public IAssemblyLoadContext LoadContext { get; set; }
+
+            public void Dispose()
+            {
+                // This is important so that when cache entries expire, we toss the load context
+                LoadContext?.Dispose();
+            }
+        }
     }
 }

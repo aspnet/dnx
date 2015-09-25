@@ -7,7 +7,6 @@ namespace Microsoft.Dnx.Compilation
 {
     public class CompilationEngineContext
     {
-        public IProjectGraphProvider ProjectGraphProvider { get; }
         public IFileWatcher FileWatcher { get; }
         public IServiceProvider Services { get { return _compilerServices; } }
         public IAssemblyLoadContext DefaultLoadContext { get; set; }
@@ -20,18 +19,8 @@ namespace Microsoft.Dnx.Compilation
         public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
                                         IRuntimeEnvironment runtimeEnvironment,
                                         IAssemblyLoadContext defaultLoadContext,
-                                        CompilationCache cache,
-                                        IProjectGraphProvider projectGraphProvider) :
-            this(applicationEnvironment, runtimeEnvironment, defaultLoadContext, cache, NoopWatcher.Instance, projectGraphProvider)
-        {
-
-        }
-
-        public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
-                                        IRuntimeEnvironment runtimeEnvironment,
-                                        IAssemblyLoadContext defaultLoadContext,
                                         CompilationCache cache) :
-            this(applicationEnvironment, runtimeEnvironment, defaultLoadContext, cache, NoopWatcher.Instance, new ProjectGraphProvider())
+            this(applicationEnvironment, runtimeEnvironment, defaultLoadContext, cache, NoopWatcher.Instance)
         {
 
         }
@@ -40,13 +29,11 @@ namespace Microsoft.Dnx.Compilation
                                         IRuntimeEnvironment runtimeEnvironment,
                                         IAssemblyLoadContext defaultLoadContext,
                                         CompilationCache cache,
-                                        IFileWatcher fileWatcher,
-                                        IProjectGraphProvider projectGraphProvider)
+                                        IFileWatcher fileWatcher)
         {
             ApplicationEnvironment = applicationEnvironment;
             RuntimeEnvironment = runtimeEnvironment;
             DefaultLoadContext = defaultLoadContext;
-            ProjectGraphProvider = projectGraphProvider;
             CompilationCache = cache;
             FileWatcher = fileWatcher;
 

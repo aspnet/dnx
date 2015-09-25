@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
@@ -7,7 +6,6 @@ using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
-using Microsoft.Dnx.Runtime.Loader;
 
 namespace Microsoft.Dnx.Compilation
 {
@@ -52,23 +50,23 @@ namespace Microsoft.Dnx.Compilation
         {
             // This library manager represents the graph that will be used to resolve
             // references (compiler /r in csc terms)
-            var libraryManager = _context.ProjectGraphProvider.GetProjectGraph(project, targetFramework);
 
-            // Create an application host context to use to drive a Load Context used to load Precompilers
             var context = new ApplicationHostContext
             {
                 Project = project,
-                RuntimeIdentifiers = _context.RuntimeEnvironment.GetAllRuntimeIdentifiers(),
-                TargetFramework = _context.ApplicationEnvironment.RuntimeFramework
+                TargetFramework = targetFramework
             };
 
-            var libraries = ApplicationHostContext.GetRuntimeLibraries(context);
+            ApplicationHostContext.Initialize(context);
 
+            return new LibraryExporter(context.LibraryManager, this, configuration);
+        }
+
+        public IAssemblyLoadContext CreateBuildLoadContext(Project project)
+        {
             // This load context represents the graph that will be used to *load* the compiler and other
             // build time related dependencies
-            var loadContext = new RuntimeLoadContext(libraries, this, _context.DefaultLoadContext);
-
-            return new LibraryExporter(libraryManager, loadContext, this, configuration);
+            return new BuildLoadContext(project, this, _context);
         }
 
         public IProjectCompiler GetCompiler(TypeInformation provider, IAssemblyLoadContext loadContext)

@@ -13,14 +13,15 @@ namespace Microsoft.Dnx.Runtime.Loader
         private readonly ProjectAssemblyLoader _projectAssemblyLoader;
         private readonly IAssemblyLoadContext _defaultContext;
 
-        public RuntimeLoadContext(IEnumerable<LibraryDescription> libraries,
+        public RuntimeLoadContext(string friendlyName,
+                                  IEnumerable<LibraryDescription> libraries,
                                   ICompilationEngine compilationEngine,
-                                  IAssemblyLoadContext defaultContext)
+                                  IAssemblyLoadContext defaultContext) : base(friendlyName)
         {
             // TODO: Make this all lazy
             // TODO: Unify this logic with default host
             var projects = libraries.Where(p => p.Type == LibraryTypes.Project)
-                                    .ToDictionary(p => p.Identity.Name, p => (ProjectDescription)p);
+                                    .OfType<ProjectDescription>();
 
             var assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraries);
 
@@ -37,9 +38,14 @@ namespace Microsoft.Dnx.Runtime.Loader
             }
             catch (FileNotFoundException)
             {
-                return _projectAssemblyLoader.Load(assemblyName, this) ??
-                       _packageAssemblyLoader.Load(assemblyName, this);
+                return LoadWithoutDefault(assemblyName);
             }
+        }
+
+        public Assembly LoadWithoutDefault(AssemblyName assemblyName)
+        {
+            return _projectAssemblyLoader.Load(assemblyName, this) ??
+                   _packageAssemblyLoader.Load(assemblyName, this);
         }
     }
 }
