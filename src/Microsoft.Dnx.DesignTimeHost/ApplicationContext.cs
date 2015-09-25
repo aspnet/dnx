@@ -329,8 +329,9 @@ namespace Microsoft.Dnx.DesignTimeHost
                         if (!_requiresAssemblies.ContainsKey(targetFramework))
                         {
                             _requiresAssemblies[targetFramework] = new Trigger<Void>();
-                            _requiresAssemblies[targetFramework].Value = default(Void);
                         }
+
+                        _requiresAssemblies[targetFramework].Value = default(Void);
 
                         List<CompiledAssemblyState> waitingForCompiledAssemblies;
                         if (!_waitingForCompiledAssemblies.TryGetValue(targetFramework, out waitingForCompiledAssemblies))
@@ -568,7 +569,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var appHostContext = CreateApplicationHostContext(ctx, project, _applicationEnvironment.RuntimeFramework, _runtimeEnvironment.GetAllRuntimeIdentifiers());
 
-                return new RuntimeLoadContext(appHostContext.LibraryManager.GetLibraryDescriptions(), _compilationEngine, _defaultLoadContext);
+                return new RuntimeLoadContext($"{project.Name}_plugin", appHostContext.LibraryManager.GetLibraryDescriptions(), _compilationEngine, _defaultLoadContext);
             });
         }
 
@@ -823,8 +824,6 @@ namespace Microsoft.Dnx.DesignTimeHost
             foreach (var pair in _waitingForCompiledAssemblies)
             {
                 var waitingForCompiledAssemblies = pair.Value;
-
-                _requiresAssemblies[pair.Key].Value = default(Void);
 
                 for (int i = waitingForCompiledAssemblies.Count - 1; i >= 0; i--)
                 {

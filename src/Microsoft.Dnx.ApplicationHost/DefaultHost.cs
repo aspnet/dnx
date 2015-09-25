@@ -149,8 +149,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 _runtimeEnvironment,
                 loadContextAccessor.Default,
                 new CompilationCache(),
-                fileWatcher,
-                new ProjectGraphProvider());
+                fileWatcher);
 
             // Compilation services available only for runtime compilation
             compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
@@ -180,7 +179,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             var assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraries);
 
             // Configure Assembly loaders
-            _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects));
+            _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects.Values));
             _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, assemblies));
 
             _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(projects));

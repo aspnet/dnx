@@ -10,7 +10,7 @@ namespace Microsoft.Dnx.Host
     {
         private readonly LoaderContainer _loaderContainer;
 
-        public DefaultLoadContext(LoaderContainer loaderContainer)
+        public DefaultLoadContext(LoaderContainer loaderContainer) : base("Default")
         {
             _loaderContainer = loaderContainer;
         }
