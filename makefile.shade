@@ -1216,7 +1216,7 @@ functions @{
         {
             ExecuteAndRedirectOutput("cmd", string.Format("/C dnu restore {0} {1}", projectFolder, args), out tmp);
         }
-        
+
         if (target.Flavor == "mono")
         {
             runtimeTarget = "DNX,Version=v4.5.1";
@@ -1224,6 +1224,12 @@ functions @{
         else
         {
             runtimeTarget = (target.Flavor == "coreclr" ? "DNXCore,Version=v5.0/" : "DNX,Version=v4.5.1/") + runtimeTarget;
+        }
+
+        var packagesFolder = Environment.GetEnvironmentVariable("DNX_PACKAGES");
+        if (string.IsNullOrEmpty(packagesFolder))
+        {
+            packagesFolder = Path.Combine(Environment.GetEnvironmentVariable(home), ".dnx", "packages");
         }
 
         var lockFile = File.ReadAllText(Path.Combine(projectFolder, "project.lock.json"));
@@ -1255,7 +1261,7 @@ functions @{
             {
                 foreach (var dll in runtime.Keys)
                 {
-                    projectAssemblies.Add(Path.Combine(Environment.GetEnvironmentVariable(home), ".dnx", Path.Combine("packages", Path.Combine(package, dll))));
+                    projectAssemblies.Add(Path.Combine(packagesFolder, Path.Combine(package, dll)));
                 }
             }
 
@@ -1265,12 +1271,12 @@ functions @{
             {
                 foreach (var dll in native.Keys)
                 {
-                    projectAssemblies.Add(Path.Combine(Environment.GetEnvironmentVariable(home), ".dnx", Path.Combine("packages", Path.Combine(package, dll))));
+                    projectAssemblies.Add(Path.Combine(packagesFolder, Path.Combine(package, dll)));
                     
                     // this is to grab sos.dll and crossgen.exe
                     if (dll.EndsWith("coreclr.dll") || dll.Contains("libcoreclr"))
                     {
-                        tools = Path.Combine(Environment.GetEnvironmentVariable(home), ".dnx", Path.Combine("packages", Path.Combine(package, "tools")));
+                        tools = Path.Combine(packagesFolder, Path.Combine(package, "tools"));
                     }
                 }
             }
