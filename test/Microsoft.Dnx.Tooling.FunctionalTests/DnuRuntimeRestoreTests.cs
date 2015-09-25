@@ -43,7 +43,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             LockFile lockFile;
             using (var testDir = new DisposableDir())
             {
-                DirTree.CreateFromDirectory(Path.Combine(_appEnv.ApplicationBasePath, "..", "..", "misc", "RuntimeRestore", "TestProject"))
+                var misc = TestUtils.GetMiscProjectsFolder();
+                DirTree.CreateFromDirectory(Path.Combine(misc, "RuntimeRestore", "TestProject"))
                     .WriteTo(testDir);
 
                 // Clean up the lock file if it ended up there during the copy
@@ -54,7 +55,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 }
 
                 // Restore the project!
-                var source = Path.Combine(_appEnv.ApplicationBasePath, "..", "..", "misc", "RuntimeRestore", "RuntimeRestoreTestPackage", "feed");
+                var source = Path.Combine(misc, "RuntimeRestore", "RuntimeRestoreTestPackage", "feed");
                 DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", $"--source {source}", workingDir: testDir);
 
                 // Check the lock file
@@ -84,7 +85,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             LockFile lockFile;
             using (var testDir = new DisposableDir())
             {
-                DirTree.CreateFromDirectory(Path.Combine(_appEnv.ApplicationBasePath, "..", "..", "misc", "RuntimeRestore", "TestProject"))
+                var misc = TestUtils.GetMiscProjectsFolder();
+                DirTree.CreateFromDirectory(Path.Combine(misc, "RuntimeRestore", "TestProject"))
                     .WriteTo(testDir);
 
                 // Clean up the lock file if it ended up there during the copy
@@ -98,7 +100,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 AddRuntimeToProject(testDir, "win10-x86");
 
                 // Restore the project!
-                var source = Path.Combine(_appEnv.ApplicationBasePath, "..", "..", "misc", "RuntimeRestore", "RuntimeRestoreTestPackage", "feed");
+                var source = Path.Combine(misc, "RuntimeRestore", "RuntimeRestoreTestPackage", "feed");
                 DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", $"--source {source} --runtime linux-x64 --runtime darwin-x64", workingDir: testDir);
 
                 // Check the lock file
@@ -119,7 +121,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             LockFile lockFile;
             using (var testDir = new DisposableDir())
             {
-                DirTree.CreateFromDirectory(Path.Combine(_appEnv.ApplicationBasePath, "..", "..", "misc", "RuntimeRestore", "TestProject"))
+                var misc = TestUtils.GetMiscProjectsFolder();
+                DirTree.CreateFromDirectory(Path.Combine(misc, "RuntimeRestore", "TestProject"))
                     .WriteTo(testDir);
 
                 // Clean up the lock file if it ended up there during the copy
@@ -130,7 +133,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 }
 
                 // Restore the project!
-                var source = Path.Combine(_appEnv.ApplicationBasePath, "..", "..", "misc", "RuntimeRestore", "RuntimeRestoreTestPackage", "feed");
+                var source = Path.Combine(misc, "RuntimeRestore", "RuntimeRestoreTestPackage", "feed");
                 DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", $"--source {source} --runtime win10-x64 --runtime win10-x86 --runtime linux-x86", workingDir: testDir);
 
                 // Check the lock file
