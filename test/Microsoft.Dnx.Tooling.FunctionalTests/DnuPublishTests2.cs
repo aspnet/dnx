@@ -167,6 +167,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         }
 
         [Theory]
+        [FrameworkSkipCondition(RuntimeFrameworks.CLR)] //Getting Path is too long exceptions
         [MemberData(nameof(DnxSdks))]
         public void PublishedAppRunsNoSourceAndRT(DnxSdk sdk)
         {
