@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.Versioning;
+using System.Linq;
 using Microsoft.Dnx.Runtime.Compilation;
 
 namespace Microsoft.Dnx.Runtime.Loader
@@ -13,15 +15,15 @@ namespace Microsoft.Dnx.Runtime.Loader
     {
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly ICompilationEngine _compilationEngine;
-        private readonly IDictionary<string, ProjectDescription> _projects;
+        private readonly IDictionary<string, RuntimeProject> _projects;
 
         public ProjectAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
                                      ICompilationEngine compilationEngine,
-                                     IDictionary<string, ProjectDescription> projects)
+                                     IEnumerable<ProjectDescription> projects)
         {
             _loadContextAccessor = loadContextAccessor;
             _compilationEngine = compilationEngine;
-            _projects = projects;
+            _projects = projects.ToDictionary(p => p.Identity.Name, p => new RuntimeProject(p.Project, p.Framework));
         }
 
         public Assembly Load(AssemblyName assemblyName)
@@ -52,7 +54,7 @@ namespace Microsoft.Dnx.Runtime.Loader
                 name = Path.GetFileNameWithoutExtension(name);
             }
 
-            ProjectDescription project;
+            RuntimeProject project;
             if (!_projects.TryGetValue(name, out project))
             {
                 return null;
@@ -64,6 +66,18 @@ namespace Microsoft.Dnx.Runtime.Loader
                 aspect,
                 loadContext,
                 assemblyName);
+        }
+
+        private struct RuntimeProject
+        {
+            public RuntimeProject(Project project, FrameworkName targetFramework)
+            {
+                Project = project;
+                Framework = targetFramework;
+            }
+
+            public Project Project { get; }
+            public FrameworkName Framework { get; }
         }
     }
 }

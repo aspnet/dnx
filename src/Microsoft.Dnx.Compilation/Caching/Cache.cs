@@ -53,11 +53,7 @@ namespace Microsoft.Dnx.Compilation.Caching
                 {
                     // Dispose any entries that are disposable since
                     // we're creating a new one
-                    var disposable = currentEntry.Value as IDisposable;
-                    if (disposable != null)
-                    {
-                        disposable.Dispose();
-                    }
+                    currentEntry.Value.Dispose();
 
                     return AddEntry(k, acquire);
                 }
@@ -113,7 +109,7 @@ namespace Microsoft.Dnx.Compilation.Caching
             return entry;
         }
 
-        private class CacheEntry
+        private class CacheEntry : IDisposable
         {
             private IList<ICacheDependency> _dependencies;
 
@@ -141,6 +137,11 @@ namespace Microsoft.Dnx.Compilation.Caching
                 {
                     _dependencies = _dependencies.Distinct().ToArray();
                 }
+            }
+
+            public void Dispose()
+            {
+                (Result as IDisposable)?.Dispose();
             }
         }
     }
