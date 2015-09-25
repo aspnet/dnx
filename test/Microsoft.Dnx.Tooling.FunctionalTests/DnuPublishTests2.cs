@@ -166,7 +166,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             Assert.Equal(0, result.ExitCode);
         }
 
-        [Theory]
+        [ConditionalTheory]
         [FrameworkSkipCondition(RuntimeFrameworks.CLR)] //Getting Path is too long exceptions
         [MemberData(nameof(DnxSdks))]
         public void PublishedAppRunsNoSourceAndRT(DnxSdk sdk)
