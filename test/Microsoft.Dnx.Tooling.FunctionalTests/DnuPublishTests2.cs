@@ -168,7 +168,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
         [Theory]
         [MemberData(nameof(DnxSdks))]
-        public void PublishedAppRunsNoSourceAndRuntime(DnxSdk sdk)
+        public void PublishedAppRunsNoSourceAndRT(DnxSdk sdk)
         {
             // Arrange
             var solution = TestUtils.GetSolution<DnuPublishTests2>(sdk, "HelloWorld");
