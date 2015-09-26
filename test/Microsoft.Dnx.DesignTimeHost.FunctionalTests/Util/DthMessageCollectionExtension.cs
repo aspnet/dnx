@@ -53,7 +53,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util
             return messages;
         }
 
-        public static IEnumerable<DthMessage> NotContainMessage(this IEnumerable<DthMessage> messages, string typename)
+        public static IEnumerable<DthMessage> AssertDoesNotContain(this IEnumerable<DthMessage> messages, string typename)
         {
             var notContain = messages.FirstOrDefault(msg => string.Equals(msg.MessageType, typename, StringComparison.Ordinal)) == null;
 
@@ -64,8 +64,19 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util
 
         private static bool MatchesFramework(FrameworkName targetFramework, DthMessage msg)
         {
-            return msg.Payload.Type == JTokenType.Object && 
-                string.Equals(msg.Payload["Framework"]?.Value<string>("FrameworkName"), targetFramework.FullName, StringComparison.OrdinalIgnoreCase);
+            if (msg.Payload.Type != JTokenType.Object)
+            {
+                return false;
+            }
+
+            var frameworkObj = msg.Payload["Framework"];
+
+            if (frameworkObj == null || !frameworkObj.HasValues)
+            {
+                return false;
+            }
+
+            return string.Equals(frameworkObj.Value<string>("FrameworkName"), targetFramework.FullName, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
