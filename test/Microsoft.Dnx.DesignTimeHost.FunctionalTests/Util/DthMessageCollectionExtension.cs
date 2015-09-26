@@ -4,13 +4,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util
 {
     public static class DthMessageCollectionExtension
     {
+        public static IList<DthMessage> GetMessagesByFramework(this IEnumerable<DthMessage> messages, FrameworkName targetFramework)
+        {
+            return messages.Where(msg => MatchesFramework(targetFramework, msg)).ToList();
+        }
+
+        public static IList<DthMessage> GetMessagesByType(this IEnumerable<DthMessage> messages, string typename)
+        {
+            return messages.Where(msg => string.Equals(msg.MessageType, typename)).ToList();
+        }
+
         public static DthMessage RetrieveSingleMessage(this IEnumerable<DthMessage> messages,
                                                        string typename)
         {
@@ -48,6 +60,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util
             Assert.True(notContain, $"Message collection contains message of type {typename}.");
 
             return messages;
+        }
+
+        private static bool MatchesFramework(FrameworkName targetFramework, DthMessage msg)
+        {
+            return msg.Payload.Type == JTokenType.Object && 
+                string.Equals(msg.Payload["Framework"]?.Value<string>("FrameworkName"), targetFramework.FullName, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

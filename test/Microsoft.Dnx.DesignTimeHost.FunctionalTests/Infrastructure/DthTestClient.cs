@@ -9,7 +9,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json;
+using Xunit;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 {
@@ -23,7 +25,13 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
         private readonly BlockingCollection<DthMessage> _messageQueue;
         private readonly CancellationTokenSource _readCancellationToken;
 
-        public DthTestClient(DthTestServer server, int contextId)
+        // Keeps track of initialized project contexts
+        // REVIEW: This needs to be exposed if we ever create 2 clients in order to simulate how build
+        // works in visual studio
+        private readonly Dictionary<string, int> _projectContexts = new Dictionary<string, int>();
+        private int _contextId;
+
+        public DthTestClient(DthTestServer server)
         {
             var socket = new Socket(AddressFamily.InterNetwork,
                                     SocketType.Stream,
@@ -32,7 +40,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             socket.Connect(new IPEndPoint(IPAddress.Loopback, server.Port));
 
             _hostId = server.HostId;
-            ContextId = contextId;
 
             _networkStream = new NetworkStream(socket);
             _reader = new BinaryReader(_networkStream);
@@ -44,20 +51,29 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             Task.Run(() => ReadMessage(_readCancellationToken.Token), _readCancellationToken.Token);
         }
 
-        public int ContextId { get; }
-
-        public void SendPayLoad(string messageType)
+        public void SendPayLoad(Project project, string messageType)
         {
-            SendPayLoad(messageType, new { });
+            SendPayLoad(project.ProjectDirectory, messageType);
         }
 
-        public void SendPayLoad(string messageType, object payload)
+        public void SendPayLoad(string projectPath, string messageType)
+        {
+            int contextId;
+            if (!_projectContexts.TryGetValue(projectPath, out contextId))
+            {
+                Assert.True(false, $"Unable to resolve context for {projectPath}");
+            }
+
+            SendPayLoad(contextId, messageType, new { });
+        }
+
+        public void SendPayLoad(int contextId, string messageType, object payload)
         {
             lock (_writer)
             {
                 var message = new
                 {
-                    ContextId = ContextId,
+                    ContextId = contextId,
                     HostId = _hostId,
                     MessageType = messageType,
                     Payload = payload
@@ -68,22 +84,25 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 
         public void Initialize(string projectPath)
         {
-            SendPayLoad("Initialize", new { ProjectFolder = projectPath });
+            _projectContexts[projectPath] = _contextId++;
+            SendPayLoad(0, "Initialize", new { ProjectFolder = projectPath });
         }
 
         public void Initialize(string projectPath, int protocolVersion)
         {
-            SendPayLoad("Initialize", new { ProjectFolder = projectPath, Version = protocolVersion });
+            _projectContexts[projectPath] = _contextId++;
+            SendPayLoad(0, "Initialize", new { ProjectFolder = projectPath, Version = protocolVersion });
         }
 
         public void Initialize(string projectPath, int protocolVersion, string configuration)
         {
-            SendPayLoad("Initialize", new { ProjectFolder = projectPath, Version = protocolVersion, Configuration = configuration });
+            _projectContexts[projectPath] = _contextId++;
+            SendPayLoad(0, "Initialize", new { ProjectFolder = projectPath, Version = protocolVersion, Configuration = configuration });
         }
 
         public void SetProtocolVersion(int version)
         {
-            SendPayLoad(ProtocolManager.NegotiationMessageTypeName, new { Version = version });
+            SendPayLoad(0, ProtocolManager.NegotiationMessageTypeName, new { Version = version });
         }
 
         public List<DthMessage> DrainAllMessages()

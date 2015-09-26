@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util;
 using Microsoft.Dnx.Runtime;
@@ -58,136 +57,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
-        [Theory]
-        [MemberData(nameof(DnxSdks))]
-        public void DthStartup_GetProjectInformation(DnxSdk sdk)
-        {
-            var projectName = "EmptyConsoleApp";
-            var testProject = _fixture.GetTestProjectPath(projectName);
-
-            using (var server = DthTestServer.Create(sdk, testProject))
-            using (var client = new DthTestClient(server, 0))
-            {
-                client.Initialize(testProject);
-
-                var projectInformation = client.DrainAllMessages()
-                                               .RetrieveSingleMessage("ProjectInformation")
-                                               .EnsureSource(server, client)
-                                               .RetrievePayloadAs<JObject>()
-                                               .AssertProperty("Name", projectName);
-
-                projectInformation.RetrievePropertyAs<JArray>("Configurations")
-                                  .AssertJArrayCount(2)
-                                  .AssertJArrayContains("Debug")
-                                  .AssertJArrayContains("Release");
-
-                var frameworkShortNames = projectInformation.RetrievePropertyAs<JArray>("Frameworks")
-                                                            .AssertJArrayCount(2)
-                                                            .Select(f => f["ShortName"].Value<string>());
-
-                Assert.Contains("dnxcore50", frameworkShortNames);
-                Assert.Contains("dnx451", frameworkShortNames);
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(ProtocolNegotiationTestData))]
-        public void DthStartup_ProtocolNegotiation(DnxSdk sdk, int requestVersion, int expectVersion)
-        {
-            var projectName = "EmptyConsoleApp";
-            var testProject = _fixture.GetTestProjectPath(projectName);
-
-            using (var server = DthTestServer.Create(sdk, testProject))
-            using (var client = new DthTestClient(server, 0))
-            {
-                client.SetProtocolVersion(requestVersion);
-
-                var response = client.DrainTillFirst(ProtocolManager.NegotiationMessageTypeName);
-                response.EnsureSource(server, client);
-
-                Assert.Equal(expectVersion, response.Payload["Version"]?.Value<int>());
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(DnxSdks))]
-        public void DthStartup_ProtocolNegotiation_ZeroIsNoAllowed(DnxSdk sdk)
-        {
-            var projectName = "EmptyConsoleApp";
-            var testProject = _fixture.GetTestProjectPath(projectName);
-
-            using (var server = DthTestServer.Create(sdk, testProject))
-            using (var client = new DthTestClient(server, 0))
-            {
-                client.SetProtocolVersion(0);
-
-                Assert.Throws<TimeoutException>(() =>
-                {
-                    client.DrainTillFirst(ProtocolManager.NegotiationMessageTypeName);
-                });
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponentsWithBothVersions))]
-        public void DthCompilation_GetDiagnostics_OnEmptyConsoleApp(DnxSdk sdk, int protocolVersion)
-        {
-            var projectName = "EmptyConsoleApp";
-            var testProject = _fixture.GetTestProjectPath(projectName);
-
-            using (var server = DthTestServer.Create(sdk, testProject))
-            using (var client = new DthTestClient(server, 0))
-            {
-                // Drain the inital messages
-                client.Initialize(testProject, protocolVersion);
-                client.SendPayLoad("GetDiagnostics");
-
-                var diagnosticsGroup = client.DrainTillFirst("AllDiagnostics")
-                                             .EnsureSource(server, client)
-                                             .RetrievePayloadAs<JArray>()
-                                             .AssertJArrayCount(3);
-
-                foreach (var group in diagnosticsGroup)
-                {
-                    group.AsJObject()
-                         .AssertProperty<JArray>("Errors", errorsArray => !errorsArray.Any())
-                         .AssertProperty<JArray>("Warnings", warningsArray => !warningsArray.Any());
-                }
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponentsWithBothVersions))]
-        public void DthCompilation_RestoreComplete_OnEmptyLibrary(DnxSdk sdk, int protocolVersion)
-        {
-            var projectName = "EmptyLibrary";
-
-            string testProject;
-            using (_fixture.CreateDisposableTestProject(projectName, sdk, out testProject))
-            using (var server = DthTestServer.Create(sdk, testProject))
-            using (var client = new DthTestClient(server, 0))
-            {
-                // Drain the inital messages
-                client.Initialize(testProject, protocolVersion);
-
-                client.DrainTillFirst("Dependencies")
-                      .EnsureSource(server, client)
-                      .EnsureNotContainDependency("System.Console");
-
-                File.Copy(Path.Combine(testProject, "project-update.json"),
-                          Path.Combine(testProject, "project.json"),
-                          overwrite: true);
-
-                sdk.Dnu.Restore(testProject).EnsureSuccess();
-
-                client.SendPayLoad("RestoreComplete");
-
-                client.DrainTillFirst("Dependencies")
-                       .EnsureSource(server, client)
-                       .RetrieveDependency("System.Console");
-            }
-        }
-
         public static IEnumerable<object[]> UnresolvedDependencyTestData
         {
             get
@@ -218,14 +87,144 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         }
 
         [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void DthStartup_GetProjectInformation(DnxSdk sdk)
+        {
+            var projectName = "EmptyConsoleApp";
+            var testProject = _fixture.GetTestProjectPath(projectName);
+
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = new DthTestClient(server))
+            {
+                client.Initialize(testProject);
+
+                var projectInformation = client.DrainAllMessages()
+                                               .RetrieveSingleMessage("ProjectInformation")
+                                               .EnsureSource(server, client)
+                                               .RetrievePayloadAs<JObject>()
+                                               .AssertProperty("Name", projectName);
+
+                projectInformation.RetrievePropertyAs<JArray>("Configurations")
+                                  .AssertJArrayCount(2)
+                                  .AssertJArrayContains("Debug")
+                                  .AssertJArrayContains("Release");
+
+                var frameworkShortNames = projectInformation.RetrievePropertyAs<JArray>("Frameworks")
+                                                            .AssertJArrayCount(2)
+                                                            .Select(f => f["ShortName"].Value<string>());
+
+                Assert.Contains("dnxcore50", frameworkShortNames);
+                Assert.Contains("dnx451", frameworkShortNames);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ProtocolNegotiationTestData))]
+        public void DthStartup_ProtocolNegotiation(DnxSdk sdk, int requestVersion, int expectVersion)
+        {
+            var projectName = "EmptyConsoleApp";
+            var testProject = _fixture.GetTestProjectPath(projectName);
+
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
+            {
+                client.SetProtocolVersion(requestVersion);
+
+                var response = client.DrainTillFirst(ProtocolManager.NegotiationMessageTypeName);
+                response.EnsureSource(server, client);
+
+                Assert.Equal(expectVersion, response.Payload["Version"]?.Value<int>());
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void DthStartup_ProtocolNegotiation_ZeroIsNoAllowed(DnxSdk sdk)
+        {
+            var projectName = "EmptyConsoleApp";
+            var testProject = _fixture.GetTestProjectPath(projectName);
+
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
+            {
+                client.SetProtocolVersion(0);
+
+                Assert.Throws<TimeoutException>(() =>
+                {
+                    client.DrainTillFirst(ProtocolManager.NegotiationMessageTypeName);
+                });
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponentsWithBothVersions))]
+        public void DthCompilation_GetDiagnostics_OnEmptyConsoleApp(DnxSdk sdk, int protocolVersion)
+        {
+            var projectName = "EmptyConsoleApp";
+            var testProject = _fixture.GetTestProjectPath(projectName);
+
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
+            {
+                // Drain the inital messages
+                client.Initialize(testProject, protocolVersion);
+                client.SendPayLoad(testProject, "GetDiagnostics");
+
+                var diagnosticsGroup = client.DrainTillFirst("AllDiagnostics")
+                                             .EnsureSource(server, client)
+                                             .RetrievePayloadAs<JArray>()
+                                             .AssertJArrayCount(3);
+
+                foreach (var group in diagnosticsGroup)
+                {
+                    group.AsJObject()
+                         .AssertProperty<JArray>("Errors", errorsArray => !errorsArray.Any())
+                         .AssertProperty<JArray>("Warnings", warningsArray => !warningsArray.Any());
+                }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponentsWithBothVersions))]
+        public void DthCompilation_RestoreComplete_OnEmptyLibrary(DnxSdk sdk, int protocolVersion)
+        {
+            var projectName = "EmptyLibrary";
+
+            string testProject;
+            using (_fixture.CreateDisposableTestProject(projectName, sdk, out testProject))
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
+            {
+                // Drain the inital messages
+                client.Initialize(testProject, protocolVersion);
+
+                client.DrainTillFirst("Dependencies")
+                      .EnsureSource(server, client)
+                      .EnsureNotContainDependency("System.Console");
+
+                File.Copy(Path.Combine(testProject, "project-update.json"),
+                          Path.Combine(testProject, "project.json"),
+                          overwrite: true);
+
+                sdk.Dnu.Restore(testProject).EnsureSuccess();
+
+                client.SendPayLoad(testProject, "RestoreComplete");
+
+                client.DrainTillFirst("Dependencies")
+                       .EnsureSource(server, client)
+                       .RetrieveDependency("System.Console");
+            }
+        }
+
+        [Theory]
         [MemberData(nameof(UnresolvedDependencyTestData))]
         public void DthCompilation_Initialize_UnresolvedDependency(DnxSdk sdk, int protocolVersion, string referenceType, string testProjectName,
                                                                    string expectedUnresolvedDependency, string expectedUnresolvedType)
         {
             var testProject = _fixture.GetTestProjectPath(testProjectName);
 
-            using (var server = DthTestServer.Create(sdk, testProject))
-            using (var client = new DthTestClient(server, 0))
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
             {
                 client.Initialize(testProject, protocolVersion);
 
@@ -281,8 +280,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
 
             using (var disposableDir = new DisposableDir())
-            using (var server = DthTestServer.Create(sdk, testProject))
-            using (var client = new DthTestClient(server, 0))
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
             {
                 // copy the project to difference location so that the project path in its lock file is invalid
                 var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
@@ -312,8 +311,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
 
             using (var disposableDir = new DisposableDir())
-            using (var server = DthTestServer.Create(sdk, testProject))
-            using (var client = new DthTestClient(server, 0))
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
             {
                 // copy the project to difference location so that the project path in its lock file is invalid
                 var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
@@ -344,8 +343,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         public void DthDependencies_UpdateGlobalJson_RefreshDependencies(DnxSdk sdk)
         {
             using (var disposableDir = new DisposableDir())
-            using (var server = DthTestServer.Create(sdk, null))
-            using (var client = new DthTestClient(server, 0))
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
             {
                 Testing.TestUtils.CopyFolder(
                     _fixture.GetTestProjectPath("UpdateSearchPathSample"),
@@ -354,7 +353,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 var root = Path.Combine(disposableDir, "UpdateSearchPathSample", "home");
                 sdk.Dnu.Restore(root).EnsureSuccess();
 
-                client.Initialize(Path.Combine(root, "src", "MainProject"), protocolVersion: 2);
+                var testProject = Path.Combine(root, "src", "MainProject");
+
+                client.Initialize(testProject, protocolVersion: 2);
                 var messages = client.DrainAllMessages();
 
                 messages.RetrieveSingleMessage("ProjectInformation")
@@ -378,7 +379,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                     Path.Combine(root, GlobalSettings.GlobalFileName),
                     JsonConvert.SerializeObject(new { project = new string[] { "src" } }));
 
-                client.SendPayLoad("RefreshDependencies");
+                client.SendPayLoad(testProject, "RefreshDependencies");
                 messages = client.DrainAllMessages();
 
                 messages.RetrieveSingleMessage("ProjectInformation")
@@ -402,5 +403,43 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                         .AssertProperty("ErrorCode", "NU1010");
             }
         }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void CompileModuleWithDeps(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "CompileModuleWithDependencies");
+            var project = solution.GetProject("A");
+
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
+            {
+                sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+                client.Initialize(project.ProjectDirectory);
+
+                client.SendPayLoad(project, "GetDiagnostics");
+
+                var messages = client.DrainAllMessages();
+
+
+                // Assert
+                messages.NotContainMessage("Error");
+
+                var diagnosticsPerFramework = messages.RetrieveSingleMessage("AllDiagnostics")
+                                                      .RetrievePayloadAs<JArray>()
+                                                      .AssertJArrayCount(3);
+
+                foreach (var frameworkDiagnostics in diagnosticsPerFramework)
+                {
+                    var errors = frameworkDiagnostics.Value<JArray>("Errors");
+                    var warnings = frameworkDiagnostics.Value<JArray>("Warnings");
+                    Assert.Equal(0, errors.Count);
+                    Assert.Equal(0, warnings.Count);
+                }
+            }
+        }
+
     }
 }

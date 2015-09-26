@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Testing;
 
@@ -33,7 +33,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 
         public IDisposable CreateDisposableTestProject(string projectName, DnxSdk sdk, out string testProjectDir)
         {
-            var source = Path.Combine(GetMiscProjectsFolder(), "DthTestProjects", projectName);
+            var source = Path.Combine(TestUtils.GetTestSolutionsDirectory(), "DthTestProjects", projectName);
             if (!Directory.Exists(source))
             {
                 throw new ArgumentException($"Test project {source} doesn't exist.", nameof(projectName));
@@ -49,7 +49,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
         private void PrepareTestProjects()
         {
             var sdk = DnxSdkFunctionalTestBase.ClrDnxSdks.First();
-            var dthTestProjectsSource = Path.Combine(CommonTestUtils.TestUtils.GetMiscProjectsFolder(), "DthTestProjects");
+            var dthTestProjectsSource = Path.Combine(TestUtils.GetTestSolutionsDirectory(), "DthTestProjects");
 
             foreach (var testProject in Directory.GetDirectories(dthTestProjectsSource))
             {
@@ -71,12 +71,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 
             // Use the newly built runtime to generate lock files for samples
             sdk.Dnu.Restore(targetProjectDir);
-        }
-
-        private static string GetMiscProjectsFolder()
-        {
-            var dnxRuntimeRoot = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-            return Path.Combine(dnxRuntimeRoot, "misc");
         }
     }
 }

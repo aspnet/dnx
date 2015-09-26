@@ -4,7 +4,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -19,7 +18,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
         private const string DthName = "Microsoft.Dnx.DesignTimeHost";
         private Process _process;
 
-        public static DthTestServer Create(DnxSdk sdk, string projectPath, TimeSpan timeout)
+        public static DthTestServer Create(DnxSdk sdk, TimeSpan timeout)
         {
             var bootstraperExe = Path.Combine(sdk.Location, "bin", Constants.BootstrapperExeName);
 
@@ -95,9 +94,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             }
         }
 
-        public static DthTestServer Create(DnxSdk sdk, string projectPath)
+        public static DthTestServer Create(DnxSdk sdk)
         {
-            return Create(sdk, projectPath, TimeSpan.FromSeconds(10));
+            return Create(sdk, TimeSpan.FromSeconds(10));
         }
 
         public DthTestServer(Process process, int port, string hostId)
@@ -111,6 +110,11 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 
         public int Port { get; }
 
+        public DthTestClient CreateClient()
+        {
+            return new DthTestClient(this);
+        }
+
         public void Dispose()
         {
             try
@@ -121,20 +125,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             catch (InvalidOperationException)
             {
                 // swallow the exception if the process had been terminated.
-            }
-        }
-
-        private static string GetRuntimeRoot(string runtimeHomePath)
-        {
-            var runtimeRoot = string.Empty;
-            var dnxDev = Environment.GetEnvironmentVariable("DNX_DEV");
-            if (string.Equals(dnxDev, "1"))
-            {
-                return runtimeHomePath;
-            }
-            else
-            {
-                return Directory.EnumerateDirectories(Path.Combine(runtimeHomePath, "runtimes"), Constants.RuntimeNamePrefix + "*").First();
             }
         }
 

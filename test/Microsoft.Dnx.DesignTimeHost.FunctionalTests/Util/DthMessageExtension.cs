@@ -68,11 +68,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util
                 throw new Exception($"{nameof(message.HostId)} doesn't match the one of server. Expected {server.HostId} but actually {message.HostId}.");
             }
 
-            if (message.ContextId != client.ContextId)
-            {
-                throw new Exception($"{nameof(message.ContextId)} doesn't match the one of client. Expected {client.ContextId} but actually {message.ContextId}.");
-            }
-
             return message;
         }
 

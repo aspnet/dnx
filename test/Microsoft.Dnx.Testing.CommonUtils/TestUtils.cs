@@ -47,14 +47,19 @@ namespace Microsoft.Dnx.Testing
             throw new InvalidOperationException($"Unknown runtime flavor '{flavor}'");
         }
 
+        public static string GetTestSolutionsDirectory()
+        {
+            var rootPath = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            return Path.Combine(rootPath, TestConstants.TestSolutionsDirectory);
+        }
+
         public static Solution GetSolution<TTest>(
             DnxSdk sdk, 
             string solutionName, 
             [CallerMemberName]string testName = null, 
             bool appendSolutionNameToTestFolder = false)
         {
-            var rootPath = ProjectRootResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-            var originalSolutionPath = Path.Combine(rootPath, TestConstants.TestSolutionsDirectory, solutionName);
+            var originalSolutionPath = Path.Combine(GetTestSolutionsDirectory(), solutionName);
             var tempSolutionPath = GetTestFolder<TTest>(sdk, Path.Combine(testName, appendSolutionNameToTestFolder ? solutionName : string.Empty));
             CopyFolder(originalSolutionPath, tempSolutionPath);
             return new Solution(tempSolutionPath);
