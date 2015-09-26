@@ -167,12 +167,12 @@ namespace Microsoft.Dnx.Runtime.Loader
 
         public Assembly LoadFile(string assemblyPath)
         {
-            return Assembly.LoadFile(assemblyPath);
+            return Associate(Assembly.LoadFile(assemblyPath));
         }
 
-        public Assembly LoadStream(Stream assembly, Stream assemblySymbols)
+        public Assembly LoadStream(Stream assemblyStream, Stream assemblySymbols)
         {
-            byte[] assemblyBytes = GetStreamAsByteArray(assembly);
+            byte[] assemblyBytes = GetStreamAsByteArray(assemblyStream);
             byte[] assemblySymbolBytes = null;
 
             if (assemblySymbols != null)
@@ -180,7 +180,17 @@ namespace Microsoft.Dnx.Runtime.Loader
                 assemblySymbolBytes = GetStreamAsByteArray(assemblySymbols);
             }
 
-            return Assembly.Load(assemblyBytes, assemblySymbolBytes);
+            return Associate(Assembly.Load(assemblyBytes, assemblySymbolBytes));
+        }
+
+        private Assembly Associate(Assembly assembly)
+        {
+            if (assembly != null)
+            {
+                LoadContextAccessor.Instance.SetLoadContext(assembly, this);
+            }
+
+            return assembly;
         }
 
         private byte[] GetStreamAsByteArray(Stream stream)
@@ -262,14 +272,7 @@ namespace Microsoft.Dnx.Runtime.Loader
         {
             assembly = context.LoadAssemblyImpl(assemblyName);
 
-            if (assembly != null)
-            {
-                LoadContextAccessor.Instance.SetLoadContext(assembly, context);
-
-                return true;
-            }
-
-            return false;
+            return assembly != null;
         }
     }
 #endif
