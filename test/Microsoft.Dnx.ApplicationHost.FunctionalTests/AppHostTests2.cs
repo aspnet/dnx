@@ -18,14 +18,32 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
             var project = solution.GetProject("GetExports");
 
             sdk.Dnu.Restore(project.ProjectDirectory).EnsureSuccess();
-            
+
             // Act
-            var result = sdk.Dnx.Execute($"-p \"{project.ProjectDirectory}\" run");
+            var result = sdk.Dnx.Execute(project);
 
             // Assert
             Assert.Equal(0, result.ExitCode);
             Assert.Contains($"Project: {project.Name}", result.StandardOutput);
             Assert.Contains($"Package: Microsoft.Dnx.Compilation.Abstractions", result.StandardOutput);
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void CompileModuleWithDeps(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<AppHostTests2>(sdk, "CompileModuleWithDependencies");
+            var project = solution.GetProject("A");
+
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+            // Act
+            var result = sdk.Dnx.Execute(project);
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+            Assert.Contains($"Hello from generated code", result.StandardOutput);
         }
 
         [Theory]
@@ -39,7 +57,7 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
             sdk.Dnu.Restore(project.ProjectDirectory).EnsureSuccess();
 
             // Act
-            var result = sdk.Dnx.Execute($"-p \"{project.ProjectDirectory}\" run");
+            var result = sdk.Dnx.Execute(project);
 
             // Assert
             Assert.Equal(0, result.ExitCode);

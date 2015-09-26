@@ -93,20 +93,23 @@ namespace Microsoft.Dnx.Testing
 
         public DnuPackOutput Pack(
             string projectDir, 
-            string outputPath, 
+            string outputPath = null, 
             string configuration = "Debug",
             string additionalArguments = null)
         {
             var sb = new StringBuilder();
             sb.Append($@"pack ""{projectDir}""");
-            sb.Append($@" --out ""{outputPath}""");
+            if (!string.IsNullOrEmpty(outputPath))
+            {
+                sb.Append($@" --out ""{outputPath}""");
+            }
             sb.Append($" --configuration {configuration}");
             sb.Append($" {additionalArguments}");
 
             var result = Execute(sb.ToString());
 
             var projectName = new DirectoryInfo(projectDir).Name;
-            return new DnuPackOutput(outputPath, projectName, configuration)
+            return new DnuPackOutput(outputPath ?? Path.Combine(projectDir, "bin"), projectName, configuration)
             {
                 ExitCode = result.ExitCode,
                 StandardError = result.StandardError,

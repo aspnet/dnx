@@ -41,5 +41,21 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             Assert.Equal(0, result.ExitCode);
         }
 
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void CompileModuleWithDeps(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPackTests>(sdk, "CompileModuleWithDependencies");
+            var project = solution.GetProject("A");
+
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+            // Act
+            var result = sdk.Dnu.Pack(project.ProjectDirectory);
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+        }
     }
 }
