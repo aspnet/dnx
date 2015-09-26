@@ -16,12 +16,14 @@ namespace Microsoft.Dnx.Compilation
     {
         private readonly CompilationEngine _compilationEngine;
         private readonly string _configuration;
+        private readonly bool _skipLockfileValidation;
 
-        public LibraryExporter(LibraryManager manager, CompilationEngine compilationEngine, string configuration)
+        public LibraryExporter(LibraryManager manager, CompilationEngine compilationEngine, string configuration, bool skipLockfileValidation)
         {
             LibraryManager = manager;
             _compilationEngine = compilationEngine;
             _configuration = configuration;
+            _skipLockfileValidation = skipLockfileValidation;
         }
 
         public LibraryManager LibraryManager { get; }
@@ -237,7 +239,7 @@ namespace Microsoft.Dnx.Compilation
                     var compilerTypeInfo = project.Project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
 
                     // Create the project exporter
-                    var exporter = _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration);
+                    var exporter = _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration, _skipLockfileValidation);
                     context.LoadContext = _compilationEngine.CreateBuildLoadContext(project.Project);
 
                     // Get the exports for the project dependencies

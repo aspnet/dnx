@@ -20,9 +20,11 @@ namespace Microsoft.Dnx.Testing
             return Path.Combine(project.ProjectDirectory, "packages");
         }
 
-        public static void UpdateProjectFile(this Project project, Action<JObject> updateContents)
+        public static Project UpdateProjectFile(this Project project, Action<JObject> updateContents)
         {
             JsonUtils.UpdateJson(project.ProjectFilePath, updateContents);
+            Project.TryGetProject(project.ProjectFilePath, out project);
+            return project;
         }
     }
 }

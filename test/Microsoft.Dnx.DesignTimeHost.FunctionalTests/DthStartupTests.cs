@@ -289,7 +289,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 client.Initialize(targetPath, protocolVersion: 1);
                 var messages = client.DrainAllMessages()
-                                     .NotContainMessage("Error");
+                                     .AssertDoesNotContain("Error");
 
                 var error = messages.RetrieveSingleMessage("DependencyDiagnostics")
                                     .RetrieveDependencyDiagnosticsCollection()
@@ -320,7 +320,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 client.Initialize(targetPath, protocolVersion: 2);
                 var messages = client.DrainAllMessages()
-                                     .NotContainMessage("Error");
+                                     .AssertDoesNotContain("Error");
 
                 messages.RetrieveSingleMessage("DependencyDiagnostics")
                         .RetrieveDependencyDiagnosticsCollection()
@@ -425,7 +425,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
 
                 // Assert
-                messages.NotContainMessage("Error");
+                messages.AssertDoesNotContain("Error");
 
                 var diagnosticsPerFramework = messages.RetrieveSingleMessage("AllDiagnostics")
                                                       .RetrievePayloadAs<JArray>()
@@ -441,5 +441,95 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void AddDepsReturnsReferences(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "HelloWorld");
+            var project = solution.GetProject("HelloWorld");
+
+            using (var server = DthTestServer.Create(sdk))
+            using (var client = server.CreateClient())
+            {
+                sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+                client.SetProtocolVersion(3);
+
+                client.Initialize(project.ProjectDirectory);
+
+                var messages = client.DrainAllMessages();
+
+                foreach (var frameworkInfo in project.GetTargetFrameworks())
+                {
+                    var messagesByFramework = messages.GetMessagesByFramework(frameworkInfo.FrameworkName);
+
+                    messagesByFramework.RetrieveSingleMessage("Dependencies")
+                                       .RetrieveDependency("Newtonsoft.Json")
+                                       .AssertProperty("Type", LibraryTypes.Package);
+
+                    var references = messagesByFramework.RetrieveSingleMessage("References")
+                                                        .RetrievePayloadAs<JObject>()
+                                                        .RetrievePropertyAs<JArray>("FileReferences");
+
+                    Assert.NotEmpty(references);
+                    Assert.Contains("Newtonsoft.Json", references.Select(r => Path.GetFileNameWithoutExtension(r.Value<string>())));
+                }
+
+                // Update dependencies
+                project = project.UpdateProjectFile(json =>
+                {
+                    json["dependencies"]["DoesNotExist"] = "1.0.0";
+                });
+
+                client.SendPayLoad(project, "FilesChanged");
+
+                messages = client.DrainAllMessages();
+
+                foreach (var frameworkInfo in project.GetTargetFrameworks())
+                {
+                    var messagesByFramework = messages.GetMessagesByFramework(frameworkInfo.FrameworkName);
+
+                    var dependencies = messagesByFramework.RetrieveSingleMessage("Dependencies");
+
+                    dependencies.RetrieveDependency("Newtonsoft.Json")
+                                .AssertProperty("Type", LibraryTypes.Package);
+
+                    dependencies.RetrieveDependency("DoesNotExist")
+                                .AssertProperty("Type", LibraryTypes.Unresolved);
+
+                    // The references should not have changed
+                    messagesByFramework.AssertDoesNotContain("References");
+                }
+
+                client.SendPayLoad(project, "GetDiagnostics");
+
+                messages = client.DrainAllMessages();
+
+                var diagnosticsPerFramework = messages.RetrieveSingleMessage("AllDiagnostics")
+                                                      .RetrievePayloadAs<JArray>()
+                                                      .AssertJArrayCount(3);
+
+                foreach (var frameworkDiagnostics in diagnosticsPerFramework)
+                {
+                    if (!frameworkDiagnostics["Framework"].HasValues)
+                    {
+                        continue;
+                    }
+
+                    var errors = frameworkDiagnostics.Value<JArray>("Errors");
+                    var warnings = frameworkDiagnostics.Value<JArray>("Warnings");
+                    Assert.Equal(2, errors.Count);
+                    Assert.Equal(0, warnings.Count);
+
+                    var error1 = errors[0];
+                    var error2 = errors[1];
+
+                    Assert.Equal("NU1006", error1.Value<string>("ErrorCode"));
+                    Assert.Equal("NU1001", error2.Value<string>("ErrorCode"));
+                    Assert.Equal("DoesNotExist", error2["Source"].Value<string>("Name"));
+                }
+            }
+        }
     }
 }
