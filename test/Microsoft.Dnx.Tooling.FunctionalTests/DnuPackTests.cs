@@ -57,5 +57,22 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             // Assert
             Assert.Equal(0, result.ExitCode);
         }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void P2PDifferentFrameworks(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPackTests>(sdk, "ProjectToProject");
+            var project = solution.GetProject("P1");
+
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+            // Act
+            var result = sdk.Dnu.Pack(project.ProjectDirectory);
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+        }
     }
 }

@@ -63,5 +63,24 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
             Assert.Equal(0, result.ExitCode);
             Assert.Contains($"EntryPoint: Main", result.StandardOutput);
         }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void RunP2PDifferentFrameworks(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<AppHostTests2>(sdk, "ProjectToProject");
+            var project = solution.GetProject("P1");
+
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+            // Act
+            var result = sdk.Dnx.Execute(project);
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+            Assert.Contains("BaseClass.Test()", result.StandardOutput);
+            Assert.Contains("Derived.Test", result.StandardOutput);
+        }
     }
 }

@@ -16,9 +16,10 @@ namespace Microsoft.Dnx.Testing
             PackageName = packageName;
             Configuration = configuration;
             var basePath = Path.Combine(RootPath, Configuration);
-            PackagePath = Directory.GetFiles(basePath, $"*{Constants.PackageExtension}")
+            PackagePath = Directory.Exists(basePath) ? Directory.GetFiles(basePath, $"*{Constants.PackageExtension}")
                 .Where(x => Path.GetFileName(x).StartsWith(packageName))
-                .FirstOrDefault(x => !x.EndsWith($"*.symbols{Constants.PackageExtension}"));
+                .FirstOrDefault(x => !x.EndsWith($"*.symbols{Constants.PackageExtension}"))
+                : null;
         }
 
         public string RootPath { get; private set; }
