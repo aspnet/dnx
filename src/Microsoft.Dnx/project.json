@@ -12,19 +12,20 @@
         },
         "dnxcore50": {
             "dependencies": {
+                "Microsoft.CSharp": "4.0.0-*",
                 "Microsoft.Dnx.Host.CoreClr": "1.0.0-*",
                 "Microsoft.NETCore.Runtime": "1.0.1-*",
-                "System.IO.Compression": "4.0.1-*",
-                "Microsoft.CSharp": "4.0.0-*",
                 "Microsoft.VisualBasic": "10.0.0-*",
-                "System.Threading.Tasks.Parallel": "4.0.1-*",
-                "System.Runtime.Serialization.Json": "4.0.1-*",
-                "System.Runtime.Serialization.Primitives": "4.0.11-*",
                 "Microsoft.Win32.Registry.AccessControl": "4.0.0-*",
                 "System.Data.SqlClient": "4.0.0-*",
-                "System.IO.FileSystem.Primitives": "4.0.1-*",
                 "System.Diagnostics.Process": "4.1.0-*",
-                "System.IO.UnmanagedMemoryStream": "4.0.1-*"
+                "System.IO.Compression": "4.0.1-*",
+                "System.IO.FileSystem.Primitives": "4.0.1-*",
+                "System.IO.UnmanagedMemoryStream": "4.0.1-*",
+                "System.Runtime.Serialization.Json": "4.0.1-*",
+                "System.Runtime.Serialization.Primitives": "4.0.11-*",
+                "System.Security.Cryptography.X509Certificates": "4.0.0-*",
+                "System.Threading.Tasks.Parallel": "4.0.1-*"
             }
         }
     }
