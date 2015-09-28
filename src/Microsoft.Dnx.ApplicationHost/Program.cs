@@ -245,10 +245,8 @@ namespace Microsoft.Dnx.ApplicationHost
                             applicationName,
                             ex.InnerException);
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
             if (assembly == null)
