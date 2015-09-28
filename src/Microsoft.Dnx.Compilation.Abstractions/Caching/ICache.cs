@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Versioning;
 
 namespace Microsoft.Dnx.Compilation.Caching
 {

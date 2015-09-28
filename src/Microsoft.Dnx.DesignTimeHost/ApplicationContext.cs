@@ -580,8 +580,8 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         private bool UpdateProjectCompilation(ProjectWorld project, out ProjectCompilation compilation)
         {
-            var exporter = _compilationEngine.CreateProjectExporter(_local.Project, project.TargetFramework, _configuration.Value, skipLockfileValidation: true);
-            var export = exporter.GetExport(_local.ProjectInformation.Name);
+            var exporter = _compilationEngine.CreateExporter(_configuration.Value);
+            var export = exporter.ExportProject(_local.Project, project.TargetFramework);
 
             ProjectCompilation oldCompilation;
             if (!_compilations.TryGetValue(project.TargetFramework, out oldCompilation) ||

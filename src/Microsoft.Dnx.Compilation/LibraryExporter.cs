@@ -6,82 +6,57 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using NuGet;
 
 namespace Microsoft.Dnx.Compilation
 {
-    public class LibraryExporter : ILibraryExporter
+    public class LibraryExporter
     {
         private readonly CompilationEngine _compilationEngine;
         private readonly string _configuration;
-        private readonly bool _skipLockfileValidation;
 
-        public LibraryExporter(LibraryManager manager, CompilationEngine compilationEngine, string configuration, bool skipLockfileValidation)
+        public LibraryExporter(CompilationEngine compilationEngine, string configuration)
         {
-            LibraryManager = manager;
             _compilationEngine = compilationEngine;
             _configuration = configuration;
-            _skipLockfileValidation = skipLockfileValidation;
         }
 
-        public LibraryManager LibraryManager { get; }
-
-        public LibraryExport GetExport(string name)
+        public LibraryExport GetExport(LibraryDescription library)
         {
-            return GetExport(name, aspect: null);
+            return GetExport(library, aspect: null);
         }
 
-        public LibraryExport GetExport(string name, string aspect)
+        public LibraryExport GetExport(LibraryDescription library, string aspect)
         {
-            var library = LibraryManager.GetLibraryDescription(name);
-            if (library == null)
+            // Don't even try to export unresolved libraries
+            if (!library.Resolved)
             {
                 return null;
             }
-            return GetExport(library, aspect);
+
+            if (string.Equals(LibraryTypes.Package, library.Type, StringComparison.Ordinal))
+            {
+                return ExportPackage((PackageDescription)library);
+            }
+            else if (string.Equals(LibraryTypes.Project, library.Type, StringComparison.Ordinal))
+            {
+                return ExportProject((ProjectDescription)library, aspect);
+            }
+            else
+            {
+                return ExportAssemblyLibrary(library);
+            }
         }
 
-        public LibraryExport GetAllExports(string name)
+        public ProjectExport ExportProject(Project project, FrameworkName targetFramework, string aspect = null)
         {
-            return GetAllExports(name, aspect: null);
-        }
-
-        public LibraryExport GetAllExports(string name, string aspect)
-        {
-            return GetAllExports(name, aspect, l => true);
-        }
-
-        public LibraryExport GetNonProjectExports(string name)
-        {
-            return GetAllExports(
-                name,
-                aspect: null,
-                libraryFilter: l => l.Type != LibraryTypes.Project);
-        }
-
-        public LibraryExport GetAllDependencies(
-            string name,
-            string aspect)
-        {
-            return GetAllExports(name, aspect, library => !string.Equals(name, library.Identity.Name));
+            return ExportProject(project, targetFramework, project.GetTargetFramework(targetFramework), aspect);
         }
 
         public LibraryExport GetAllExports(
-            string name,
-            string aspect,
-            Func<LibraryDescription, bool> libraryFilter)
-        {
-            var description = LibraryManager.GetLibraryDescription(name);
-            if (description == null)
-            {
-                return null;
-            }
-            return GetAllExports(description, aspect, libraryFilter);
-        }
-
-        private LibraryExport GetAllExports(
             LibraryDescription root,
             string aspect,
             Func<LibraryDescription, bool> include)
@@ -172,28 +147,6 @@ namespace Microsoft.Dnx.Compilation
             }
         }
 
-        private LibraryExport GetExport(LibraryDescription library, string aspect)
-        {
-            // Don't even try to export unresolved libraries
-            if (!library.Resolved)
-            {
-                return null;
-            }
-
-            if (string.Equals(LibraryTypes.Package, library.Type, StringComparison.Ordinal))
-            {
-                return ExportPackage((PackageDescription)library);
-            }
-            else if (string.Equals(LibraryTypes.Project, library.Type, StringComparison.Ordinal))
-            {
-                return ExportProject((ProjectDescription)library, aspect);
-            }
-            else
-            {
-                return ExportAssemblyLibrary(library);
-            }
-        }
-
         private LibraryExport ExportPackage(PackageDescription package)
         {
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
@@ -210,64 +163,61 @@ namespace Microsoft.Dnx.Compilation
             return new LibraryExport(references.Values.ToList(), sourceReferences);
         }
 
-        private LibraryExport ExportProject(ProjectDescription project, string aspect)
+        private ProjectExport ExportProject(ProjectDescription project, string aspect)
         {
-            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: {nameof(ExportProject)}({project.Identity.Name}, {aspect}, {project.Framework}, {_configuration})");
+            return ExportProject(project.Project, project.Framework, project.TargetFrameworkInfo, aspect);
+        }
 
-            var key = Tuple.Create(project.Identity.Name, project.Framework, _configuration, aspect);
+        private ProjectExport ExportProject(Project project, FrameworkName targetFramework, TargetFrameworkInformation targetFrameworkInfo, string aspect)
+        {
+            Logger.TraceInformation($"[{nameof(LibraryExporter)}]: {nameof(ExportProject)}({project.Name}, {aspect}, {targetFramework}, {_configuration})");
 
-            return _compilationEngine.CompilationCache.Cache.Get<ProjectExportContext>(key, ctx =>
+            var key = Tuple.Create(project.Name, targetFramework, _configuration, aspect);
+
+            return _compilationEngine.CompilationCache.Cache.Get<ProjectExport>(key, ctx =>
             {
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
-                var context = new ProjectExportContext();
+                var projectExport = new ProjectExport(this, project, targetFramework, metadataReferences, sourceReferences);
 
                 // Create the compilation context
-                var compilationContext = project.Project.ToCompilationContext(project.Framework, _configuration, aspect);
+                var compilationContext = project.ToCompilationContext(targetFramework, _configuration, aspect);
 
-                if (!string.IsNullOrEmpty(project.TargetFrameworkInfo?.AssemblyPath))
+                if (!string.IsNullOrEmpty(targetFrameworkInfo?.AssemblyPath))
                 {
                     // Project specifies a pre-compiled binary. We're done!
-                    var assemblyPath = ResolvePath(project.Project, _configuration, project.TargetFrameworkInfo.AssemblyPath);
-                    var pdbPath = ResolvePath(project.Project, _configuration, project.TargetFrameworkInfo.PdbPath);
+                    var assemblyPath = ResolvePath(project, _configuration, targetFrameworkInfo.AssemblyPath);
+                    var pdbPath = ResolvePath(project, _configuration, targetFrameworkInfo.PdbPath);
 
                     metadataReferences.Add(new CompiledProjectMetadataReference(compilationContext, assemblyPath, pdbPath));
                 }
                 else
                 {
                     // We need to compile the project.
-                    var compilerTypeInfo = project.Project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
-
-                    // Create the project exporter
-                    var exporter = _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration, _skipLockfileValidation);
-                    context.LoadContext = _compilationEngine.CreateBuildLoadContext(project.Project);
-
-                    // Get the exports for the project dependencies
-                    var projectDependenciesExport = new Lazy<LibraryExport>(() => exporter.GetAllDependencies(project.Identity.Name, aspect));
+                    var compilerTypeInfo = project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
 
                     // Find the project compiler
-                    var projectCompiler = _compilationEngine.GetCompiler(compilerTypeInfo, context.LoadContext);
+                    var projectCompiler = _compilationEngine.GetCompiler(compilerTypeInfo, projectExport.LoadContext);
 
-                    Logger.TraceInformation($"[{nameof(LibraryExporter)}]: GetProjectReference({compilerTypeInfo.TypeName}, {project.Identity.Name}, {project.Framework}, {aspect})");
+                    Logger.TraceInformation($"[{nameof(LibraryExporter)}]: {compilerTypeInfo.TypeName}.CompileProject({project.Name}, {targetFramework}, {aspect})");
 
                     // Resolve the project export
                     IMetadataProjectReference projectReference = projectCompiler.CompileProject(
                         compilationContext,
-                        () => projectDependenciesExport.Value,
-                        () => CompositeResourceProvider.Default.GetResources(project.Project));
+                        () => projectExport.DependenciesExport,
+                        () => CompositeResourceProvider.Default.GetResources(project));
 
                     metadataReferences.Add(projectReference);
 
                     // Shared sources
-                    foreach (var sharedFile in project.Project.Files.SharedFiles)
+                    foreach (var sharedFile in project.Files.SharedFiles)
                     {
                         sourceReferences.Add(new SourceFileReference(sharedFile));
                     }
                 }
 
-                context.Export = new LibraryExport(metadataReferences, sourceReferences);
-                return context;
-            }).Export;
+                return projectExport;
+            });
         }
 
         private static string ResolvePath(Project project, string configuration, string path)
@@ -328,19 +278,6 @@ namespace Microsoft.Dnx.Compilation
             public LibraryDescription Library { get; set; }
 
             public Node Parent { get; set; }
-        }
-
-        private class ProjectExportContext : IDisposable
-        {
-            public LibraryExport Export { get; set; }
-
-            public IAssemblyLoadContext LoadContext { get; set; }
-
-            public void Dispose()
-            {
-                // This is important so that when cache entries expire, we toss the load context
-                LoadContext?.Dispose();
-            }
         }
     }
 }

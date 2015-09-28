@@ -14,46 +14,39 @@ namespace Microsoft.Dnx.Tooling
     {
         private readonly Runtime.Project _project;
         private readonly FrameworkName _targetFramework;
-        private readonly string _configuration;
         private readonly string _targetFrameworkFolder;
         private readonly string _outputPath;
-        private readonly LibraryManager _libraryManager;
         private readonly LibraryExporter _libraryExporter;
+        private ApplicationHostContext _context;
+        private readonly IReport _report;
 
-        public BuildContext(CompilationEngine compilationEngine,
+        public BuildContext(IReport report,
                             Runtime.Project project,
                             FrameworkName targetFramework,
-                            string configuration,
+                            LibraryExporter libraryExporter,
                             string outputPath)
         {
+            _report = report;
             _project = project;
             _targetFramework = targetFramework;
-            _configuration = configuration;
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
 
-            _libraryExporter = compilationEngine.CreateProjectExporter(
-                _project, _targetFramework, _configuration);
-
-            _libraryManager = _libraryExporter.LibraryManager;
-        }
-
-        public void Initialize(IReport report)
-        {
-            ShowDependencyInformation(report);
+            _libraryExporter = libraryExporter;
         }
 
         public bool Build(List<DiagnosticMessage> diagnostics)
         {
-            var export = _libraryExporter.GetExport(_project.Name);
-            if (export == null)
+            var export = _libraryExporter.ExportProject(_project, _targetFramework);
+
+            if (export != null)
             {
-                return false;
+                ShowDependencyInformation(export);
             }
 
-            var metadataReference = export.MetadataReferences
-                .OfType<IMetadataProjectReference>()
-                .FirstOrDefault(r => string.Equals(r.Name, _project.Name, StringComparison.OrdinalIgnoreCase));
+            _context = export?.ApplicationHostContext;
+
+            var metadataReference = export?.ProjectReference;
 
             if (metadataReference == null)
             {
@@ -62,7 +55,7 @@ namespace Microsoft.Dnx.Tooling
 
             var result = metadataReference.EmitAssembly(_outputPath);
 
-            diagnostics.AddRange(_libraryManager.GetAllDiagnostics());
+            diagnostics.AddRange(_context.LibraryManager.GetAllDiagnostics());
 
             if (result.Diagnostics != null)
             {
@@ -75,7 +68,7 @@ namespace Microsoft.Dnx.Tooling
         public void PopulateDependencies(PackageBuilder packageBuilder)
         {
             var dependencies = new List<PackageDependency>();
-            var project = _libraryManager.GetLibraryDescription(_project.Name);
+            var project = _context.MainProject;
 
             foreach (var dependency in project.Dependencies)
             {
@@ -84,7 +77,7 @@ namespace Microsoft.Dnx.Tooling
                     continue;
                 }
 
-                var dependencyDescription = _libraryManager.GetLibraryDescription(dependency.Name);
+                var dependencyDescription = _context.LibraryManager.GetLibraryDescription(dependency.Name);
 
                 // REVIEW: Can we get this far with unresolved dependencies
                 if (dependencyDescription == null || !dependencyDescription.Resolved)
@@ -167,27 +160,21 @@ namespace Microsoft.Dnx.Tooling
             }
         }
 
-        private void ShowDependencyInformation(IReport report)
+        private void ShowDependencyInformation(ProjectExport projectExport)
         {
-            // Make lookup for actual package dependency assemblies
-            var projectExport = _libraryExporter.GetAllExports(_project.Name);
-            if (projectExport == null)
-            {
-                return;
-            }
-            var metadataFileRefs = projectExport.MetadataReferences
+            var metadataFileRefs = projectExport.DependenciesExport.MetadataReferences
                 .OfType<IMetadataFileReference>();
 
-            foreach (var library in _libraryManager.GetLibraryDescriptions())
+            foreach (var library in projectExport.ApplicationHostContext.LibraryManager.GetLibraryDescriptions())
             {
                 if (!library.Resolved)
                 {
-                    report.WriteLine("  Unable to resolve dependency {0}", library.Identity.ToString().Red().Bold());
-                    report.WriteLine();
+                    _report.WriteLine("  Unable to resolve dependency {0}", library.Identity.ToString().Red().Bold());
+                    _report.WriteLine();
                     continue;
                 }
-                report.WriteLine("  Using {0} dependency {1}", library.Type, library.Identity);
-                report.WriteLine("    Source: {0}", HighlightFile(library.Path));
+                _report.WriteLine("  Using {0} dependency {1}", library.Type, library.Identity);
+                _report.WriteLine("    Source: {0}", HighlightFile(library.Path));
 
                 if (library.Type == LibraryTypes.Package)
                 {
@@ -200,10 +187,10 @@ namespace Microsoft.Dnx.Tooling
                         var relativeAssemblyPath = PathUtility.GetRelativePath(
                             libraryPath,
                             Path.GetFullPath(assembly.Path));
-                        report.WriteLine("    File: {0}", relativeAssemblyPath.Bold());
+                        _report.WriteLine("    File: {0}", relativeAssemblyPath.Bold());
                     }
                 }
-                report.WriteLine();
+                _report.WriteLine();
             }
         }
 

@@ -151,7 +151,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var applicationHostContext = _applicationHostContextCreator(ctx, project, frameworkName);
                 var libraryManager = applicationHostContext.LibraryManager;
-                var libraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration, skipLockfileValidation: true);
+                var libraryExporter = _compilationEngine.CreateExporter(configuration);
 
                 var info = new DependencyInfo
                 {
@@ -226,27 +226,28 @@ namespace Microsoft.Dnx.DesignTimeHost
                     }
                 }
 
-                var exportWithoutProjects = libraryExporter.GetNonProjectExports(project.Name);
+                // something
+                //var exportWithoutProjects = libraryExporter.GetNonProjectExports(project.Name);
 
-                foreach (var reference in exportWithoutProjects.MetadataReferences)
-                {
-                    var fileReference = reference as IMetadataFileReference;
-                    if (fileReference != null)
-                    {
-                        info.References.Add(fileReference.Path);
-                    }
+                //foreach (var reference in exportWithoutProjects.MetadataReferences)
+                //{
+                //    var fileReference = reference as IMetadataFileReference;
+                //    if (fileReference != null)
+                //    {
+                //        info.References.Add(fileReference.Path);
+                //    }
 
-                    var embedded = reference as IMetadataEmbeddedReference;
-                    if (embedded != null)
-                    {
-                        info.RawReferences[embedded.Name] = embedded.Contents;
-                    }
-                }
+                //    var embedded = reference as IMetadataEmbeddedReference;
+                //    if (embedded != null)
+                //    {
+                //        info.RawReferences[embedded.Name] = embedded.Contents;
+                //    }
+                //}
 
-                foreach (var sourceFileReference in exportWithoutProjects.SourceReferences.OfType<ISourceFileReference>())
-                {
-                    info.ExportedSourcesFiles.Add(sourceFileReference.Path);
-                }
+                //foreach (var sourceFileReference in exportWithoutProjects.SourceReferences.OfType<ISourceFileReference>())
+                //{
+                //    info.ExportedSourcesFiles.Add(sourceFileReference.Path);
+                //}
 
                 return info;
             });

@@ -24,43 +24,16 @@ namespace Microsoft.Dnx.Compilation
 
         public Assembly LoadProject(Project project, FrameworkName targetFramework, string aspect, IAssemblyLoadContext loadContext, AssemblyName assemblyName)
         {
-            var exporter = CreateProjectExporter(project, targetFramework, _context.ApplicationEnvironment.Configuration);
+            var exporter = CreateExporter(_context.ApplicationEnvironment.Configuration);
 
-            // Export the project
-            var export = exporter.GetExport(project.Name, aspect);
+            var export = exporter.ExportProject(project, targetFramework, aspect);
 
-            if (export == null)
-            {
-                return null;
-            }
-
-            // Load the metadata reference
-            foreach (var projectReference in export.MetadataReferences.OfType<IMetadataProjectReference>())
-            {
-                if (string.Equals(projectReference.Name, project.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    return projectReference.Load(assemblyName, loadContext);
-                }
-            }
-
-            return null;
+            return export?.ProjectReference?.Load(assemblyName, loadContext);
         }
 
-        public LibraryExporter CreateProjectExporter(Project project, FrameworkName targetFramework, string configuration, bool skipLockfileValidation = false)
+        public LibraryExporter CreateExporter(string configuration)
         {
-            // This library manager represents the graph that will be used to resolve
-            // references (compiler /r in csc terms)
-
-            var context = new ApplicationHostContext
-            {
-                Project = project,
-                TargetFramework = targetFramework,
-                SkipLockfileValidation = skipLockfileValidation
-            };
-
-            ApplicationHostContext.Initialize(context);
-
-            return new LibraryExporter(context.LibraryManager, this, configuration, skipLockfileValidation);
+            return new LibraryExporter(this, configuration);
         }
 
         public IAssemblyLoadContext CreateBuildLoadContext(Project project)

@@ -165,11 +165,13 @@ namespace Microsoft.Dnx.Tooling
                 { "build:Configuration", configuration }
             };
 
+            var exporter = _compilationEngine.CreateExporter(configuration);
+
             var getScriptVariable = GetScriptVariable(contextVariables);
 
             if (_buildOptions.GeneratePackages)
             {
-                if(!ScriptExecutor.Execute(_currentProject, "prepack", getScriptVariable))
+                if (!ScriptExecutor.Execute(_currentProject, "prepack", getScriptVariable))
                 {
                     LogError(ScriptExecutor.ErrorMessage);
                     return false;
@@ -204,13 +206,11 @@ namespace Microsoft.Dnx.Tooling
                 }
 
                 var diagnostics = new List<DiagnosticMessage>();
-                var context = new BuildContext(_compilationEngine,
+                var context = new BuildContext(_buildOptions.Reports.Quiet,
                                                _currentProject,
                                                targetFramework,
-                                               configuration,
+                                               exporter,
                                                outputPath);
-
-                context.Initialize(_buildOptions.Reports.Quiet);
 
                 success &= context.Build(diagnostics);
 
