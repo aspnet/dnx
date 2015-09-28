@@ -248,7 +248,7 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
         return -1;
     }
 
-    dnx::utils::wait_for_debugger(data->argc, data->argv);
+    dnx::utils::wait_for_debugger(data->argc, data->argv, L"--debug");
 
     bootstrapper_context ctx;
     ctx.operating_system = L"Windows";

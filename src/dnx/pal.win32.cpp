@@ -21,23 +21,6 @@ std::wstring GetNativeBootstrapperDirectory()
     return std::wstring(buffer);
 }
 
-void WaitForDebuggerToAttach()
-{
-    if (!IsDebuggerPresent())
-    {
-        ::_tprintf_s(_T("Process Id: %ld\r\n"), GetCurrentProcessId());
-        ::_tprintf_s(_T("Waiting for the debugger to attach...\r\n"));
-
-        // Do not use getchar() like in corerun because it doesn't work well with remote sessions
-        while (!IsDebuggerPresent())
-        {
-            Sleep(250);
-        }
-
-        ::_tprintf_s(_T("Debugger attached.\r\n"));
-    }
-}
-
 bool IsTracingEnabled()
 {
     wchar_t buff[2];
@@ -49,12 +32,12 @@ bool GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
     DWORD dwFullAppBase = GetFullPathName(szPath, MAX_PATH, pszNormalizedPath, nullptr);
     if (!dwFullAppBase)
     {
-        ::_tprintf_s(_T("Failed to get full path of application base: %s\r\n"), szPath);
+        std::wcout << L"Failed to get full path of application base: " << szPath << std::endl;
         return false;
     }
     else if (dwFullAppBase > MAX_PATH)
     {
-        ::_tprintf_s(_T("Full path of application base is too long\r\n"));
+        std::wcout << L"Full path of application base is too long." << std::endl;
         return false;
     }
 

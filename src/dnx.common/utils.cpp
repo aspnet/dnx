@@ -243,25 +243,34 @@ namespace dnx
 
             return argv[index + 1];
         }
-#if defined(_WIN32)
-        void wait_for_debugger(int argc, const wchar_t** argv)
+
+
+        void wait_for_debugger()
         {
-            if (dnx::utils::find_bootstrapper_option_index(argc, const_cast<wchar_t**>(argv), _X("--debug")) >= 0)
+#if defined(_WIN32)
+            if (!IsDebuggerPresent())
             {
-                if (!IsDebuggerPresent())
+                std::wcout << L"Process Id: " << GetCurrentProcessId() << std::endl;
+                std::wcout << L"Waiting for the debugger to attach..." << std::endl;
+
+                while (!IsDebuggerPresent())
                 {
-                    std::wcout << L"Process Id: " << GetCurrentProcessId() << std::endl;
-                    std::wcout << L"Waiting for the debugger to attach..." << std::endl;
-
-                    while (!IsDebuggerPresent())
-                    {
-                        Sleep(250);
-                    }
-
-                    std::wcout << L"Debugger attached." << std::endl;
+                    Sleep(250);
                 }
+
+                std::wcout << L"Debugger attached." << std::endl;
+            }
+#else
+            // TODO: Implement this.  procfs will be able to tell us this.
+#endif
+        }
+
+        void wait_for_debugger(int argc, const dnx::char_t** argv, const dnx::char_t* option)
+        {
+            if (dnx::utils::find_bootstrapper_option_index(argc, const_cast<dnx::char_t**>(argv), option) >= 0)
+            {
+                wait_for_debugger();
             }
         }
-#endif
     }
 }

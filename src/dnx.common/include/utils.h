@@ -24,10 +24,11 @@ namespace dnx
 
 #if defined(_WIN32)
         const wchar_t* get_windows_version();
-        void wait_for_debugger(int argc, const wchar_t** argv);
 #endif
         int find_bootstrapper_option_index(int argc, dnx::char_t**argv, const dnx::char_t* optionName);
         int find_first_non_bootstrapper_param_index(int argc, dnx::char_t**argv);
         dnx::char_t* get_option_value(int argc, dnx::char_t* argv[], const dnx::char_t* optionName);
+
+        void wait_for_debugger(int argc, const dnx::char_t** argv, const dnx::char_t* debug_option);
     }
 }

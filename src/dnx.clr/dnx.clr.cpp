@@ -7,6 +7,7 @@
 
 #include "ClrBootstrapper.h"
 #include "app_main.h"
+#include  <iostream>
 
 IClrBootstrapperPtr g_clrBootstrapper;
 
@@ -23,15 +24,14 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     hr = bootstrapper->InitializeRuntime(data->runtimeDirectory, data->applicationBase, framework);
     if (SUCCEEDED(hr))
     {
-        dnx::utils::wait_for_debugger(data->argc, data->argv);
+        dnx::utils::wait_for_debugger(data->argc, data->argv, L"--debug");
 
         g_clrBootstrapper = NULL;
         data->exitcode = bootstrapper->CallApplicationMain(data->argc, data->argv);
     }
     else
     {
-        printf_s("Failed to initialize runtime (%x)", hr);
-        data->exitcode = hr;
+        std::wcout << L"Failed to initialize runtime 0x" << std::hex << std::endl;
     }
 
     return hr;

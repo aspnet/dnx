@@ -9,7 +9,6 @@
 #include "app_main.h"
 
 dnx::xstring_t GetNativeBootstrapperDirectory() { return L""; }
-void WaitForDebuggerToAttach() {}
 bool IsTracingEnabled() { return true; }
 bool GetFullPath(const wchar_t* /*szPath*/, wchar_t* /*szFullPath*/) { return false; }
 int CallApplicationMain(const wchar_t* /*moduleName*/, const char* /*functionName*/, CALL_APPLICATION_MAIN_DATA* /*data*/, dnx::trace_writer& /*trace_writer*/) { return 3; }

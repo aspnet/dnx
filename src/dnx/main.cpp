@@ -9,14 +9,6 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer&
 void FreeExpandedCommandLineArguments(size_t argc, dnx::char_t** ppszArgv);
 bool ExpandCommandLineArguments(int argc, dnx::char_t** ppszArgv, size_t& expanded_argc, dnx::char_t**& ppszExpandedArgv);
 
-void WaitForDebugger(int argc, dnx::char_t** argv)
-{
-    if (dnx::utils::find_bootstrapper_option_index(argc, argv, _X("--bootstrapper-debug")) >= 0)
-    {
-        WaitForDebuggerToAttach();
-    }
-}
-
 #if defined(ARM)
 int wmain(int argc, wchar_t* argv[])
 #elif defined(PLATFORM_UNIX)
@@ -26,7 +18,7 @@ extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
 #endif
 {
     // Check for the debug flag before doing anything else
-    WaitForDebugger(argc - 1, &(argv[1]));
+    dnx::utils::wait_for_debugger(argc - 1, const_cast<const dnx::char_t**>(&(argv[1])), _X("--bootstrapper-debug"));
 
     size_t nExpandedArgc = 0;
     dnx::char_t** ppszExpandedArgv = nullptr;
