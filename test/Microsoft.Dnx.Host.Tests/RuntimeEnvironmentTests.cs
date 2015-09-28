@@ -22,13 +22,15 @@ namespace dnx.hostTests
                         OperatingSystem = "Windows",
                         OsVersion = "10.0",
                         Architecture = "x64",
-                        RuntimeType = "CoreClr"
+                        RuntimeType = "CoreClr",
+                        RuntimeDirectory = "c:/temp"
                     });
 
             Assert.Equal(runtimeEnv.OperatingSystem, "Windows");
             Assert.Equal(runtimeEnv.OperatingSystemVersion, "10.0");
             Assert.Equal(runtimeEnv.RuntimeArchitecture, "x64");
             Assert.Equal(runtimeEnv.RuntimeType, "CoreClr");
+            Assert.Equal(runtimeEnv.RuntimePath, "c:/temp");
         }
 
         // Test RID generation
@@ -154,6 +156,7 @@ namespace dnx.hostTests
             public string RuntimeArchitecture { get; set; }
             public string RuntimeType { get; set; }
             public string RuntimeVersion { get; set; }
+            public string RuntimePath { get; set; }
         }
     }
 }

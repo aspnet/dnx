@@ -35,5 +35,10 @@ namespace Microsoft.Dnx.Runtime
         /// Gets the runtime version.
         /// </summary>
         string RuntimeVersion { get; }
+
+        /// <summary>
+        /// Gets the path to the runtime foler.
+        /// </summary>
+        string RuntimePath { get; }
     }
 }

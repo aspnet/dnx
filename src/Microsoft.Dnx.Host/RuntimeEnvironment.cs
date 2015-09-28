@@ -17,6 +17,7 @@ namespace Microsoft.Dnx.Runtime
             RuntimeArchitecture = bootstrapperContext.Architecture;
             OperatingSystem = bootstrapperContext.OperatingSystem;
             OperatingSystemVersion = bootstrapperContext.OsVersion;
+            RuntimePath = bootstrapperContext.RuntimeDirectory;
         }
 
         public string OperatingSystem { get; }
@@ -43,5 +44,7 @@ namespace Microsoft.Dnx.Runtime
                 return _runtimeVersion;
             }
         }
+
+        public string RuntimePath { get; }
     }
 }
