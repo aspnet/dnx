@@ -580,7 +580,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         private bool UpdateProjectCompilation(ProjectWorld project, out ProjectCompilation compilation)
         {
-            var exporter = _compilationEngine.CreateProjectExporter(_local.Project, project.TargetFramework, _configuration.Value, skipLockfileValidation: true);
+            var exporter = _compilationEngine.CreateProjectExporter(_local.Project, project.TargetFramework, _configuration.Value);
             var export = exporter.GetExport(_local.ProjectInformation.Name);
 
             ProjectCompilation oldCompilation;
@@ -995,8 +995,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                 Project = project,
                 TargetFramework = frameworkName,
                 RuntimeIdentifiers = runtimeIdentifiers,
-                FrameworkResolver = _frameworkResolver,
-                SkipLockfileValidation = true
+                FrameworkResolver = _frameworkResolver
             };
 
             ApplicationHostContext.Initialize(applicationHostContext);

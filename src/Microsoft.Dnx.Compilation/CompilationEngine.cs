@@ -46,7 +46,7 @@ namespace Microsoft.Dnx.Compilation
             return null;
         }
 
-        public LibraryExporter CreateProjectExporter(Project project, FrameworkName targetFramework, string configuration, bool skipLockfileValidation = false)
+        public LibraryExporter CreateProjectExporter(Project project, FrameworkName targetFramework, string configuration)
         {
             // This library manager represents the graph that will be used to resolve
             // references (compiler /r in csc terms)
@@ -54,13 +54,12 @@ namespace Microsoft.Dnx.Compilation
             var context = new ApplicationHostContext
             {
                 Project = project,
-                TargetFramework = targetFramework,
-                SkipLockfileValidation = skipLockfileValidation
+                TargetFramework = targetFramework
             };
 
             ApplicationHostContext.Initialize(context);
 
-            return new LibraryExporter(context.LibraryManager, this, configuration, skipLockfileValidation);
+            return new LibraryExporter(context.LibraryManager, this, configuration);
         }
 
         public IAssemblyLoadContext CreateBuildLoadContext(Project project)

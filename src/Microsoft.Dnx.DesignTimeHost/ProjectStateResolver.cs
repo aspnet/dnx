@@ -151,7 +151,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var applicationHostContext = _applicationHostContextCreator(ctx, project, frameworkName);
                 var libraryManager = applicationHostContext.LibraryManager;
-                var libraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration, skipLockfileValidation: true);
+                var libraryExporter = _compilationEngine.CreateProjectExporter(project, frameworkName, configuration);
 
                 var info = new DependencyInfo
                 {

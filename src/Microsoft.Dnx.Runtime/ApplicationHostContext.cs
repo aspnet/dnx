@@ -29,8 +29,6 @@ namespace Microsoft.Dnx.Runtime
 
         public string PackagesDirectory { get; set; }
 
-        public bool SkipLockfileValidation { get; set; }
-
         public FrameworkReferenceResolver FrameworkResolver { get; set; }
 
         public LibraryManager LibraryManager { get; private set; }
@@ -152,22 +150,13 @@ namespace Microsoft.Dnx.Runtime
             }
 
             var validLockFile = true;
-            var skipLockFileValidation = context.SkipLockfileValidation;
             string lockFileValidationMessage = null;
 
             if (context.LockFile != null)
             {
-                validLockFile = context.LockFile.IsValidForProject(context.Project, out lockFileValidationMessage);
+                validLockFile = (context.LockFile.Version == Constants.LockFileVersion) && context.LockFile.IsValidForProject(context.Project, out lockFileValidationMessage);
 
-                // When the only invalid part of a lock file is version number,
-                // we shouldn't skip lock file validation because we want to leave all dependencies unresolved, so that
-                // VS can be aware of this version mismatch error and automatically do restore
-                skipLockFileValidation = context.SkipLockfileValidation && (context.LockFile.Version == Constants.LockFileVersion);
-
-                if (validLockFile || skipLockFileValidation)
-                {
-                    lockFileLookup = new LockFileLookup(context.LockFile);
-                }
+                lockFileLookup = new LockFileLookup(context.LockFile);
             }
 
             var libraries = new List<LibraryDescription>();

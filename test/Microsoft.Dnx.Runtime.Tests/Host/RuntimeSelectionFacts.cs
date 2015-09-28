@@ -22,7 +22,6 @@ namespace Microsoft.Dnx.Runtime.Tests.Host
                 Project = CreateDummyProject(),
                 TargetFramework = Dnx451,
                 RuntimeIdentifiers = new[] { "win7-x64" },
-                SkipLockfileValidation = true,
                 LockFile = new LockFile()
                 {
                     Version = Constants.LockFileVersion,
@@ -86,7 +85,6 @@ namespace Microsoft.Dnx.Runtime.Tests.Host
             {
                 Project = CreateDummyProject(),
                 TargetFramework = Dnx451,
-                SkipLockfileValidation = true,
                 LockFile = new LockFile()
                 {
                     Version = Constants.LockFileVersion,
@@ -151,7 +149,6 @@ namespace Microsoft.Dnx.Runtime.Tests.Host
                 Project = CreateDummyProject(),
                 TargetFramework = Dnx451,
                 RuntimeIdentifiers = new[] { "win10-x64", "win8-x64", "win7-x64" },
-                SkipLockfileValidation = true,
                 LockFile = new LockFile()
                 {
                     Version = Constants.LockFileVersion,
