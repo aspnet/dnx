@@ -15,16 +15,8 @@ using Xunit;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 {
-    [Collection(nameof(DthFunctionalTestCollection))]
     public class DthStartupTests : DnxSdkFunctionalTestBase
     {
-        private readonly DthFunctionalTestFixture _fixture;
-
-        public DthStartupTests(DthFunctionalTestFixture fixture)
-        {
-            _fixture = fixture;
-        }
-
         public static IEnumerable<object[]> RuntimeComponentsWithBothVersions
         {
             get
@@ -90,19 +82,21 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [MemberData(nameof(DnxSdks))]
         public void DthStartup_GetProjectInformation(DnxSdk sdk)
         {
-            var projectName = "EmptyConsoleApp";
-            var testProject = _fixture.GetTestProjectPath(projectName);
-
             using (var server = DthTestServer.Create(sdk))
             using (var client = new DthTestClient(server))
             {
-                client.Initialize(testProject);
+                var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+                var project = solution.GetProject("EmptyConsoleApp");
+
+                sdk.Dnu.Restore(project).EnsureSuccess();
+
+                client.Initialize(project.ProjectDirectory);
 
                 var projectInformation = client.DrainAllMessages()
                                                .RetrieveSingleMessage("ProjectInformation")
                                                .EnsureSource(server, client)
                                                .RetrievePayloadAs<JObject>()
-                                               .AssertProperty("Name", projectName);
+                                               .AssertProperty("Name", project.Name);
 
                 projectInformation.RetrievePropertyAs<JArray>("Configurations")
                                   .AssertJArrayCount(2)
@@ -122,9 +116,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [MemberData(nameof(ProtocolNegotiationTestData))]
         public void DthStartup_ProtocolNegotiation(DnxSdk sdk, int requestVersion, int expectVersion)
         {
-            var projectName = "EmptyConsoleApp";
-            var testProject = _fixture.GetTestProjectPath(projectName);
-
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
@@ -141,9 +132,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [MemberData(nameof(DnxSdks))]
         public void DthStartup_ProtocolNegotiation_ZeroIsNoAllowed(DnxSdk sdk)
         {
-            var projectName = "EmptyConsoleApp";
-            var testProject = _fixture.GetTestProjectPath(projectName);
-
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
@@ -160,15 +148,17 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [MemberData(nameof(RuntimeComponentsWithBothVersions))]
         public void DthCompilation_GetDiagnostics_OnEmptyConsoleApp(DnxSdk sdk, int protocolVersion)
         {
-            var projectName = "EmptyConsoleApp";
-            var testProject = _fixture.GetTestProjectPath(projectName);
-
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
+                var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+                var project = solution.GetProject("EmptyConsoleApp");
+
+                sdk.Dnu.Restore(project).EnsureSuccess();
+
                 // Drain the inital messages
-                client.Initialize(testProject, protocolVersion);
-                client.SendPayLoad(testProject, "GetDiagnostics");
+                client.Initialize(project.ProjectDirectory, protocolVersion);
+                client.SendPayLoad(project, "GetDiagnostics");
 
                 var diagnosticsGroup = client.DrainTillFirst("AllDiagnostics")
                                              .EnsureSource(server, client)
@@ -188,27 +178,28 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [MemberData(nameof(RuntimeComponentsWithBothVersions))]
         public void DthCompilation_RestoreComplete_OnEmptyLibrary(DnxSdk sdk, int protocolVersion)
         {
-            var projectName = "EmptyLibrary";
-
-            string testProject;
-            using (_fixture.CreateDisposableTestProject(projectName, sdk, out testProject))
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
+                var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+                var project = solution.GetProject("EmptyLibrary");
+
+                sdk.Dnu.Restore(project).EnsureSuccess();
+
                 // Drain the inital messages
-                client.Initialize(testProject, protocolVersion);
+                client.Initialize(project.ProjectDirectory, protocolVersion);
 
                 client.DrainTillFirst("Dependencies")
                       .EnsureSource(server, client)
                       .EnsureNotContainDependency("System.Console");
 
-                File.Copy(Path.Combine(testProject, "project-update.json"),
-                          Path.Combine(testProject, "project.json"),
+                File.Copy(Path.Combine(project.ProjectDirectory, "project-update.json"),
+                          Path.Combine(project.ProjectDirectory, "project.json"),
                           overwrite: true);
 
-                sdk.Dnu.Restore(testProject).EnsureSuccess();
+                sdk.Dnu.Restore(project).EnsureSuccess();
 
-                client.SendPayLoad(testProject, "RestoreComplete");
+                client.SendPayLoad(project, "RestoreComplete");
 
                 client.DrainTillFirst("Dependencies")
                        .EnsureSource(server, client)
@@ -221,18 +212,22 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         public void DthCompilation_Initialize_UnresolvedDependency(DnxSdk sdk, int protocolVersion, string referenceType, string testProjectName,
                                                                    string expectedUnresolvedDependency, string expectedUnresolvedType)
         {
-            var testProject = _fixture.GetTestProjectPath(testProjectName);
-
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
-                client.Initialize(testProject, protocolVersion);
+                var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+                var project = solution.GetProject(testProjectName);
+
+                sdk.Dnu.Restore(project);
+
+                client.Initialize(project.ProjectDirectory, protocolVersion);
 
                 var messages = client.DrainAllMessages();
 
                 var unresolveDependency = messages.RetrieveSingleMessage("Dependencies")
                                                   .EnsureSource(server, client)
                                                   .RetrieveDependency(expectedUnresolvedDependency);
+
                 unresolveDependency.AssertProperty("Name", expectedUnresolvedDependency)
                                    .AssertProperty("DisplayName", expectedUnresolvedDependency)
                                    .AssertProperty("Resolved", false)
@@ -240,9 +235,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 if (expectedUnresolvedType == "Project")
                 {
-                    unresolveDependency.AssertProperty(
-                        "Path",
-                        Path.Combine(Path.GetDirectoryName(testProject), expectedUnresolvedDependency, Project.ProjectFileName));
+                    unresolveDependency.AssertProperty("Path", Path.Combine(Path.GetDirectoryName(project.ProjectDirectory),
+                                                                            expectedUnresolvedDependency,
+                                                                            Project.ProjectFileName));
                 }
                 else
                 {
@@ -254,7 +249,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 if (referenceType == "Project")
                 {
-                    var expectedUnresolvedProjectPath = Path.Combine(Path.GetDirectoryName(testProject), expectedUnresolvedDependency, Project.ProjectFileName);
+                    var expectedUnresolvedProjectPath = Path.Combine(Path.GetDirectoryName(project.ProjectDirectory),
+                                                                     expectedUnresolvedDependency,
+                                                                     Project.ProjectFileName);
 
                     referencesMessage.RetrievePayloadAs<JObject>()
                                      .RetrievePropertyAs<JArray>("ProjectReferences")
@@ -277,17 +274,22 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [MemberData(nameof(DnxSdks))]
         public void DthNegative_BrokenProjectPathInLockFile_V1(DnxSdk sdk)
         {
-            var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
+            var projectName = "BrokenProjectPathSample";
+            var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+            var project = solution.GetProject(projectName);
+
+            sdk.Dnu.Restore(project).EnsureSuccess();
 
             using (var disposableDir = new DisposableDir())
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
-                // copy the project to difference location so that the project path in its lock file is invalid
-                var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
-                Testing.TestUtils.CopyFolder(testProject, targetPath);
+                // After restore the project is copied to another place so that
+                // the relative path in project lock file is invalid.
+                var movedProjectPath = Path.Combine(disposableDir, projectName);
+                TestUtils.CopyFolder(project.ProjectDirectory, movedProjectPath);
 
-                client.Initialize(targetPath, protocolVersion: 1);
+                client.Initialize(movedProjectPath, protocolVersion: 1);
                 var messages = client.DrainAllMessages()
                                      .AssertDoesNotContain("Error");
 
@@ -295,7 +297,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                                     .RetrieveDependencyDiagnosticsCollection()
                                     .RetrieveDependencyDiagnosticsErrorAt<JValue>(0);
 
-                Assert.Contains("error NU1001: The dependency EmptyLibrary  could not be resolved.", error.Value<string>());
+                Assert.Contains("error NU1002", error.Value<string>());
 
                 messages.RetrieveSingleMessage("Dependencies")
                         .RetrieveDependency("EmptyLibrary")
@@ -308,24 +310,29 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [MemberData(nameof(DnxSdks))]
         public void DthNegative_BrokenProjectPathInLockFile_V2(DnxSdk sdk)
         {
-            var testProject = _fixture.GetTestProjectPath("BrokenProjectPathSample");
+            var projectName = "BrokenProjectPathSample";
+            var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+            var project = solution.GetProject(projectName);
+
+            sdk.Dnu.Restore(project).EnsureSuccess();
 
             using (var disposableDir = new DisposableDir())
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
-                // copy the project to difference location so that the project path in its lock file is invalid
-                var targetPath = Path.Combine(disposableDir, "BrokenProjectPathSample");
-                Testing.TestUtils.CopyFolder(testProject, targetPath);
+                // After restore the project is copied to another place so that
+                // the relative path in project lock file is invalid.
+                var movedProjectPath = Path.Combine(disposableDir, projectName);
+                TestUtils.CopyFolder(project.ProjectDirectory, movedProjectPath);
 
-                client.Initialize(targetPath, protocolVersion: 2);
+                client.Initialize(movedProjectPath, protocolVersion: 2);
                 var messages = client.DrainAllMessages()
                                      .AssertDoesNotContain("Error");
 
                 messages.RetrieveSingleMessage("DependencyDiagnostics")
                         .RetrieveDependencyDiagnosticsCollection()
                         .RetrieveDependencyDiagnosticsErrorAt(0)
-                        .AssertProperty<string>("FormattedMessage", message => message.Contains("error NU1001: The dependency EmptyLibrary  could not be resolved."))
+                        .AssertProperty<string>("FormattedMessage", message => message.Contains("error NU1002"))
                         .RetrievePropertyAs<JObject>("Source")
                         .AssertProperty("Name", "EmptyLibrary");
 
@@ -342,15 +349,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         [MemberData(nameof(DnxSdks))]
         public void DthDependencies_UpdateGlobalJson_RefreshDependencies(DnxSdk sdk)
         {
-            using (var disposableDir = new DisposableDir())
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
-                Testing.TestUtils.CopyFolder(
-                    _fixture.GetTestProjectPath("UpdateSearchPathSample"),
-                    Path.Combine(disposableDir, "UpdateSearchPathSample"));
+                var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthUpdateSearchPathSample");
 
-                var root = Path.Combine(disposableDir, "UpdateSearchPathSample", "home");
+                var root = Path.Combine(solution.RootPath, "home");
                 sdk.Dnu.Restore(root).EnsureSuccess();
 
                 var testProject = Path.Combine(root, "src", "MainProject");
