@@ -34,7 +34,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             // Run the app
             var result = sdk.Dnx.Execute(solution.GetProject("App"));
 
-            Assert.Equal(@"A: This is Project A
+            Assert.Contains(@"A: This is Project A
 B: This is Package B
 ", result.StandardOutput);
 
