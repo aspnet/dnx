@@ -354,7 +354,8 @@ namespace Microsoft.Dnx.Tooling.Publish
             var specialFolders = new List<string> {
                 "native",
                 "InteropAssemblies",
-                "redist"
+                "redist",
+                "runtimes"
             };
 
             if (!root.NoSource)
