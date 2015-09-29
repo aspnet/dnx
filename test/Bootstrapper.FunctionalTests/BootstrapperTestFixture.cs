@@ -6,24 +6,7 @@ using Microsoft.Dnx.Testing;
 
 namespace Bootstrapper.FunctionalTests
 {
-    public class BootstrapperTestFixture : IDisposable
+    public class BootstrapperTestFixture : DnxSdkFunctionalTestFixtureBase
     {
-        public BootstrapperTestFixture()
-        {
-            Console.WriteLine($@"
-Environment information:
-  DNX_HOME: {Environment.GetEnvironmentVariable("DNX_HOME")}
-  DNX_SDK_VERSION_FOR_TESTING: {Environment.GetEnvironmentVariable("DNX_SDK_VERSION_FOR_TESTING")}
-
-Information of DNX under testing:
-  DNX Home: {DnxSdk.GetRuntimeHome()}
-  DNX Version: {DnxSdkFunctionalTestBase.SdkVersionForTesting}
-");
-        }
-
-        public void Dispose()
-        {
-
-        }
     }
 }

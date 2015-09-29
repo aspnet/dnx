@@ -10,7 +10,7 @@ namespace Bootstrapper.FunctionalTests
     [Collection(nameof(BootstrapperTestCollection))]
     public class BootstrapperTests : DnxSdkFunctionalTestBase
     {
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void UnknownCommandDoesNotThrow(DnxSdk sdk)
         {
@@ -25,9 +25,11 @@ namespace Bootstrapper.FunctionalTests
 
             Assert.Equal(1, result.ExitCode);
             Assert.Equal($"Error: Unable to load application or execute command '{unknownCommand}'. Available commands: {testerCommand}.{Environment.NewLine}", result.StandardError);
+
+            TestUtils.CleanUpTestDir<BootstrapperTests>(sdk);
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void UnresolvedProjectDoesNotThrow(DnxSdk sdk)
         {
@@ -38,9 +40,11 @@ namespace Bootstrapper.FunctionalTests
 
             Assert.Equal(1, result.ExitCode);
             Assert.Equal($"Error: Unable to resolve project from {solution.RootPath}{Environment.NewLine}", result.StandardError);
+
+            TestUtils.CleanUpTestDir<BootstrapperTests>(sdk);
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void UserExceptionsThrows(DnxSdk sdk)
         {
@@ -54,6 +58,8 @@ namespace Bootstrapper.FunctionalTests
 
             Assert.Equal(1, result.ExitCode);
             Assert.Contains("System.Exception: foo", result.StandardError);
+
+            TestUtils.CleanUpTestDir<BootstrapperTests>(sdk);
         }
     }
 }

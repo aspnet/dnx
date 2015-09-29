@@ -7,12 +7,11 @@ using System.IO;
 using System.Linq;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
-using Microsoft.Dnx.Testing;
 using NuGet;
 using Xunit;
 using TestUtils = Microsoft.Dnx.CommonTestUtils.TestUtils;
 
-namespace Microsoft.Dnx.Tooling
+namespace Microsoft.Dnx.Tooling.FunctionalTest.Old
 {
     // DO NOT add further tests to this class! Add them to the 'DnuPackTests.cs' file.
     public partial class DnuPackTests

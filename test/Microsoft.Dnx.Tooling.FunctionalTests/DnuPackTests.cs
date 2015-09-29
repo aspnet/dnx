@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System.IO;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Testing;
 using Newtonsoft.Json.Linq;
@@ -6,9 +9,10 @@ using Xunit;
 
 namespace Microsoft.Dnx.Tooling.FunctionalTests
 {
-    public partial class DnuPackTests : DnxSdkFunctionalTestBase
+    [Collection(nameof(ToolingFunctionalTestCollection))]
+    public class DnuPackTests : DnxSdkFunctionalTestBase
     {
-        [ConditionalTheory]
+        [ConditionalTheory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
         public void DnuPack_ClientProfile(DnxSdk sdk)
@@ -39,9 +43,11 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             var result = sdk.Dnu.Pack(projectDir, outputDir);
 
             Assert.Equal(0, result.ExitCode);
+
+            TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void CompileModuleWithDeps(DnxSdk sdk)
         {
@@ -56,9 +62,11 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             // Assert
             Assert.Equal(0, result.ExitCode);
+
+            TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void P2PDifferentFrameworks(DnxSdk sdk)
         {
@@ -73,6 +81,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             // Assert
             Assert.Equal(0, result.ExitCode);
+
+            TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
         }
     }
 }
