@@ -92,8 +92,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 client.Initialize(project.ProjectDirectory);
 
-                var projectInformation = client.DrainAllMessages()
-                                               .RetrieveSingleMessage("ProjectInformation")
+                var projectInformation = client.DrainTillFirst("ProjectInformation")
                                                .EnsureSource(server, client)
                                                .RetrievePayloadAs<JObject>()
                                                .AssertProperty("Name", project.Name);
@@ -222,11 +221,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 client.Initialize(project.ProjectDirectory, protocolVersion);
 
-                var messages = client.DrainAllMessages();
-
-                var unresolveDependency = messages.RetrieveSingleMessage("Dependencies")
-                                                  .EnsureSource(server, client)
-                                                  .RetrieveDependency(expectedUnresolvedDependency);
+                var unresolveDependency = client.DrainTillFirst("Dependencies")
+                                                .EnsureSource(server, client)
+                                                .RetrieveDependency(expectedUnresolvedDependency);
 
                 unresolveDependency.AssertProperty("Name", expectedUnresolvedDependency)
                                    .AssertProperty("DisplayName", expectedUnresolvedDependency)
@@ -244,8 +241,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                     Assert.False(unresolveDependency["Path"].HasValues);
                 }
 
-                var referencesMessage = messages.RetrieveSingleMessage("References")
-                                                .EnsureSource(server, client);
+                var referencesMessage = client.DrainTillFirst("References")
+                                              .EnsureSource(server, client);
 
                 if (referenceType == "Project")
                 {
@@ -290,19 +287,17 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 TestUtils.CopyFolder(project.ProjectDirectory, movedProjectPath);
 
                 client.Initialize(movedProjectPath, protocolVersion: 1);
-                var messages = client.DrainAllMessages()
-                                     .AssertDoesNotContain("Error");
 
-                var error = messages.RetrieveSingleMessage("DependencyDiagnostics")
-                                    .RetrieveDependencyDiagnosticsCollection()
-                                    .RetrieveDependencyDiagnosticsErrorAt<JValue>(0);
+                var error = client.DrainTillFirst("DependencyDiagnostics")
+                                  .RetrieveDependencyDiagnosticsCollection()
+                                  .RetrieveDependencyDiagnosticsErrorAt<JValue>(0);
 
                 Assert.Contains("error NU1002", error.Value<string>());
 
-                messages.RetrieveSingleMessage("Dependencies")
-                        .RetrieveDependency("EmptyLibrary")
-                        .AssertProperty("Name", "EmptyLibrary")
-                        .AssertProperty("Resolved", false);
+                client.DrainTillFirst("Dependencies")
+                      .RetrieveDependency("EmptyLibrary")
+                      .AssertProperty("Name", "EmptyLibrary")
+                      .AssertProperty("Resolved", false);
             }
         }
 
@@ -326,22 +321,20 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 TestUtils.CopyFolder(project.ProjectDirectory, movedProjectPath);
 
                 client.Initialize(movedProjectPath, protocolVersion: 2);
-                var messages = client.DrainAllMessages()
-                                     .AssertDoesNotContain("Error");
 
-                messages.RetrieveSingleMessage("DependencyDiagnostics")
-                        .RetrieveDependencyDiagnosticsCollection()
-                        .RetrieveDependencyDiagnosticsErrorAt(0)
-                        .AssertProperty<string>("FormattedMessage", message => message.Contains("error NU1002"))
-                        .RetrievePropertyAs<JObject>("Source")
-                        .AssertProperty("Name", "EmptyLibrary");
+                client.DrainTillFirst("DependencyDiagnostics")
+                      .RetrieveDependencyDiagnosticsCollection()
+                      .RetrieveDependencyDiagnosticsErrorAt(0)
+                      .AssertProperty<string>("FormattedMessage", message => message.Contains("error NU1002"))
+                      .RetrievePropertyAs<JObject>("Source")
+                      .AssertProperty("Name", "EmptyLibrary");
 
-                messages.RetrieveSingleMessage("Dependencies")
-                        .RetrieveDependency("EmptyLibrary")
-                        .AssertProperty<JArray>("Errors", errorsArray => errorsArray.Count == 1)
-                        .AssertProperty<JArray>("Warnings", warningsArray => warningsArray.Count == 0)
-                        .AssertProperty("Name", "EmptyLibrary")
-                        .AssertProperty("Resolved", false);
+                client.DrainTillFirst("Dependencies")
+                      .RetrieveDependency("EmptyLibrary")
+                      .AssertProperty<JArray>("Errors", errorsArray => errorsArray.Count == 1)
+                      .AssertProperty<JArray>("Warnings", warningsArray => warningsArray.Count == 0)
+                      .AssertProperty("Name", "EmptyLibrary")
+                      .AssertProperty("Resolved", false);
             }
         }
 
@@ -360,23 +353,22 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 var testProject = Path.Combine(root, "src", "MainProject");
 
                 client.Initialize(testProject, protocolVersion: 2);
-                var messages = client.DrainAllMessages();
 
-                messages.RetrieveSingleMessage("ProjectInformation")
-                        .RetrievePayloadAs<JObject>()
-                        .RetrievePropertyAs<JArray>("ProjectSearchPaths")
-                        .AssertJArrayCount(2);
+                client.DrainTillFirst("ProjectInformation")
+                      .RetrievePayloadAs<JObject>()
+                      .RetrievePropertyAs<JArray>("ProjectSearchPaths")
+                      .AssertJArrayCount(2);
 
-                messages.RetrieveSingleMessage("Dependencies")
-                        .RetrieveDependency("Newtonsoft.Json")
-                        .AssertProperty("Type", "Project")
-                        .AssertProperty("Resolved", true)
-                        .AssertProperty<JArray>("Errors", array => array.Count == 0, _ => "Dependency shouldn't contain any error.");
+                client.DrainTillFirst("DependencyDiagnostics")
+                      .RetrievePayloadAs<JObject>()
+                      .AssertProperty<JArray>("Errors", array => array.Count == 0)
+                      .AssertProperty<JArray>("Warnings", array => array.Count == 0);
 
-                messages.RetrieveSingleMessage("DependencyDiagnostics")
-                        .RetrievePayloadAs<JObject>()
-                        .AssertProperty<JArray>("Errors", array => array.Count == 0)
-                        .AssertProperty<JArray>("Warnings", array => array.Count == 0);
+                client.DrainTillFirst("Dependencies")
+                      .RetrieveDependency("Newtonsoft.Json")
+                      .AssertProperty("Type", "Project")
+                      .AssertProperty("Resolved", true)
+                      .AssertProperty<JArray>("Errors", array => array.Count == 0, _ => "Dependency shouldn't contain any error.");
 
                 // Overwrite the global.json to remove search path to ext
                 File.WriteAllText(
@@ -384,27 +376,26 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                     JsonConvert.SerializeObject(new { project = new string[] { "src" } }));
 
                 client.SendPayLoad(testProject, "RefreshDependencies");
-                messages = client.DrainAllMessages();
 
-                messages.RetrieveSingleMessage("ProjectInformation")
-                        .RetrievePayloadAs<JObject>()
-                        .RetrievePropertyAs<JArray>("ProjectSearchPaths")
-                        .AssertJArrayCount(1)
-                        .AssertJArrayElement(0, Path.Combine(root, "src"));
+                client.DrainTillFirst("ProjectInformation")
+                      .RetrievePayloadAs<JObject>()
+                      .RetrievePropertyAs<JArray>("ProjectSearchPaths")
+                      .AssertJArrayCount(1)
+                      .AssertJArrayElement(0, Path.Combine(root, "src"));
 
-                messages.RetrieveSingleMessage("Dependencies")
-                        .RetrieveDependency("Newtonsoft.Json")
-                        .AssertProperty("Type", LibraryTypes.Unresolved)
-                        .AssertProperty("Resolved", false)
-                        .RetrievePropertyAs<JArray>("Errors")
-                        .AssertJArrayCount(1)
-                        .RetrieveArraryElementAs<JObject>(0)
-                        .AssertProperty("ErrorCode", "NU1010");
+                client.DrainTillFirst("DependencyDiagnostics")
+                      .RetrieveDependencyDiagnosticsCollection()
+                      .RetrieveDependencyDiagnosticsErrorAt<JObject>(0)
+                      .AssertProperty("ErrorCode", "NU1010");
 
-                messages.RetrieveSingleMessage("DependencyDiagnostics")
-                        .RetrieveDependencyDiagnosticsCollection()
-                        .RetrieveDependencyDiagnosticsErrorAt<JObject>(0)
-                        .AssertProperty("ErrorCode", "NU1010");
+                client.DrainTillFirst("Dependencies")
+                      .RetrieveDependency("Newtonsoft.Json")
+                      .AssertProperty("Type", LibraryTypes.Unresolved)
+                      .AssertProperty("Resolved", false)
+                      .RetrievePropertyAs<JArray>("Errors")
+                      .AssertJArrayCount(1)
+                      .RetrieveArraryElementAs<JObject>(0)
+                      .AssertProperty("ErrorCode", "NU1010");
             }
         }
 
@@ -425,15 +416,10 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 client.SendPayLoad(project, "GetDiagnostics");
 
-                var messages = client.DrainAllMessages();
-
-
                 // Assert
-                messages.AssertDoesNotContain("Error");
-
-                var diagnosticsPerFramework = messages.RetrieveSingleMessage("AllDiagnostics")
-                                                      .RetrievePayloadAs<JArray>()
-                                                      .AssertJArrayCount(3);
+                var diagnosticsPerFramework = client.DrainTillFirst("AllDiagnostics")
+                                                    .RetrievePayloadAs<JArray>()
+                                                    .AssertJArrayCount(3);
 
                 foreach (var frameworkDiagnostics in diagnosticsPerFramework)
                 {
