@@ -85,7 +85,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             using (var server = DthTestServer.Create(sdk))
             using (var client = new DthTestClient(server))
             {
-                var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+                var solution = TestProjectsRepository.EnsureRestoredSolution("DthTestProjects");
                 var project = solution.GetProject("EmptyConsoleApp");
 
                 sdk.Dnu.Restore(project).EnsureSuccess();
@@ -152,10 +152,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
-                var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+                var solution = TestProjectsRepository.EnsureRestoredSolution("DthTestProjects");
                 var project = solution.GetProject("EmptyConsoleApp");
-
-                sdk.Dnu.Restore(project).EnsureSuccess();
 
                 // Drain the inital messages
                 client.Initialize(project.ProjectDirectory, protocolVersion);
@@ -220,10 +218,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
-                var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+                var solution = TestProjectsRepository.EnsureRestoredSolution("DthTestProjects");
                 var project = solution.GetProject(testProjectName);
-
-                sdk.Dnu.Restore(project);
 
                 client.Initialize(project.ProjectDirectory, protocolVersion);
 
@@ -280,18 +276,15 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         public void DthNegative_BrokenProjectPathInLockFile_V1(DnxSdk sdk)
         {
             var projectName = "BrokenProjectPathSample";
-            var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+            var solution = TestProjectsRepository.EnsureRestoredSolution("DthTestProjects");
             var project = solution.GetProject(projectName);
 
-            sdk.Dnu.Restore(project).EnsureSuccess();
-
-            using (var disposableDir = new DisposableDir())
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
                 // After restore the project is copied to another place so that
                 // the relative path in project lock file is invalid.
-                var movedProjectPath = Path.Combine(disposableDir, projectName);
+                var movedProjectPath = Path.Combine(TestUtils.GetTempTestFolder<DthStartupTests>(sdk), projectName);
                 TestUtils.CopyFolder(project.ProjectDirectory, movedProjectPath);
 
                 client.Initialize(movedProjectPath, protocolVersion: 1);
@@ -316,18 +309,15 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         public void DthNegative_BrokenProjectPathInLockFile_V2(DnxSdk sdk)
         {
             var projectName = "BrokenProjectPathSample";
-            var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DthTestProjects");
+            var solution = TestProjectsRepository.EnsureRestoredSolution("DthTestProjects");
             var project = solution.GetProject(projectName);
 
-            sdk.Dnu.Restore(project).EnsureSuccess();
-
-            using (var disposableDir = new DisposableDir())
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
                 // After restore the project is copied to another place so that
                 // the relative path in project lock file is invalid.
-                var movedProjectPath = Path.Combine(disposableDir, projectName);
+                var movedProjectPath = Path.Combine(TestUtils.GetTempTestFolder<DthStartupTests>(sdk), projectName);
                 TestUtils.CopyFolder(project.ProjectDirectory, movedProjectPath);
 
                 client.Initialize(movedProjectPath, protocolVersion: 2);
@@ -418,14 +408,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
         public void CompileModuleWithDeps(DnxSdk sdk)
         {
             // Arrange
-            var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "CompileModuleWithDependencies");
+            var solution = TestProjectsRepository.EnsureRestoredSolution("CompileModuleWithDependencies");
             var project = solution.GetProject("A");
 
             using (var server = DthTestServer.Create(sdk))
             using (var client = server.CreateClient())
             {
-                sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
-
                 client.Initialize(project.ProjectDirectory);
 
                 client.SendPayLoad(project, "GetDiagnostics");
