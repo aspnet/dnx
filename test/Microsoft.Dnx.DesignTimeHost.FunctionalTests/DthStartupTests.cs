@@ -138,7 +138,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 Assert.Throws<TimeoutException>(() =>
                 {
-                    client.DrainTillFirst(ProtocolManager.NegotiationMessageTypeName);
+                    client.DrainTillFirst(ProtocolManager.NegotiationMessageTypeName, timeout: TimeSpan.FromSeconds(1));
                 });
             }
         }
@@ -448,7 +448,10 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 client.Initialize(project.ProjectDirectory);
 
-                var messages = client.DrainAllMessages();
+                // for a project supports two frameworks, 13 responses will be sent.
+                // one ProjectInformation, and Depenedencies, DependencyDiagnostics,
+                // References, Source, Diagnostics, CompilerOptions for each framework
+                var messages = client.DrainMessage(13);
 
                 foreach (var frameworkInfo in project.GetTargetFrameworks())
                 {
@@ -474,7 +477,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 client.SendPayLoad(project, "FilesChanged");
 
-                messages = client.DrainAllMessages();
+                messages = client.DrainMessage(4);
 
                 foreach (var frameworkInfo in project.GetTargetFrameworks())
                 {
@@ -494,11 +497,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 client.SendPayLoad(project, "GetDiagnostics");
 
-                messages = client.DrainAllMessages();
-
-                var diagnosticsPerFramework = messages.RetrieveSingleMessage("AllDiagnostics")
-                                                      .RetrievePayloadAs<JArray>()
-                                                      .AssertJArrayCount(3);
+                var diagnosticsPerFramework = client.DrainTillFirst("AllDiagnostics")
+                                                    .RetrievePayloadAs<JArray>()
+                                                    .AssertJArrayCount(3);
 
                 foreach (var frameworkDiagnostics in diagnosticsPerFramework)
                 {

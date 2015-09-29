@@ -105,6 +105,18 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             SendPayLoad(0, ProtocolManager.NegotiationMessageTypeName, new { Version = version });
         }
 
+        public List<DthMessage> DrainMessage(int count)
+        {
+            var result = new List<DthMessage>();
+            while (count > 0)
+            {
+                result.Add(GetResponse(timeout: TimeSpan.FromSeconds(10)));
+                count--;
+            }
+
+            return result;
+        }
+
         public List<DthMessage> DrainAllMessages()
         {
             return DrainAllMessages(TimeSpan.FromSeconds(10));
