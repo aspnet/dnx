@@ -11,5 +11,9 @@ addons:
     - debian-sid
     packages:
     - libunwind8
+    - libicu-dev
+before_install:
+  - [ $TRAVIS_OS_NAME == "osx" ] || brew update
+  - [ $TRAVIS_OS_NAME == "osx" ] || (brew list | grep icu4c || brew install icu4c)
 script:
   - ./build.sh --quiet verify
