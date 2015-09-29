@@ -234,7 +234,7 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
 
     HostMain main_function;
     // looks like the Version in the assembly is mandatory but the value does not matter
-    hr = pCLRRuntimeHost->CreateDelegate(domainId, L"Microsoft.Dnx.Host.CoreClr, Version=0.0.0.0", L"DomainManager", L"Execute", (INT_PTR*)&main_function);
+    hr = pCLRRuntimeHost->CreateDelegate(domainId, L"Microsoft.Dnx.Host.CoreClr, Version=0.0.0.0", L"Microsoft.Dnx.Host.CoreClr.Program", L"Main", (INT_PTR*)&main_function);
     if (FAILED(hr))
     {
         trace_writer.write(L"Failed to create main delegate", false);

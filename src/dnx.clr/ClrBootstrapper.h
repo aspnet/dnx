@@ -143,7 +143,7 @@ public:
 
         ICLRControl *pCLRControl = NULL;
         _HR(runtimeHost->GetCLRControl(&pCLRControl));
-        _HR(pCLRControl->SetAppDomainManagerType(AppDomainManagerAssemblyName, L"DomainManager"));
+        _HR(pCLRControl->SetAppDomainManagerType(AppDomainManagerAssemblyName, L"Microsoft.Dnx.Host.Clr.DomainManager"));
 
         _HR(runtimeHost->Start());
 

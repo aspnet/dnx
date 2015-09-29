@@ -5,39 +5,26 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
-using Microsoft.Dnx.Host;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.Impl;
 
-[SecurityCritical]
-sealed class DomainManager
+namespace Microsoft.Dnx.Host.CoreClr
 {
-    // this structure is used to pass data from native code
-    // and needs to be in sync with its native counterpart
-    [StructLayout(LayoutKind.Sequential)]
-    private unsafe struct NativeBootstrapperContext
-    {
-        public char* OperatingSystem;
-        public char* OsVersion;
-        public char* Architecture;
-        public char* RuntimeDirectory;
-        public char* ApplicationBase;
-    }
-
     [SecurityCritical]
-    unsafe static int Execute(int argc, char** argv, NativeBootstrapperContext* context)
+    internal sealed class Program
     {
-        Logger.TraceInformation($"[{nameof(DomainManager)}] Using CoreCLR");
-
-        // Pack arguments
-        var arguments = new string[argc];
-        for (var i = 0; i < arguments.Length; i++)
+        [SecurityCritical]
+        private unsafe static int Main(int argc, char** argv, NativeBootstrapperContext* context)
         {
-            arguments[i] = new string(argv[i]);
-        }
+            Logger.TraceInformation($"[{nameof(Program)}] Using CoreCLR");
 
-        try
-        {
+            // Pack arguments
+            var arguments = new string[argc];
+            for (var i = 0; i < arguments.Length; i++)
+            {
+                arguments[i] = new string(argv[i]);
+            }
+
             var bootstrapperContext = new BootstrapperContext();
 
             bootstrapperContext.OperatingSystem = new string(context->OperatingSystem);
@@ -50,9 +37,17 @@ sealed class DomainManager
 
             return RuntimeBootstrapper.Execute(arguments, bootstrapperContext);
         }
-        catch (Exception ex)
+
+        // this structure is used to pass data from native code
+        // and needs to be in sync with its native counterpart
+        [StructLayout(LayoutKind.Sequential)]
+        private unsafe struct NativeBootstrapperContext
         {
-            return ex.HResult != 0 ? ex.HResult : 1;
+            public char* OperatingSystem;
+            public char* OsVersion;
+            public char* Architecture;
+            public char* RuntimeDirectory;
+            public char* ApplicationBase;
         }
     }
 }

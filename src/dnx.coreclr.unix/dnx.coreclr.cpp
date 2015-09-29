@@ -194,7 +194,7 @@ int32_t create_delegate(void *host_handle, unsigned int domain_id, void** delega
     }
 
     return coreclr_create_delegate(host_handle, domain_id, BootstrapperName", Version=0.0.0.0",
-            "DomainManager", "Execute", delegate);
+            "Microsoft.Dnx.Host.CoreClr.Program", "Main", delegate);
 }
 
 int32_t shutdown_runtime(void* host_handle, unsigned int domain_id)
