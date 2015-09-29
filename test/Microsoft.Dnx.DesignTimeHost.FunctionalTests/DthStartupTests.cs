@@ -8,7 +8,7 @@ using System.Linq;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Testing;
+using Microsoft.Dnx.Testing.Framework;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -78,7 +78,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void DthStartup_GetProjectInformation(DnxSdk sdk)
         {
@@ -108,10 +108,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 Assert.Contains("dnxcore50", frameworkShortNames);
                 Assert.Contains("dnx451", frameworkShortNames);
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(ProtocolNegotiationTestData))]
         public void DthStartup_ProtocolNegotiation(DnxSdk sdk, int requestVersion, int expectVersion)
         {
@@ -127,7 +129,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void DthStartup_ProtocolNegotiation_ZeroIsNoAllowed(DnxSdk sdk)
         {
@@ -143,7 +145,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(RuntimeComponentsWithBothVersions))]
         public void DthCompilation_GetDiagnostics_OnEmptyConsoleApp(DnxSdk sdk, int protocolVersion)
         {
@@ -170,10 +172,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                          .AssertProperty<JArray>("Errors", errorsArray => !errorsArray.Any())
                          .AssertProperty<JArray>("Warnings", warningsArray => !warningsArray.Any());
                 }
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(RuntimeComponentsWithBothVersions))]
         public void DthCompilation_RestoreComplete_OnEmptyLibrary(DnxSdk sdk, int protocolVersion)
         {
@@ -203,10 +207,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 client.DrainTillFirst("Dependencies")
                        .EnsureSource(server, client)
                        .RetrieveDependency("System.Console");
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(UnresolvedDependencyTestData))]
         public void DthCompilation_Initialize_UnresolvedDependency(DnxSdk sdk, int protocolVersion, string referenceType, string testProjectName,
                                                                    string expectedUnresolvedDependency, string expectedUnresolvedType)
@@ -264,10 +270,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                                      .RetrievePropertyAs<JArray>("ProjectReferences")
                                      .AssertJArrayCount(0);
                 }
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void DthNegative_BrokenProjectPathInLockFile_V1(DnxSdk sdk)
         {
@@ -298,10 +306,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                       .RetrieveDependency("EmptyLibrary")
                       .AssertProperty("Name", "EmptyLibrary")
                       .AssertProperty("Resolved", false);
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void DthNegative_BrokenProjectPathInLockFile_V2(DnxSdk sdk)
         {
@@ -336,9 +346,11 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                       .AssertProperty("Name", "EmptyLibrary")
                       .AssertProperty("Resolved", false);
             }
+
+            TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void DthDependencies_UpdateGlobalJson_RefreshDependencies(DnxSdk sdk)
         {
@@ -396,10 +408,12 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                       .AssertJArrayCount(1)
                       .RetrieveArraryElementAs<JObject>(0)
                       .AssertProperty("ErrorCode", "NU1010");
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void CompileModuleWithDeps(DnxSdk sdk)
         {
@@ -429,9 +443,11 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                     Assert.Equal(0, warnings.Count);
                 }
             }
+
+            TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
         }
 
-        [Theory]
+        [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void AddDepsReturnsReferences(DnxSdk sdk)
         {
@@ -521,6 +537,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                     Assert.Equal("DoesNotExist", error2["Source"].Value<string>("Name"));
                 }
             }
+
+            TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
         }
     }
 }

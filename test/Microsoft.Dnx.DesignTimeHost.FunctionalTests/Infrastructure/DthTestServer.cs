@@ -9,7 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Testing;
+using Microsoft.Dnx.Testing.Framework;
 
 namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 {
