@@ -7,7 +7,7 @@ using Xunit;
 namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
 {
     [CollectionDefinition(nameof(ApplicationHostTestCollection))]
-    public class ApplicationHostTestCollection: ICollectionFixture<DnxRuntimeFixture>
+    public class ApplicationHostTestCollection: ICollectionFixture<DnxRuntimeFixture>, ICollectionFixture<ApplicationHostTestFixture>
     {
     }
 }

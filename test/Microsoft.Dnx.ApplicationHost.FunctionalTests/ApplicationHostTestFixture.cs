@@ -5,7 +5,7 @@ using Microsoft.Dnx.Testing.Framework;
 
 namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
 {
-    public class ApplicationHostTestFixture : DnxSdkFunctionalTestBase
+    public class ApplicationHostTestFixture : DnxSdkFunctionalTestFixtureBase
     {
     }
 }
