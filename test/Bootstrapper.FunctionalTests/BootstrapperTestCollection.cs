@@ -2,12 +2,13 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Testing.Framework;
 using Xunit;
 
 namespace Bootstrapper.FunctionalTests
 {
     [CollectionDefinition("BootstrapperTestCollection")]
-    public class BootstrapperTestCollection : ICollectionFixture<DnxRuntimeFixture>, ICollectionFixture<BootstrapperTestFixture>
+    public class BootstrapperTestCollection : ICollectionFixture<DnxRuntimeFixture>, ICollectionFixture<DnxSdkFunctionalTestFixtureBase>
     {
     }
 }
