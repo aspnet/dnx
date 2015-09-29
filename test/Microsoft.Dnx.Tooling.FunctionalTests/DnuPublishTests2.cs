@@ -204,7 +204,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             sdk.Dnu.Restore(project).EnsureSuccess();
             var result = sdk.Dnu.Publish(project.ProjectDirectory, outputPath, $"--iis-command SomethingRandom");
 
-            Assert.NotEqual(0, result.ExitCode);
+            Assert.Equal(1, result.ExitCode);
         }
 
         [Theory]

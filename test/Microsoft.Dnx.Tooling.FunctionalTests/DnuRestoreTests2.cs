@@ -63,7 +63,7 @@ B: This is Package B
             // Restore the app, it should fail because the project is gone!
             var result = sdk.Dnu.Restore(solution.GetProject("App"));
 
-            Assert.NotEqual(0, result.ExitCode);
+            Assert.Equal(1, result.ExitCode);
             Assert.Contains("Unable to locate Project A", result.StandardError);
         }
     }

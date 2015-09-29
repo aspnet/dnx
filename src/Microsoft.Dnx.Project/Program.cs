@@ -54,7 +54,7 @@ namespace Microsoft.Dnx.Project
                     var gen = new CrossgenManager(crossgenOptions);
                     if (!gen.GenerateNativeImages())
                     {
-                        return -1;
+                        return 1;
                     }
 
                     return 0;

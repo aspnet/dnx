@@ -364,7 +364,7 @@ public class TestClass : BaseClass {
                     out stdOut,
                     out stdErr);
 
-                Assert.NotEqual(0, exitCode);
+                Assert.Equal(1, exitCode);
                 Assert.NotEmpty(stdErr);
                 Assert.DoesNotContain("POST_BUILD_SCRIPT_OUTPUT", stdOut);
                 Assert.DoesNotContain("POST_PACK_SCRIPT_OUTPUT", stdOut);
@@ -475,7 +475,7 @@ public class TestClass : BaseClass {
                     $"{projectJsonPath} -s {emptyLocalFeed}",
                     out stdOut,
                     out stdErr);
-                Assert.NotEqual(0, exitCode);
+                Assert.Equal(1, exitCode);
 
                 exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
@@ -484,7 +484,7 @@ public class TestClass : BaseClass {
                     out stdOut,
                     out stdErr);
 
-                Assert.NotEqual(0, exitCode);
+                Assert.Equal(1, exitCode);
                 Assert.NotEmpty(stdErr);
                 var unresolvedDependencyErrorCount = stdErr
                     .Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)

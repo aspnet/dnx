@@ -60,7 +60,7 @@ namespace Microsoft.Dnx.ApplicationHost
 
                 if (host.Project == null)
                 {
-                    return Task.FromResult(-1);
+                    return Task.FromResult(1);
                 }
 
                 var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
@@ -246,7 +246,7 @@ namespace Microsoft.Dnx.ApplicationHost
 
             if (assembly == null)
             {
-                return Task.FromResult(-1);
+                return Task.FromResult(1);
             }
 
             return EntryPointExecutor.Execute(assembly, args, host.ServiceProvider);

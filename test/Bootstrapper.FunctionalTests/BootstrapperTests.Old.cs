@@ -89,7 +89,7 @@ namespace ConfigTest
                 stdOut: out stdOut,
                 stdErr: out stdErr);
 
-            Assert.NotEqual(0, exitCode);
+            Assert.Equal(2, exitCode);
         }
 
         [Theory]

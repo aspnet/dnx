@@ -41,7 +41,7 @@ namespace Microsoft.Dnx.Host
 
                 if (assembly == null)
                 {
-                    return Task.FromResult(-1);
+                    return Task.FromResult(1);
                 }
 
 #if DNX451

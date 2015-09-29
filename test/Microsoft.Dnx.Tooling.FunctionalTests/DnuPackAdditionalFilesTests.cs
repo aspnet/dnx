@@ -391,7 +391,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 // Check it
                 if (shouldFail)
                 {
-                    Assert.NotEqual(0, exitCode);
+                    Assert.Equal(1, exitCode);
                     foreach (var message in expectedOutput)
                     {
                         Assert.Contains(

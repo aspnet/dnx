@@ -23,7 +23,7 @@ namespace Bootstrapper.FunctionalTests
 
             var result = sdk.Dnx.Execute($"--project {project.ProjectDirectory} {unknownCommand}");
 
-            Assert.NotEqual(0, result.ExitCode);
+            Assert.Equal(1, result.ExitCode);
             Assert.Equal($"Error: Unable to load application or execute command '{unknownCommand}'. Available commands: {testerCommand}.{Environment.NewLine}", result.StandardError);
         }
 
@@ -33,10 +33,10 @@ namespace Bootstrapper.FunctionalTests
         {
             const string solutionName = "BootstrapperSolution";
             var solution = TestUtils.GetSolution<BootstrapperTests>(sdk, solutionName);
-            
+
             var result = sdk.Dnx.Execute($"--project {solution.RootPath} run");
 
-            Assert.NotEqual(0, result.ExitCode);
+            Assert.Equal(1, result.ExitCode);
             Assert.Equal($"Error: Unable to resolve project from {solution.RootPath}{Environment.NewLine}", result.StandardError);
         }
 
@@ -52,7 +52,7 @@ namespace Bootstrapper.FunctionalTests
             sdk.Dnu.Restore(project).EnsureSuccess();
             var result = sdk.Dnx.Execute($"--project {project.ProjectDirectory} run");
 
-            Assert.NotEqual(0, result.ExitCode);
+            Assert.Equal(1, result.ExitCode);
             Assert.Contains("System.Exception: foo", result.StandardError);
         }
     }

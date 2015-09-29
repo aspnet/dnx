@@ -52,7 +52,7 @@ namespace Microsoft.Dnx.Tooling
                     if (optionFramework.HasValue() && optionRuntime.HasValue())
                     {
                         reports.WriteError($"--{optionFramework.LongName} and --{optionRuntime.LongName} cannot be used together.");
-                        return -1;
+                        return 1;
                     }
 
                     var options = new PublishOptions
@@ -78,7 +78,7 @@ namespace Microsoft.Dnx.Tooling
                     var manager = new PublishManager(serviceProvider, options, applicationEnvironment);
                     if (!manager.Publish())
                     {
-                        return -1;
+                        return 1;
                     }
 
                     return 0;

@@ -47,7 +47,7 @@ namespace Microsoft.Dnx.Tooling
 
                     if (!projectManager.Build())
                     {
-                        return -1;
+                        return 1;
                     }
 
                     return 0;

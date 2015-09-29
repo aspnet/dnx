@@ -19,7 +19,7 @@ namespace Microsoft.Dnx.Runtime.Common
 
             if (!TryGetEntryPoint(assembly, serviceProvider, out instance, out entryPoint))
             {
-                return Task.FromResult(-1);
+                return Task.FromResult(1);
             }
 
             object result = null;
