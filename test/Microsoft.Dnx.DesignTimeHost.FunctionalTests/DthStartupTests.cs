@@ -8,7 +8,7 @@ using System.Linq;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure;
 using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Testing;
+using Microsoft.Dnx.Testing.Framework;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;

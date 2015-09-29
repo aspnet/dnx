@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public class JsonUtils
     {

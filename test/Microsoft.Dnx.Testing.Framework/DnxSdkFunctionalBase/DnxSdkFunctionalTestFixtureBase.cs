@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using Microsoft.Dnx.Runtime;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public class DnxSdkFunctionalTestFixtureBase
     {

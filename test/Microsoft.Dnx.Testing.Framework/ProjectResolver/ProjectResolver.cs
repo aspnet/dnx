@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using Microsoft.Dnx.Runtime;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     internal class ProjectResolver
     {

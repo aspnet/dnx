@@ -4,7 +4,7 @@
 using System;
 using Xunit.Sdk;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public class DirMismatchException : XunitException
     {

@@ -4,11 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 using Microsoft.Dnx.Runtime;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public class Exec
     {

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public class DnuPackOutput : ExecResult
     {

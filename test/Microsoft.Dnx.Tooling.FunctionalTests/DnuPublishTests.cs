@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Microsoft.AspNet.Testing.xunit;
-using Microsoft.Dnx.Testing;
+using Microsoft.Dnx.Testing.Framework;
 using Newtonsoft.Json.Linq;
 using Xunit;
 

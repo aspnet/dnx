@@ -5,7 +5,7 @@ using System;
 using System.Reflection;
 using Xunit.Sdk;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public class TraceTestAttribute : BeforeAfterTestAttribute
     {

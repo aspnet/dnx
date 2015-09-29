@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     internal static class TestLogger
     {

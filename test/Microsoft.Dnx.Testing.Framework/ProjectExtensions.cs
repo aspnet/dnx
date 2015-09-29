@@ -6,7 +6,7 @@ using System.IO;
 using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public static class ProjectExtensions
     {

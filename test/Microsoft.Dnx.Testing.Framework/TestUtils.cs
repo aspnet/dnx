@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Helpers;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public static class TestUtils
     {

@@ -3,7 +3,7 @@
 
 using System.IO;
 using Microsoft.AspNet.Testing.xunit;
-using Microsoft.Dnx.Testing;
+using Microsoft.Dnx.Testing.Framework;
 using Newtonsoft.Json.Linq;
 using Xunit;
 

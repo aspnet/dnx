@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
 
-namespace Microsoft.Dnx.Testing
+namespace Microsoft.Dnx.Testing.Framework
 {
     public class DnxSdk
     {
