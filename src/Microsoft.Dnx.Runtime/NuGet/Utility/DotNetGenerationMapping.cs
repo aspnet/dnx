@@ -10,39 +10,39 @@ namespace NuGet
         private static readonly Dictionary<FrameworkName, Version> _generationMappings = new Dictionary<FrameworkName, Version>()
         {
             // dnxcore50
-            { new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 3) },
+            { new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 5) },
 
             // netcore50/uap10
-            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 3) },
-            { new FrameworkName(VersionUtility.UapFrameworkIdentifier, new Version(10, 0)), new Version(5, 3) },
+            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 4) },
+            { new FrameworkName(VersionUtility.UapFrameworkIdentifier, new Version(10, 0)), new Version(5, 4) },
 
             // netN
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5)), new Version(5, 1) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 2)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6)), new Version(5, 3) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6, 1)), new Version(5, 4) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5)), new Version(5, 2) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 3) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 2)), new Version(5, 3) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6)), new Version(5, 4) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6, 1)), new Version(5, 5) },
 
             // dnxN
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5)), new Version(5, 1) },
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 2)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6)), new Version(5, 3) },
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6, 1)), new Version(5, 4) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5)), new Version(5, 2) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 3) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 2)), new Version(5, 3) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6)), new Version(5, 4) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6, 1)), new Version(5, 5) },
 
             // winN
-            { new FrameworkName(VersionUtility.WindowsFrameworkIdentifier, new Version(8, 0)), new Version(5, 1) },
-            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(4, 5)), new Version(5, 1) },
-            { new FrameworkName(VersionUtility.WindowsFrameworkIdentifier, new Version(8, 1)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 2) },
+            { new FrameworkName(VersionUtility.WindowsFrameworkIdentifier, new Version(8, 0)), new Version(5, 2) },
+            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(4, 5)), new Version(5, 2) },
+            { new FrameworkName(VersionUtility.WindowsFrameworkIdentifier, new Version(8, 1)), new Version(5, 3) },
+            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 3) },
 
-            // wpN
+            // windows phone silverlight
             { new FrameworkName(VersionUtility.WindowsPhoneFrameworkIdentifier, new Version(8, 0)), new Version(5, 1) },
+            { new FrameworkName(VersionUtility.WindowsPhoneFrameworkIdentifier, new Version(8, 1)), new Version(5, 1) },
             { new FrameworkName(VersionUtility.SilverlightFrameworkIdentifier, new Version(8, 0), VersionUtility.WindowsPhoneFrameworkIdentifier), new Version(5, 1) },
-            { new FrameworkName(VersionUtility.WindowsPhoneFrameworkIdentifier, new Version(8, 1)), new Version(5, 2) },
 
             // wpaN
-            { new FrameworkName(VersionUtility.WindowsPhoneAppFrameworkIdentifier, new Version(8, 1)), new Version(5, 2) }
+            { new FrameworkName(VersionUtility.WindowsPhoneAppFrameworkIdentifier, new Version(8, 1)), new Version(5, 3) }
         };
 
         public static IEnumerable<FrameworkName> Expand(FrameworkName input)
