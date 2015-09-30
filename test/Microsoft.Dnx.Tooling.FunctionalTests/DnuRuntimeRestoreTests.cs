@@ -70,7 +70,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             }
             else
             {
-                var osName = RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem.ToLowerInvariant();
+                var osName = RuntimeEnvironmentHelper.RuntimeEnvironment.GetDefaultRestoreRuntimes().First();
+                osName = osName.Substring(0, osName.Length - 4); // Remove the -x86 suffix
                 AssertLockFileTarget(lockFile, osName + "-x86", assemblyRid: null); // There is no linux/darwin-x86 in the test package
                 AssertLockFileTarget(lockFile, osName + "-x64", osName + "-x64");
             }
