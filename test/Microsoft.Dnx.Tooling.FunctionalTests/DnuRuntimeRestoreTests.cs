@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Infrastructure;
@@ -34,7 +35,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             }
         }
 
-        [Theory]
+        [ConditionalTheory]
+        [OSSkipCondition(OperatingSystems.Linux)] // Linux RIDs are too volatile right now to test...
         [MemberData(nameof(RuntimeComponents))]
         public void DnuRestore_GeneratesDefaultRuntimeTargets(string flavor, string os, string architecture)
         {
