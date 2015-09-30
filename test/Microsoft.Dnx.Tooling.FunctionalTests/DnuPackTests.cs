@@ -9,7 +9,6 @@ using Xunit;
 
 namespace Microsoft.Dnx.Tooling.FunctionalTests
 {
-    [Collection(nameof(ToolingFunctionalTestCollection))]
     public class DnuPackTests : DnxSdkFunctionalTestBase
     {
         [ConditionalTheory, TraceTest]

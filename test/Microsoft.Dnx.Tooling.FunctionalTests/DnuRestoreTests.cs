@@ -7,7 +7,6 @@ using Xunit;
 
 namespace Microsoft.Dnx.Tooling.FunctionalTests
 {
-    [Collection(nameof(ToolingFunctionalTestCollection))]
     public class DnuRestoreTests : DnxSdkFunctionalTestBase
     {
         [Theory, TraceTest]

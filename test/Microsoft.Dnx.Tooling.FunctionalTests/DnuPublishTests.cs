@@ -11,7 +11,6 @@ using Xunit;
 
 namespace Microsoft.Dnx.Tooling.FunctionalTests
 {
-    [Collection(nameof(ToolingFunctionalTestCollection))]
     public class DnuPublishTests : DnxSdkFunctionalTestBase
     {
         [ConditionalTheory, TraceTest]
