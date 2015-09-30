@@ -54,8 +54,13 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("osx", "unix"),
             new RuntimeSpec("osx-x64", "osx", "unix-x64"),
 
+            // Mac OS X Yosemite
             new RuntimeSpec("osx.10.10", "osx"),
             new RuntimeSpec("osx.10.10-x64", "osx.10.10", "osx-x64"),
+
+            // Optimistically support Mac OS X El Capitan for now (again, informal support)
+            new RuntimeSpec("osx.10.11", "osx.10.10"),
+            new RuntimeSpec("osx.10.11-x64", "osx.10.11", "osx.10.10-x64"),
 
             new RuntimeSpec("linux", "unix"),
             new RuntimeSpec("linux-x64", "linux", "unix-x64"),
@@ -70,7 +75,11 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("ubuntu-x64", "ubuntu", "linux-x64"),
 
             new RuntimeSpec("ubuntu.14.04", "ubuntu"),
-            new RuntimeSpec("ubuntu.14.04-x64", "ubuntu.14.04", "ubuntu-x64"));
+            new RuntimeSpec("ubuntu.14.04-x64", "ubuntu.14.04", "ubuntu-x64"),
+
+            // Linux Mint 17.2 is identical to Ubuntu 14.04 for our purposes (though we are not formally supporting it either)
+            new RuntimeSpec("linuxmint.17.2", "ubuntu.14.04"),
+            new RuntimeSpec("linuxmint.17.2-x64", "ubuntu.14.04-x64"));
 
         public static readonly SemanticVersion ImplicitRuntimePackageVersion = new SemanticVersion("0.0.0");
         public static readonly string ImplicitRuntimePackageId = "Microsoft.NETCore.Platforms";
