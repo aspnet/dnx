@@ -72,7 +72,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
             bool allowUnsafe = compilerOptions.AllowUnsafe ?? false;
             bool optimize = compilerOptions.Optimize ?? false;
             bool warningsAsErrors = compilerOptions.WarningsAsErrors ?? false;
-            bool strongName = compilerOptions.StrongName ?? false;
 
             Platform platform;
             if (!Enum.TryParse(value: platformValue, ignoreCase: true, result: out platform))
@@ -80,13 +79,46 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 platform = Platform.AnyCpu;
             }
 
-            return options.WithAllowUnsafe(allowUnsafe)
-                          .WithPlatform(platform)
-                          .WithGeneralDiagnosticOption(warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default)
-                          .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug)
-                          .WithCryptoKeyFile(compilerOptions.KeyFile)
-                          .WithDelaySign(compilerOptions.DelaySign)
-                          .WithCryptoPublicKey(strongName ? StrongNameKey : ImmutableArray<byte>.Empty);
+            options = options
+                        .WithAllowUnsafe(allowUnsafe)
+                        .WithPlatform(platform)
+                        .WithGeneralDiagnosticOption(warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default)
+                        .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug);
+
+            return AddSigningOptions(options, compilerOptions);
+        }
+
+        private static CSharpCompilationOptions AddSigningOptions(CSharpCompilationOptions options, ICompilerOptions compilerOptions)
+        {
+            var strongName = compilerOptions.StrongName == true;
+
+            var keyFile =
+                Environment.GetEnvironmentVariable(EnvironmentNames.BuildKeyFile) ??
+                compilerOptions.KeyFile;
+#if DNX451
+            if (!string.IsNullOrEmpty(compilerOptions.KeyFile))
+            {
+                // For Mono signing with snk is not supported so we want to fallback to OSS sigining unless both
+                // snk and OSS signing is requested. This is incorrect so we leave it to be able to show an error.
+                if (RuntimeEnvironmentHelper.IsMono && !strongName)
+                {
+                    return options.WithCryptoPublicKey(StrongNameKey);
+                }
+
+                var delaySignString = Environment.GetEnvironmentVariable(EnvironmentNames.BuildDelaySign);
+                var delaySign =
+                    delaySignString == null
+                        ? compilerOptions.DelaySign
+                        : string.Equals(delaySignString, "true", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(delaySignString, "1", StringComparison.OrdinalIgnoreCase);
+
+                options = options
+                            .WithCryptoKeyFile(keyFile)
+                            .WithDelaySign(delaySign);
+            }
+#endif
+
+            return strongName ? options.WithCryptoPublicKey(StrongNameKey) : options;
         }
 
         private static bool IsDesktop(FrameworkName frameworkName)

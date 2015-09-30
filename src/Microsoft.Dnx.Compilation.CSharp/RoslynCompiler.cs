@@ -136,8 +136,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 incomingReferences,
                 resourcesResolver);
 
-            // Apply strong-name settings
-            ApplyStrongNameSettings(compilationContext);
+            ValidateSigningOptions(compilationContext);
+            AddStrongNameProvider(compilationContext);
 
             if (isMainAspect && projectContext.Files.PreprocessSourceFiles.Any())
             {
@@ -180,43 +180,46 @@ namespace Microsoft.Dnx.Compilation.CSharp
             return compilationContext;
         }
 
-        private void ApplyStrongNameSettings(CompilationContext compilationContext)
+        private void ValidateSigningOptions(CompilationContext compilationContext)
         {
+            var compilerOptions = compilationContext.Project.CompilerOptions;
+
             var keyFile =
                 Environment.GetEnvironmentVariable(EnvironmentNames.BuildKeyFile) ??
-                compilationContext.Compilation.Options.CryptoKeyFile;
+                compilerOptions.KeyFile;
 
-            if (!string.IsNullOrEmpty(keyFile) && !RuntimeEnvironmentHelper.IsMono)
+            if (!string.IsNullOrEmpty(keyFile))
             {
-#if DNX451
-                var delaySignString = Environment.GetEnvironmentVariable(EnvironmentNames.BuildDelaySign);
-                var delaySign =
-                    delaySignString == null
-                        ? compilationContext.Compilation.Options.DelaySign
-                        : string.Equals(delaySignString, "true", StringComparison.OrdinalIgnoreCase) ||
-                          string.Equals(delaySignString, "1", StringComparison.OrdinalIgnoreCase);
+                if (compilerOptions.StrongName == true)
+                {
+                    compilationContext.Diagnostics.Add(
+                        Diagnostic.Create(RoslynDiagnostics.OssAndSnkSigningAreExclusive, null));
+                    return;
+                }
 
-                var strongNameProvider = new DesktopStrongNameProvider(
-                    ImmutableArray.Create(compilationContext.Project.ProjectDirectory));
-                var newOptions = compilationContext.Compilation.Options
-                    .WithStrongNameProvider(strongNameProvider)
-                    .WithCryptoKeyFile(keyFile)
-                    .WithDelaySign(delaySign);
-                compilationContext.Compilation = compilationContext.Compilation.WithOptions(newOptions);
-#else
-                var diag = Diagnostic.Create(
-                    RoslynDiagnostics.StrongNamingNotSupported,
-                    null);
-                compilationContext.Diagnostics.Add(diag);
+                if (RuntimeEnvironmentHelper.IsMono)
+                {
+                    compilationContext.Diagnostics.Add(
+                        Diagnostic.Create(RoslynDiagnostics.SnkNotSupportedOnMono, null));
+                    return;
+                }
+#if DNXCORE50
+                compilationContext.Diagnostics.Add(
+                    Diagnostic.Create(RoslynDiagnostics.StrongNamingNotSupported, null));
 #endif
             }
+        }
 
-            // If both CryptoPublicKey and CryptoKeyFile compilation will fail so we don't need a check
-            if (compilationContext.Compilation.Options.CryptoPublicKey != null)
+        private void AddStrongNameProvider(CompilationContext compilationContext)
+        {
+            if (!string.IsNullOrEmpty(compilationContext.Compilation.Options.CryptoKeyFile))
             {
-                var options = compilationContext.Compilation.Options
-                    .WithCryptoPublicKey(compilationContext.Compilation.Options.CryptoPublicKey);
-                compilationContext.Compilation = compilationContext.Compilation.WithOptions(options);
+                var strongNameProvider =
+                    new DesktopStrongNameProvider(ImmutableArray.Create(compilationContext.Project.ProjectDirectory));
+
+                compilationContext.Compilation =
+                    compilationContext.Compilation.WithOptions(
+                        compilationContext.Compilation.Options.WithStrongNameProvider(strongNameProvider));
             }
         }
 
