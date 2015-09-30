@@ -44,7 +44,7 @@ namespace Microsoft.Dnx.ApplicationHost.Old
                 stdOut: out stdOut,
                 stdErr: out stdErr);
 
-            Assert.NotEqual(0, exitCode);
+            Assert.Equal(2, exitCode);
         }
 
         [Theory]
@@ -96,7 +96,7 @@ namespace Microsoft.Dnx.ApplicationHost.Old
                     stdErr: out stdErr,
                     workingDir: emptyFolder);
 
-                Assert.NotEqual(0, exitCode);
+                Assert.Equal(1, exitCode);
                 Assert.Contains("Unable to resolve project", stdErr);
             }
         }
@@ -130,7 +130,7 @@ namespace Microsoft.Dnx.ApplicationHost.Old
                     environment: new Dictionary<string, string> { },
                     workingDir: projectPath);
 
-                Assert.NotEqual(0, exitCode);
+                Assert.Equal(1, exitCode);
                 Assert.Contains("Unable to load application or execute command 'invalid'.", stdErr);
             }
         }
@@ -169,7 +169,7 @@ namespace Microsoft.Dnx.ApplicationHost.Old
                 // TODO: add complete error message check when OS version information is consistent on CoreCLR and CLR
                 var expectedErrorMsg = $@"The current runtime target framework is not compatible with '{projectName}'.";
 
-                Assert.NotEqual(0, exitCode);
+                Assert.Equal(1, exitCode);
                 Assert.Contains(expectedErrorMsg, stdErr);
             }
         }

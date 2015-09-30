@@ -1180,7 +1180,7 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
                     stdErr: out stdErr,
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
-                Assert.NotEqual(0, exitCode);
+                Assert.Equal(1, exitCode);
                 Assert.Contains("The project being published has no frameworks listed in the 'frameworks' section.", stdErr);
             }
         }
@@ -1222,7 +1222,7 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
                     stdErr: out stdErr,
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
-                Assert.NotEqual(0, exitCode);
+                Assert.Equal(1, exitCode);
                 Assert.Contains($"The project being published does not support the runtime '{runtimeHomeDir}'", stdErr);
             }
         }
