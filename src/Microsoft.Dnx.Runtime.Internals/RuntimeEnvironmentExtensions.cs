@@ -71,7 +71,7 @@ namespace Microsoft.Dnx.Runtime
             }
         }
 
-        private static string GetRuntimeOsName(this IRuntimeEnvironment env)
+        public static string GetRuntimeOsName(this IRuntimeEnvironment env)
         {
             string os = env.OperatingSystem;
             string ver = env.OperatingSystemVersion;

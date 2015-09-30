@@ -18,7 +18,7 @@ namespace Microsoft.Dnx.Tooling
             }
             else
             {
-                var os = env.OperatingSystem.ToLowerInvariant();
+                var os = env.GetRuntimeOsName();
                 yield return os + "-x86"; // We do support x86 on Linux/Darwin via Mono
                 yield return os + "-x64";
             }
