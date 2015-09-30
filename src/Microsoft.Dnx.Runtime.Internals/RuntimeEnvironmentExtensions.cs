@@ -100,6 +100,20 @@ namespace Microsoft.Dnx.Runtime
 
                 return os + ver;
             }
+            else if (string.Equals(os, RuntimeOperatingSystems.Linux, StringComparison.Ordinal))
+            {
+                // Check if the version has a distro in it
+                var segments = (ver ?? string.Empty).Split(' ');
+                if (segments.Length == 2)
+                {
+                    os = segments[0].ToLowerInvariant();
+                    ver = segments[1].ToLowerInvariant();
+                }
+                else
+                {
+                    os = os.ToLowerInvariant();
+                }
+            }
             else if (string.Equals(os, RuntimeOperatingSystems.Darwin, StringComparison.Ordinal))
             {
                 os = "osx";
