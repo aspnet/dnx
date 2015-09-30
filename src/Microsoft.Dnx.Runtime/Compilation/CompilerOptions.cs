@@ -24,7 +24,7 @@ namespace Microsoft.Dnx.Runtime
 
         public bool? DelaySign { get; set; }
 
-        public bool? StrongName { get; set; }
+        public bool? UseOssSigning { get; set; }
 
         public bool? EmitEntryPoint { get; set; }
 
@@ -81,9 +81,9 @@ namespace Microsoft.Dnx.Runtime
                     result.DelaySign = option.DelaySign;
                 }
 
-                if (option.StrongName != null)
+                if (option.UseOssSigning != null)
                 {
-                    result.StrongName = option.StrongName;
+                    result.UseOssSigning = option.UseOssSigning;
                 }
 
                 if (option.EmitEntryPoint != null)

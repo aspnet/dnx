@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
@@ -72,7 +73,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
             bool allowUnsafe = compilerOptions.AllowUnsafe ?? false;
             bool optimize = compilerOptions.Optimize ?? false;
             bool warningsAsErrors = compilerOptions.WarningsAsErrors ?? false;
-            bool strongName = compilerOptions.StrongName ?? false;
 
             Platform platform;
             if (!Enum.TryParse(value: platformValue, ignoreCase: true, result: out platform))
@@ -80,13 +80,49 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 platform = Platform.AnyCpu;
             }
 
-            return options.WithAllowUnsafe(allowUnsafe)
-                          .WithPlatform(platform)
-                          .WithGeneralDiagnosticOption(warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default)
-                          .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug)
-                          .WithCryptoKeyFile(compilerOptions.KeyFile)
-                          .WithDelaySign(compilerOptions.DelaySign)
-                          .WithCryptoPublicKey(strongName ? StrongNameKey : ImmutableArray<byte>.Empty);
+            options = options
+                        .WithAllowUnsafe(allowUnsafe)
+                        .WithPlatform(platform)
+                        .WithGeneralDiagnosticOption(warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default)
+                        .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug);
+
+            return AddSigningOptions(options, compilerOptions);
+        }
+
+        private static CSharpCompilationOptions AddSigningOptions(CSharpCompilationOptions options, ICompilerOptions compilerOptions)
+        {
+            var useOssSigning = compilerOptions.UseOssSigning == true;
+
+            var keyFile =
+                Environment.GetEnvironmentVariable(EnvironmentNames.BuildKeyFile) ??
+                compilerOptions.KeyFile;
+
+            if (!string.IsNullOrEmpty(keyFile))
+            {
+#if DNXCORE50
+                return options.WithCryptoPublicKey(
+                    SnkUtils.ExtractPublicKey(File.ReadAllBytes(keyFile)));
+#else
+                if (RuntimeEnvironmentHelper.IsMono || useOssSigning)
+                {
+                    return options.WithCryptoPublicKey(
+                        SnkUtils.ExtractPublicKey(File.ReadAllBytes(keyFile)));
+                }
+
+                options = options.WithCryptoKeyFile(keyFile);
+
+                var delaySignString = Environment.GetEnvironmentVariable(EnvironmentNames.BuildDelaySign);
+                var delaySign =
+                    delaySignString == null
+                        ? compilerOptions.DelaySign
+                        : string.Equals(delaySignString, "true", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(delaySignString, "1", StringComparison.Ordinal);
+
+                return options.WithDelaySign(delaySign);
+#endif
+            }
+
+            return useOssSigning ? options.WithCryptoPublicKey(StrongNameKey) : options;
         }
 
         private static bool IsDesktop(FrameworkName frameworkName)

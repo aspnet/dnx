@@ -468,7 +468,7 @@ namespace Microsoft.Dnx.Runtime
                 Optimize = rawOptions.ValueAsNullableBoolean("optimize"),
                 KeyFile = rawOptions.ValueAsString("keyFile"),
                 DelaySign = rawOptions.ValueAsNullableBoolean("delaySign"),
-                StrongName = rawOptions.ValueAsNullableBoolean("strongName"),
+                UseOssSigning = rawOptions.ValueAsNullableBoolean("useOssSigning"),
                 EmitEntryPoint = rawOptions.ValueAsNullableBoolean("emitEntryPoint")
             };
         }

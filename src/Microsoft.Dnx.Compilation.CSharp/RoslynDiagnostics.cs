@@ -4,10 +4,10 @@ namespace Microsoft.Dnx.Compilation.CSharp
 {
     internal class RoslynDiagnostics
     {
-        internal static readonly DiagnosticDescriptor StrongNamingNotSupported = new DiagnosticDescriptor(
+        internal static readonly DiagnosticDescriptor RealSigningSupportedOnlyOnDesktopClr = new DiagnosticDescriptor(
             id: "DNX1001",
-            title: "Strong name generation is not supported on this platform",
-            messageFormat: "Strong name generation is not supported on CoreCLR. Skipping strong name generation.",
+            title: "Strong name generation with a private and public key pair is not supported on this platform",
+            messageFormat: "Strong name generation with a private and public key pair is supported only on desktop CLR. Falling back to OSS signing.",
             category: "StrongNaming",
             defaultSeverity: DiagnosticSeverity.Warning,
             isEnabledByDefault: true);

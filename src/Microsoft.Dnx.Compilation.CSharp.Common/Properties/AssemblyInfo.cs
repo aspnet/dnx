@@ -3,6 +3,8 @@
 
 using System.Reflection;
 using System.Resources;
+using System.Runtime.CompilerServices;
 
 [assembly: AssemblyMetadata("Serviceable", "True")]
 [assembly: NeutralResourcesLanguage("en-US")]
+[assembly: InternalsVisibleTo("Microsoft.Dnx.Compilation.CSharp.Tests")]

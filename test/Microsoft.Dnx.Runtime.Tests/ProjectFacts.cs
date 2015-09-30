@@ -382,7 +382,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         {
             var project = ProjectUtilities.GetProject(@"
 {
-    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""keyFile"" : ""c:\\keyfile.snk"", ""delaySign"" : true, ""strongName"" : true }
+    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""keyFile"" : ""c:\\keyfile.snk"", ""delaySign"" : true, ""useOssSigning"" : true }
 }",
 "foo",
 @"c:\foo\project.json");
@@ -396,7 +396,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.True(compilerOptions.Optimize.Value);
             Assert.Equal(compilerOptions.KeyFile, @"c:\keyfile.snk");
             Assert.True(compilerOptions.DelaySign);
-            Assert.True(compilerOptions.StrongName);
+            Assert.True(compilerOptions.UseOssSigning);
         }
 
         [Fact]

@@ -135,8 +135,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 incomingReferences,
                 resourcesResolver);
 
-            // Apply strong-name settings
-            ApplyStrongNameSettings(compilationContext);
+            ValidateSigningOptions(compilationContext);
+            AddStrongNameProvider(compilationContext);
 
             if (isMainAspect && projectContext.Files.PreprocessSourceFiles.Any())
             {
@@ -179,43 +179,32 @@ namespace Microsoft.Dnx.Compilation.CSharp
             return compilationContext;
         }
 
-        private void ApplyStrongNameSettings(CompilationContext compilationContext)
+        private void ValidateSigningOptions(CompilationContext compilationContext)
         {
-            var keyFile =
-                Environment.GetEnvironmentVariable(EnvironmentNames.BuildKeyFile) ??
-                compilationContext.Compilation.Options.CryptoKeyFile;
-
-            if (!string.IsNullOrEmpty(keyFile) && !RuntimeEnvironmentHelper.IsMono)
+            var compilerOptions = compilationContext.Project.CompilerOptions;
+            if (compilerOptions.UseOssSigning == false)
             {
 #if DNX451
-                var delaySignString = Environment.GetEnvironmentVariable(EnvironmentNames.BuildDelaySign);
-                var delaySign =
-                    delaySignString == null
-                        ? compilationContext.Compilation.Options.DelaySign
-                        : string.Equals(delaySignString, "true", StringComparison.OrdinalIgnoreCase) ||
-                          string.Equals(delaySignString, "1", StringComparison.OrdinalIgnoreCase);
-
-                var strongNameProvider = new DesktopStrongNameProvider(
-                    ImmutableArray.Create(compilationContext.Project.ProjectDirectory));
-                var newOptions = compilationContext.Compilation.Options
-                    .WithStrongNameProvider(strongNameProvider)
-                    .WithCryptoKeyFile(keyFile)
-                    .WithDelaySign(delaySign);
-                compilationContext.Compilation = compilationContext.Compilation.WithOptions(newOptions);
-#else
-                var diag = Diagnostic.Create(
-                    RoslynDiagnostics.StrongNamingNotSupported,
-                    null);
-                compilationContext.Diagnostics.Add(diag);
+                if (!RuntimeEnvironmentHelper.IsMono)
+                {
+                    return;
+                }
 #endif
+                compilationContext.Diagnostics.Add(
+                    Diagnostic.Create(RoslynDiagnostics.RealSigningSupportedOnlyOnDesktopClr, null));
             }
+        }
 
-            // If both CryptoPublicKey and CryptoKeyFile compilation will fail so we don't need a check
-            if (compilationContext.Compilation.Options.CryptoPublicKey != null)
+        private void AddStrongNameProvider(CompilationContext compilationContext)
+        {
+            if (!string.IsNullOrEmpty(compilationContext.Compilation.Options.CryptoKeyFile))
             {
-                var options = compilationContext.Compilation.Options
-                    .WithCryptoPublicKey(compilationContext.Compilation.Options.CryptoPublicKey);
-                compilationContext.Compilation = compilationContext.Compilation.WithOptions(options);
+                var strongNameProvider =
+                    new DesktopStrongNameProvider(ImmutableArray.Create(compilationContext.Project.ProjectDirectory));
+
+                compilationContext.Compilation =
+                    compilationContext.Compilation.WithOptions(
+                        compilationContext.Compilation.Options.WithStrongNameProvider(strongNameProvider));
             }
         }
 
