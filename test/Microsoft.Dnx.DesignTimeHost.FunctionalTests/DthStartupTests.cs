@@ -108,6 +108,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
                 Assert.Contains("dnxcore50", frameworkShortNames);
                 Assert.Contains("dnx451", frameworkShortNames);
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
@@ -170,6 +172,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                          .AssertProperty<JArray>("Errors", errorsArray => !errorsArray.Any())
                          .AssertProperty<JArray>("Warnings", warningsArray => !warningsArray.Any());
                 }
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
@@ -203,6 +207,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 client.DrainTillFirst("Dependencies")
                        .EnsureSource(server, client)
                        .RetrieveDependency("System.Console");
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
@@ -264,6 +270,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                                      .RetrievePropertyAs<JArray>("ProjectReferences")
                                      .AssertJArrayCount(0);
                 }
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
@@ -298,6 +306,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                       .RetrieveDependency("EmptyLibrary")
                       .AssertProperty("Name", "EmptyLibrary")
                       .AssertProperty("Resolved", false);
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
@@ -336,6 +346,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                       .AssertProperty("Name", "EmptyLibrary")
                       .AssertProperty("Resolved", false);
             }
+
+            TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
         }
 
         [Theory, TraceTest]
@@ -396,6 +408,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                       .AssertJArrayCount(1)
                       .RetrieveArraryElementAs<JObject>(0)
                       .AssertProperty("ErrorCode", "NU1010");
+
+                TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
             }
         }
 
@@ -429,6 +443,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                     Assert.Equal(0, warnings.Count);
                 }
             }
+
+            TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
         }
 
         [Theory, TraceTest]
@@ -521,6 +537,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                     Assert.Equal("DoesNotExist", error2["Source"].Value<string>("Name"));
                 }
             }
+
+            TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
         }
     }
 }
