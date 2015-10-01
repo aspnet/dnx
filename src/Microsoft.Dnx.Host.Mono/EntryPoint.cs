@@ -76,7 +76,8 @@ public class EntryPoint
             ApplicationBase = appBase,
             // NOTE(anurse): Mono is always "dnx451" (for now).
             TargetFramework = new FrameworkName("DNX", new Version(4, 5, 1)),
-            RuntimeType = "Mono"
+            RuntimeType = "Mono",
+            CommandLineArguments = arguments
         };
 
         return RuntimeBootstrapper.Execute(arguments, bootstrapperContext);
