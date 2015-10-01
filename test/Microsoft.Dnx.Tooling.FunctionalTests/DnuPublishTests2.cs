@@ -131,7 +131,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             sdk.Dnu.Restore(project).EnsureSuccess();
             sdk.Dnu.Publish(project.ProjectDirectory, outputPath).EnsureSuccess();
 
-            var executable = Path.Combine(outputPath, "HelloWorld");
+            var executable = Path.Combine(outputPath, "approot", "HelloWorld");
 
             // Assert
             var result = Exec.RunScript(executable, env =>
@@ -155,7 +155,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             sdk.Dnu.Restore(project).EnsureSuccess();
             sdk.Dnu.Publish(project.ProjectDirectory, outputPath, "--no-source").EnsureSuccess();
 
-            var executable = Path.Combine(outputPath, "HelloWorld");
+            var executable = Path.Combine(outputPath, "approot", "HelloWorld");
 
             // Assert
             var result = Exec.RunScript(executable, env =>
@@ -180,7 +180,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             sdk.Dnu.Restore(project).EnsureSuccess();
             sdk.Dnu.Publish(project.ProjectDirectory, outputPath, $"--no-source --runtime {sdk.Location}").EnsureSuccess();
 
-            var executable = Path.Combine(outputPath, "HelloWorld");
+            var executable = Path.Combine(outputPath, "approot", "HelloWorld");
 
             // Assert
             var result = Exec.RunScript(executable, env =>
@@ -227,7 +227,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
     <handlers>
       <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
     </handlers>
-    <httpPlatform processPath=""..\HelloWorld.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+    <httpPlatform processPath=""..\approot\HelloWorld.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
   </system.webServer>
 </configuration>";
 

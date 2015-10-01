@@ -99,11 +99,11 @@ namespace Microsoft.Dnx.Tooling.Publish
             string relativeAppBase;
             if (NoSource)
             {
-                relativeAppBase = $@"{AppRootName}\packages\{_project.Name}\{_project.Version}\root";
+                relativeAppBase = $@"packages\{_project.Name}\{_project.Version}\root";
             }
             else
             {
-                relativeAppBase = $@"{AppRootName}\src\{_project.Name}";
+                relativeAppBase = $@"src\{_project.Name}";
             }
 
             foreach (var commandName in _project.Commands.Keys)
@@ -114,11 +114,11 @@ namespace Microsoft.Dnx.Tooling.Publish
                     runtimeFolder = Runtimes.First().Name;
                 }
 
-                var cmdPath = Path.Combine(OutputPath, commandName + ".cmd");
+                var cmdPath = Path.Combine(OutputPath, AppRootName, commandName + ".cmd");
                 var cmdScript = $@"
 @echo off
 SET DNX_FOLDER={runtimeFolder}
-SET ""LOCAL_DNX=%~dp0{AppRootName}\runtimes\%DNX_FOLDER%\bin\{Runtime.Constants.BootstrapperExeName}.exe""
+SET ""LOCAL_DNX=%~dp0runtimes\%DNX_FOLDER%\bin\{Runtime.Constants.BootstrapperExeName}.exe""
 
 IF EXIST %LOCAL_DNX% (
   SET ""DNX_PATH=%LOCAL_DNX%""
@@ -152,11 +152,11 @@ IF ""%DNX_PATH%"" == """" (
             string relativeAppBase;
             if (NoSource)
             {
-                relativeAppBase = $"{AppRootName}/packages/{_project.Name}/{_project.Version}/root";
+                relativeAppBase = $"packages/{_project.Name}/{_project.Version}/root";
             }
             else
             {
-                relativeAppBase = $"{AppRootName}/src/{_project.Name}";
+                relativeAppBase = $"src/{_project.Name}";
             }
 
             foreach (var commandName in _project.Commands.Keys)
@@ -165,10 +165,10 @@ IF ""%DNX_PATH%"" == """" (
                 if (Runtimes.Any())
                 {
                     var runtime = Runtimes.First().Name;
-                    runtimeFolder = $@"$DIR/{AppRootName}/runtimes/{runtime}/bin/";
+                    runtimeFolder = $@"$DIR/runtimes/{runtime}/bin/";
                 }
 
-                var scriptPath = Path.Combine(OutputPath, commandName);
+                var scriptPath = Path.Combine(OutputPath, AppRootName, commandName);
                 var scriptContents = $@"#!/usr/bin/env bash
 
 SOURCE=""${{BASH_SOURCE[0]}}""
