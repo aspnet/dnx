@@ -6,11 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Infrastructure;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
 using Xunit;
@@ -35,8 +33,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             }
         }
 
-        [ConditionalTheory]
-        [OSSkipCondition(OperatingSystems.Linux)] // Linux RIDs are too volatile right now to test...
+        [Theory]
         [MemberData(nameof(RuntimeComponents))]
         public void DnuRestore_GeneratesDefaultRuntimeTargets(string flavor, string os, string architecture)
         {
@@ -74,7 +71,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             {
                 var osName = RuntimeEnvironmentHelper.RuntimeEnvironment.GetDefaultRestoreRuntimes().First();
                 osName = osName.Substring(0, osName.Length - 4); // Remove the -x86 suffix
-                AssertLockFileTarget(lockFile, osName + "-x86", assemblyRid: null); // There is no linux/darwin-x86 in the test package
+                AssertLockFileTarget(lockFile, osName + "-x86", assemblyRid: null); // There is no ubuntu/osx-x86 in the test package
                 AssertLockFileTarget(lockFile, osName + "-x64", osName + "-x64");
             }
         }
@@ -104,15 +101,15 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
                 // Restore the project!
                 var source = Path.Combine(misc, "RuntimeRestore", "RuntimeRestoreTestPackage", "feed");
-                DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", $"--source {source} --runtime linux-x64 --runtime darwin-x64", workingDir: testDir);
+                DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", $"--source {source} --runtime ubuntu.14.04-x64 --runtime osx.10.10-x64", workingDir: testDir);
 
                 // Check the lock file
                 lockFile = (new LockFileFormat()).Read(Path.Combine(testDir, "project.lock.json"));
             }
 
             AssertLockFileTarget(lockFile, "win10-x86", "win8-x86");
-            AssertLockFileTarget(lockFile, "darwin-x64", "darwin-x64");
-            AssertLockFileTarget(lockFile, "linux-x64", "linux-x64");
+            AssertLockFileTarget(lockFile, "osx.10.10-x64", "osx.10.10-x64");
+            AssertLockFileTarget(lockFile, "ubuntu.14.04-x64", "ubuntu.14.04-x64");
         }
 
         [Theory]
@@ -137,7 +134,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
                 // Restore the project!
                 var source = Path.Combine(misc, "RuntimeRestore", "RuntimeRestoreTestPackage", "feed");
-                DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", $"--source {source} --runtime win10-x64 --runtime win10-x86 --runtime linux-x86", workingDir: testDir);
+                DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", $"--source {source} --runtime win10-x64 --runtime win10-x86 --runtime ubuntu.14.04-x86", workingDir: testDir);
 
                 // Check the lock file
                 lockFile = (new LockFileFormat()).Read(Path.Combine(testDir, "project.lock.json"));
@@ -145,7 +142,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             AssertLockFileTarget(lockFile, "win10-x64", "win7-x64");
             AssertLockFileTarget(lockFile, "win10-x86", "win8-x86");
-            AssertLockFileTarget(lockFile, "linux-x86", assemblyRid: null);
+            AssertLockFileTarget(lockFile, "ubuntu.14.04-x86", assemblyRid: null);
         }
 
         private void AddRuntimeToProject(string projectRoot, string rid)

@@ -42,39 +42,27 @@ namespace dnx.hostTests
         [InlineData("Windows", "10.0", "x86", "win10-x86")]
         [InlineData("Windows", "10.0", "x64", "win10-x64")]
         [InlineData("Windows", "10.0", "arm", "win10-arm")]
-        [InlineData("Ubuntu", "14.04", "x86", "ubuntu.14.04-x86")]
-        [InlineData("Ubuntu", "14.04", "x64", "ubuntu.14.04-x64")]
-        [InlineData("Ubuntu", "14.04", "arm", "ubuntu.14.04-arm")]
-        [InlineData("CentOS", "7.1", "x86", "centos.7.1-x86")]
-        [InlineData("CentOS", "7.1", "x64", "centos.7.1-x64")]
-        [InlineData("CentOS", "7.1", "arm", "centos.7.1-arm")]
-        [InlineData("Linux", null, "x86", "linux-x86")]
-        [InlineData("Linux", null, "x64", "linux-x64")]
-        [InlineData("Linux", null, "arm", "linux-arm")]
-        [InlineData("Linux", "", "x86", "linux-x86")]
-        [InlineData("Linux", "", "x64", "linux-x64")]
-        [InlineData("Linux", "", "arm", "linux-arm")]
+        [InlineData("Linux", null, "x86", "ubuntu.14.04-x86")]
+        [InlineData("Linux", null, "x64", "ubuntu.14.04-x64")]
+        [InlineData("Linux", null, "arm", "ubuntu.14.04-arm")]
+        [InlineData("Linux", "", "x86", "ubuntu.14.04-x86")]
+        [InlineData("Linux", "", "x64", "ubuntu.14.04-x64")]
+        [InlineData("Linux", "", "arm", "ubuntu.14.04-arm")]
         [InlineData("Linux", "Ubuntu 14.04", "x86", "ubuntu.14.04-x86")]
         [InlineData("Linux", "Ubuntu 14.04", "x64", "ubuntu.14.04-x64")]
         [InlineData("Linux", "Ubuntu 14.04", "arm", "ubuntu.14.04-arm")]
-        [InlineData("Linux", "LinuxMint 17.2", "x86", "linuxmint.17.2-x86")]
-        [InlineData("Linux", "LinuxMint 17.2", "x64", "linuxmint.17.2-x64")]
-        [InlineData("Linux", "LinuxMint 17.2", "arm", "linuxmint.17.2-arm")]
+        [InlineData("Linux", "LinuxMint 17.2", "x86", "ubuntu.14.04-x86")]
+        [InlineData("Linux", "LinuxMint 17.2", "x64", "ubuntu.14.04-x64")]
+        [InlineData("Linux", "LinuxMint 17.2", "arm", "ubuntu.14.04-arm")]
         [InlineData("Darwin", null, "x86", "osx-x86")]
         [InlineData("Darwin", null, "x64", "osx-x64")]
         [InlineData("Darwin", null, "arm", "osx-arm")]
         [InlineData("Darwin", "", "x86", "osx-x86")]
         [InlineData("Darwin", "", "x64", "osx-x64")]
         [InlineData("Darwin", "", "arm", "osx-arm")]
-
-        // Our Darwin RIDs are in flux a bit, but this is just testing that whatever we decide on, we can render the right RID from the right input data :)
-        // See: https://github.com/aspnet/dnx/issues/2792
         [InlineData("Darwin", "10.10", "x86", "osx.10.10-x86")]
         [InlineData("Darwin", "10.10", "x64", "osx.10.10-x64")]
         [InlineData("Darwin", "10.10", "arm", "osx.10.10-arm")]
-        [InlineData("OSX", "10.10", "x86", "osx.10.10-x86")]
-        [InlineData("OSX", "10.10", "x64", "osx.10.10-x64")]
-        [InlineData("OSX", "10.10", "arm", "osx.10.10-arm")]
         public void RuntimeIdIsGeneratedCorrectly(string osName, string version, string architecture, string expectedRid)
         {
             var runtimeEnv = new DummyRuntimeEnvironment()
@@ -95,15 +83,15 @@ namespace dnx.hostTests
         [InlineData("Windows", "8.1", "x64", "win81-x64,win8-x64,win7-x64")]
         [InlineData("Windows", "10.0", "x86", "win10-x86,win81-x86,win8-x86,win7-x86")]
         [InlineData("Windows", "10.0", "x64", "win10-x64,win81-x64,win8-x64,win7-x64")]
-        [InlineData("Ubuntu", "14.04", "x86", "ubuntu.14.04-x86")]
-        [InlineData("Ubuntu", "14.04", "x64", "ubuntu.14.04-x64")]
-        [InlineData("Ubuntu", "14.04", "arm", "ubuntu.14.04-arm")]
-        [InlineData("CentOS", "7.1", "x86", "centos.7.1-x86")]
-        [InlineData("CentOS", "7.1", "x64", "centos.7.1-x64")]
-        [InlineData("CentOS", "7.1", "arm", "centos.7.1-arm")]
-        [InlineData("Linux", "", "x86", "linux-x86")]
-        [InlineData("Linux", "", "x64", "linux-x64")]
-        [InlineData("Linux", "", "arm", "linux-arm")]
+        [InlineData("Linux", "", "x86", "ubuntu.14.04-x86")]
+        [InlineData("Linux", "", "x64", "ubuntu.14.04-x64")]
+        [InlineData("Linux", "", "arm", "ubuntu.14.04-arm")]
+        [InlineData("Linux", "Ubuntu 14.04", "x86", "ubuntu.14.04-x86")]
+        [InlineData("Linux", "Ubuntu 14.04", "x64", "ubuntu.14.04-x64")]
+        [InlineData("Linux", "Ubuntu 14.04", "arm", "ubuntu.14.04-arm")]
+        [InlineData("Linux", "LinuxMint 17.2", "x86", "ubuntu.14.04-x86")]
+        [InlineData("Linux", "LinuxMint 17.2", "x64", "ubuntu.14.04-x64")]
+        [InlineData("Linux", "LinuxMint 17.2", "arm", "ubuntu.14.04-arm")]
         [InlineData("Darwin", "", "x86", "osx-x86")]
         [InlineData("Darwin", "", "x64", "osx-x64")]
         [InlineData("Darwin", "", "arm", "osx-arm")]
@@ -142,21 +130,26 @@ namespace dnx.hostTests
             Assert.Equal(expectedArch, arch);
         }
 
-        [Fact(Skip = "This fails on Travis because Travis runs on Darwin 10.9")]
-        //[ConditionalFact]
-        //[OSSkipCondition(OperatingSystems.Linux)]
-        //[FrameworkSkipCondition(RuntimeFrameworks.CLR | RuntimeFrameworks.CoreCLR)] // We don't have an OS skip condition for all Windows yet
+        [ConditionalFact]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [FrameworkSkipCondition(RuntimeFrameworks.CLR | RuntimeFrameworks.CoreCLR)] // We don't have an OS skip condition for all Windows yet
         public void MacRuntimeIdIsCorrect()
         {
-            var arch = RuntimeEnvironmentHelper.RuntimeEnvironment.RuntimeArchitecture.ToLowerInvariant();
-            Assert.Equal($"osx.10.10-{arch}", RuntimeEnvironmentHelper.RuntimeEnvironment.GetRuntimeIdentifier());
+            var expectedArch = RuntimeEnvironmentHelper.RuntimeEnvironment.RuntimeArchitecture.ToLowerInvariant();
+            var rid = RuntimeEnvironmentHelper.RuntimeEnvironment.GetRuntimeIdentifier();
+            var osName = new string(rid.TakeWhile(c => c != '.').ToArray());
+            var arch = rid.Split('-')[1];
+            Assert.Equal("osx", osName);
+            Assert.Equal(expectedArch, arch);
         }
 
-        [Fact(Skip = "Our linux builds don't quite sync up with RIDs yet")]
+        [ConditionalFact]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
+        [FrameworkSkipCondition(RuntimeFrameworks.CLR | RuntimeFrameworks.CoreCLR)] // We don't have an OS skip condition for all Windows yet
         public void LinuxRuntimeIdIsCorrect()
         {
             var arch = RuntimeEnvironmentHelper.RuntimeEnvironment.RuntimeArchitecture.ToLowerInvariant();
-            Assert.Equal($"linux-{arch}", RuntimeEnvironmentHelper.RuntimeEnvironment.GetRuntimeIdentifier());
+            Assert.Equal($"ubuntu.14.04-{arch}", RuntimeEnvironmentHelper.RuntimeEnvironment.GetRuntimeIdentifier());
         }
 
         private class DummyRuntimeEnvironment : IRuntimeEnvironment

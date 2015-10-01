@@ -4,7 +4,7 @@ namespace RuntimeRestoreTest
     {
         public static string GetValue()
         {
-            return "This is the Mac OS X x64 version.";
+            return "This is the Ubuntu 14.04 x64 version.";
         }
     }
 }
