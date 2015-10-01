@@ -37,8 +37,14 @@ namespace Microsoft.Dnx.Runtime
         string RuntimeVersion { get; }
 
         /// <summary>
-        /// Gets the path to the runtime foler.
+        /// Gets the path to the runtime folder.
         /// </summary>
         string RuntimePath { get; }
+        
+        
+        /// <summary>
+        /// Gets the arguments supplied from os commandline.
+        /// </summary>
+        string[] CommandLineArguments { get; }
     }
 }

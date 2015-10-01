@@ -47,6 +47,7 @@ sealed class DomainManager
             bootstrapperContext.ApplicationBase = new string(context->ApplicationBase);
             bootstrapperContext.TargetFramework = new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
             bootstrapperContext.RuntimeType = "CoreClr";
+            bootstrapperContext.CommandLineArguments = arguments;
 
             return RuntimeBootstrapper.Execute(arguments, bootstrapperContext);
         }

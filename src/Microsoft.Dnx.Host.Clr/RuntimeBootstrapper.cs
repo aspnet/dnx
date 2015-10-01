@@ -9,7 +9,7 @@ namespace Microsoft.Dnx.Host.Clr
     {
         public static int Execute(string[] argv, FrameworkName targetFramework, DomainManager.ApplicationMainInfo info)
         {
-            var bootstrapperContext = GetBootstrapperContext(targetFramework, info);
+            var bootstrapperContext = GetBootstrapperContext(targetFramework, info, argv);
             var bootstrapperType = bootstrapperContext.GetType().Assembly.GetType("Microsoft.Dnx.Host.RuntimeBootstrapper");
 
             var executeMethodInfo = bootstrapperType.GetMethod("Execute", BindingFlags.Static | BindingFlags.Public, null,
@@ -18,7 +18,7 @@ namespace Microsoft.Dnx.Host.Clr
             return (int)executeMethodInfo.Invoke(null, new object[] { argv, bootstrapperContext });
         }
 
-        private static object GetBootstrapperContext(FrameworkName targetFramework, DomainManager.ApplicationMainInfo info)
+        private static object GetBootstrapperContext(FrameworkName targetFramework, DomainManager.ApplicationMainInfo info, string[] argv)
         {
             var dnxHost = Assembly.Load("Microsoft.Dnx.Host");
             var contextType = dnxHost.GetType("Microsoft.Dnx.Host.BootstrapperContext");
@@ -30,6 +30,7 @@ namespace Microsoft.Dnx.Host.Clr
             contextType.GetProperty("ApplicationBase").SetValue(bootstrapperContext, info.ApplicationBase);
             contextType.GetProperty("TargetFramework").SetValue(bootstrapperContext, targetFramework);
             contextType.GetProperty("RuntimeType").SetValue(bootstrapperContext, "Clr");
+            contextType.GetProperty("CommandLineArguments").SetValue(bootstrapperContext, argv);
 
             return bootstrapperContext;
         }

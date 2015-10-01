@@ -46,5 +46,7 @@ namespace Microsoft.Dnx.Runtime
         }
 
         public string RuntimePath { get; }
+    
+        public string[] CommandLineArguments { get; }
     }
 }
