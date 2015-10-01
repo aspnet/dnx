@@ -36,6 +36,11 @@ int _tmain(int argc, _TCHAR* argv[])
 
     if (!dnx_dll)
     {
+        if (is_oneCore)
+        {
+            _tprintf(L"Falling back to loading dnx.win32.dll\n");
+        }
+
         dnx_dll = load_dnx_dll(L"dnx.win32.dll");
     }
 
