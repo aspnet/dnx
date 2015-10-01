@@ -4,7 +4,7 @@ namespace RuntimeRestoreTest
     {
         public static string GetValue()
         {
-            return "This is the Linux x64 version.";
+            return "This is the Mac OS X 10.10 x64 version.";
         }
     }
 }

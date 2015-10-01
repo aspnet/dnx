@@ -102,17 +102,27 @@ namespace Microsoft.Dnx.Runtime
             }
             else if (string.Equals(os, RuntimeOperatingSystems.Linux, StringComparison.Ordinal))
             {
-                // Check if the version has a distro in it
-                var segments = (ver ?? string.Empty).Split(' ');
-                if (segments.Length == 2)
-                {
-                    os = segments[0].ToLowerInvariant();
-                    ver = segments[1].ToLowerInvariant();
-                }
-                else
-                {
-                    os = os.ToLowerInvariant();
-                }
+                // NOTE(anurse):
+                //  We've run in to so many problems with various little
+                //  distro differences that for now the easiest thing to do is just report that
+                //  we are on ubuntu.14.04 whenever we're on Linux...
+                //  All the current CoreCLR packages only have Ubuntu 14.04 variants, no other
+                //  Linux distros are/will be supported officially for Beta8, but since other
+                //  distros DO sometimes work (Linux Mint and other Ubuntu versions, mostly),
+                //  we unblock them from working (though we do not officially support them).
+                return "ubuntu.14.04";
+
+                //// Check if the version has a distro in it
+                //var segments = (ver ?? string.Empty).Split(' ');
+                //if (segments.Length == 2)
+                //{
+                //    os = segments[0].ToLowerInvariant();
+                //    ver = segments[1].ToLowerInvariant();
+                //}
+                //else
+                //{
+                //    os = os.ToLowerInvariant();
+                //}
             }
             else if (string.Equals(os, RuntimeOperatingSystems.Darwin, StringComparison.Ordinal))
             {
