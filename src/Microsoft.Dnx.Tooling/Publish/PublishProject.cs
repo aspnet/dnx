@@ -554,7 +554,7 @@ namespace Microsoft.Dnx.Tooling.Publish
   <handlers>
     <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
   </handlers>
-  <httpPlatform processPath=""..\{command}.cmd""
+  <httpPlatform processPath=""..\approot\{command}.cmd""
                 arguments="""" 
                 stdoutLogEnabled=""true"" 
                 stdoutLogFile=""..\logs\stdout.log"">
