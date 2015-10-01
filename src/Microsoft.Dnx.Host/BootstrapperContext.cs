@@ -20,5 +20,7 @@ namespace Microsoft.Dnx.Host
         public FrameworkName TargetFramework { get; set; }
 
         public string RuntimeType { get; set; }
+        
+        public string[] CommandLineArguments { get; set; }
     }
 }
