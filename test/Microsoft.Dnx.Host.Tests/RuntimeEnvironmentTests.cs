@@ -169,6 +169,7 @@ namespace dnx.hostTests
             public string RuntimeType { get; set; }
             public string RuntimeVersion { get; set; }
             public string RuntimePath { get; set; }
+            public string[] CommandLineArguments { get; set;}
         }
     }
 }
