@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Infrastructure;
@@ -37,6 +38,18 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         [MemberData(nameof(RuntimeComponents))]
         public void DnuRestore_GeneratesDefaultRuntimeTargets(string flavor, string os, string architecture)
         {
+            // TODO(anurse): Maybe this could be a condition? This is the only place we need it right now so it
+            // didn't seem worth the refactor.
+            if(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem.Equals("Darwin"))
+            {
+                var ver = Version.Parse(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystemVersion);
+                if(ver < new Version(10, 10))
+                {
+                    // Not supported on this!
+                    return;
+                }
+            }
+
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
             LockFile lockFile;
