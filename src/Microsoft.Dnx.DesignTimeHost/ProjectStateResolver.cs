@@ -339,16 +339,40 @@ namespace Microsoft.Dnx.DesignTimeHost
                 Type = library.Type,
                 Resolved = library.Resolved,
                 Path = library.Path,
-                Dependencies = library.Dependencies.Select(dependency => new DependencyItem
-                {
-                    Name = dependency.Name,
-                    Version = dependency.Library?.Identity?.Version?.ToString()
-                }),
                 Errors = diagnostics.Where(d => d.Severity == DiagnosticMessageSeverity.Error)
                                     .Select(d => new DiagnosticMessageView(d)),
                 Warnings = diagnostics.Where(d => d.Severity == DiagnosticMessageSeverity.Warning)
                                       .Select(d => new DiagnosticMessageView(d))
             };
+
+            result.Dependencies = library.Dependencies.Select(dependency =>
+            {
+                var actualVersion = dependency.Library?.Identity?.Version;
+                var item = new DependencyItem
+                {
+                    Name = dependency.Name,
+                    Version = actualVersion?.ToString()
+                };
+
+                var requestVersion = dependency.LibraryRange?.VersionRange;
+                if (requestVersion == null || actualVersion == null)
+                {
+                    item.Override = false;
+                }
+                else if ((requestVersion.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                          requestVersion.MinVersion != actualVersion) ||
+                         (requestVersion.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                          !requestVersion.EqualsFloating(actualVersion)))
+                {
+                    item.Override = true;
+                }
+                else
+                {
+                    item.Override = false;
+                }
+
+                return item;
+            });
 
             if (protocolVersion < 3 && !library.Resolved)
             {

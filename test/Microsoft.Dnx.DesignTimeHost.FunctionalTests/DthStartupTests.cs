@@ -594,5 +594,97 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
             TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
         }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void DthDependencies_NearestOverride(DnxSdk sdk)
+        {
+            using (var server = sdk.Dth.CreateServer())
+            using (var client = server.CreateClient())
+            {
+                var solution = TestUtils.GetSolution<DthTestServer>(sdk, "DependencyOverrideNearest");
+                sdk.Dnu.Restore(solution).EnsureSuccess();
+
+                var ctxMain = client.Initialize(solution.GetProject("Main").ProjectDirectory);
+                var ctxLib = client.Initialize(solution.GetProject("Library").ProjectDirectory);
+
+                var messages = client.DrainMessage(14);
+
+                var mainDependencies = messages.RetrieveSingleMessage(DthMessageTypes.Dependencies, ctxMain);
+
+                mainDependencies.RetrieveDependency("Newtonsoft.Json").AssertProperty("Version", "6.0.8");
+                mainDependencies.RetrieveDependency("Main")
+                                .RetrievePropertyAs<JArray>("Dependencies")
+                                .OfType<JObject>()
+                                .Single(item => item["Name"].Value<string>() == "Newtonsoft.Json")
+                                .AssertProperty("Override", false);
+
+                mainDependencies.RetrieveDependency("Library") 
+                                .RetrievePropertyAs<JArray>("Dependencies")
+                                .OfType<JObject>()
+                                .Single(item => item["Name"].Value<string>() == "Newtonsoft.Json")
+                                .AssertProperty("Override", true);
+
+                var libDependencies = messages.RetrieveSingleMessage(DthMessageTypes.Dependencies, ctxLib);
+                libDependencies.RetrieveDependency("Newtonsoft.Json").AssertProperty("Version", "7.0.1");
+                libDependencies.RetrieveDependency("Library") 
+                               .RetrievePropertyAs<JArray>("Dependencies")
+                               .OfType<JObject>()
+                               .Single(item => item["Name"].Value<string>() == "Newtonsoft.Json")
+                               .AssertProperty("Override", false);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void DthDependencies_HighestOverride(DnxSdk sdk)
+        {
+            using (var server = sdk.Dth.CreateServer())
+            using (var client = server.CreateClient())
+            {
+                var solution = TestUtils.GetSolution<DthTestServer>(sdk, "DependencyOverrideSibling");
+                sdk.Dnu.Restore(solution).EnsureSuccess();
+
+                var ctxMain = client.Initialize(solution.GetProject("Main").ProjectDirectory);
+                var ctxLib1 = client.Initialize(solution.GetProject("Library1").ProjectDirectory);
+                var ctxLib2 = client.Initialize(solution.GetProject("Library2").ProjectDirectory);
+
+                // 7 messages for each project
+                var messages = client.DrainMessage(21);
+
+                var mainDependencies = messages.RetrieveSingleMessage(DthMessageTypes.Dependencies, ctxMain);
+
+                // among the sibling the higher version wins
+                mainDependencies.RetrieveDependency("Newtonsoft.Json").AssertProperty("Version", "6.0.8");
+
+                mainDependencies.RetrieveDependency("Library1")
+                                .RetrievePropertyAs<JArray>("Dependencies")
+                                .OfType<JObject>()
+                                .Single(item => item["Name"].Value<string>() == "Newtonsoft.Json")
+                                .AssertProperty("Override", true);
+
+                mainDependencies.RetrieveDependency("Library2")
+                                .RetrievePropertyAs<JArray>("Dependencies")
+                                .OfType<JObject>()
+                                .Single(item => item["Name"].Value<string>() == "Newtonsoft.Json")
+                                .AssertProperty("Override", false);
+
+                var lib1Dependencies = messages.RetrieveSingleMessage(DthMessageTypes.Dependencies, ctxLib1);
+                lib1Dependencies.RetrieveDependency("Newtonsoft.Json").AssertProperty("Version", "5.0.1");
+                lib1Dependencies.RetrieveDependency("Library1")
+                               .RetrievePropertyAs<JArray>("Dependencies")
+                               .OfType<JObject>()
+                               .Single(item => item["Name"].Value<string>() == "Newtonsoft.Json")
+                               .AssertProperty("Override", false);
+
+                var lib2Dependencies = messages.RetrieveSingleMessage(DthMessageTypes.Dependencies, ctxLib2);
+                lib2Dependencies.RetrieveDependency("Newtonsoft.Json").AssertProperty("Version", "6.0.8");
+                lib2Dependencies.RetrieveDependency("Library2")
+                               .RetrievePropertyAs<JArray>("Dependencies")
+                               .OfType<JObject>()
+                               .Single(item => item["Name"].Value<string>() == "Newtonsoft.Json")
+                               .AssertProperty("Override", false);
+            }
+        }
     }
 }

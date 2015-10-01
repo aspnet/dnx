@@ -11,6 +11,8 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
 
         public string Version { get; set; }
 
+        public bool Override { get; set; }
+
         public override bool Equals(object obj)
         {
             var other = obj as DependencyItem;
