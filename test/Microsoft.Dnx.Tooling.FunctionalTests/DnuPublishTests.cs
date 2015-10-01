@@ -24,7 +24,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         private static readonly string BatchFileTemplate = @"
 @echo off
 SET DNX_FOLDER={0}
-SET ""LOCAL_DNX=%~dp0approot\runtimes\%DNX_FOLDER%\bin\{1}.exe""
+SET ""LOCAL_DNX=%~dp0runtimes\%DNX_FOLDER%\bin\{1}.exe""
 
 IF EXIST %LOCAL_DNX% (
   SET ""DNX_PATH=%LOCAL_DNX%""
@@ -47,7 +47,7 @@ IF ""%DNX_PATH%"" == """" (
   SET ""DNX_PATH={1}.exe""
 )
 
-@""%DNX_PATH%"" --project ""%~dp0approot\src\{2}"" --configuration {3} {4} %*
+@""%DNX_PATH%"" --project ""%~dp0src\{2}"" --configuration {3} {4} %*
 ";
 
         private static readonly string BashScriptTemplate = @"#!/usr/bin/env bash
@@ -60,7 +60,7 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@""".Replace("\r\n", "\n");
+exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Replace("\r\n", "\n");
 
         private static readonly string BasicLockFileTemplate = @"{
   ""locked"": false,
@@ -169,7 +169,7 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
     <handlers>
       <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
     </handlers>
-    <httpPlatform processPath=""..\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+    <httpPlatform processPath=""..\approot\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
   </system.webServer>
 </configuration>";
 
@@ -277,7 +277,7 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
     <handlers>
       <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
     </handlers>
-    <httpPlatform processPath=""..\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+    <httpPlatform processPath=""..\approot\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
   </system.webServer>
 </configuration>";
 
@@ -1261,7 +1261,7 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
     <handlers>
       <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
     </handlers>
-    <httpPlatform processPath=""..\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
+    <httpPlatform processPath=""..\approot\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log""></httpPlatform>
   </system.webServer>
 </configuration>";
 
@@ -1353,7 +1353,7 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
     <handlers>
       <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
     </handlers>
-    <httpPlatform processPath=""..\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log"" rapidFailsPerMinute=""5""></httpPlatform>
+    <httpPlatform processPath=""..\approot\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log"" rapidFailsPerMinute=""5""></httpPlatform>
   </system.webServer>
 </configuration>";
 
@@ -1415,8 +1415,8 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
   'packages': {}
 }";
             var expectedOutputStructure = @"{
-  '.': ['run.cmd', 'run', 'kestrel.cmd', 'kestrel'],
   'approot': {
+    '.' : ['run.cmd', 'run', 'kestrel.cmd', 'kestrel'],
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
@@ -1496,11 +1496,11 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
   ],
   ""packages"": ""packages""
 }")
-                    .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
-                    .WithFileContents("kestrel.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
-                    .WithFileContents("run",
+                    .WithFileContents(Path.Combine("approot", "run.cmd"), BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
+                    .WithFileContents(Path.Combine("approot", "kestrel.cmd"), BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
+                    .WithFileContents(Path.Combine("approot", "run"),
                         BashScriptTemplate, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, configuration, "run")
-                    .WithFileContents("kestrel",
+                    .WithFileContents(Path.Combine("approot", "kestrel"),
                         BashScriptTemplate, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, configuration, "kestrel");
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
@@ -1523,8 +1523,8 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
   'packages': {}
 }";
             var expectedOutputStructure = @"{
-  '.': ['run.cmd', 'run', 'kestrel.cmd', 'kestrel'],
   'approot': {
+    '.': ['run.cmd', 'run', 'kestrel.cmd', 'kestrel'],
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
@@ -1583,8 +1583,8 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
                     .RemoveFile(Path.Combine("bin", "lib", "Microsoft.Dnx.Tooling",
                         "bin", "profile", "startup.prof"));
 
-                var batchFileBinPath = string.Format(@"%~dp0approot\runtimes\{0}\bin\", runtimeName);
-                var bashScriptBinPath = string.Format("$DIR/approot/runtimes/{0}/bin/", runtimeName);
+                var batchFileBinPath = string.Format(@"%~dp0runtimes\{0}\bin\", runtimeName);
+                var bashScriptBinPath = string.Format("$DIR/runtimes/{0}/bin/", runtimeName);
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
@@ -1617,11 +1617,11 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
   ],
   ""packages"": ""packages""
 }")
-                    .WithFileContents("run.cmd", BatchFileTemplate, runtimeName, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
-                    .WithFileContents("kestrel.cmd", BatchFileTemplate, runtimeName, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
-                    .WithFileContents("run",
+                    .WithFileContents(Path.Combine("approot", "run.cmd"), BatchFileTemplate, runtimeName, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
+                    .WithFileContents(Path.Combine("approot", "kestrel.cmd"), BatchFileTemplate, runtimeName, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
+                    .WithFileContents(Path.Combine("approot", "run"),
                         BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "run")
-                    .WithFileContents("kestrel",
+                    .WithFileContents(Path.Combine("approot", "kestrel"),
                         BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "kestrel")
                     .WithSubDir(Path.Combine("approot", "runtimes", runtimeName), runtimeSubDir);
 
@@ -1636,8 +1636,8 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
         {
             const string testApp = "NoDependencies";
             string expectedOutputStructure = @"{
-  '.': ['hello', 'hello.cmd'],
   'approot': {
+    '.': ['hello', 'hello.cmd'],
     'global.json': '',
     'packages': {
       'NoDependencies': {
@@ -1740,8 +1740,8 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
         {
             const string testApp = "NoDependencies";
             string expectedOutputStructure = @"{
-  '.': ['hello', 'hello.cmd'],
   'approot': {
+    '.': ['hello', 'hello.cmd'],
     'global.json': '',
     'packages': {
       'NoDependencies': {
@@ -1853,8 +1853,8 @@ exec ""{1}{2}"" --project ""$DIR/approot/src/{0}"" --configuration {3} {4} ""$@"
         {
             const string testApp = "NoDependencies";
             string expectedOutputStructure = @"{
-  '.': ['hello', 'hello.cmd'],
   'approot': {
+    '.': ['hello', 'hello.cmd'],
     'global.json': '',
     'packages': {
       'NoDependencies': {
