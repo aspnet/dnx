@@ -13,6 +13,8 @@
 *.png 	binary
 *.gif 	binary
 
+*.sh eol=lf
+
 *.cs text=auto diff=csharp 
 *.vb text=auto
 *.resx text=auto
