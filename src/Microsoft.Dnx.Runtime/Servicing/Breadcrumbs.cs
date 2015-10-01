@@ -105,6 +105,12 @@ namespace Microsoft.Dnx.Runtime.Servicing
             // The lock ensures that no add is happening while or after we set the flag
             lock (_addLock)
             {
+                if (_writeWasCalled)
+                {
+                    // This can happen if write is called simultaneously from multiple threads
+                    return;
+                }
+
                 _writeWasCalled = true;
             }
 
