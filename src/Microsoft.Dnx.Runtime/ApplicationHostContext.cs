@@ -171,35 +171,28 @@ namespace Microsoft.Dnx.Runtime
             if (lockFileLookup != null)
             {
                 var target = SelectTarget(context, context.LockFile);
-                if (target != null)
+                // target is guaranteed to be non-null
+
+                Logger.TraceInformation($"[{nameof(ApplicationHostContext)}] Using Lock File Target: {target.TargetFramework}/{target.RuntimeIdentifier}");
+                foreach (var library in target.Libraries)
                 {
-                    if (Logger.IsEnabled && string.IsNullOrEmpty(target.RuntimeIdentifier))
+                    if (string.Equals(library.Type, "project"))
                     {
-                        // REVIEW(anurse): Is there ever a reason we want to use the RID-less target now?
-                        Logger.TraceWarning($"[{nameof(ApplicationHostContext)}] Lock File Target is Runtime-agnostic! This is generally not good.");
+                        var projectLibrary = lockFileLookup.GetProject(library.Name);
+
+                        var path = Path.GetFullPath(Path.Combine(context.ProjectDirectory, projectLibrary.Path));
+
+                        var projectDescription = projectResolver.GetDescription(library.Name, path, library);
+
+                        libraries.Add(projectDescription);
                     }
-
-                    Logger.TraceInformation($"[{nameof(ApplicationHostContext)}] Using Lock File Target: {target.TargetFramework}/{target.RuntimeIdentifier}");
-                    foreach (var library in target.Libraries)
+                    else
                     {
-                        if (string.Equals(library.Type, "project"))
-                        {
-                            var projectLibrary = lockFileLookup.GetProject(library.Name);
+                        var packageEntry = lockFileLookup.GetPackage(library.Name, library.Version);
 
-                            var path = Path.GetFullPath(Path.Combine(context.ProjectDirectory, projectLibrary.Path));
+                        var packageDescription = packageResolver.GetDescription(packageEntry, library);
 
-                            var projectDescription = projectResolver.GetDescription(library.Name, path, library);
-
-                            libraries.Add(projectDescription);
-                        }
-                        else
-                        {
-                            var packageEntry = lockFileLookup.GetPackage(library.Name, library.Version);
-
-                            var packageDescription = packageResolver.GetDescription(packageEntry, library);
-
-                            libraries.Add(packageDescription);
-                        }
+                        libraries.Add(packageDescription);
                     }
                 }
             }
@@ -214,26 +207,43 @@ namespace Microsoft.Dnx.Runtime
 
         private static LockFileTarget SelectTarget(ApplicationHostContext context, LockFile lockFile)
         {
-            foreach (var runtimeIdentifier in context.RuntimeIdentifiers)
+            if (context.RuntimeIdentifiers != null && context.RuntimeIdentifiers.Any())
             {
+                // Only search targets WITH runtimes (for execution).
+                foreach (var runtimeIdentifier in context.RuntimeIdentifiers)
+                {
+                    foreach (var scanTarget in lockFile.Targets)
+                    {
+                        if (scanTarget.TargetFramework == context.TargetFramework && string.Equals(scanTarget.RuntimeIdentifier, runtimeIdentifier, StringComparison.Ordinal))
+                        {
+                            return scanTarget;
+                        }
+                    }
+                }
+                var expectedTarget = $"{context.TargetFramework}/{context.RuntimeIdentifiers.First()}";
+                throw new InvalidOperationException(
+                    $"The lock file does not contain a target compatible with {expectedTarget}. " +
+                    "This usually indicates that you have not restored the project on the correct runtime. " +
+                    "Try running 'dnu restore' on this machine and re-run the application");
+            }
+            else
+            {
+                // Only search targets WITHOUT runtimes (for compilation)
                 foreach (var scanTarget in lockFile.Targets)
                 {
-                    if (scanTarget.TargetFramework == context.TargetFramework && string.Equals(scanTarget.RuntimeIdentifier, runtimeIdentifier, StringComparison.Ordinal))
+                    if (scanTarget.TargetFramework == context.TargetFramework && string.IsNullOrEmpty(scanTarget.RuntimeIdentifier))
                     {
                         return scanTarget;
                     }
                 }
+                
+                // This can happen if the project indicates it supports the right framework but hasn't actually been restored for it.
+                var expectedTarget = context.TargetFramework.ToString();
+                throw new InvalidOperationException(
+                    $"The lock file does not contain a target compatible with {expectedTarget}. " +
+                    "This usually indicates that you have not restored the project on the correct runtime. " +
+                    "Try running 'dnu restore' on this machine and re-run the application");
             }
-
-            foreach (var scanTarget in lockFile.Targets)
-            {
-                if (scanTarget.TargetFramework == context.TargetFramework && string.IsNullOrEmpty(scanTarget.RuntimeIdentifier))
-                {
-                    return scanTarget;
-                }
-            }
-
-            return null;
         }
 
         private static void AddLockFileDiagnostics(ApplicationHostContext context, Result result)
