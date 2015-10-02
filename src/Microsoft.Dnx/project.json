@@ -16,6 +16,7 @@
                 "Microsoft.Dnx.Host.CoreClr": "1.0.0-*",
                 "Microsoft.NETCore.Runtime": "1.0.1-*",
                 "Microsoft.VisualBasic": "10.0.0-*",
+                "Microsoft.Win32.Primitives": "4.0.1-*",
                 "Microsoft.Win32.Registry.AccessControl": "4.0.0-*",
                 "System.Data.SqlClient": "4.0.0-*",
                 "System.Diagnostics.Process": "4.1.0-*",
