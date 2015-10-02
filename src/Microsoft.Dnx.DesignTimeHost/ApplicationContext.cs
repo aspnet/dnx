@@ -54,6 +54,8 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         private ProjectStateResolver _projectStateResolver;
 
+        private readonly DiagnosticMessageAggregator _messagesAggregator = new DiagnosticMessageAggregator();
+
         public ApplicationContext(IServiceProvider services,
                                   IApplicationEnvironment applicationEnvironment,
                                   IRuntimeEnvironment runtimeEnvironment,
@@ -763,18 +765,6 @@ namespace Microsoft.Dnx.DesignTimeHost
                 return;
             }
 
-            // Group all of the diagnostics into group by target framework
-
-            var messages = new List<DiagnosticsListMessage>();
-
-            foreach (var g in allDiagnostics.GroupBy(g => g.Framework))
-            {
-                var messageGroup = g.SelectMany(d => d.Diagnostics).ToList();
-                messages.Add(new DiagnosticsListMessage(messageGroup, g.Key));
-            }
-
-            var payload = JToken.FromObject(messages.Select(d => d.ConvertToJson(ProtocolVersion)));
-
             if (IsDifferent(_local.GlobalErrorMessage, _remote.GlobalErrorMessage))
             {
                 var message = new Message
@@ -792,6 +782,10 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 _remote.GlobalErrorMessage = _local.GlobalErrorMessage;
             }
+
+            // Group all of the diagnostics into group by target framework
+            var messages = _messagesAggregator.Aggregrate(allDiagnostics);
+            var payload = JToken.FromObject(messages.Select(d => d.ConvertToJson(ProtocolVersion)));
 
             // Send all diagnostics back
             foreach (var connection in _waitingForDiagnostics)
