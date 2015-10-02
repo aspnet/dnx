@@ -24,6 +24,8 @@ namespace Microsoft.Dnx.Testing.Framework
 
         public string FullName { get; set; }
 
+        public string ShortName { get; set; }
+
         public FrameworkName TargetFramework { get; set; }
 
         public Dnu Dnu => new Dnu(Location);
@@ -43,7 +45,7 @@ namespace Microsoft.Dnx.Testing.Framework
                     basePath = Environment.GetEnvironmentVariable("USERPROFILE");
                 }
 
-                homePath = System.IO.Path.Combine(basePath, ".dnx");
+                homePath = Path.Combine(basePath, ".dnx");
             }
 
             return homePath;
@@ -61,12 +63,14 @@ namespace Microsoft.Dnx.Testing.Framework
 
         public static DnxSdk GetRuntime(string basePath, string version, string flavor, string os, string arch)
         {
-            var fullName = GetRuntimeName(flavor, os, arch) + $".{version}";
+            var fullName =  $"{GetRuntimeName(flavor, os, arch)}.{version}";
+            var shortName = $"{GetShortRuntimeName(flavor, os, arch)}.{version}";
             return new DnxSdk
             {
                 FullName = fullName,
+                ShortName = shortName,
                 TargetFramework = TestUtils.GetFrameworkForRuntimeFlavor(flavor),
-                Location = System.IO.Path.Combine(basePath, "runtimes", fullName),
+                Location = Path.Combine(basePath, "runtimes", fullName),
                 Architecture = arch,
                 Flavor = flavor,
                 OperationSystem = os,
@@ -83,6 +87,19 @@ namespace Microsoft.Dnx.Testing.Framework
             }
 
             return $"dnx-{flavor}-{os}-{architecture}";
+        }
+
+        public static string GetShortRuntimeName(string flavor, string os, string architecture)
+        {
+            var ra = TestConstants.RuntimeAcronyms;
+
+            // Mono ignores os and architecture
+            if (string.Equals(flavor, "mono", StringComparison.OrdinalIgnoreCase))
+            {
+                return ra["mono"];
+            }
+
+            return $"{ra[flavor]}{ra[os]}{ra[architecture]}";
         }
 
         public override string ToString()

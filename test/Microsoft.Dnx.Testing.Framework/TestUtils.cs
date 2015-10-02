@@ -72,7 +72,7 @@ namespace Microsoft.Dnx.Testing.Framework
 
         public static string GetTestFolder<T>(DnxSdk sdk, [CallerMemberName]string testName = null)
         {
-            var tempFolderPath = Path.Combine(RootTestFolder, $"{typeof(T).Name}.{testName}", sdk.FullName);
+            var tempFolderPath = Path.Combine(RootTestFolder, $"{typeof(T).Name}.{testName}", sdk.ShortName);
             Directory.CreateDirectory(tempFolderPath);
             return tempFolderPath;
         }
