@@ -26,7 +26,7 @@ namespace Microsoft.Dnx.Tooling
         //          }
         //      }
         //
-        private static readonly RuntimeFile ImplicitRuntimeFile = new RuntimeFile(
+        internal static readonly RuntimeFile ImplicitRuntimeFile = new RuntimeFile(
             new RuntimeSpec("base"),
             new RuntimeSpec("any", "base"),
             new RuntimeSpec("win", "any"),

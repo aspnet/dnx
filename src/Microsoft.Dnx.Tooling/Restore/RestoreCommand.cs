@@ -412,8 +412,7 @@ namespace Microsoft.Dnx.Tooling
                                 runtimeName,
                                 runtimeFiles,
                                 runtimeDependencies,
-                                runtimeNames,
-                                _ => false);
+                                runtimeNames);
                             runtimeStopwatch.Stop();
                             Reports.WriteVerbose($" Scanned Runtime graph in {runtimeStopwatch.ElapsedMilliseconds:0.00}ms");
 
@@ -593,7 +592,16 @@ namespace Microsoft.Dnx.Tooling
             };
         }
 
-        private void FindRuntimeDependencies(
+        internal static void FindRuntimeDependencies(
+            string runtimeName,
+            List<RuntimeFile> runtimeFiles,
+            Dictionary<string, DependencySpec> effectiveRuntimeSpecs,
+            HashSet<string> allRuntimeNames)
+        {
+            FindRuntimeDependencies(runtimeName, runtimeFiles, effectiveRuntimeSpecs, allRuntimeNames, _ => false);
+        }
+
+        private static void FindRuntimeDependencies(
             string runtimeName,
             List<RuntimeFile> runtimeFiles,
             Dictionary<string, DependencySpec> effectiveRuntimeSpecs,
