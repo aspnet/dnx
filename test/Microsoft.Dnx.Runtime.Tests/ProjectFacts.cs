@@ -48,6 +48,14 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.Equal("Chi", project.Owners[1]);
         }
 
+        [Fact]
+        public void CopyrightIsSet()
+        {
+            var project = ProjectUtilities.GetProject(@"{ ""copyright"": ""Copyright \u00A9 2015"" }", @"foo", @"C:\Foo\Project.json");
+
+            Assert.Equal("Copyright \u00A9 2015", project.Copyright);
+        }
+
         [Theory]
         [InlineData("summary", nameof(Project.Summary))]
         [InlineData("description", nameof(Project.Description))]

@@ -15,7 +15,7 @@ namespace Microsoft.Dnx.Runtime.Json
         public const string ValueFalse = "false";
 
         private readonly StringBuilder _buffer = new StringBuilder();
-        private readonly StringBuilder _codePointBuffer = new StringBuilder(4);
+        private readonly StringBuilder _codePointBuffer = new StringBuilder();
         private readonly TextReader _reader;
         private JsonToken _token;
         private int _line;
@@ -264,7 +264,7 @@ namespace Microsoft.Dnx.Runtime.Json
                             }
                             else
                             {
-                                _codePointBuffer[i] = (char)next;
+                                _codePointBuffer.Append((char)next);
                             }
                         }
 

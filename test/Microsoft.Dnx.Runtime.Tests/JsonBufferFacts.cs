@@ -143,6 +143,21 @@ namespace Microsoft.Dnx.Runtime.Json.Tests
             }
         }
 
+        [Fact]
+        public void ReadUnicode()
+        {
+            var content = "\"Unicode string \\u00A9\"";
+            using (var stream = CreateTextReader(content))
+            {
+                var buffer = new JsonBuffer(stream);
+                Assert.NotNull(buffer);
+
+                var token = buffer.Read();
+                Assert.Equal(JsonTokenType.String, token.Type);
+                Assert.Equal(16, token.Value.Length);
+            }
+        }
+
         private TextReader CreateTextReader(string content)
         {
             return new StringReader(content);
