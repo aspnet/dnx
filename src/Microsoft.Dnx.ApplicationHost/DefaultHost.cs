@@ -127,7 +127,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             _project = applicationHostContext.Project;
 
+#if FEATURE_DNX_MIN_VERSION_CHECK
             ValidateMinRuntimeVersion(libraries);
+#endif
 
             if (options.WatchFiles)
             {
@@ -187,6 +189,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             AddBreadcrumbs(libraries);
         }
 
+#if FEATURE_DNX_MIN_VERSION_CHECK
         private void ValidateMinRuntimeVersion(IEnumerable<LibraryDescription> libraries)
         {
             if (string.Equals(Environment.GetEnvironmentVariable(EnvironmentNames.DnxDisableMinVersionCheck), "1", StringComparison.OrdinalIgnoreCase))
@@ -207,7 +210,8 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                     throw new InvalidOperationException($"This application requires DNX version {lib.Identity.Version} or newer to run.");
                 }
             }
-        }
+    }
+#endif
 
         private void AddBreadcrumbs(IEnumerable<LibraryDescription> libraries)
         {
