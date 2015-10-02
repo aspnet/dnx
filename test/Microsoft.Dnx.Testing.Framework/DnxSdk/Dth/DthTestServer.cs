@@ -9,20 +9,19 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Testing.Framework;
 
-namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
+namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
 {
     public class DthTestServer : IDisposable
     {
         private const string DthName = "Microsoft.Dnx.DesignTimeHost";
         private Process _process;
 
-        public static DthTestServer Create(DnxSdk sdk, TimeSpan timeout)
+        public static DthTestServer Create(string sdkPath, TimeSpan timeout)
         {
-            var bootstraperExe = Path.Combine(sdk.Location, "bin", Constants.BootstrapperExeName);
+            var bootstraperExe = Path.Combine(sdkPath, "bin", Constants.BootstrapperExeName);
 
-            var dthPath = Path.Combine(sdk.Location, "bin", "lib", DthName, $"{DthName}.dll");
+            var dthPath = Path.Combine(sdkPath, "bin", "lib", DthName, $"{DthName}.dll");
             if (!File.Exists(dthPath))
             {
                 throw new InvalidOperationException($"Can't find {DthName} at {dthPath}.");
@@ -33,9 +32,9 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             var processStartInfo = new ProcessStartInfo()
             {
                 UseShellExecute = false,
-                WorkingDirectory = sdk.Location,
+                WorkingDirectory = sdkPath,
                 FileName = bootstraperExe,
-                Arguments = $"--appbase \"{sdk.Location}\" \"{dthPath}\" {port} {Process.GetCurrentProcess().Id} {hostId}",
+                Arguments = $"--appbase \"{sdkPath}\" \"{dthPath}\" {port} {Process.GetCurrentProcess().Id} {hostId}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
@@ -92,11 +91,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
             {
                 throw new InvalidOperationException($"Timeout after {timeout.TotalSeconds}. Expected message {successOuput} from STDOUT to indicate that DTH is started successfully.");
             }
-        }
-
-        public static DthTestServer Create(DnxSdk sdk)
-        {
-            return Create(sdk, TimeSpan.FromSeconds(10));
         }
 
         public DthTestServer(Process process, int port, string hostId)

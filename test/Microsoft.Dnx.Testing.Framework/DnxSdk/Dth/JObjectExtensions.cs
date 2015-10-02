@@ -5,7 +5,7 @@ using System;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util
+namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
 {
     public static class JObjectExtensions
     {

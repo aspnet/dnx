@@ -5,11 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util
+namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
 {
     public static class DthMessageCollectionExtension
     {

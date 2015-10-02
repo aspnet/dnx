@@ -2,11 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Util
+namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
 {
     public static class DthMessageExtension
     {

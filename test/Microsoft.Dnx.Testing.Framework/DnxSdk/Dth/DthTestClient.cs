@@ -13,7 +13,7 @@ using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
+namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
 {
     public class DthTestClient : IDisposable
     {
@@ -102,7 +102,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests.Infrastructure
 
         public void SetProtocolVersion(int version)
         {
-            SendPayLoad(0, ProtocolManager.NegotiationMessageTypeName, new { Version = version });
+            SendPayLoad(0, DthMessageTypes.ProtocolVersion, new { Version = version });
         }
 
         public List<DthMessage> DrainMessage(int count)

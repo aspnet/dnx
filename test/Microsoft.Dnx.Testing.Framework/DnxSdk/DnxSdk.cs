@@ -32,6 +32,8 @@ namespace Microsoft.Dnx.Testing.Framework
 
         public Dnx Dnx => new Dnx(Location);
 
+        public Dth Dth => new Dth(Location);
+
         public static string GetRuntimeHome()
         {
             var dnxHomePath = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
