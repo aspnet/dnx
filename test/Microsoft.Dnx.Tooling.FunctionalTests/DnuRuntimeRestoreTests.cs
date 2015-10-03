@@ -40,10 +40,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         {
             // TODO(anurse): Maybe this could be a condition? This is the only place we need it right now so it
             // didn't seem worth the refactor.
-            if(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem.Equals("Darwin"))
+            if (RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem.Equals("Darwin"))
             {
                 var ver = Version.Parse(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystemVersion);
-                if(ver < new Version(10, 10))
+                if (ver < new Version(10, 10))
                 {
                     // Not supported on this!
                     return;

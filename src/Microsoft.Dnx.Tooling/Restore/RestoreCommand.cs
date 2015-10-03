@@ -229,8 +229,8 @@ namespace Microsoft.Dnx.Tooling
                     .Where(x => x.Severity == DiagnosticMessageSeverity.Error)
                     .Select(x => x.Message);
 
-                throw new InvalidOperationException(errorMessages.Any() ? 
-                    $"Errors occured when while parsing project.json:{Environment.NewLine}{string.Join(Environment.NewLine, errorMessages)}" : 
+                throw new InvalidOperationException(errorMessages.Any() ?
+                    $"Errors occured when while parsing project.json:{Environment.NewLine}{string.Join(Environment.NewLine, errorMessages)}" :
                     "Invalid project.json");
             }
 
@@ -412,8 +412,7 @@ namespace Microsoft.Dnx.Tooling
                                 runtimeName,
                                 runtimeFiles,
                                 runtimeDependencies,
-                                runtimeNames,
-                                _ => false);
+                                runtimeNames);
                             runtimeStopwatch.Stop();
                             Reports.WriteVerbose($" Scanned Runtime graph in {runtimeStopwatch.ElapsedMilliseconds:0.00}ms");
 
@@ -593,7 +592,16 @@ namespace Microsoft.Dnx.Tooling
             };
         }
 
-        private void FindRuntimeDependencies(
+        internal static void FindRuntimeDependencies(
+            string runtimeName,
+            List<RuntimeFile> runtimeFiles,
+            Dictionary<string, DependencySpec> effectiveRuntimeSpecs,
+            HashSet<string> allRuntimeNames)
+        {
+            FindRuntimeDependencies(runtimeName, runtimeFiles, effectiveRuntimeSpecs, allRuntimeNames, _ => false);
+        }
+
+        private static void FindRuntimeDependencies(
             string runtimeName,
             List<RuntimeFile> runtimeFiles,
             Dictionary<string, DependencySpec> effectiveRuntimeSpecs,
@@ -620,9 +628,16 @@ namespace Microsoft.Dnx.Tooling
                     // Load dependencies provided by this runtime file
                     foreach (var dependencySpec in runtimeSpec.Dependencies.Values)
                     {
-                        // New dependency specs replace existing ones
-                        // This matches the NuGet3 behavior: https://github.com/NuGet/NuGet3/blob/dev/src/NuGet.RuntimeModel/RuntimeDescription.cs#L99
-                        effectiveRuntimeSpecs[dependencySpec.Name] = dependencySpec;
+                        // The first one to set a spec for a package wins. Why?
+                        //  1) The runtime files are coming in order from the top of the dependency graph to the bottom, so
+                        //       earlier items in the graph are closer to the root. Having said that, it is NOT EXPECTED that
+                        //       a single package be affected by two runtime.json files anyway.
+                        //  2) The runtime imports are coming in order from most specific to least specific, so we stop as soon
+                        //       as we find a match compatible with our runtime.
+                        if (!effectiveRuntimeSpecs.ContainsKey(dependencySpec.Name))
+                        {
+                            effectiveRuntimeSpecs[dependencySpec.Name] = dependencySpec;
+                        }
                     }
                 }
             }
