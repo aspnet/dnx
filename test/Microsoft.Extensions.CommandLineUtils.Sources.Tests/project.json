@@ -1,6 +1,6 @@
 {
     "dependencies": {
-        "Microsoft.Framework.CommandLineUtils.Sources": "1.0.0-*",
+        "Microsoft.Extensions.CommandLineUtils.Sources": "1.0.0-*",
         "xunit.runner.aspnet": "2.0.0-aspnet-*"
     },
 

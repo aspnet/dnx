@@ -92,7 +92,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Dnx.Runtime.Sources",
     "Microsoft.Dnx.Project",
     "Microsoft.Dnx.Tooling",
-    "Microsoft.Framework.CommandLineUtils.Sources")}'
+    "Microsoft.Extensions.CommandLineUtils.Sources")}'
 
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_CLR_MANAGED_NAME)}'
@@ -497,7 +497,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.Sources/**/*.*"),
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.CommandParsing.Sources/**/*.*"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.Json.Sources/**/*.*"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils.Sources/**/*.*"),
+            Path.Combine(BUILD_DIR2, "Microsoft.Extensions.CommandLineUtils.Sources/**/*.*"),
         };
         
         foreach (var file in Files.Include(dnxCore50Pattern).Exclude(sharedSourceAssemblies))
@@ -866,7 +866,7 @@ macro name='DoRestore'
 
 functions @{
     private static readonly string[] TPA_IGNORED_ASSEMBLIES = new [] {
-        "Microsoft.Framework.HashCodeCombiner.Sources"
+        "Microsoft.Extensions.HashCodeCombiner.Sources"
     };
 
     private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";

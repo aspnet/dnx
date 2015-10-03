@@ -7,7 +7,7 @@
         "warningsAsErrors": true
     },
     "compile": [
-        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs"
+        "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"
     ],
     "preprocess": [
         "../../ext/compiler/preprocess/Internalization.cs"
@@ -31,7 +31,7 @@
             "version": "1.0.0-*",
             "type": "build"
         },
-        "Microsoft.Framework.HashCodeCombiner.Sources": {
+        "Microsoft.Extensions.HashCodeCombiner.Sources": {
             "version": "1.0.0-*",
             "type": "build"
         },

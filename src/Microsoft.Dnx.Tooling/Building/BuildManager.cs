@@ -12,8 +12,8 @@ using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Internals;
 using Microsoft.Dnx.Tooling.Utils;
-using Microsoft.Framework.FileSystemGlobbing;
-using Microsoft.Framework.FileSystemGlobbing.Abstractions;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Tooling

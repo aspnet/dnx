@@ -10,13 +10,13 @@
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.NotNullAttribute.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.HashCodeCombiner.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Extensions.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Extensions.NotNullAttribute.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Extensions.HashCodeCombiner.Sources": { "version": "1.0.0-*", "type": "build" },
         "Newtonsoft.Json": "6.0.6"
     }, 
     "compile": [ 
-         "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs" 
+         "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs" 
     ], 
     "preprocess": [ 
         "../../ext/compiler/preprocess/Internalization.cs" 

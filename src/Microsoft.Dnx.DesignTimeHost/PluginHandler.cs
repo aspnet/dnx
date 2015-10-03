@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Dnx.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
-using Microsoft.Framework.Internal;
+using Microsoft.Extensions.Internal;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 

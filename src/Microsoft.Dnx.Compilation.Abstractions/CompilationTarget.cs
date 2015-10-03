@@ -3,7 +3,7 @@
 
 using System;
 using System.Runtime.Versioning;
-using Microsoft.Framework.Internal;
+using Microsoft.Extensions.Internal;
 
 namespace Microsoft.Dnx.Compilation
 {

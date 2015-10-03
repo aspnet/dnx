@@ -4,7 +4,7 @@
   "compilationOptions": { "warningsAsErrors": true },
   "dependencies": {
     "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
-    "Microsoft.Framework.HashCodeCombiner.Sources": {
+    "Microsoft.Extensions.HashCodeCombiner.Sources": {
       "type": "build",
       "version": "1.0.0-*"
     }

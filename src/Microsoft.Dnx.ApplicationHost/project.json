@@ -8,7 +8,7 @@
         "Microsoft.Dnx.Runtime.CommandParsing.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" }
+        "Microsoft.Extensions.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" }
     },
     "frameworks": {
         "dnx451": { },

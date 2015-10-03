@@ -37,7 +37,7 @@
           "lib/net45/Microsoft.CodeAnalysis.CSharp.dll"
         ]
       },
-      "Microsoft.Framework.DependencyInjection.Interfaces/1.0.0-beta5-11289": {
+      "Microsoft.Extensions.DependencyInjection.Interfaces/1.0.0-beta5-11289": {
         "frameworkAssemblies": [
           "mscorlib",
           "System",
@@ -45,13 +45,13 @@
           "Microsoft.CSharp"
         ],
         "compile": [
-          "lib/dnx451/Microsoft.Framework.DependencyInjection.Interfaces.dll"
+          "lib/dnx451/Microsoft.Extensions.DependencyInjection.Interfaces.dll"
         ],
         "runtime": [
-          "lib/dnx451/Microsoft.Framework.DependencyInjection.Interfaces.dll"
+          "lib/dnx451/Microsoft.Extensions.DependencyInjection.Interfaces.dll"
         ]
       },
-      "Microsoft.Framework.NotNullAttribute.Internal/1.0.0-beta5-10282": {
+      "Microsoft.Extensions.NotNullAttribute.Internal/1.0.0-beta5-10282": {
         "frameworkAssemblies": [
           "mscorlib",
           "System",
@@ -59,13 +59,13 @@
           "Microsoft.CSharp"
         ],
         "compile": [
-          "lib/dnx451/Microsoft.Framework.NotNullAttribute.Internal.dll"
+          "lib/dnx451/Microsoft.Extensions.NotNullAttribute.Internal.dll"
         ],
         "runtime": [
-          "lib/dnx451/Microsoft.Framework.NotNullAttribute.Internal.dll"
+          "lib/dnx451/Microsoft.Extensions.NotNullAttribute.Internal.dll"
         ]
       },
-      "Microsoft.Framework.TestAdapter/1.0.0-beta5-11408": {
+      "Microsoft.Extensions.TestAdapter/1.0.0-beta5-11408": {
         "frameworkAssemblies": [
           "mscorlib",
           "System",
@@ -73,20 +73,20 @@
           "Microsoft.CSharp"
         ],
         "compile": [
-          "lib/dnx451/Microsoft.Framework.TestAdapter.dll"
+          "lib/dnx451/Microsoft.Extensions.TestAdapter.dll"
         ],
         "runtime": [
-          "lib/dnx451/Microsoft.Framework.TestAdapter.dll"
+          "lib/dnx451/Microsoft.Extensions.TestAdapter.dll"
         ]
       },
-      "Microsoft.Framework.TestHost/1.0.0-beta5-11408": {
+      "Microsoft.Extensions.TestHost/1.0.0-beta5-11408": {
         "dependencies": {
-          "Microsoft.Framework.TestAdapter": "1.0.0-beta5-11408",
-          "Microsoft.Framework.ApplicationHost": "1.0.0-beta5-11682",
-          "Microsoft.Framework.CommandLineUtils": "1.0.0-beta5-11682",
-          "Microsoft.Framework.Logging": "1.0.0-beta5-11300",
-          "Microsoft.Framework.Runtime": "1.0.0-beta5-11682",
-          "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.TestAdapter": "1.0.0-beta5-11408",
+          "Microsoft.Extensions.ApplicationHost": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.CommandLineUtils": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.Logging": "1.0.0-beta5-11300",
+          "Microsoft.Extensions.Runtime": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.Runtime.Abstractions": "1.0.0-beta5-11682",
           "Newtonsoft.Json": "6.0.6"
         },
         "frameworkAssemblies": [
@@ -96,10 +96,10 @@
           "Microsoft.CSharp"
         ],
         "compile": [
-          "lib/dnx451/Microsoft.Framework.TestHost.dll"
+          "lib/dnx451/Microsoft.Extensions.TestHost.dll"
         ],
         "runtime": [
-          "lib/dnx451/Microsoft.Framework.TestHost.dll"
+          "lib/dnx451/Microsoft.Extensions.TestHost.dll"
         ]
       },
       "Newtonsoft.Json/6.0.6": {
@@ -185,8 +185,8 @@
       },
       "xunit.runner.aspnet/2.0.0-aspnet-beta5-10345": {
         "dependencies": {
-          "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta5-11682",
-          "Microsoft.Framework.TestHost": "1.0.0-beta5-11408",
+          "Microsoft.Extensions.Runtime.Abstractions": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.TestHost": "1.0.0-beta5-11408",
           "xunit.assert": "2.0.0-rc3-build2880",
           "xunit.execution.AspNet": "2.0.0-aspnet-beta5-10279",
           "xunit.runner.utility.AspNet": "2.0.0-aspnet-beta5-10279"
@@ -255,7 +255,7 @@
           "lib/portable-net45+win8/Microsoft.CodeAnalysis.CSharp.dll"
         ]
       },
-      "Microsoft.Framework.DependencyInjection.Interfaces/1.0.0-beta5-11289": {
+      "Microsoft.Extensions.DependencyInjection.Interfaces/1.0.0-beta5-11289": {
         "dependencies": {
           "System.ComponentModel": "4.0.0-beta-22829",
           "System.Diagnostics.Debug": "4.0.10-beta-22829",
@@ -266,44 +266,44 @@
           "System.Resources.ResourceManager": "4.0.0-beta-22829"
         },
         "compile": [
-          "lib/dnxcore50/Microsoft.Framework.DependencyInjection.Interfaces.dll"
+          "lib/dnxcore50/Microsoft.Extensions.DependencyInjection.Interfaces.dll"
         ],
         "runtime": [
-          "lib/dnxcore50/Microsoft.Framework.DependencyInjection.Interfaces.dll"
+          "lib/dnxcore50/Microsoft.Extensions.DependencyInjection.Interfaces.dll"
         ]
       },
-      "Microsoft.Framework.NotNullAttribute.Internal/1.0.0-beta5-10282": {
+      "Microsoft.Extensions.NotNullAttribute.Internal/1.0.0-beta5-10282": {
         "dependencies": {
           "System.Runtime": "4.0.20-beta-22830"
         },
         "compile": [
-          "lib/dnxcore50/Microsoft.Framework.NotNullAttribute.Internal.dll"
+          "lib/dnxcore50/Microsoft.Extensions.NotNullAttribute.Internal.dll"
         ],
         "runtime": [
-          "lib/dnxcore50/Microsoft.Framework.NotNullAttribute.Internal.dll"
+          "lib/dnxcore50/Microsoft.Extensions.NotNullAttribute.Internal.dll"
         ]
       },
-      "Microsoft.Framework.TestAdapter/1.0.0-beta5-11408": {
+      "Microsoft.Extensions.TestAdapter/1.0.0-beta5-11408": {
         "dependencies": {
           "System.Collections": "4.0.10-beta-22830",
           "System.Runtime": "4.0.20-beta-22830",
           "System.Runtime.Extensions": "4.0.10-beta-22830"
         },
         "compile": [
-          "lib/dnxcore50/Microsoft.Framework.TestAdapter.dll"
+          "lib/dnxcore50/Microsoft.Extensions.TestAdapter.dll"
         ],
         "runtime": [
-          "lib/dnxcore50/Microsoft.Framework.TestAdapter.dll"
+          "lib/dnxcore50/Microsoft.Extensions.TestAdapter.dll"
         ]
       },
-      "Microsoft.Framework.TestHost/1.0.0-beta5-11408": {
+      "Microsoft.Extensions.TestHost/1.0.0-beta5-11408": {
         "dependencies": {
-          "Microsoft.Framework.TestAdapter": "1.0.0-beta5-11408",
-          "Microsoft.Framework.ApplicationHost": "1.0.0-beta5-11682",
-          "Microsoft.Framework.CommandLineUtils": "1.0.0-beta5-11682",
-          "Microsoft.Framework.Logging": "1.0.0-beta5-11300",
-          "Microsoft.Framework.Runtime": "1.0.0-beta5-11682",
-          "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.TestAdapter": "1.0.0-beta5-11408",
+          "Microsoft.Extensions.ApplicationHost": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.CommandLineUtils": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.Logging": "1.0.0-beta5-11300",
+          "Microsoft.Extensions.Runtime": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.Runtime.Abstractions": "1.0.0-beta5-11682",
           "Newtonsoft.Json": "6.0.6",
           "System.Console": "4.0.0-beta-22830",
           "System.Diagnostics.Process": "4.0.0-beta-22830",
@@ -311,10 +311,10 @@
           "System.Net.Sockets": "4.0.10-beta-22830"
         },
         "compile": [
-          "lib/dnxcore50/Microsoft.Framework.TestHost.dll"
+          "lib/dnxcore50/Microsoft.Extensions.TestHost.dll"
         ],
         "runtime": [
-          "lib/dnxcore50/Microsoft.Framework.TestHost.dll"
+          "lib/dnxcore50/Microsoft.Extensions.TestHost.dll"
         ]
       },
       "Microsoft.Net.Http.Client/1.0.0-beta3-10053": {
@@ -1137,8 +1137,8 @@
       },
       "xunit.runner.aspnet/2.0.0-aspnet-beta5-10345": {
         "dependencies": {
-          "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta5-11682",
-          "Microsoft.Framework.TestHost": "1.0.0-beta5-11408",
+          "Microsoft.Extensions.Runtime.Abstractions": "1.0.0-beta5-11682",
+          "Microsoft.Extensions.TestHost": "1.0.0-beta5-11408",
           "xunit.assert": "2.0.0-rc3-build2880",
           "xunit.execution.AspNet": "2.0.0-aspnet-beta5-10279",
           "xunit.runner.utility.AspNet": "2.0.0-aspnet-beta5-10279",
@@ -1219,63 +1219,63 @@
         "lib/portable-net45+win8/Microsoft.CodeAnalysis.CSharp.xml"
       ]
     },
-    "Microsoft.Framework.DependencyInjection.Interfaces/1.0.0-beta5-11289": {
+    "Microsoft.Extensions.DependencyInjection.Interfaces/1.0.0-beta5-11289": {
       "serviceable": true,
       "sha512": "Dg2uoDG6zxiETWJUZ62kRsQUewzGECFX8q7HlKv2MPsoC3+FICqiaa0lIApRqJbnE8Enc7+OnJoq9ZoM2kSMrA==",
       "files": [
-        "Microsoft.Framework.DependencyInjection.Interfaces.1.0.0-beta5-11289.nupkg",
-        "Microsoft.Framework.DependencyInjection.Interfaces.1.0.0-beta5-11289.nupkg.sha512",
-        "Microsoft.Framework.DependencyInjection.Interfaces.nuspec",
-        "lib/dnx451/Microsoft.Framework.DependencyInjection.Interfaces.dll",
-        "lib/dnx451/Microsoft.Framework.DependencyInjection.Interfaces.xml",
-        "lib/dnxcore50/Microsoft.Framework.DependencyInjection.Interfaces.dll",
-        "lib/dnxcore50/Microsoft.Framework.DependencyInjection.Interfaces.xml",
-        "lib/net45/Microsoft.Framework.DependencyInjection.Interfaces.dll",
-        "lib/net45/Microsoft.Framework.DependencyInjection.Interfaces.xml",
-        "lib/portable-net45+win/Microsoft.Framework.DependencyInjection.Interfaces.dll",
-        "lib/portable-net45+win/Microsoft.Framework.DependencyInjection.Interfaces.xml"
+        "Microsoft.Extensions.DependencyInjection.Interfaces.1.0.0-beta5-11289.nupkg",
+        "Microsoft.Extensions.DependencyInjection.Interfaces.1.0.0-beta5-11289.nupkg.sha512",
+        "Microsoft.Extensions.DependencyInjection.Interfaces.nuspec",
+        "lib/dnx451/Microsoft.Extensions.DependencyInjection.Interfaces.dll",
+        "lib/dnx451/Microsoft.Extensions.DependencyInjection.Interfaces.xml",
+        "lib/dnxcore50/Microsoft.Extensions.DependencyInjection.Interfaces.dll",
+        "lib/dnxcore50/Microsoft.Extensions.DependencyInjection.Interfaces.xml",
+        "lib/net45/Microsoft.Extensions.DependencyInjection.Interfaces.dll",
+        "lib/net45/Microsoft.Extensions.DependencyInjection.Interfaces.xml",
+        "lib/portable-net45+win/Microsoft.Extensions.DependencyInjection.Interfaces.dll",
+        "lib/portable-net45+win/Microsoft.Extensions.DependencyInjection.Interfaces.xml"
       ]
     },
-    "Microsoft.Framework.NotNullAttribute.Internal/1.0.0-beta5-10282": {
+    "Microsoft.Extensions.NotNullAttribute.Internal/1.0.0-beta5-10282": {
       "sha512": "vuupwOlqW729dx8VSthj+K40MBpdQpW7szcwJ/kjhzrLQkgFruD/wlT+HT6486hqeFywCu85ZUGzoNO15cQ2Ag==",
       "files": [
-        "Microsoft.Framework.NotNullAttribute.Internal.1.0.0-beta5-10282.nupkg",
-        "Microsoft.Framework.NotNullAttribute.Internal.1.0.0-beta5-10282.nupkg.sha512",
-        "Microsoft.Framework.NotNullAttribute.Internal.nuspec",
-        "lib/dnx451/Microsoft.Framework.NotNullAttribute.Internal.dll",
-        "lib/dnx451/Microsoft.Framework.NotNullAttribute.Internal.xml",
-        "lib/dnxcore50/Microsoft.Framework.NotNullAttribute.Internal.dll",
-        "lib/dnxcore50/Microsoft.Framework.NotNullAttribute.Internal.xml",
-        "lib/net45/Microsoft.Framework.NotNullAttribute.Internal.dll",
-        "lib/net45/Microsoft.Framework.NotNullAttribute.Internal.xml",
+        "Microsoft.Extensions.NotNullAttribute.Internal.1.0.0-beta5-10282.nupkg",
+        "Microsoft.Extensions.NotNullAttribute.Internal.1.0.0-beta5-10282.nupkg.sha512",
+        "Microsoft.Extensions.NotNullAttribute.Internal.nuspec",
+        "lib/dnx451/Microsoft.Extensions.NotNullAttribute.Internal.dll",
+        "lib/dnx451/Microsoft.Extensions.NotNullAttribute.Internal.xml",
+        "lib/dnxcore50/Microsoft.Extensions.NotNullAttribute.Internal.dll",
+        "lib/dnxcore50/Microsoft.Extensions.NotNullAttribute.Internal.xml",
+        "lib/net45/Microsoft.Extensions.NotNullAttribute.Internal.dll",
+        "lib/net45/Microsoft.Extensions.NotNullAttribute.Internal.xml",
         "shared/NotNullAttribute.cs"
       ]
     },
-    "Microsoft.Framework.TestAdapter/1.0.0-beta5-11408": {
+    "Microsoft.Extensions.TestAdapter/1.0.0-beta5-11408": {
       "serviceable": true,
       "sha512": "7UNpkZRtp02cniF4sL3bDxQQ3hFzmL3yZL6Jo++To1enu1uqd1eDLD0zXQEyxbPumHhG5WX4iDHpDa312WoXyg==",
       "files": [
-        "Microsoft.Framework.TestAdapter.1.0.0-beta5-11408.nupkg",
-        "Microsoft.Framework.TestAdapter.1.0.0-beta5-11408.nupkg.sha512",
-        "Microsoft.Framework.TestAdapter.nuspec",
-        "lib/dnx451/Microsoft.Framework.TestAdapter.dll",
-        "lib/dnx451/Microsoft.Framework.TestAdapter.xml",
-        "lib/dnxcore50/Microsoft.Framework.TestAdapter.dll",
-        "lib/dnxcore50/Microsoft.Framework.TestAdapter.xml"
+        "Microsoft.Extensions.TestAdapter.1.0.0-beta5-11408.nupkg",
+        "Microsoft.Extensions.TestAdapter.1.0.0-beta5-11408.nupkg.sha512",
+        "Microsoft.Extensions.TestAdapter.nuspec",
+        "lib/dnx451/Microsoft.Extensions.TestAdapter.dll",
+        "lib/dnx451/Microsoft.Extensions.TestAdapter.xml",
+        "lib/dnxcore50/Microsoft.Extensions.TestAdapter.dll",
+        "lib/dnxcore50/Microsoft.Extensions.TestAdapter.xml"
       ]
     },
-    "Microsoft.Framework.TestHost/1.0.0-beta5-11408": {
+    "Microsoft.Extensions.TestHost/1.0.0-beta5-11408": {
       "serviceable": true,
       "sha512": "rArkTiBXm2PgO5OAx/Hg2oBYF6NaS4Gd7pRI5aW+1ZUcp2WMjHgTCiLVz2c1wo5RbY16QD+CCAeY+WswDLRX4g==",
       "files": [
-        "Microsoft.Framework.TestHost.1.0.0-beta5-11408.nupkg",
-        "Microsoft.Framework.TestHost.1.0.0-beta5-11408.nupkg.sha512",
-        "Microsoft.Framework.TestHost.nuspec",
+        "Microsoft.Extensions.TestHost.1.0.0-beta5-11408.nupkg",
+        "Microsoft.Extensions.TestHost.1.0.0-beta5-11408.nupkg.sha512",
+        "Microsoft.Extensions.TestHost.nuspec",
         "app/project.json",
-        "lib/dnx451/Microsoft.Framework.TestHost.dll",
-        "lib/dnx451/Microsoft.Framework.TestHost.xml",
-        "lib/dnxcore50/Microsoft.Framework.TestHost.dll",
-        "lib/dnxcore50/Microsoft.Framework.TestHost.xml"
+        "lib/dnx451/Microsoft.Extensions.TestHost.dll",
+        "lib/dnx451/Microsoft.Extensions.TestHost.xml",
+        "lib/dnxcore50/Microsoft.Extensions.TestHost.dll",
+        "lib/dnxcore50/Microsoft.Extensions.TestHost.xml"
       ]
     },
     "Microsoft.Net.Http.Client/1.0.0-beta3-10053": {
@@ -2169,9 +2169,9 @@
   },
   "projectFileDependencyGroups": {
     "": [
-      "Microsoft.Framework.CommonTestUtils >= 1.0.0-*",
-      "Microsoft.Framework.PackageManager >= 1.0.0-*",
-      "Microsoft.Framework.Runtime.Common >= 1.0.0-*",
+      "Microsoft.Extensions.CommonTestUtils >= 1.0.0-*",
+      "Microsoft.Extensions.PackageManager >= 1.0.0-*",
+      "Microsoft.Extensions.Runtime.Common >= 1.0.0-*",
       "xunit.runner.aspnet >= 2.0.0-aspnet-*"
     ],
     "DNX,Version=v4.5.1": [],
