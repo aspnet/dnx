@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Reflection;
 using System.Resources;
+using TestClassLibrary;
 
 public class Program
 {
@@ -19,5 +20,8 @@ public class Program
         var edmResource = new ResourceManager("Microsoft.Data.Edm", edmAssembly);
         Console.WriteLine(edmResource.GetString("Bad_AmbiguousElementBinding"));
         Console.WriteLine(edmResource.GetString("Bad_AmbiguousElementBinding", new CultureInfo("fr")));
+
+        var testClass = new TestClass();
+        Console.WriteLine(testClass.Print());
     }
 }

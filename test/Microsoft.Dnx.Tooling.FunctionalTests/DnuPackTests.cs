@@ -2,9 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Testing.Framework;
 using Newtonsoft.Json.Linq;
+using NuGet;
 using Xunit;
 
 namespace Microsoft.Dnx.Tooling.FunctionalTests
@@ -84,5 +86,27 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
         }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void DnuPack_ResourcesNoArgs(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPackTests>(sdk, Path.Combine("ResourcesTestProjects", "ReadFromResources"));
+
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+            var project = solution.GetProject("ReadFromResources");
+
+            // Act
+            var result = sdk.Dnu.Pack(project.ProjectDirectory);
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+            Assert.True(File.Exists(result.GetSateliteAssemblyPath(VersionUtility.ParseFrameworkName("dnx451"), "fr-FR")));
+            Assert.True(File.Exists(result.GetSateliteAssemblyPath(VersionUtility.ParseFrameworkName("dnxcore50"), "fr-FR")));
+
+            TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
+         }
     }
 }

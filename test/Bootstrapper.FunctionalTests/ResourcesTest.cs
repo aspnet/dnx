@@ -56,6 +56,7 @@ Hallo Welt
 Bienvenue
 The name '{0}' is ambiguous.
 Le nom '{0}' est ambigu.
+In TestClass
 ", stdOut);
             }
         }
