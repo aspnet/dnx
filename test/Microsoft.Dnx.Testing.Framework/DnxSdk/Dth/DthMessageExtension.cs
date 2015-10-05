@@ -48,6 +48,30 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
             return payload;
         }
 
+        public static JObject RetrieveCompilationDiagnostics(this DthMessage message, string frameworkShortName)
+        {
+            Assert.NotNull(message);
+            Assert.Equal(DthMessageTypes.AllDiagnostics, message.MessageType);
+
+            Assert.True(message.Payload is JArray);
+            var payload = (JArray)message.Payload;
+
+            foreach (var each in payload)
+            {
+                Assert.True(each is JObject);
+                var diagnosticsOfFramework = (JObject)each;
+
+                if (string.Equals(diagnosticsOfFramework["Framework"]["ShortName"].Value<string>(),
+                                  frameworkShortName,
+                                  StringComparison.OrdinalIgnoreCase))
+                {
+                    return diagnosticsOfFramework;
+                }
+            }
+
+            return null;
+        }
+
         public static T RetrievePayloadAs<T>(this DthMessage message)
             where T : JToken
         {

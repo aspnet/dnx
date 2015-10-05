@@ -9,6 +9,22 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
 {
     public static class JArrayExtensions
     {
+        public static JArray AssertJArrayEmpty(this JArray array)
+        {
+            Assert.NotNull(array);
+            Assert.Empty(array);
+
+            return array;
+        }
+
+        public static JArray AssertJArrayNotEmpty(this JArray array)
+        {
+            Assert.NotNull(array);
+            Assert.NotEmpty(array);
+
+            return array;
+        }
+
         public static JArray AssertJArrayCount(this JArray array, int expectedCount)
         {
             Assert.NotNull(array);

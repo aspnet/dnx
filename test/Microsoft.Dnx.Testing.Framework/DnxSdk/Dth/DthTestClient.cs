@@ -29,7 +29,7 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
         // REVIEW: This needs to be exposed if we ever create 2 clients in order to simulate how build
         // works in visual studio
         private readonly Dictionary<string, int> _projectContexts = new Dictionary<string, int>();
-        private int _contextId;
+        private int _nextContextId;
 
         public DthTestClient(DthTestServer server)
         {
@@ -64,6 +64,11 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
                 Assert.True(false, $"Unable to resolve context for {projectPath}");
             }
 
+            SendPayLoad(contextId, messageType);
+        }
+
+        public void SendPayLoad(int contextId, string messageType)
+        {
             SendPayLoad(contextId, messageType, new { });
         }
 
@@ -82,22 +87,34 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
             }
         }
 
-        public void Initialize(string projectPath)
+        public int Initialize(string projectPath)
         {
-            _projectContexts[projectPath] = _contextId++;
-            SendPayLoad(0, "Initialize", new { ProjectFolder = projectPath });
+            var contextId = _nextContextId++;
+
+            _projectContexts[projectPath] = contextId;
+            SendPayLoad(contextId, "Initialize", new { ProjectFolder = projectPath });
+
+            return contextId;
         }
 
-        public void Initialize(string projectPath, int protocolVersion)
+        public int Initialize(string projectPath, int protocolVersion)
         {
-            _projectContexts[projectPath] = _contextId++;
-            SendPayLoad(0, "Initialize", new { ProjectFolder = projectPath, Version = protocolVersion });
+            var contextId = _nextContextId++;
+
+            _projectContexts[projectPath] = contextId;
+            SendPayLoad(contextId, "Initialize", new { ProjectFolder = projectPath, Version = protocolVersion });
+
+            return contextId;
         }
 
-        public void Initialize(string projectPath, int protocolVersion, string configuration)
+        public int Initialize(string projectPath, int protocolVersion, string configuration)
         {
-            _projectContexts[projectPath] = _contextId++;
-            SendPayLoad(0, "Initialize", new { ProjectFolder = projectPath, Version = protocolVersion, Configuration = configuration });
+            var contextId = _nextContextId++;
+
+            _projectContexts[projectPath] = contextId;
+            SendPayLoad(contextId, "Initialize", new { ProjectFolder = projectPath, Version = protocolVersion, Configuration = configuration });
+
+            return contextId;
         }
 
         public void SetProtocolVersion(int version)

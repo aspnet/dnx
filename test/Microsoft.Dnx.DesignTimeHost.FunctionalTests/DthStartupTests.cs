@@ -404,6 +404,42 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
         [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
+        public void DthCompilation_ChangeConfiguration(DnxSdk sdk)
+        {
+            // arrange
+            using (var server = sdk.Dth.CreateServer())
+            using (var client = server.CreateClient())
+            {
+                var project = TestProjectsRepository.EnsureRestoredSolution("DthTestProjects")
+                                                    .GetProject("FailReleaseProject");
+
+                var contextId = client.Initialize(project.ProjectDirectory);
+                client.SendPayLoad(contextId, DthMessageTypes.GetDiagnostics);
+
+                // the default configuration must be debug. therefore the sample project
+                // can be compiled successfully
+                client.DrainTillFirst(DthMessageTypes.AllDiagnostics)
+                      .RetrieveCompilationDiagnostics("dnxcore50")
+                      .RetrievePropertyAs<JArray>("Errors")
+                      .AssertJArrayEmpty();
+
+                client.SendPayLoad(contextId, DthMessageTypes.ChangeConfiguration, new
+                {
+                    Configuration = "Release"
+                });
+
+                client.SendPayLoad(contextId, DthMessageTypes.GetDiagnostics);
+
+                client.DrainTillFirst(DthMessageTypes.AllDiagnostics)
+                      .RetrieveCompilationDiagnostics("dnxcore50")
+                      .RetrievePropertyAs<JArray>("Errors")
+                      .AssertJArrayNotEmpty();
+            }
+        }
+
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
         public void CompileModuleWithDeps(DnxSdk sdk)
         {
             // Arrange
