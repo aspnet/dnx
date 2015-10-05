@@ -70,5 +70,22 @@ B: This is Package B
 
             TestUtils.CleanUpTestDir<DnuPublishTests>(sdk);
         }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void Restore_DoNotRestoreNestProjects(DnxSdk sdk)
+        {
+            var solution = TestUtils.GetSolution<DnuRestoreTests>(sdk, "NestProjectRestoreModel");
+
+            // ensure there is no lock file before restore
+            Assert.Empty(Directory.GetFiles(solution.RootPath, "project.lock.json", SearchOption.AllDirectories));
+
+            sdk.Dnu.Restore(solution.GetProject("Main")).EnsureSuccess();
+
+            // only the project.json under Main folder is expected to be restored
+            var lockFiles = Directory.GetFiles(solution.RootPath, "project.lock.json", SearchOption.AllDirectories);
+            Assert.Equal(1, lockFiles.Length);
+            Assert.Equal("Main", Path.GetFileName(Path.GetDirectoryName(lockFiles[0])));
+        }
     }
 }

@@ -92,33 +92,8 @@ namespace Microsoft.Dnx.Tooling
             {
                 var sw = Stopwatch.StartNew();
 
-                var projectJsonFiles = new List<string>();
-
-                if (string.Equals(
-                    Runtime.Project.ProjectFileName,
-                    Path.GetFileName(restoreDirectory),
-                    StringComparison.OrdinalIgnoreCase) && File.Exists(restoreDirectory))
-                {
-                    // If the path is a project.json file we don't do recursive search in subfolders
-                    projectJsonFiles.Add(restoreDirectory);
-                }
-                else if (Directory.Exists(restoreDirectory))
-                {
-                    var projectJsonFile = Path.Combine(restoreDirectory, Runtime.Project.ProjectFileName);
-                    if (File.Exists(projectJsonFile))
-                    {
-                        // If the path contains a project.json file we don't do recursive search in subfolders
-                        projectJsonFiles.Add(projectJsonFile);
-                    }
-                    else
-                    {
-                        projectJsonFiles.AddRange(Directory.EnumerateFiles(
-                            restoreDirectory,
-                            Runtime.Project.ProjectFileName,
-                            SearchOption.AllDirectories));
-                    }
-                }
-                else
+                IEnumerable<string> projectJsonFiles;
+                if (!RestoreProjectsCollector.Find(restoreDirectory, out projectJsonFiles))
                 {
                     var errorMessage = $"The given root {restoreDirectory.Red().Bold()} is invalid.";
                     summary.ErrorMessages.GetOrAdd(restoreDirectory, _ => new List<string>()).Add(errorMessage);
