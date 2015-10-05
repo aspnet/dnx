@@ -98,12 +98,28 @@ namespace Microsoft.Dnx.Tooling
                 throw;
             }
 #else
+            catch (AggregateException aex)
+            {
+                foreach (var exception in aex.InnerExceptions)
+                {
+                    DumpException(exception);
+                }
+                return 1;
+            }
             catch (Exception ex)
             {
-                AnsiConsole.GetError(useConsoleColor: _runtimeEnv.OperatingSystem == "Windows").WriteLine($"Error: {ex.Message}".Red().Bold());
+                DumpException(ex);
                 return 1;
             }
 #endif
+        }
+
+        private void DumpException(Exception ex)
+        {
+            AnsiConsole
+                .GetError(useConsoleColor: _runtimeEnv.OperatingSystem == "Windows")
+                .WriteLine($"Error: {ex.Message}".Red().Bold());
+            Logger.TraceError($"Full Exception: {ex.ToString()}");
         }
     }
 }
