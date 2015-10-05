@@ -158,6 +158,7 @@ int32_t initialize_runtime(CALL_APPLICATION_MAIN_DATA* data, void **host_handle,
         "APPBASE",
         "TRUSTED_PLATFORM_ASSEMBLIES",
         "APP_PATHS",
+        "NATIVE_DLL_SEARCH_DIRECTORIES"
     };
 
     std::string trusted_assemblies;
@@ -178,6 +179,8 @@ int32_t initialize_runtime(CALL_APPLICATION_MAIN_DATA* data, void **host_handle,
         trusted_assemblies.c_str(),
         // APP_PATHS
         data->runtimeDirectory,
+        // NATIVE_DLL_SEARCH_DIRECTORIES
+        data->runtimeDirectory
     };
 
     return coreclr_initialize(bootstrapper_path.c_str(), BootstrapperName, sizeof(property_keys) / sizeof(const char*),
