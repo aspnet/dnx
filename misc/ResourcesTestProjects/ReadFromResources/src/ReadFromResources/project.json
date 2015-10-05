@@ -2,7 +2,8 @@
     "version": "1.0.0-*",
     "dependencies": {
         "Microsoft.Data.Edm": "5.6.3",
-        "ResourcesLibrary": "1.0.0-*"
+        "ResourcesLibrary": "1.0.0-*",
+        "TestClassLibrary": "1.0.0-*"
     },
     "frameworks": {
         "dnx451": {

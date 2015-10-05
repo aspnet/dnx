@@ -83,7 +83,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 EmitResult emitResult = null;
 
-                if (ResourcesHelper.IsResourceNeutralCulture(assemblyName))
+                if (!string.Equals(Path.GetExtension(assemblyName.Name), ".resources") || ResourcesHelper.IsResourceNeutralCulture(assemblyName))
                 {
                     var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
                     if (resourcesForCulture == null)

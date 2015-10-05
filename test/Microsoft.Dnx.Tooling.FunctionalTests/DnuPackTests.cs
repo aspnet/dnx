@@ -84,5 +84,30 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
         }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void DnuPack_ResourcesNoArgs(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPackTests>(sdk, Path.Combine("ResourcesTestProjects", "ReadFromResources"));
+
+            var project = solution.GetProject("TestClassLibrary");
+            sdk.Dnu.Restore(project.ProjectDirectory).EnsureSuccess();
+
+            project = solution.GetProject("ReadFromResources");
+            sdk.Dnu.Restore(project.ProjectDirectory).EnsureSuccess();
+
+            // Act
+            var result = sdk.Dnu.Pack(project.ProjectDirectory);
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+            Assert.True(Directory.Exists(Path.Combine(project.ProjectDirectory, "bin")));
+            Assert.True(File.Exists(Path.Combine(project.ProjectDirectory, "bin", "Debug", "dnx451", "fr-FR", "ReadFromResources.resources.dll")));
+            Assert.True(File.Exists(Path.Combine(project.ProjectDirectory, "bin", "Debug", "dnxcore50", "fr-FR", "ReadFromResources.resources.dll")));
+
+            TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
+         }
     }
 }
