@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Json;
+using Microsoft.Extensions.JsonParser.Sources;
 
 namespace Microsoft.Dnx.Compilation.DesignTime
 {

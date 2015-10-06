@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.Dnx.Runtime.Json
+namespace Microsoft.Extensions.JsonParser.Sources
 {
     internal class JsonObject : JsonValue
     {

@@ -2,7 +2,7 @@
     "version": "1.0.0-*",
     "dependencies": {
         "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Json.Sources": {
+        "Microsoft.Extensions.JsonParser.Sources": {
             "version": "1.0.0-*",
             "type": "build"
         },
@@ -12,10 +12,7 @@
         }
     },
     "frameworks": {
-        "dnx451": {
-            "dependencies": {
-            }
-        },
+        "dnx451": { },
         "dnxcore50": {
             "dependencies": {
                 "System.Console": "4.0.0-beta-*",

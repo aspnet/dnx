@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Microsoft.Dnx.Runtime.Json
+namespace Microsoft.Extensions.JsonParser.Sources
 {
     internal static class JsonDeserializer
     {

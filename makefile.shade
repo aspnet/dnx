@@ -88,7 +88,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Dnx.Runtime.Abstractions",
     "Microsoft.Dnx.Runtime.CommandParsing.Sources",
     "Microsoft.Dnx.Runtime.Internals",
-    "Microsoft.Dnx.Runtime.Json.Sources",
+    "Microsoft.Extensions.JsonParser.Sources",
     "Microsoft.Dnx.Runtime.Sources",
     "Microsoft.Dnx.Project",
     "Microsoft.Dnx.Tooling",
@@ -496,7 +496,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
         var sharedSourceAssemblies = new [] { 
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.Sources/**/*.*"),
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.CommandParsing.Sources/**/*.*"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.Json.Sources/**/*.*"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Extensions.JsonParser.Sources/**/*.*"),
             Path.Combine(BUILD_DIR2, "Microsoft.Extensions.CommandLineUtils.Sources/**/*.*"),
         };
         

@@ -115,7 +115,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.T
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.DesignTimeHost.FunctionalTests", "test\Microsoft.Dnx.DesignTimeHost.FunctionalTests\Microsoft.Dnx.DesignTimeHost.FunctionalTests.xproj", "{B1B8B882-BEB2-48AF-AFE8-A752740A76CB}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.Json.Sources", "src\Microsoft.Dnx.Runtime.Json.Sources\Microsoft.Dnx.Runtime.Json.Sources.xproj", "{F88EB033-3BCA-411A-987F-B705569F9317}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Extensions.JsonParser.Sources", "src\Microsoft.Extensions.JsonParser.Sources\Microsoft.Extensions.JsonParser.Sources.xproj", "{F88EB033-3BCA-411A-987F-B705569F9317}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Testing.Framework", "test\Microsoft.Dnx.Testing.Framework\Microsoft.Dnx.Testing.Framework.xproj", "{00E320EE-F8E7-40C2-9334-A02561EDAEAA}"
 EndProject

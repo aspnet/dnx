@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Runtime.Helpers;
 using Microsoft.Dnx.Runtime.Internals;
-using Microsoft.Dnx.Runtime.Json;
+using Microsoft.Extensions.JsonParser.Sources;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
