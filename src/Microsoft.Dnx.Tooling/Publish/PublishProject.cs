@@ -550,11 +550,16 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             root.Reports.Information.WriteLine($"Using command '{command}' as the entry point for web.config.");
 
+            var azurePublishValue = Environment.GetEnvironmentVariable("DNU_PUBLISH_AZURE");
+            var basePath = string.Equals(azurePublishValue, "true", StringComparison.Ordinal) ||
+                           string.Equals(azurePublishValue, "1", StringComparison.Ordinal)
+                           ? @"%home%\site" : "..";
+
             var targetDocument = XDocument.Parse($@"<configuration><system.webServer>
   <handlers>
     <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
   </handlers>
-  <httpPlatform processPath=""..\approot\{command}.cmd""
+  <httpPlatform processPath=""{basePath}\approot\{command}.cmd""
                 arguments="""" 
                 stdoutLogEnabled=""true"" 
                 stdoutLogFile=""..\logs\stdout.log"">
@@ -564,9 +569,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             var attributesToOverwrite = new[]
             {
                 "processPath",
-                "arguments",
-                "stdoutLogEnabled",
-                "stdoutLogFile"
+                "arguments"
             };
 
             var result = xDoc.Root.MergeWith(targetDocument.Root, (name, sourceChild, targetChild) =>
