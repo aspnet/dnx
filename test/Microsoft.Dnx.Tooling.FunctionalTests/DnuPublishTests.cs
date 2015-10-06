@@ -1353,7 +1353,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     <handlers>
       <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
     </handlers>
-    <httpPlatform processPath=""..\approot\web.cmd"" arguments="""" stdoutLogEnabled=""true"" stdoutLogFile=""..\logs\stdout.log"" rapidFailsPerMinute=""5""></httpPlatform>
+    <httpPlatform processPath=""..\approot\web.cmd"" arguments="""" stdoutLogEnabled=""false"" stdoutLogFile=""..\logs\stdout.log"" rapidFailsPerMinute=""5""></httpPlatform>
   </system.webServer>
 </configuration>";
 
