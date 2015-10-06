@@ -667,9 +667,8 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
     }
     nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis -Properties RuntimeNamePrefix=${RUNTIME_NAME_PREFIX}' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 
-var CI_DEPENDENCIES_PATHS = '${Environment.GetEnvironmentVariable("CI_DEPENDENCIES_PATHS")}'
-
-#nuget-dependencies-install target='install' description='Install dependencies to publish directory' if='!string.IsNullOrEmpty(CI_DEPENDENCIES_PATHS)'
+#nuget-dependencies-install description='Install dependencies to publish directory'
+  - var CI_DEPENDENCIES_PATHS = Environment.GetEnvironmentVariable("CI_DEPENDENCIES_PATHS") ?? string.Empty;
   - var dependencyPaths = CI_DEPENDENCIES_PATHS.Split(new[] { (char)';' }, StringSplitOptions.RemoveEmptyEntries);
   - var publishFeed = Environment.GetEnvironmentVariable("NUGET_PUBLISH_FEED");
 
