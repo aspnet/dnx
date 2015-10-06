@@ -437,6 +437,37 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
             }
         }
 
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void DthStartup_EnumerateProjectContexts(DnxSdk sdk)
+        {
+            // arrange
+            using (var server = sdk.Dth.CreateServer())
+            using (var client = server.CreateClient())
+            {
+                var solution = TestProjectsRepository.EnsureRestoredSolution("DthTestProjects");
+                var projects = new Project[]
+                {
+                    solution.GetProject("EmptyLibrary"),
+                    solution.GetProject("UnresolvedPackageSample"),
+                    solution.GetProject("EmptyConsoleApp")
+                };
+
+                var contexts = projects.ToDictionary(proj => proj.ProjectDirectory,
+                                                     proj => client.Initialize(proj.ProjectDirectory));
+
+                // 7 response for each project initalization
+                client.DrainMessage(21);
+
+                // the context id here doesn't matter, this request is processed before it reaches
+                // ApplicationContext
+                client.SendPayLoad(1, DthMessageTypes.EnumerateProjectContexts, new { Version = 1 });
+
+                var message = client.DrainTillFirst(DthMessageTypes.ProjectContexts);
+                Assert.Equal(contexts.Count, message.Projects.Count);
+                Assert.True(Enumerable.SequenceEqual(contexts, message.Projects));
+            }
+        }
 
         [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]

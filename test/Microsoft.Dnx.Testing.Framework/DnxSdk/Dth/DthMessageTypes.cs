@@ -9,8 +9,10 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
         public const string GetDiagnostics = nameof(GetDiagnostics);
         public const string ProtocolVersion = nameof(ProtocolVersion);
         public const string ChangeConfiguration = nameof(ChangeConfiguration);
+        public const string EnumerateProjectContexts = nameof(EnumerateProjectContexts);
 
         // responses
         public const string AllDiagnostics = nameof(AllDiagnostics);
+        public const string ProjectContexts = nameof(ProjectContexts);
     }
 }
