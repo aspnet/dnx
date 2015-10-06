@@ -56,7 +56,7 @@ namespace
         if (!input.eof())
         {
             completed_successfully = false;
-            trace_writer.write(L"Error occured while reading contents of servicing index file.", false);
+            trace_writer.write(L"Error occurred while reading contents of servicing index file.", false);
         }
 
         return runtime_replacement;
