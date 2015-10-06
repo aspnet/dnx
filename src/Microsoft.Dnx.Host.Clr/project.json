@@ -7,7 +7,7 @@
     "keyFile": "KeyFile.snk"
   },
   "dependencies": {
-    "Microsoft.Dnx.Runtime.Json.Sources": { "version": "1.0.0-*", "type": "build" }
+    "Microsoft.Extensions.JsonParser.Sources": { "version": "1.0.0-*", "type": "build" }
   },
     "frameworks": {
         "dnx451": { }

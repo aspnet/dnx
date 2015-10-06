@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Xunit;
 
-namespace Microsoft.Dnx.Runtime.Json.Tests
+namespace Microsoft.Extensions.JsonParser.Sources.Tests
 {
     public class JsonBufferFacts
     {

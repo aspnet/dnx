@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Microsoft.Dnx.Runtime.Json
+namespace Microsoft.Extensions.JsonParser.Sources
 {
     internal class JsonBoolean : JsonValue
     {

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Runtime.FunctionalTests.Utilities;
-using Microsoft.Dnx.Runtime.Json;
+using Microsoft.Extensions.JsonParser.Sources;
 using Xunit;
 
 namespace Microsoft.Dnx.Runtime.FunctionalTests.ProjectFileGlobbing

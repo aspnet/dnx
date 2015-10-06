@@ -11,7 +11,7 @@ using Microsoft.Dnx.Host;
 using Microsoft.Dnx.Host.Clr;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.Impl;
-using Microsoft.Dnx.Runtime.Json;
+using Microsoft.Extensions.JsonParser.Sources;
 
 public class DomainManager : AppDomainManager
 {

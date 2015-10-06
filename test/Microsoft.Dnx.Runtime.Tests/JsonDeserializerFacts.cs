@@ -3,7 +3,7 @@
 
 using System;
 using System.IO;
-using Microsoft.Dnx.Runtime.Json;
+using Microsoft.Extensions.JsonParser.Sources;
 using Xunit;
 
 namespace Microsoft.Dnx.Runtime.Tests

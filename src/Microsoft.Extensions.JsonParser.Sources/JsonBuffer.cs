@@ -6,7 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace Microsoft.Dnx.Runtime.Json
+namespace Microsoft.Extensions.JsonParser.Sources
 {
     internal class JsonBuffer
     {
