@@ -64,7 +64,7 @@ namespace Microsoft.Dnx.Tooling
             app.OnExecute(() =>
             {
                 app.ShowHelp();
-                return 2;
+                return 0;
             });
 
             // Defer reading option verbose until AFTER execute.
