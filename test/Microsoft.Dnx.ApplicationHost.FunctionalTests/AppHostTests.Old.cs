@@ -33,7 +33,7 @@ namespace Microsoft.Dnx.ApplicationHost.Old
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
-        public void AppHostReturnsNonZeroExitCodeWhenNoSubCommandWasGiven(string flavor, string os, string architecture)
+        public void AppHostReturnsZeroExitCodeWhenNoSubCommandWasGiven(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -44,7 +44,7 @@ namespace Microsoft.Dnx.ApplicationHost.Old
                 stdOut: out stdOut,
                 stdErr: out stdErr);
 
-            Assert.Equal(2, exitCode);
+            Assert.Equal(0, exitCode);
         }
 
         [Theory]
