@@ -205,7 +205,7 @@ namespace Microsoft.Dnx.Tooling
                     .Select(x => x.Message);
 
                 throw new InvalidOperationException(errorMessages.Any() ?
-                    $"Errors occured when while parsing project.json:{Environment.NewLine}{string.Join(Environment.NewLine, errorMessages)}" :
+                    $"Errors occurred when while parsing project.json:{Environment.NewLine}{string.Join(Environment.NewLine, errorMessages)}" :
                     "Invalid project.json");
             }
 

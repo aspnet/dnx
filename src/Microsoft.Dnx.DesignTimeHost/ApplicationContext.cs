@@ -128,7 +128,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             }
             catch (Exception ex)
             {
-                Logger.TraceError("[ApplicationContext]: Error occured: {0}", ex);
+                Logger.TraceError("[ApplicationContext]: Error occurred: {0}", ex);
 
                 // Unhandled errors
                 var error = new ErrorMessage
