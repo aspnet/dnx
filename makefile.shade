@@ -884,7 +884,7 @@ functions @{
     {
         projectFolder = Path.GetDirectoryName(projectFolder);
 
-        var testArgs = IsMono ? " -parallel none" : "";
+        var testArgs = " -verbose" + (IsMono ? " -parallel none" : "");
         K(("test" + testArgs), projectFolder, "");
     }
 
