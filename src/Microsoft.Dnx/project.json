@@ -26,7 +26,20 @@
                 "System.Runtime.Serialization.Json": "4.0.1-*",
                 "System.Runtime.Serialization.Primitives": "4.0.11-*",
                 "System.Security.Cryptography.X509Certificates": "4.0.0-*",
-                "System.Threading.Tasks.Parallel": "4.0.1-*"
+                "System.Threading.Tasks.Parallel": "4.0.1-*",
+
+                "System.Diagnostics.FileVersionInfo": "4.0.0-*",
+                "System.Diagnostics.TraceSource": "4.0.0-*",
+                "System.IO.Compression.ZipFile": "4.0.1-*",
+                "System.IO.FileSystem.DriveInfo": "4.0.0-*",
+                "System.IO.MemoryMappedFiles": "4.0.0-*",
+                "System.IO.Pipes": "4.0.0-*",
+                "System.Net.Http": "4.0.1-*",
+                "System.Net.NameResolution": "4.0.0-*",
+                "System.Net.Requests": "4.0.11-*",
+                "System.Runtime.InteropServices.RuntimeInformation": "4.0.0-*",
+                "System.Text.Encoding.CodePages": "4.0.1-*",
+                "System.Threading": "4.0.11-*"
             }
         }
     }
