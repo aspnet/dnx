@@ -229,19 +229,29 @@ namespace Microsoft.Dnx.ApplicationHost
             {
                 assembly = host.GetEntryPoint(applicationName);
             }
-            // Compilation exceptions either throw FileNotFound or FileLoad exceptions and may change
-            // from version to version. It's safest to catch both types of exceptions
-            catch (Exception ex) when (ex is FileLoadException || ex is FileNotFoundException)
+            catch (Exception ex)
             {
-                if (ex.InnerException is ICompilationException)
+                // Try to find compilation exception recursively to supress its stack
+                var innerException = ex;
+                do
                 {
-                    throw SuppressStackTrace(ex.InnerException);
+                    if (innerException is ICompilationException)
+                    {
+                        throw SuppressStackTrace(innerException);
+                    }
+                    innerException = innerException.InnerException;
                 }
+                while (innerException != null);
 
-                ThrowEntryPointNotfoundException(
+                if (ex is FileLoadException || ex is FileNotFoundException)
+                {
+                    ThrowEntryPointNotfoundException(
                         host,
                         applicationName,
                         ex.InnerException);
+                }
+
+                throw;
             }
 
             if (assembly == null)
