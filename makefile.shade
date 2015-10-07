@@ -99,7 +99,7 @@ var WIN_MANAGED_PROJECTS = '${FindAllProjects(
 
 var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
-var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFiles(VS_ONECORE_ROOT, "vcruntime.lib", SearchOption.AllDirectories).Any() && Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles(WIN10_SDK_LIB, "onecore.lib", SearchOption.AllDirectories).Any()}'
+var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFiles(VS_ONECORE_ROOT, "vcruntime.lib__", SearchOption.AllDirectories).Any() && Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles(WIN10_SDK_LIB, "onecore.lib", SearchOption.AllDirectories).Any()}'
 
 @{
     // Always build mono

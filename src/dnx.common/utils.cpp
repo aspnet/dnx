@@ -57,6 +57,9 @@ namespace dnx
         bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2)
         {
 #if defined(_WIN32)
+            auto value = web::json::value::parse(_X("{ \"a\" : 123 }"));
+            std::wcout << value[_X("a")] << std::endl;
+
             return _wcsicmp(s1, s2) == 0;
 #else
             return strcasecmp(s1, s2) == 0;
@@ -116,8 +119,6 @@ namespace dnx
 
         xstring_t remove_file_from_path(const xstring_t& path)
         {
-            web::json::value obj;
-
             if (ends_with_slash(path))
             {
                 return path;
