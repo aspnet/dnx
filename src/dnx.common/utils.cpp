@@ -5,6 +5,7 @@
 
 #include "xplat.h"
 #include <string>
+#include <cpprest\json.h>
 
 // <codecvt> not supported in libstdc++ (gcc, Clang) but conversions from wstring are only
 // meant to be used on Windows
@@ -115,6 +116,8 @@ namespace dnx
 
         xstring_t remove_file_from_path(const xstring_t& path)
         {
+            web::json::value obj;
+
             if (ends_with_slash(path))
             {
                 return path;

@@ -25,7 +25,9 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;_NO_ASYNCRTIMP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MsBuildThisFileDirectory)..\..\submodules\cpprestsdk\Release\include;$(MsBuildThisFileDirectory)..\..\submodules\cpprestsdk\Release\src\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -42,6 +44,10 @@
     </ClCompile>
     <ClCompile Include="tpa.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClCompile Include="..\..\submodules\cpprestsdk\Release\src\json\json.cpp" />
+    <ClCompile Include="..\..\submodules\cpprestsdk\Release\src\json\json_parsing.cpp" />
+    <ClCompile Include="..\..\submodules\cpprestsdk\Release\src\json\json_serialization.cpp" />
+    <ClCompile Include="..\..\submodules\cpprestsdk\Release\src\utilities\asyncrt_utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
