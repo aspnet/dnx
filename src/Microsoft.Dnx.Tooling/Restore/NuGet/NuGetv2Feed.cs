@@ -208,8 +208,6 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             {
                 // If 'Id' element exist, use its value as accurate package Id
                 // Use the given Id as fallback if Id does not exist.
-                // Sometimes 'title' element is the same as Id and can be used as a fallback,
-                // but this is not always the case so don't use it.
                 Id = idElement?.Value ?? id,
                 Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
                 ContentUri = element.Element(_xnameContent).Attribute("src").Value,
