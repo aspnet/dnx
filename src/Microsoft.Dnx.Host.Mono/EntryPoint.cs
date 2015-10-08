@@ -214,6 +214,7 @@ public class EntryPoint
 
         operatingSystem = unameOutput[0];
         architecture = TranslateArchitecture(unameOutput[1]);
+
         if (operatingSystem == "Darwin")
         {
             // sw_vers returns versions in format "10.10.4" so ".4" needs to be removed
@@ -223,36 +224,34 @@ public class EntryPoint
             return;
         }
 
-        try
-        {
-            var lsb_release = RunProgram("lsb_release", "-s -i -r");
-            if (!string.IsNullOrEmpty(lsb_release))
-            {
-                osVersion = lsb_release.Replace(Environment.NewLine, " ");
-                return;
-            }
-        }
-        catch
-        {
-        }
-
-        try
-        {
-            // Red Hat based Linux without lsb_release
-            var redHatRelease = File.ReadAllText("/etc/redhat-release");
-            var m = Regex.Match(redHatRelease, @"^(?<distro>\S+) \S+ \S+ (?<version>\d+\.\d+)\..+$");
-            if (m.Success)
-            {
-                osVersion = string.Format("{0} {1}", m.Groups["distro"], m.Groups["version"]);
-                return;
-            }
-        }
-        catch
-        {
-        }
-
-        Console.WriteLine("Could not determine OS version information. Defaulting to the empty string.");
         osVersion = string.Empty;
+        var qualifiers = new[] { "ID=", "VERSION_ID=" };
+        try
+        {
+            var osRelease = File.ReadAllLines("/etc/os-release");
+            foreach (var qualifier in qualifiers)
+            {
+                foreach (var line in osRelease)
+                {
+                    if (line.StartsWith(qualifier))
+                    {
+                        if (osVersion.Length != 0)
+                        {
+                            osVersion += " ";
+                        }
+                        osVersion += line.Substring(qualifier.Length).Trim('"', '\'');
+                    }
+                }
+            }
+        }
+        catch
+        {
+        }
+
+        if (osVersion.Length == 0)
+        { 
+             Console.WriteLine("Could not determine OS version information. Defaulting to the empty string.");
+        }
     }
 
     private static string TranslateArchitecture(string architecture)

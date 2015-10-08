@@ -160,7 +160,7 @@ public:
         pInfo->RuntimeDirectory = _runtimeDirectory.copy();
         pInfo->ApplicationBase = _applicationBase.copy();
         pInfo->OperatingSystem = _bstr_t(L"Windows").copy();
-        pInfo->OsVersion = _bstr_t(dnx::utils::get_windows_version()).copy();
+        pInfo->OsVersion = _bstr_t(dnx::utils::get_windows_version().c_str()).copy();
         pInfo->Architecture =
 #if defined(AMD64)
             _bstr_t(L"x64")

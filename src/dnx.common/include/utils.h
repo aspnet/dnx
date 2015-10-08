@@ -23,7 +23,7 @@ namespace dnx
         dnx::xstring_t remove_file_from_path(const dnx::xstring_t& path);
 
 #if defined(_WIN32)
-        const wchar_t* get_windows_version();
+        std::wstring get_windows_version();
 #endif
         int find_bootstrapper_option_index(int argc, dnx::char_t**argv, const dnx::char_t* optionName);
         int find_first_non_bootstrapper_param_index(int argc, dnx::char_t**argv);

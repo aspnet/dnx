@@ -244,10 +244,10 @@ int InvokeDelegate(host_main_fn host_main, int argc, const char** argv, const bo
 
 std::string get_os_version()
 {
-    std::vector<std::string> qualifiers { "DISTRIB_ID=", "DISTRIB_RELEASE=" };
+    std::vector<std::string> qualifiers { "ID=", "VERSION_ID=" };
 
     std::ifstream lsb_release;
-    lsb_release.open("/etc/lsb-release", std::ifstream::in);
+    lsb_release.open("/etc/os-release", std::ifstream::in);
     if (lsb_release.is_open())
     {
         std::string os_version;
@@ -257,11 +257,27 @@ std::string get_os_version()
             {
                 if (line.compare(0, qualifier.length(), qualifier) == 0)
                 {
+                    auto value = line.substr(qualifier.length());
+                   
+                    if (value.length() >= 2 &&
+                        ((value[0] == '"'  && value[value.length() - 1] == '"' ) ||
+                         (value[0] == '\'' && value[value.length() - 1] == '\''))
+                       )
+                    {
+                        value = value.substr(1, value.length() - 2);
+                    }
+
+                    if (value.length() == 0)
+                    {
+                        continue;
+                    }
+
                     if (os_version.length() > 0)
                     {
-                        os_version.append(" ");
+                        os_version += " ";
                     }
-                    os_version.append(line.substr(qualifier.length()));
+
+                    os_version += value;
                 }
             }
         }
@@ -274,7 +290,7 @@ std::string get_os_version()
         return os_version;
     }
 
-    fprintf(stderr, "Could not open /etc/lsb_release. OS version will default to the empty string.\n");
+    fprintf(stderr, "Could not open /etc/os-release. OS version will default to the empty string.\n");
     return "";
 }
 #else

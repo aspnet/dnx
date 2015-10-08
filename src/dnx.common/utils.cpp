@@ -128,7 +128,7 @@ namespace dnx
         }
 
 #if defined (_WIN32)
-        const wchar_t* get_windows_version()
+        std::wstring get_windows_version()
         {
             OSVERSIONINFO version_info;
             ZeroMemory(&version_info, sizeof(OSVERSIONINFO));
@@ -137,31 +137,9 @@ namespace dnx
 #pragma warning(disable:4996)
             GetVersionEx(&version_info);
 #pragma warning(default:4996)
-
-            if (version_info.dwMajorVersion == 10)
-            {
-                return L"10.0";
-            }
-
-            if (version_info.dwMajorVersion == 6)
-            {
-                if (version_info.dwMinorVersion == 3)
-                {
-                    return L"8.1";
-                }
-
-                if (version_info.dwMinorVersion == 2)
-                {
-                    return L"8.0";
-                }
-
-                if (version_info.dwMinorVersion == 1)
-                {
-                    return L"7.0";
-                }
-            }
-
-            return nullptr;
+            return std::to_wstring(version_info.dwMajorVersion)
+               .append(L".")
+               .append(std::to_wstring(version_info.dwMinorVersion));
         }
 
 #endif

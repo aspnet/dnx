@@ -242,17 +242,12 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
     }
 
     auto windows_version = dnx::utils::get_windows_version();
-    if (!windows_version)
-    {
-        trace_writer.write(L"Unexpected windows version", false);
-        return -1;
-    }
 
     dnx::utils::wait_for_debugger(data->argc, data->argv, L"--debug");
 
     bootstrapper_context ctx;
     ctx.operating_system = L"Windows";
-    ctx.os_version = windows_version;
+    ctx.os_version = windows_version.c_str();
     ctx.runtime_directory = data->runtimeDirectory;
     ctx.application_base = data->applicationBase;
 #if defined(AMD64)
