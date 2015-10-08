@@ -191,7 +191,6 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
         {
             var properties = element.Element(_xnameProperties);
             var idElement = properties.Element(_xnameId);
-            var titleElement = element.Element(_xnameTitle);
             var publishElement = properties.Element(_xnamePublish);
 
             var listed = true;
