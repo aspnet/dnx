@@ -11,7 +11,7 @@ namespace Microsoft.Dnx.Tooling
     {
         public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IApplicationEnvironment appEnvironment)
         {
-            cmdApp.Command("list", c =>
+            cmdApp.Command("list", (c =>
             {
                 c.Description = "Print the dependencies of a given project";
                 var showAssemblies = c.Option("-a|--assemblies",
@@ -26,22 +26,30 @@ namespace Microsoft.Dnx.Tooling
                 var details = c.Option("--details",
                     "Show the details of how each dependency is introduced",
                     CommandOptionType.NoValue);
+                var mismatch = c.Option("--mismatch",
+                    "Show the mismatch dependencies.",
+                    CommandOptionType.NoValue);
+                var single = c.Option("--single",
+                    "Show details of one dependency and shows all the information about it.",
+                    CommandOptionType.SingleValue);
                 var resultsFilter = c.Option("--filter <PATTERN>",
                     "Filter the libraries referenced by the project base on their names. The matching pattern supports * and ?",
                     CommandOptionType.SingleValue);
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
                 c.HelpOption("-?|-h|--help");
 
-                c.OnExecute(() =>
+                c.OnExecute((() =>
                 {
                     c.ShowRootCommandFullNameAndVersion();
 
-                    var options = new DependencyListOptions(reportsFactory.CreateReports(verbose: true, quiet: false), argProject)
+                    var options = new List.DependencyListOptions(reportsFactory.CreateReports(verbose: true, quiet: false), argProject)
                     {
                         ShowAssemblies = showAssemblies.HasValue(),
                         RuntimeFolder = runtimeFolder.Value(),
                         Details = details.HasValue(),
-                        ResultsFilter = resultsFilter.Value()
+                        ResultsFilter = resultsFilter.Value(),
+                        Mismatch = mismatch.HasValue(),
+                        Single = single.Value()
                     };
                     options.AddFrameworkMonikers(frameworks.Values);
 
@@ -61,8 +69,8 @@ namespace Microsoft.Dnx.Tooling
 
                     var command = new DependencyListCommand(options, appEnvironment.RuntimeFramework);
                     return command.Execute();
-                });
-            });
+                }));
+            }));
         }
     }
 }

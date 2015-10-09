@@ -4,41 +4,45 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.Internal;
-using Microsoft.Dnx.Tooling.Algorithms;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Tooling.Algorithms;
+using Microsoft.Extensions.Internal;
 
 namespace Microsoft.Dnx.Tooling.List
 {
     public class LibraryDependencyFinder
     {
-        public static IGraphNode<LibraryDescription> Build([NotNull] IEnumerable<LibraryDescription> libraries, 
-                                                           [NotNull]Runtime.Project project)
+        public static IGraphNode<LibraryDependency> Build([NotNull] IEnumerable<LibraryDescription> libraries,
+                                                          [NotNull] Runtime.Project project)
         {
-            var root = libraries.FirstOrDefault(p => string.Equals(p.Identity.Name, project.Name));
-
-            if (root == null)
+            var root = new LibraryDependency
             {
-                throw new InvalidOperationException(string.Format("Failed to retrieve {0} of project {1} - {2}", typeof(LibraryDependency).Name, project.Name, project.Version));
+                Library = libraries.FirstOrDefault(p => string.Equals(p.Identity.Name, project.Name)),
+                LibraryRange = null
+            };
+
+            if (root.Library == null)
+            {
+                throw new InvalidOperationException($"Failed to retrieve {nameof(LibraryDependency)} of project {project.Name}/{project.Version}");
             }
 
             // build a tree of LibraryDescriptions of the given project root
-            return DepthFirstGraphTraversal.PostOrderWalk<LibraryDescription, IGraphNode<LibraryDescription>>(
+            return DepthFirstGraphTraversal.PostOrderWalk<LibraryDependency, IGraphNode<LibraryDependency>>(
                 node: root,
                 getChildren: node =>
                 {
-                    if (node.Resolved)
+                    if (node.Library.Resolved)
                     {
-                        return node.Dependencies.Select(dependency => dependency.Library);
+                        return node.Library.Dependencies;
                     }
                     else
                     {
-                        return Enumerable.Empty<LibraryDescription>();
+                        return Enumerable.Empty<LibraryDependency>();
                     }
                 },
                 visitNode: (node, children) =>
                 {
-                    return new GraphNode<LibraryDescription>(node, children);
+                    return new GraphNode<LibraryDependency>(node, children);
                 });
         }
 

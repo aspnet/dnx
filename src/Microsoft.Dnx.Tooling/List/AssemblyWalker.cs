@@ -42,7 +42,7 @@ namespace Microsoft.Dnx.Tooling.List
             _paths = paths;
         }
 
-        public void Walk(IGraphNode<LibraryDescription> root)
+        public void Walk(IGraphNode<LibraryDependency> root)
         {
             _assemblyFilePaths = new HashSet<string>(StringComparer.Ordinal);
             _dependencyAssemblySources = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
@@ -76,15 +76,15 @@ namespace Microsoft.Dnx.Tooling.List
             }
         }
 
-        private bool VisitLibrary(IGraphNode<LibraryDescription> node,
-                                  IEnumerable<IGraphNode<LibraryDescription>> ancestors,
+        private bool VisitLibrary(IGraphNode<LibraryDependency> node,
+                                  IEnumerable<IGraphNode<LibraryDependency>> ancestors,
                                   ISet<LibraryDescription> visitedLibraries)
         {
-            if (visitedLibraries.Add(node.Item))
+            if (visitedLibraries.Add(node.Item.Library))
             {
-                foreach (var loadableAssembly in node.Item.Assemblies)
+                foreach (var loadableAssembly in node.Item.Library.Assemblies)
                 {
-                    AddDependencySource(_dependencyPackageSources, loadableAssembly, node.Item.Identity.Name);
+                    AddDependencySource(_dependencyPackageSources, loadableAssembly, node.Item.Library.Identity.Name);
 
                     DepthFirstGraphTraversal.PreOrderWalk(
                         root: loadableAssembly,

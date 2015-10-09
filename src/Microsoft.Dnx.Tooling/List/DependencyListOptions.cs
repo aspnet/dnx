@@ -44,6 +44,10 @@ namespace Microsoft.Dnx.Tooling.List
 
         public bool Details { get; set; }
 
+        public bool Mismatch { get; set; }
+
+        public string Single { get; set; }
+
         public string ResultsFilter { get; set; }
 
         public Reports Reports { get; }

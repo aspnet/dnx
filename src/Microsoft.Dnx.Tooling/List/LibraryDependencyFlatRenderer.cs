@@ -1,12 +1,11 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.Dnx.Tooling.Algorithms;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Tooling.Algorithms;
 
 namespace Microsoft.Dnx.Tooling.List
 {
@@ -23,7 +22,7 @@ namespace Microsoft.Dnx.Tooling.List
             _listedProjects = new HashSet<string>(listedProjects);
         }
 
-        public IEnumerable<string> GetRenderContent(IGraphNode<LibraryDescription> root)
+        public IEnumerable<string> GetRenderContent(IGraphNode<LibraryDependency> root)
         {
             var dict = FindImmediateDependent(root);
             var libraries = dict.Keys.OrderBy(description => description.Identity.Name);
@@ -50,7 +49,7 @@ namespace Microsoft.Dnx.Tooling.List
             return results;
         }
 
-        private IDictionary<LibraryDescription, ISet<LibraryDescription>> FindImmediateDependent(IGraphNode<LibraryDescription> root)
+        private IDictionary<LibraryDescription, ISet<LibraryDescription>> FindImmediateDependent(IGraphNode<LibraryDependency> root)
         {
             var result = new Dictionary<LibraryDescription, ISet<LibraryDescription>>();
 
@@ -58,23 +57,23 @@ namespace Microsoft.Dnx.Tooling.List
                 (node, ancestors) =>
                 {
                     ISet<LibraryDescription> slot;
-                    if (!result.TryGetValue(node.Item, out slot))
+                    if (!result.TryGetValue(node.Item.Library, out slot))
                     {
                         slot = new HashSet<LibraryDescription>();
-                        result.Add(node.Item, slot);
+                        result.Add(node.Item.Library, slot);
                     }
 
                     // first item in the path is the immediate parent
                     if (ancestors.Any())
                     {
-                        slot.Add(ancestors.First().Item);
+                        slot.Add(ancestors.First().Item.Library);
                     }
 
                     return true;
                 });
 
             // removing the root package
-            result.Remove(root.Item);
+            result.Remove(root.Item.Library);
 
             return result;
         }
