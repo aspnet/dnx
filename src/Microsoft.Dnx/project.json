@@ -2,6 +2,7 @@
     "version": "1.0.0-*",
     "description": "List of dependencies to copy into DNX bin",
     "dependencies": {
+        "Microsoft.NETCore.Targets": "1.0.1-*",
         "Microsoft.Dnx.Host": "1.0.0-*",
         "Microsoft.Dnx.ApplicationHost": "1.0.0-*",
         "Microsoft.Dnx.Compilation.CSharp": "1.0.0-*",
