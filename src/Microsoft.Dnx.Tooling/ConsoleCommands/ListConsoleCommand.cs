@@ -26,6 +26,9 @@ namespace Microsoft.Dnx.Tooling
                 var details = c.Option("--details",
                     "Show the details of how each dependency is introduced",
                     CommandOptionType.NoValue);
+                var mismatched = c.Option("--mismatched",
+                    "Show the mismatch dependencies.",
+                    CommandOptionType.NoValue);
                 var resultsFilter = c.Option("--filter <PATTERN>",
                     "Filter the libraries referenced by the project base on their names. The matching pattern supports * and ?",
                     CommandOptionType.SingleValue);
@@ -41,7 +44,8 @@ namespace Microsoft.Dnx.Tooling
                         ShowAssemblies = showAssemblies.HasValue(),
                         RuntimeFolder = runtimeFolder.Value(),
                         Details = details.HasValue(),
-                        ResultsFilter = resultsFilter.Value()
+                        ResultsFilter = resultsFilter.Value(),
+                        Mismatched = mismatched.HasValue()
                     };
                     options.AddFrameworkMonikers(frameworks.Values);
 

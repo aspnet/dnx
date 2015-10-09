@@ -27,9 +27,15 @@ namespace Microsoft.Dnx.Tooling.List
             // 1. Walk the graph of library dependencies
             var root = LibraryDependencyFinder.Build(_libraryManager.GetLibraryDescriptions(), _options.Project);
 
+            if (_options.Mismatched)
+            {
+                RenderMismatchedDependencies(root);
+                return true;
+            }
+
             if (!_options.ShowAssemblies)
             {
-                Render(root);
+                RenderAllDependencies(root);
                 return true;
             }
 
@@ -46,7 +52,13 @@ namespace Microsoft.Dnx.Tooling.List
             return true;
         }
 
-        private void Render(IGraphNode<LibraryDescription> root)
+        private void RenderMismatchedDependencies(IGraphNode<LibraryDependency> root)
+        {
+            var render = new MismatchedDependencyRenderer(_options, _framework);
+            render.Render(root);
+        }
+
+        private void RenderAllDependencies(IGraphNode<LibraryDependency> root)
         {
             var renderer = new LibraryDependencyFlatRenderer(_options.Details,
                                                              _options.ResultsFilter,
@@ -55,8 +67,7 @@ namespace Microsoft.Dnx.Tooling.List
 
             if (content.Any())
             {
-                _options.Reports.Information.WriteLine("\n[Target framework {0} ({1})]\n",
-                    _framework.ToString(), VersionUtility.GetShortFrameworkName(_framework));
+                _options.Reports.WriteInformation($"\n[Target framework {_framework} ({VersionUtility.GetShortFrameworkName(_framework)})]\n");
 
                 foreach (var line in content)
                 {
