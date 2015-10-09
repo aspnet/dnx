@@ -8,6 +8,6 @@
         <description>Microsoft .NET Execution environment for Mono</description>
     </metadata>
     <files>
-        <file src="$RuntimeNamePrefix$mono\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
+        <file src="$RuntimeNamePrefix$mono\bin\**" exclude="**\*.pdb;**\*.xml;**\files.lst" target="bin" />
     </files>
 </package>
