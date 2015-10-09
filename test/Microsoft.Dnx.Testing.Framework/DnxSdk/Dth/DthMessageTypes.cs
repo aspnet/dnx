@@ -8,7 +8,6 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
         // requests
         public const string GetDiagnostics = nameof(GetDiagnostics);
         public const string Dependencies = nameof(Dependencies);
-        public const string AllDiagnostics = nameof(AllDiagnostics);
         public const string ProtocolVersion = nameof(ProtocolVersion);
         public const string ChangeConfiguration = nameof(ChangeConfiguration);
         public const string EnumerateProjectContexts = nameof(EnumerateProjectContexts);

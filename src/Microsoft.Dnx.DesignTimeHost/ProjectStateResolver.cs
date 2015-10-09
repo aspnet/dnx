@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Compilation.CSharp;
@@ -226,6 +227,32 @@ namespace Microsoft.Dnx.DesignTimeHost
                     }
                 }
 
+                var reverseMap = info.Dependencies.Values.SelectMany(dependencyDescription => dependencyDescription.Dependencies.Select(edge => Tuple.Create(edge, dependencyDescription)))
+                                                         .Where(each => each.Item1.Override == false)
+                                                         .ToLookup(each => Tuple.Create(each.Item1.Name, each.Item1.Version), each => each.Item2);
+
+                var winners = new Dictionary<Tuple<string, string>, List<string>>();
+                foreach (var winningEdge in info.Dependencies.Values.SelectMany(dep => dep.Dependencies)
+                                                                    .Where(edge => edge.Override == false)
+                                                                    .Distinct())
+                {
+                    var paths = new List<string>();
+                    paths.AddRange(FindWinningPaths(winningEdge, reverseMap));
+
+                    winners[Tuple.Create(winningEdge.Name, winningEdge.Version)] = paths;
+                }
+
+                foreach (var node in info.Dependencies.Values)
+                {
+                    foreach (var edge in node.Dependencies)
+                    {
+                        if (edge.Override == true)
+                        {
+                            edge.OverrideBy.AddRange(winners[Tuple.Create(edge.Name, edge.Version)]);
+                        }
+                    }
+                }
+
                 var exportWithoutProjects = libraryExporter.GetNonProjectExports(project.Name);
 
                 foreach (var reference in exportWithoutProjects.MetadataReferences)
@@ -250,6 +277,32 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 return info;
             });
+        }
+
+        private IEnumerable<string> FindWinningPaths(DependencyItem key, ILookup<Tuple<string, string>, DependencyDescription> reverseMap)
+        {
+            return FindWinningPaths(Tuple.Create(key.Name, key.Version), reverseMap, "END");
+        }
+
+        private IEnumerable<string> FindWinningPaths(Tuple<string, string> key, ILookup<Tuple<string, string>, DependencyDescription> reverseMap, string initalPath)
+        {
+            var updatedPath = $"{key.Item1}/{key.Item2} => {initalPath}";
+
+            if (reverseMap[key].Any())
+            {
+                var result = new List<string>();
+
+                foreach (var parent in reverseMap[key])
+                {
+                    result.AddRange(FindWinningPaths(Tuple.Create(parent.Name, parent.Version), reverseMap, updatedPath));
+                }
+
+                return result;
+            }
+            else
+            {
+                return new List<string> { updatedPath };
+            }
         }
 
         private DiagnosticMessage ValidateDependency(LibraryDescription library, HashSet<string> projectCandidates)
@@ -372,7 +425,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                 }
 
                 return item;
-            });
+            }).ToList();
 
             if (protocolVersion < 3 && !library.Resolved)
             {

@@ -13,6 +13,8 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
 
         public bool Override { get; set; }
 
+        public List<string> OverrideBy { get; set; } = new List<string>();
+
         public override bool Equals(object obj)
         {
             var other = obj as DependencyItem;

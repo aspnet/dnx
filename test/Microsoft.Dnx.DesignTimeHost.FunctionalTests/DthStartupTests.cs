@@ -606,6 +606,8 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 sdk.Dnu.Restore(solution).EnsureSuccess();
 
                 var ctxMain = client.Initialize(solution.GetProject("Main").ProjectDirectory);
+                //var messages = client.DrainAllMessages(TimeSpan.FromHours(1));
+
                 var ctxLib = client.Initialize(solution.GetProject("Library").ProjectDirectory);
 
                 var messages = client.DrainMessage(14);
