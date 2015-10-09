@@ -187,7 +187,7 @@ namespace Loader.Tests
         }
 
         [Theory]
-        [MemberData("TestPaths")]
+        [MemberData(nameof(TestPaths))]
         public void IsAlreadyWatched(string newPath, bool expectedResult)
         {
             var watcher = new FileWatcher();
