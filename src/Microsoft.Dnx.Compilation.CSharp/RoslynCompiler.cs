@@ -128,7 +128,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 references,
                 compilationSettings.CompilationOptions);
 
-            compilation = ApplyVersionInfo(compilation, projectContext, parseOptions);
+            compilation = ApplyProjectInfo(compilation, projectContext, parseOptions);
 
             var compilationContext = new CompilationContext(
                 compilation,
@@ -252,58 +252,44 @@ namespace Microsoft.Dnx.Compilation.CSharp
             });
         }
 
-        private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, CompilationProjectContext project,
+        private static CSharpCompilation ApplyProjectInfo(CSharpCompilation compilation, CompilationProjectContext project,
             CSharpParseOptions parseOptions)
         {
-            const string assemblyFileVersionName = "System.Reflection.AssemblyFileVersionAttribute";
-            const string assemblyVersionName = "System.Reflection.AssemblyVersionAttribute";
-            const string assemblyInformationalVersion = "System.Reflection.AssemblyInformationalVersionAttribute";
+            var attributeNameToProjectValue = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["System.Reflection.AssemblyTitleAttribute"] = project.Title,
+                ["System.Reflection.AssemblyDescriptionAttribute"] = project.Description,
+                ["System.Reflection.AssemblyCopyrightAttribute"] = project.Copyright,
+                ["System.Reflection.AssemblyCultureAttribute"] = project.Language,
+                ["System.Reflection.AssemblyFileVersionAttribute"] = project.AssemblyFileVersion.ToString(),
+                ["System.Reflection.AssemblyVersionAttribute"] = RemovePrereleaseTag(project.Version),
+                ["System.Reflection.AssemblyInformationalVersionAttribute"] = project.Version
+            };
 
             var assemblyAttributes = compilation.Assembly.GetAttributes();
 
-            var foundAssemblyFileVersion = false;
-            var foundAssemblyVersion = false;
-            var foundAssemblyInformationalVersion = false;
-
-            foreach (var assembly in assemblyAttributes)
+            foreach (var attribute in assemblyAttributes)
             {
-                string attributeName = assembly.AttributeClass.ToString();
+                string attributeName = attribute.AttributeClass.ToString();
 
-                if (string.Equals(attributeName, assemblyFileVersionName, StringComparison.Ordinal))
+                if (attributeNameToProjectValue.ContainsKey(attributeName))
                 {
-                    foundAssemblyFileVersion = true;
-                }
-                else if (string.Equals(attributeName, assemblyVersionName, StringComparison.Ordinal))
-                {
-                    foundAssemblyVersion = true;
-                }
-                else if (string.Equals(attributeName, assemblyInformationalVersion, StringComparison.Ordinal))
-                {
-                    foundAssemblyInformationalVersion = true;
+                    attributeNameToProjectValue.Remove(attributeName);
                 }
             }
 
-            var versionAttributes = new StringBuilder();
-            if (!foundAssemblyFileVersion)
+            var attributes = new StringBuilder();
+
+            foreach (var attributeValue in attributeNameToProjectValue)
             {
-                versionAttributes.AppendLine($"[assembly:{assemblyFileVersionName}(\"{project.AssemblyFileVersion}\")]");
+                attributes.AppendLine($"[assembly:{attributeValue.Key}(\"{attributeValue.Value}\")]");
             }
 
-            if (!foundAssemblyVersion)
-            {
-                versionAttributes.AppendLine($"[assembly:{assemblyVersionName}(\"{RemovePrereleaseTag(project.Version)}\")]");
-            }
-
-            if (!foundAssemblyInformationalVersion)
-            {
-                versionAttributes.AppendLine($"[assembly:{assemblyInformationalVersion}(\"{project.Version}\")]");
-            }
-
-            if (versionAttributes.Length != 0)
+            if (attributes.Length != 0)
             {
                 compilation = compilation.AddSyntaxTrees(new[]
                 {
-                    CSharpSyntaxTree.ParseText(versionAttributes.ToString(), parseOptions)
+                    CSharpSyntaxTree.ParseText(attributes.ToString(), parseOptions)
                 });
             }
 
