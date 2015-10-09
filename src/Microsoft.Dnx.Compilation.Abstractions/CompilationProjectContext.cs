@@ -11,6 +11,10 @@ namespace Microsoft.Dnx.Compilation
         public CompilationTarget Target { get; }
         public string ProjectDirectory { get; }
         public string ProjectFilePath { get; }
+        public string Title { get; }
+        public string Description { get; }
+        public string Copyright { get; }
+        public string Language { get; }
         public string Version { get; }
         public Version AssemblyFileVersion { get; }
         public CompilationFiles Files { get; }
@@ -24,6 +28,10 @@ namespace Microsoft.Dnx.Compilation
             CompilationTarget target,
             string projectDirectory,
             string projectFilePath,
+            string title,
+            string description,
+            string copyright,
+            string language,
             string version,
             Version assemblyFileVersion,
             bool embedInteropTypes,
@@ -34,6 +42,10 @@ namespace Microsoft.Dnx.Compilation
             ProjectDirectory = projectDirectory;
             ProjectFilePath = projectFilePath;
             Files = files;
+            Title = title;
+            Description = description;
+            Copyright = copyright;
+            Language = language;
             Version = version;
             AssemblyFileVersion = assemblyFileVersion;
             EmbedInteropTypes = embedInteropTypes;
