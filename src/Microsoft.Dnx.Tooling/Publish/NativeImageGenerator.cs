@@ -48,14 +48,14 @@ namespace Microsoft.Dnx.Tooling.Publish
         {
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
-            if (root.LockFile == null)
+            if (root.PublishedLockFile == null)
             {
                 return Enumerable.Empty<string>();
             }
 
             var directories = new HashSet<string>();
 
-            foreach (var target in root.LockFile.Targets)
+            foreach (var target in root.PublishedLockFile.Targets)
             {
                 foreach (var library in target.Libraries)
                 {

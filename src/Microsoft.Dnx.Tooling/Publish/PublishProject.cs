@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -322,10 +321,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             }
 
             // Prune the packages folder only leaving things that are required
-            if (!PrunePackages(root))
-            {
-                return false;
-            }
+            PrunePackages(root);
 
             // If --wwwroot-out doesn't have a non-empty value, we don't need a public app folder in output
             if (string.IsNullOrEmpty(WwwRootOut))
@@ -350,95 +346,95 @@ namespace Microsoft.Dnx.Tooling.Publish
             return GenerateWebConfigFileForWwwRootOut(root, project, wwwRootOutPath);
         }
 
-        private bool PrunePackages(PublishRoot root)
+        private void PrunePackages(PublishRoot root)
         {
-            var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
-
-            // Special cases (for backwards compat)
-            var specialFolders = new List<string> {
-                "native",
-                "InteropAssemblies",
-                "redist",
-                "runtimes"
-            };
-
-            if (!root.NoSource)
+            if (root.MainProjectLockFile == null)
             {
-                // 'shared' folder is build time dependency, so we only copy it when deploying with source
-                specialFolders.Add("shared");
+                return;
             }
 
+            var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
+
             var lockFilePath = Path.GetFullPath(Path.Combine(ApplicationBasePath, LockFileFormat.LockFileName));
-            var format = new LockFileFormat();
-            root.LockFile = format.Read(lockFilePath);
+            root.PublishedLockFile = new LockFileFormat().Read(lockFilePath);
 
-            var keep = new HashSet<string>();
+            var filesToKeep = new HashSet<string>();
+            var filesToRemove = new HashSet<string>();
 
-            foreach (var target in root.LockFile.Targets)
+            foreach (var target in root.PublishedLockFile.Targets)
             {
                 foreach (var library in target.Libraries)
                 {
-                    var packagesDir = resolver.GetInstallPath(library.Name, library.Version);
-                    var manifest = resolver.GetManifestFilePath(library.Name, library.Version);
-
-                    keep.Add(manifest);
+                    var packageDir = resolver.GetInstallPath(library.Name, library.Version);
+                    
+                    if (library.Name != root.MainProjectName && string.Equals(library.Type, LibraryTypes.Package, StringComparison.OrdinalIgnoreCase))
+                    {
+                        filesToRemove.Add(resolver.GetHashPath(library.Name, library.Version));
+                        filesToRemove.Add(resolver.GetPackageFilePath(library.Name, library.Version));
+                        filesToRemove.AddRange(Directory.EnumerateFiles(packageDir, $"{library.Name}.xml", SearchOption.AllDirectories));
+                    }
 
                     foreach (var path in library.RuntimeAssemblies)
                     {
-                        keep.Add(CombinePath(packagesDir, path));
+                        filesToKeep.Add(Path.Combine(packageDir, path));
                     }
-
                     foreach (var path in library.CompileTimeAssemblies)
                     {
-                        keep.Add(CombinePath(packagesDir, path));
+                        filesToKeep.Add(Path.Combine(packageDir, path));
                     }
-
                     foreach (var path in library.NativeLibraries)
                     {
-                        keep.Add(CombinePath(packagesDir, path));
+                        filesToKeep.Add(Path.Combine(packageDir, path));
                     }
-
                     foreach (var path in library.ResourceAssemblies)
                     {
-                        keep.Add(CombinePath(packagesDir, path));
-                    }
-
-                    foreach (var specialFolder in specialFolders)
-                    {
-                        var specialFolderPath = CombinePath(packagesDir, specialFolder);
-
-                        if (!Directory.Exists(specialFolderPath))
-                        {
-                            continue;
-                        }
-
-                        keep.AddRange(Directory.EnumerateFiles(specialFolderPath, "*.*", SearchOption.AllDirectories));
+                        filesToKeep.Add(Path.Combine(packageDir, path));
                     }
                 }
             }
 
-            foreach (var package in root.Packages)
+            foreach (var target in root.MainProjectLockFile.Targets.Where(projectTarget =>
+                string.IsNullOrEmpty(projectTarget.RuntimeIdentifier) && 
+                !root.PublishedLockFile.Targets.Any(publishTarget =>
+                projectTarget.TargetFramework == publishTarget.TargetFramework)))
             {
-                var packageDir = resolver.GetInstallPath(package.Library.Name, package.Library.Version);
-                var packageFiles = Directory.EnumerateFiles(packageDir, "*.*", SearchOption.AllDirectories);
-
-                foreach (var file in packageFiles)
+                foreach (var library in target.Libraries)
                 {
-                    if (!keep.Contains(file))
+                    var packageDir = resolver.GetInstallPath(library.Name, library.Version);
+
+                    if (Directory.Exists(packageDir))
                     {
-                        File.Delete(file);
+                        foreach (var path in library.RuntimeAssemblies)
+                        {
+                            filesToRemove.Add(Path.Combine(packageDir, path));
+                        }
+                        foreach (var path in library.CompileTimeAssemblies)
+                        {
+                            filesToRemove.Add(Path.Combine(packageDir, path));
+                        }
+                        foreach (var path in library.NativeLibraries)
+                        {
+                            filesToRemove.Add(Path.Combine(packageDir, path));
+                        }
+                        foreach (var path in library.ResourceAssemblies)
+                        {
+                            filesToRemove.Add(Path.Combine(packageDir, path));
+                        }
                     }
                 }
-
-                root.Operations.DeleteEmptyFolders(packageDir);
             }
 
-            return true;
-        }
+            foreach (var file in filesToRemove.Except(filesToKeep))
+            {
+                File.Delete(file);
+            }
 
-        private static string CombinePath(string path1, string path2)
-        {
-            return Path.Combine(path1, path2);
+            if (Directory.Exists(root.TargetPackagesPath))
+            {
+                root.Operations.DeleteEmptyFolders(root.TargetPackagesPath);
+            }
+
+            return;
         }
 
         private async Task<bool> Restore(PublishRoot root, PublishProject publishProject, string restoreDirectory, IEnumerable<FrameworkName> targetFrameworks)

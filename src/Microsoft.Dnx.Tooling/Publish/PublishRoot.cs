@@ -16,12 +16,14 @@ namespace Microsoft.Dnx.Tooling.Publish
     public class PublishRoot
     {
         private readonly Runtime.Project _project;
+        private LockFile _mainProjectLockFile;
         public static readonly string AppRootName = "approot";
         public static readonly string SourceFolderName = "src";
 
         public PublishRoot(Runtime.Project project, string outputPath, Reports reports)
         {
             _project = project;
+            MainProjectName = project.Name;
             Reports = reports;
             Projects = new List<PublishProject>();
             Packages = new List<PublishPackage>();
@@ -37,6 +39,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         public string TargetPackagesPath { get; private set; }
         public string TargetRuntimesPath { get; private set; }
         public string SourcePackagesPath { get; set; }
+        public string MainProjectName { get; }
 
         public bool NoSource { get; set; }
         public bool IncludeSymbols { get; set; }
@@ -50,8 +53,28 @@ namespace Microsoft.Dnx.Tooling.Publish
         public Reports Reports { get; private set; }
         public PublishOperations Operations { get; private set; }
 
-        // The lock file of the root project after the publish operation completes
-        public LockFile LockFile { get; set; }
+        // The lock file of the root project in the project directory
+        public LockFile MainProjectLockFile
+        {
+            get
+            {
+                if (_project == null)
+                {
+                    return null;
+                }
+
+                var projectLockFilePath = Path.Combine(_project.ProjectDirectory, LockFileFormat.LockFileName);
+
+                if (File.Exists(projectLockFilePath))
+                {
+                    _mainProjectLockFile = new LockFileFormat().Read(projectLockFilePath);
+                }
+
+                return _mainProjectLockFile;
+            }
+        }
+        // The lock file of the root project in the publish output directory
+        public LockFile PublishedLockFile { get; set; }
 
         public string IISCommand { get; set; }
 

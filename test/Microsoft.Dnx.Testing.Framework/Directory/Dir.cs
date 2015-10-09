@@ -143,7 +143,7 @@ namespace Microsoft.Dnx.Testing.Framework
                     var skipItem = skipComparison || (dirItem == null ? false : dirItem.SkipComparison );
 
                     var subTree = dirItem == null ? node.Value as Dir : dirItem.Item as Dir;
-                    var subPath = string.IsNullOrEmpty(basePath) ? node.Key : $"{basePath}/{node.Key}";
+                    var subPath = string.IsNullOrEmpty(basePath) ? node.Key : Path.Combine(basePath, node.Key);
                     if (subTree == null)
                     {
                         if (skipItem && dirItem != null)

@@ -15,6 +15,84 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
     {
         [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
+        public void PublishPrunesUnusedTFMsInLockfile(DnxSdk sdk)
+        {
+            // Arrange
+            const string solutionName = "PublishWithDependency";
+            const string projectName = "App";
+            const string feedName = "A";
+
+            var solution = TestUtils.GetSolution<DnuPublishTests>(sdk, solutionName);
+            var project = solution.GetProject(projectName);
+            var outputPathFor451 = Path.Combine(solution.RootPath, "Output", "451");
+            var outputPathForCore50 = Path.Combine(solution.RootPath, "Output", "core50");
+            var feedDir = Path.Combine(solution.SourcePath, feedName);
+            var feedOutputPath = Path.Combine(solution.ArtifactsPath, feedName);
+
+            var feedStructure = new Dir(feedDir)
+            {
+                [Path.Combine("runtimes", "win", "native", "x86"),
+                 Path.Combine("lib", "unknown"),
+                 Path.Combine("ref", "dotnet")] = new Dir
+                {
+                    ["A.dll", "A.xml"] = Dir.EmptyFile
+                }
+            };
+            feedStructure.Save(feedDir);
+
+            var expectedOutputStructureFor451 = new Dir
+            {
+                ["1.0.0"] = new Dir
+                {
+                    [Path.Combine("ref", "dotnet"),
+                     Path.Combine("lib", "unknown"),
+                     Path.Combine("lib", "dnx451"),
+                     Path.Combine("runtimes", "win", "native", "x86")] = new Dir
+                    {
+                        ["A.dll"] = Dir.EmptyFile
+                    },
+                    ["A.nuspec"] = Dir.EmptyFile
+                }
+            };
+
+            var expectedOutputStructureForCore50 = new Dir
+            {
+                ["1.0.0"] = new Dir
+                {
+                    [Path.Combine("ref", "dotnet"),
+                     Path.Combine("lib", "unknown"),
+                     Path.Combine("lib", "dnxcore50"),
+                     Path.Combine("runtimes", "win", "native", "x86")] = new Dir
+                    {
+                        ["A.dll"] = Dir.EmptyFile
+                    },
+                    ["A.nuspec"] = Dir.EmptyFile
+                }
+            };
+
+            // Act
+            sdk.Dnu.Restore(feedDir).EnsureSuccess();
+            sdk.Dnu.Pack(feedDir, feedOutputPath).EnsureSuccess();
+            sdk.Dnu.PackagesAdd(
+                Path.Combine(feedOutputPath, "Debug", $"{feedName}.1.0.0.nupkg"),
+                solution.LocalPackagesDir).EnsureSuccess();
+            Directory.Delete(feedDir, true);
+
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectFilePath, outputPathFor451, "--framework dnx451").EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectFilePath, outputPathForCore50, "--framework dnxcore50").EnsureSuccess();
+            var actualOutputStructureFor451 = new Dir(Path.Combine(outputPathFor451, "approot", "packages", feedName));
+            var actualOutputStructureForCore50 = new Dir(Path.Combine(outputPathForCore50, "approot", "packages", feedName));
+
+            // Assert
+            DirAssert.Equal(expectedOutputStructureFor451, actualOutputStructureFor451, compareContents: false);
+            DirAssert.Equal(expectedOutputStructureForCore50, actualOutputStructureForCore50, compareContents: false);
+
+            TestUtils.CleanUpTestDir<DnuPublishTests>(sdk);
+        }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
         public void GlobalJsonInProjectDir(DnxSdk sdk)
         {
             const string solutionName = "GlobalJsonInProjectDir";
@@ -37,10 +115,9 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             {
                 ["approot"] = new Dir
                 {
-                    [$"src/Project"] = new Dir
+                    [Path.Combine("src", "Project")] = new Dir
                     {
-                        ["project.json"] = new DirItem(Dir.EmptyFile, skipComparison: true),
-                        ["project.lock.json"] = new DirItem(Dir.EmptyFile, skipComparison: true)
+                        ["project.json", "project.lock.json"] = new DirItem(Dir.EmptyFile, skipComparison: true)
                     },
                     [$"global.json"] = expectedOutputGlobalJson
                 }
