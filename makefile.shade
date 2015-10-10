@@ -769,7 +769,7 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                         {
                             if(framework == target.Framework)
                             {
-                                KTest(projectFile);
+                                DnxTest(projectFile, false);
                                 break;
                             }
                             else
@@ -797,7 +797,7 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                 {
                     foreach(var projectFile in Files.Include("test/*.FunctionalTests/project.json"))
                     {
-                        KTest(projectFile);
+                        DnxTest(projectFile, false);
                     }
                 });
             }
@@ -806,8 +806,7 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
 
 - // ===================== SHARED UTILITIES =====================
 macro name='DoRestore'
-    exec program='cmd' commandline='/C dnu restore --parallel src test samples' workingdir='${Directory.GetCurrentDirectory()}' if='CanBuildForWindows'
-    exec program='dnu' commandline='restore src test samples' workingdir='${Directory.GetCurrentDirectory()}' if='CanBuildForLinux || CanBuildForDarwin'
+    dnu command='restore ${ E("KOREBUILD_DNU_RESTORE_OPTIONS") } src test samples' dnvmUse='default -runtime coreclr'
 
 #update-tpa
     @{
@@ -879,14 +878,6 @@ functions @{
 
     private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
     private static readonly string _runtimesSubDir = "runtimes";
-
-    void KTest(string projectFolder)
-    {
-        projectFolder = Path.GetDirectoryName(projectFolder);
-
-        var testArgs = " -verbose" + (IsMono ? " -parallel none" : "");
-        K(("test" + testArgs), projectFolder, "");
-    }
 
     bool CanBuildForLinux
     {
