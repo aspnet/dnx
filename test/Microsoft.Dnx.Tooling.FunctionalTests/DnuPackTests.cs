@@ -2,7 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
-using System.Runtime.Versioning;
+using System.Linq;
+using System.Reflection;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Testing.Framework;
 using Newtonsoft.Json.Linq;
@@ -108,5 +111,78 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
          }
+         
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void ProjectPropertiesFlowIntoAssembly(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPackTests>(sdk, "AssemblyInfo");
+            var project = solution.GetProject("Test");
+
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+            // Act
+            var result = sdk.Dnu.Pack(project.ProjectDirectory);
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+
+            var assemblyPath = result.GetAssemblyPath(sdk.TargetFramework);
+
+            using (var stream = File.OpenRead(assemblyPath))
+            {
+                using (var peReader = new PEReader(stream))
+                {
+                    var metadataReader = peReader.GetMetadataReader();
+                    var assemblyDefinition = metadataReader.GetAssemblyDefinition();
+                    var attributes = assemblyDefinition.GetCustomAttributes()
+                        .Select(handle => metadataReader.GetCustomAttribute(handle))
+                        .ToDictionary(attribute => GetAttributeName(attribute, metadataReader), attribute => GetAttributeArgument(attribute, metadataReader));
+
+                    Assert.Equal(project.Title, attributes[typeof(AssemblyTitleAttribute).Name]);
+                    Assert.Equal(project.Description, attributes[typeof(AssemblyDescriptionAttribute).Name]);
+                    Assert.Equal(project.Copyright, attributes[typeof(AssemblyCopyrightAttribute).Name]);
+                    Assert.Equal(project.AssemblyFileVersion.ToString(), attributes[typeof(AssemblyFileVersionAttribute).Name]);
+                    Assert.Equal(project.Version.ToString(), attributes[typeof(AssemblyInformationalVersionAttribute).Name]);
+                    Assert.Equal(project.Version.Version, assemblyDefinition.Version);
+                }
+            }
+
+            TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
+        }
+
+        private string GetAttributeName(CustomAttribute attribute, MetadataReader metadataReader)
+        {
+            var container = metadataReader.GetMemberReference((MemberReferenceHandle)attribute.Constructor).Parent;
+            var name = metadataReader.GetTypeReference((TypeReferenceHandle)container).Name;
+            return metadataReader.GetString(name);
+        }
+
+        private string GetAttributeArgument(CustomAttribute attribute, MetadataReader metadataReader)
+        {
+            var signature = metadataReader.GetMemberReference((MemberReferenceHandle)attribute.Constructor).Signature;
+            var signatureReader = metadataReader.GetBlobReader(signature);
+            var valueReader = metadataReader.GetBlobReader(attribute.Value);
+
+            valueReader.ReadUInt16(); // Skip prolog
+            signatureReader.ReadSignatureHeader(); // Skip header
+
+            int parameterCount;
+            signatureReader.TryReadCompressedInteger(out parameterCount);
+
+            signatureReader.ReadSignatureTypeCode(); // Skip return type
+
+            for (int i = 0; i < parameterCount; i++)
+            {
+                var signatureTypeCode = signatureReader.ReadSignatureTypeCode();
+                if (signatureTypeCode == SignatureTypeCode.String)
+                {
+                    return valueReader.ReadSerializedString();
+                }
+            }
+
+            return string.Empty;
+        }
     }
 }

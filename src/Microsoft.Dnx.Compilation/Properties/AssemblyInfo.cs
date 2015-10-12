@@ -6,5 +6,6 @@ using System.Resources;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Microsoft.Dnx.Compilation.Tests")]
+[assembly: InternalsVisibleTo("Microsoft.Dnx.Compilation.CSharp.Tests")]
 [assembly: AssemblyMetadata("Serviceable", "True")]
 [assembly: NeutralResourcesLanguage("en-US")]

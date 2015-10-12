@@ -1,5 +1,6 @@
 {
     "dependencies": {
+        "System.Reflection.Metadata": "1.0.21-*",
         "Microsoft.AspNet.Testing": "1.0.0-*",
         "Microsoft.Dnx.CommonTestUtils": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",

@@ -127,7 +127,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 references,
                 compilationSettings.CompilationOptions);
 
-            compilation = ApplyVersionInfo(compilation, projectContext, parseOptions);
+            compilation = ApplyProjectInfo(compilation, projectContext, parseOptions);
 
             var compilationContext = new CompilationContext(
                 compilation,
@@ -251,58 +251,30 @@ namespace Microsoft.Dnx.Compilation.CSharp
             });
         }
 
-        private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, CompilationProjectContext project,
+        private static CSharpCompilation ApplyProjectInfo(CSharpCompilation compilation, CompilationProjectContext project,
             CSharpParseOptions parseOptions)
         {
-            const string assemblyFileVersionName = "System.Reflection.AssemblyFileVersionAttribute";
-            const string assemblyVersionName = "System.Reflection.AssemblyVersionAttribute";
-            const string assemblyInformationalVersion = "System.Reflection.AssemblyInformationalVersionAttribute";
-
-            var assemblyAttributes = compilation.Assembly.GetAttributes();
-
-            var foundAssemblyFileVersion = false;
-            var foundAssemblyVersion = false;
-            var foundAssemblyInformationalVersion = false;
-
-            foreach (var assembly in assemblyAttributes)
+            var projectAttributes = new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                string attributeName = assembly.AttributeClass.ToString();
+                [typeof(System.Reflection.AssemblyTitleAttribute).FullName] = project.Title,
+                [typeof(System.Reflection.AssemblyDescriptionAttribute).FullName] = project.Description,
+                [typeof(System.Reflection.AssemblyCopyrightAttribute).FullName] = project.Copyright,
+                [typeof(System.Reflection.AssemblyFileVersionAttribute).FullName] = project.AssemblyFileVersion.ToString(),
+                [typeof(System.Reflection.AssemblyVersionAttribute).FullName] = RemovePrereleaseTag(project.Version),
+                [typeof(System.Reflection.AssemblyInformationalVersionAttribute).FullName] = project.Version
+            };
 
-                if (string.Equals(attributeName, assemblyFileVersionName, StringComparison.Ordinal))
-                {
-                    foundAssemblyFileVersion = true;
-                }
-                else if (string.Equals(attributeName, assemblyVersionName, StringComparison.Ordinal))
-                {
-                    foundAssemblyVersion = true;
-                }
-                else if (string.Equals(attributeName, assemblyInformationalVersion, StringComparison.Ordinal))
-                {
-                    foundAssemblyInformationalVersion = true;
-                }
-            }
+            var assemblyAttributes = compilation.Assembly.GetAttributes()
+                .Select(assemblyAttribute => assemblyAttribute.AttributeClass.ToString());
+            var newAttributes = string.Join(Environment.NewLine, projectAttributes
+                .Where(projectAttribute => projectAttribute.Value != null && !assemblyAttributes.Contains(projectAttribute.Key))
+                .Select(projectAttribute => $"[assembly:{projectAttribute.Key}(\"{projectAttribute.Value}\")]"));
 
-            var versionAttributes = new StringBuilder();
-            if (!foundAssemblyFileVersion)
-            {
-                versionAttributes.AppendLine($"[assembly:{assemblyFileVersionName}(\"{project.AssemblyFileVersion}\")]");
-            }
-
-            if (!foundAssemblyVersion)
-            {
-                versionAttributes.AppendLine($"[assembly:{assemblyVersionName}(\"{RemovePrereleaseTag(project.Version)}\")]");
-            }
-
-            if (!foundAssemblyInformationalVersion)
-            {
-                versionAttributes.AppendLine($"[assembly:{assemblyInformationalVersion}(\"{project.Version}\")]");
-            }
-
-            if (versionAttributes.Length != 0)
+            if (!string.IsNullOrWhiteSpace(newAttributes))
             {
                 compilation = compilation.AddSyntaxTrees(new[]
                 {
-                    CSharpSyntaxTree.ParseText(versionAttributes.ToString(), parseOptions)
+                    CSharpSyntaxTree.ParseText(newAttributes, parseOptions)
                 });
             }
 
@@ -361,7 +333,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             foreach (var d in dirs)
             {
-                ctx.Monitor(new FileWriteTimeCacheDependency(d));
+                ctx?.Monitor(new FileWriteTimeCacheDependency(d));
             }
 
             return trees;

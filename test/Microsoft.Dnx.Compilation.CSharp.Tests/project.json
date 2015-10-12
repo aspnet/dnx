@@ -5,7 +5,11 @@
         "xunit.runner.aspnet": "2.0.0-aspnet-*"
     },
     "frameworks": {
-        "dnx451": { },
+        "dnx451": {
+            "dependencies": {
+                "Moq": "4.2.1312.1622"
+            }
+        },
         "dnxcore50": { }
     },
     "commands": {
