@@ -14,7 +14,6 @@ namespace Microsoft.Dnx.Compilation
         public string Title { get; }
         public string Description { get; }
         public string Copyright { get; }
-        public string Language { get; }
         public string Version { get; }
         public Version AssemblyFileVersion { get; }
         public CompilationFiles Files { get; }
@@ -31,7 +30,6 @@ namespace Microsoft.Dnx.Compilation
             string title,
             string description,
             string copyright,
-            string language,
             string version,
             Version assemblyFileVersion,
             bool embedInteropTypes,
@@ -45,7 +43,6 @@ namespace Microsoft.Dnx.Compilation
             Title = title;
             Description = description;
             Copyright = copyright;
-            Language = language;
             Version = version;
             AssemblyFileVersion = assemblyFileVersion;
             EmbedInteropTypes = embedInteropTypes;

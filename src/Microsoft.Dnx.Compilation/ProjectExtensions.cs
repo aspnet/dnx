@@ -14,7 +14,6 @@ namespace Microsoft.Dnx.Compilation
                 self.Title,
                 self.Description,
                 self.Copyright,
-                self.Language,
                 self.Version.ToString(),
                 self.AssemblyFileVersion,
                 self.EmbedInteropTypes,

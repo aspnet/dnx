@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Testing.Framework;
 using Newtonsoft.Json.Linq;
@@ -80,6 +82,35 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             // Assert
             Assert.Equal(0, result.ExitCode);
+
+            TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
+        }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void AssemblyInfo(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPackTests>(sdk, "AssemblyInfo");
+            var project = solution.GetProject("Test");
+
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+            // Act
+            var result = sdk.Dnu.Pack(project.ProjectDirectory);
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+
+            var assemblyPath = Path.Combine(result.RootPath, "Debug", "dnx451", "Test.dll");
+            var assembly = Assembly.LoadFrom(assemblyPath);
+            var attributes = assembly.GetCustomAttributes(true);
+            Assert.Equal(project.Title, attributes.OfType<AssemblyTitleAttribute>().First().Title);
+            Assert.Equal(project.Description, attributes.OfType<AssemblyDescriptionAttribute>().First().Description);
+            Assert.Equal(project.Copyright, attributes.OfType<AssemblyCopyrightAttribute>().First().Copyright);
+            Assert.Equal(project.AssemblyFileVersion.ToString(), attributes.OfType<AssemblyFileVersionAttribute>().First().Version);
+            Assert.Equal(project.Version.ToString(), attributes.OfType<AssemblyInformationalVersionAttribute>().First().InformationalVersion);
+            Assert.Equal(project.Version.Version, assembly.GetName().Version);
 
             TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
         }

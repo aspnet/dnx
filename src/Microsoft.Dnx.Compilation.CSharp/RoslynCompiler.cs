@@ -260,7 +260,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 ["System.Reflection.AssemblyTitleAttribute"] = project.Title,
                 ["System.Reflection.AssemblyDescriptionAttribute"] = project.Description,
                 ["System.Reflection.AssemblyCopyrightAttribute"] = project.Copyright,
-                ["System.Reflection.AssemblyCultureAttribute"] = project.Language,
                 ["System.Reflection.AssemblyFileVersionAttribute"] = project.AssemblyFileVersion.ToString(),
                 ["System.Reflection.AssemblyVersionAttribute"] = RemovePrereleaseTag(project.Version),
                 ["System.Reflection.AssemblyInformationalVersionAttribute"] = project.Version

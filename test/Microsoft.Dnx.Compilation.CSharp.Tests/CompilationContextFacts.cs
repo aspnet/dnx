@@ -61,7 +61,6 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
                 "Mock title",
                 "Mock description",
                 "Mock copyright",
-                "en",
                 "0.0.1-rc-fake",
                 new Version(0, 0, 1),
                 embedInteropTypes: false,
