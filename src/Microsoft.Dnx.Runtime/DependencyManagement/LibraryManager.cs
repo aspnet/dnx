@@ -113,7 +113,8 @@ namespace Microsoft.Dnx.Runtime
                 messages.AddRange(_diagnostics);
             }
 
-            foreach (var library in GetLibraryDescriptions())
+            var libraries = GetLibraryDescriptions();
+            foreach (var library in libraries)
             {
                 string projectPath = library.RequestedRange.FileName ?? _projectPath;
 
@@ -143,44 +144,53 @@ namespace Microsoft.Dnx.Runtime
                             library.RequestedRange.Column,
                             library));
                 }
-                else
+            }
+
+            var root = _graph[Directory.GetParent(_projectPath).Name].Item2;
+
+            var stack = new Stack<LibraryDependency>(root.Dependencies);
+            while (stack.Any())
+            {
+                var top = stack.Pop();
+                if (IsLibraryMismatch(top))
                 {
-                    // Skip libraries that aren't specified in a project.json
-                    if (string.IsNullOrEmpty(library.RequestedRange.FileName))
-                    {
-                        continue;
-                    }
+                    messages.Add(new DiagnosticMessage(
+                        DiagnosticMonikers.NU1007,
+                        $"Dependency specified was {top.LibraryRange} but ended up with {top.Library.Identity}.",
+                        top.LibraryRange.FileName ?? _projectPath,
+                        DiagnosticMessageSeverity.Warning,
+                        top.LibraryRange.Line,
+                        top.LibraryRange.Column,
+                        top.Library));
+                }
 
-                    if (library.RequestedRange.VersionRange == null)
-                    {
-                        // TODO: Show errors/warnings for things without versions
-                        continue;
-                    }
-
-                    // If we ended up with a declared version that isn't what was asked for directly
-                    // then report a warning
-                    // Case 1: Non floating version and the minimum doesn't match what was specified
-                    // Case 2: Floating version that fell outside of the range
-                    if ((library.RequestedRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
-                         library.RequestedRange.VersionRange.MinVersion != library.Identity.Version) ||
-                        (library.RequestedRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None &&
-                         !library.RequestedRange.VersionRange.EqualsFloating(library.Identity.Version)))
-                    {
-                        var message = string.Format("Dependency specified was {0} but ended up with {1}.", library.RequestedRange, library.Identity);
-                        messages.Add(
-                            new DiagnosticMessage(
-                                DiagnosticMonikers.NU1007,
-                                message,
-                                projectPath,
-                                DiagnosticMessageSeverity.Warning,
-                                library.RequestedRange.Line,
-                                library.RequestedRange.Column,
-                                library));
-                    }
+                foreach(var dependency in top.Library.Dependencies)
+                {
+                    stack.Push(dependency);
                 }
             }
 
             return messages;
+        }
+
+        private static bool IsLibraryMismatch(LibraryDependency dependency)
+        {
+            if (dependency.LibraryRange?.VersionRange != null)
+            {
+                // If we ended up with a declared version that isn't what was asked for directly
+                // then report a warning
+                // Case 1: Non floating version and the minimum doesn't match what was specified
+                // Case 2: Floating version that fell outside of the range
+                if ((dependency.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                     dependency.LibraryRange.VersionRange.MinVersion != dependency.Library.Identity.Version) ||
+                    (dependency.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None &&
+                     !dependency.LibraryRange.VersionRange.EqualsFloating(dependency.Library.Identity.Version)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void EnsureGraph()
