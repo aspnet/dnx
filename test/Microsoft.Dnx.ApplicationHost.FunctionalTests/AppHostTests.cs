@@ -90,7 +90,7 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
 
             TestUtils.CleanUpTestDir<AppHostTests>(sdk);
         }
-        
+
         [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
         public void DnxSupressesRoslynExceptionStackTrace(DnxSdk sdk)
@@ -107,6 +107,26 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
             // Assert
             Assert.Equal(1, result.ExitCode);
             Assert.DoesNotContain("RoslynCompilationException:", result.StandardError);
+
+            TestUtils.CleanUpTestDir<AppHostTests>(sdk);
+        }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void DnxSupressesRoslynExceptionStackTraceInMain(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<AppHostTests>(sdk, "ApplicationHostTestProjects");
+            var project = solution.GetProject("CompilationExceptionInMain");
+
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+            // Act
+            var result = sdk.Dnx.Execute(project);
+
+            // Assert
+            Assert.Equal(1, result.ExitCode);
+            Assert.DoesNotContain("DummyCompilationException:", result.StandardError);
 
             TestUtils.CleanUpTestDir<AppHostTests>(sdk);
         }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.FileSystem;
@@ -231,18 +232,7 @@ namespace Microsoft.Dnx.ApplicationHost
             }
             catch (Exception ex)
             {
-                // Try to find compilation exception recursively to supress its stack
-                var innerException = ex;
-                do
-                {
-                    if (innerException is ICompilationException)
-                    {
-                        throw SuppressStackTrace(innerException);
-                    }
-                    innerException = innerException.InnerException;
-                }
-                while (innerException != null);
-
+                SuppressCompilationExceptions(ex);
                 if (ex is FileLoadException || ex is FileNotFoundException)
                 {
                     ThrowEntryPointNotfoundException(
@@ -259,7 +249,33 @@ namespace Microsoft.Dnx.ApplicationHost
                 return Task.FromResult(1);
             }
 
-            return EntryPointExecutor.Execute(assembly, args, host.ServiceProvider);
+            return Task.Run(()=> EntryPointExecutor.Execute(assembly, args, host.ServiceProvider))
+                        .ContinueWith(t =>
+                        {
+                            t.Exception?.Handle(e =>
+                            {
+                                SuppressCompilationExceptions(e);
+                                return false;
+                            });
+
+                            return t.Result;
+                        });
+        
+        }
+
+        private void SuppressCompilationExceptions(Exception exception)
+        {
+            // Try to find compilation exception recursively to supress its stack
+            var innerException = exception;
+            do
+            {
+                if (innerException is ICompilationException)
+                {
+                    throw SuppressStackTrace(innerException);
+                }
+                innerException = innerException.InnerException;
+            }
+            while (innerException != null);
         }
 
         private static void ThrowEntryPointNotfoundException(
