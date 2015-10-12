@@ -1,7 +1,7 @@
 DNX
 ===
 
-Travis:   [![Travis](https://travis-ci.org/aspnet/dnx.svg?branch=cesarbs/dnx-assembly-info)](https://travis-ci.org/aspnet/dnx)
+Travis:   [![Travis](https://travis-ci.org/aspnet/dnx.svg?branch=dev)](https://travis-ci.org/aspnet/dnx)
 
 The .NET Execution Environment contains the code required to bootstrap and run an application. This includes things like the compilation system, SDK tools, and the native CLR hosts.
 
