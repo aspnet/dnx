@@ -83,6 +83,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 EmitResult emitResult = null;
 
+                // If assembly is not a satelite assembly or if assembly culture is neutral, then do not generate a resources assembly.
                 if (!string.Equals(Path.GetExtension(assemblyName.Name), ".resources") || ResourcesHelper.IsResourceNeutralCulture(assemblyName))
                 {
                     var resourcesForCulture = ResourcesForCulture.GetResourcesForCulture(assemblyName.CultureName ?? string.Empty, CompilationContext.Resources);
@@ -286,7 +287,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 Logger.TraceInformation("Using portable pdb format");
 
                 // Emit the portable pdb format if explicitly specified.
-                // TODO: Make a decision about when we use the portable pdb by default. 
+                // TODO: Make a decision about when we use the portable pdb by default.
                 // On mono < 4.2 Emitting the portable PDB just hangs for some odd reason.
                 emitPdb = true;
                 return emitOptions.WithDebugInformationFormat(DebugInformationFormat.PortablePdb);

@@ -2,9 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Testing.Framework;
 using Newtonsoft.Json.Linq;
+using NuGet;
 using Xunit;
 
 namespace Microsoft.Dnx.Tooling.FunctionalTests
@@ -92,20 +94,17 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             // Arrange
             var solution = TestUtils.GetSolution<DnuPackTests>(sdk, Path.Combine("ResourcesTestProjects", "ReadFromResources"));
 
-            var project = solution.GetProject("TestClassLibrary");
-            sdk.Dnu.Restore(project.ProjectDirectory).EnsureSuccess();
+            sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
 
-            project = solution.GetProject("ReadFromResources");
-            sdk.Dnu.Restore(project.ProjectDirectory).EnsureSuccess();
+            var project = solution.GetProject("ReadFromResources");
 
             // Act
             var result = sdk.Dnu.Pack(project.ProjectDirectory);
 
             // Assert
             Assert.Equal(0, result.ExitCode);
-            Assert.True(Directory.Exists(Path.Combine(project.ProjectDirectory, "bin")));
-            Assert.True(File.Exists(Path.Combine(project.ProjectDirectory, "bin", "Debug", "dnx451", "fr-FR", "ReadFromResources.resources.dll")));
-            Assert.True(File.Exists(Path.Combine(project.ProjectDirectory, "bin", "Debug", "dnxcore50", "fr-FR", "ReadFromResources.resources.dll")));
+            Assert.True(File.Exists(result.GetSateliteAssemblyPath(VersionUtility.ParseFrameworkName("dnx451"), "fr-FR")));
+            Assert.True(File.Exists(result.GetSateliteAssemblyPath(VersionUtility.ParseFrameworkName("dnxcore50"), "fr-FR")));
 
             TestUtils.CleanUpTestDir<DnuPackTests>(sdk);
          }
