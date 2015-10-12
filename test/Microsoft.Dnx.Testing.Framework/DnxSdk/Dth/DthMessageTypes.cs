@@ -14,5 +14,6 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
         // responses
         public const string AllDiagnostics = nameof(AllDiagnostics);
         public const string ProjectContexts = nameof(ProjectContexts);
+        public const string DependencyDiagnostics = nameof(DependencyDiagnostics);
     }
 }

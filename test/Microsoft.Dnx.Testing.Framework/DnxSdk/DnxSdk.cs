@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
 
@@ -37,7 +38,11 @@ namespace Microsoft.Dnx.Testing.Framework
         public static string GetRuntimeHome()
         {
             var dnxHomePath = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
-            var homePath = string.IsNullOrEmpty(dnxHomePath) ? null : Environment.ExpandEnvironmentVariables(dnxHomePath);
+            var homePath = dnxHomePath.Split(';')
+                                      .Where(path => !string.IsNullOrEmpty(path))
+                                      .Select(path => Environment.ExpandEnvironmentVariables(path))
+                                      .Where(path => Directory.Exists(path))
+                                      .FirstOrDefault();
 
             if (string.IsNullOrEmpty(homePath))
             {
@@ -65,7 +70,7 @@ namespace Microsoft.Dnx.Testing.Framework
 
         public static DnxSdk GetRuntime(string basePath, string version, string flavor, string os, string arch)
         {
-            var fullName =  $"{GetRuntimeName(flavor, os, arch)}.{version}";
+            var fullName = $"{GetRuntimeName(flavor, os, arch)}.{version}";
             var shortName = $"{GetShortRuntimeName(flavor, os, arch)}.{version}";
             return new DnxSdk
             {

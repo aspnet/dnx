@@ -594,5 +594,26 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
 
             TestUtils.CleanUpTestDir<DthStartupTests>(sdk);
         }
+
+        [Theory]
+        [MemberData(nameof(DnxSdks))]
+        public void DthDependencies_OverrideVersion_Nearest(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DthStartupTests>(sdk, "DependencyOverrideNearest");
+            var project = solution.GetProject("Main");
+
+            using (var server = sdk.Dth.CreateServer())
+            using (var client = server.CreateClient())
+            {
+                sdk.Dnu.Restore(solution.RootPath).EnsureSuccess();
+
+                client.Initialize(project.ProjectDirectory, protocolVersion: 3);
+                client.DrainTillFirst(DthMessageTypes.DependencyDiagnostics)
+                      .RetrievePayloadAs<JObject>()
+                      .RetrievePropertyAs<JArray>("Warnings")
+                      .AssertJArrayEmpty();
+            }
+        }
     }
 }

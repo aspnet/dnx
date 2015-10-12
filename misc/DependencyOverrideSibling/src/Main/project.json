@@ -1,0 +1,9 @@
+{
+  "frameworks": {
+    "dnx451": { }
+  },
+  "dependencies": {
+    "Library1": "",
+    "Library2": ""
+  }
+}
