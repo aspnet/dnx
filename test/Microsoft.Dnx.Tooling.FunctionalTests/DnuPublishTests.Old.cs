@@ -660,7 +660,8 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
         }
 
         [ConditionalTheory]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)] // Mono DNX still only supports one framework (dnx451) at the moment.
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)] // Mono DNX still only supports one framework (dnx451) at the moment.
         [MemberData(nameof(ClrRuntimeComponents))]
         public void PublishMultipleProjectsWithDifferentTargetFrameworks(string flavor, string os, string architecture)
         {

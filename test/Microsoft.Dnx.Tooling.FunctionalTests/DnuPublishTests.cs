@@ -14,7 +14,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
     public class DnuPublishTests : DnxSdkFunctionalTestBase
     {
         [ConditionalTheory, TraceTest]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)] // This needs msbuild to run
+        [OSSkipCondition(OperatingSystems.Linux)] // This needs msbuild to run
+        [OSSkipCondition(OperatingSystems.MacOSX)] // This needs msbuild to run
         [MemberData(nameof(DnxSdks))]
         public void PublishWrappedProjectForSpecificFramework(DnxSdk sdk)
         {

@@ -13,7 +13,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
     {
         [ConditionalTheory, TraceTest]
         [MemberData(nameof(DnxSdks))]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void DnuPack_ClientProfile(DnxSdk sdk)
         {
             const string ProjectName = "ClientProfileProject";

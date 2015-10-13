@@ -265,7 +265,8 @@ Hello, code!
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void BootstrapperLaunches451ClrIfDnx451IsHighestVersionInProject(string flavor, string os, string architecture)
         {
             const string projectStructure = @"{
@@ -321,7 +322,8 @@ Hello, code!
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void BootstrapperLaunches452ClrIfDnx452IsHighestVersionInProject(string flavor, string os, string architecture)
         {
             const string projectStructure = @"{
@@ -379,7 +381,8 @@ Hello, code!
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void BootstrapperLaunches46ClrIfDnx46IsHighestVersionInProject(string flavor, string os, string architecture)
         {
             const string projectStructure = @"{
@@ -440,7 +443,8 @@ Hello, code!
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided_Dnx451(string flavor, string os, string architecture)
         {
             BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx451", "40501");
@@ -449,7 +453,8 @@ Hello, code!
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided_Dnx452(string flavor, string os, string architecture)
         {
             BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx452", "40502");
@@ -458,7 +463,8 @@ Hello, code!
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided_Dnx46(string flavor, string os, string architecture)
         {
             BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx46", "40600");
@@ -524,7 +530,8 @@ Hello, code!
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void BootstrapperConfiguresAppConfigFile(string flavor, string os, string architecture)
         {
             const string projectStructure = @"{

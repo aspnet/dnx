@@ -119,7 +119,8 @@ namespace dnx.hostTests
 
         // Test live runtime ids
         [ConditionalFact]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         public void WindowsRuntimeIdIsCorrect()
         {
             // Verifying OS version is difficult in a test

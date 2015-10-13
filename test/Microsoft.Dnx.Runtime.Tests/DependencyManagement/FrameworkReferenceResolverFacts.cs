@@ -13,7 +13,8 @@ namespace Microsoft.Dnx.Runtime.Tests
     {
         [ConditionalTheory]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
 
         // NOTE(anurse): Disabled the tests that use frameworks less than .NET 4.0 because the CI doesn't have them installed :(
         // for some reason, the reference assemblies for .NET 3.5 Client Profile ARE installed however, so we can test those.
@@ -99,7 +100,8 @@ namespace Microsoft.Dnx.Runtime.Tests
 
         [ConditionalTheory]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         [InlineData("net20", @"%WINDIR%\Microsoft.NET\Framework\v2.0.50727\{name}.dll")]
         [InlineData("net30", @"REFASMSROOT\v3.0\{name}.dll,%WINDIR%\Microsoft.NET\Framework\v2.0.50727\{name}.dll")]
         [InlineData("net35", @"REFASMSROOT\v3.5\{name}.dll,REFASMSROOT\v3.0\{name}.dll,%WINDIR%\Microsoft.NET\Framework\v2.0.50727\{name}.dll")]

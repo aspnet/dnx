@@ -232,7 +232,8 @@ namespace Microsoft.Dnx.Runtime.Tests
         }
 
         [ConditionalTheory]
-        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
+        [OSSkipCondition(OperatingSystems.Linux)]
+        [OSSkipCondition(OperatingSystems.MacOSX)]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
         // Portable frameworks should use the old matching system based on scoring to ensure the best PCL is chosen
         [InlineData(".NETPortable,Version=v4.0,Profile=Profile6", "portable-net40+sl4+win8,portable-net40+win8", "portable-net40+win8")]
