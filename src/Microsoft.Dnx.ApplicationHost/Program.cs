@@ -8,7 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Compilation.FileSystem;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.CommandParsing;
 using Microsoft.Dnx.Runtime.Common;
