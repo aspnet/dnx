@@ -39,8 +39,7 @@ namespace Microsoft.Dnx.ApplicationHost
 
         public DefaultHost(RuntimeOptions options,
                            IServiceProvider hostServices,
-                           IAssemblyLoadContextAccessor loadContextAccessor,
-                           IFileWatcher fileWatcher)
+                           IAssemblyLoadContextAccessor loadContextAccessor)
         {
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
@@ -49,7 +48,7 @@ namespace Microsoft.Dnx.ApplicationHost
 
             _serviceProvider = new ServiceProvider(hostServices);
 
-            Initialize(options, hostServices, loadContextAccessor, fileWatcher);
+            Initialize(options, hostServices, loadContextAccessor);
         }
 
         public IServiceProvider ServiceProvider
@@ -107,7 +106,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             });
         }
 
-        private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor, IFileWatcher fileWatcher)
+        private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor)
         {
             var applicationHostContext = new ApplicationHostContext
             {
@@ -131,14 +130,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             ValidateMinRuntimeVersion(libraries);
 #endif
 
-            if (options.WatchFiles)
-            {
-                fileWatcher.OnChanged += _ =>
-                {
-                    _shutdown.RequestShutdownWaitForDebugger();
-                };
-            }
-
             // Create a new Application Environment for running the app. It needs a reference to the Host's application environment
             // (if any), which we can get from the service provider we were given.
             // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
@@ -150,8 +141,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 applicationEnvironment,
                 _runtimeEnvironment,
                 loadContextAccessor.Default,
-                new CompilationCache(),
-                fileWatcher);
+                new CompilationCache());
 
             // Compilation services available only for runtime compilation
             compilationContext.AddCompilationService(typeof(RuntimeOptions), options);

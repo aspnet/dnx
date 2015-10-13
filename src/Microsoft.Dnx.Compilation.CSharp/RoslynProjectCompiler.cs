@@ -14,7 +14,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
             ICacheContextAccessor cacheContextAccessor,
             INamedCacheDependencyProvider namedCacheProvider,
             IAssemblyLoadContext loadContext,
-            IFileWatcher watcher,
             IApplicationEnvironment environment,
             IServiceProvider services)
         {
@@ -23,7 +22,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 cacheContextAccessor,
                 namedCacheProvider,
                 loadContext,
-                watcher,
                 environment,
                 services);
         }

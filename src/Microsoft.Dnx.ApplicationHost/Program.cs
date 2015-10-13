@@ -47,17 +47,7 @@ namespace Microsoft.Dnx.ApplicationHost
                     return Task.FromResult(exitCode);
                 }
 
-                IFileWatcher watcher;
-                if (options.WatchFiles)
-                {
-                    watcher = new FileWatcher(ProjectRootResolver.ResolveRootDirectory(Path.GetFullPath(options.ApplicationBaseDirectory)));
-                }
-                else
-                {
-                    watcher = NoopWatcher.Instance;
-                }
-
-                host = new DefaultHost(options, _serviceProvider, _loadContextAccessor, watcher);
+                host = new DefaultHost(options, _serviceProvider, _loadContextAccessor);
 
                 if (host.Project == null)
                 {
@@ -141,7 +131,6 @@ namespace Microsoft.Dnx.ApplicationHost
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "Microsoft.Dnx.ApplicationHost";
             app.FullName = app.Name;
-            var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
             var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
 
@@ -183,7 +172,6 @@ namespace Microsoft.Dnx.ApplicationHost
             }
 
             defaultHostOptions = new RuntimeOptions();
-            defaultHostOptions.WatchFiles = optionWatch.HasValue();
 
             defaultHostOptions.TargetFramework = _environment.RuntimeFramework;
             defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";

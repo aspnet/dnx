@@ -24,7 +24,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
         private readonly IAssemblyLoadContext _loadContext;
-        private readonly IFileWatcher _watcher;
         private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _services;
         private readonly Func<IMetadataFileReference, AssemblyMetadata> _assemblyMetadataFactory;
@@ -33,7 +32,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                               ICacheContextAccessor cacheContextAccessor,
                               INamedCacheDependencyProvider namedDependencyProvider,
                               IAssemblyLoadContext loadContext,
-                              IFileWatcher watcher,
                               IApplicationEnvironment environment,
                               IServiceProvider services)
         {
@@ -41,7 +39,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
             _loadContext = loadContext;
-            _watcher = watcher;
             _environment = environment;
             _services = services;
             _assemblyMetadataFactory = fileReference =>
@@ -70,10 +67,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
             {
                 name += "!" + projectContext.Target.Aspect;
             }
-
-            _watcher.WatchProject(path);
-
-            _watcher.WatchFile(projectContext.ProjectFilePath);
 
             if (_cacheContextAccessor.Current != null)
             {
@@ -343,8 +336,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             foreach (var sourcePath in sourceFiles)
             {
-                _watcher.WatchFile(sourcePath);
-
                 var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
 
                 trees.Add(syntaxTree);
@@ -353,8 +344,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
             foreach (var sourceFileReference in sourceReferences.OfType<ISourceFileReference>())
             {
                 var sourcePath = sourceFileReference.Path;
-
-                _watcher.WatchFile(sourcePath);
 
                 var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
 
@@ -367,9 +356,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
             foreach (var d in dirs)
             {
                 ctx.Monitor(new FileWriteTimeCacheDependency(d));
-
-                // TODO: Make the file watcher hand out cache dependencies as well
-                _watcher.WatchDirectory(d, ".cs");
             }
 
             return trees;
