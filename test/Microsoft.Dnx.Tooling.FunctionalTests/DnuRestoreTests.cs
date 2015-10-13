@@ -87,5 +87,16 @@ B: This is Package B
             Assert.Equal(1, lockFiles.Length);
             Assert.Equal("Main", Path.GetFileName(Path.GetDirectoryName(lockFiles[0])));
         }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void Restore_NormalizesVersionCasing(DnxSdk sdk)
+        {
+            var solution = TestUtils.GetSolution<DnuRestoreTests>(sdk, "MismatchedVersionCasing");
+
+            var result = sdk.Dnu.Restore(solution.GetProject("A"));
+
+            Assert.Equal(0, result.ExitCode);
+        }
     }
 }
