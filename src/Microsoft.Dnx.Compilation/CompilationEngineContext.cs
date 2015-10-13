@@ -7,7 +7,6 @@ namespace Microsoft.Dnx.Compilation
 {
     public class CompilationEngineContext
     {
-        public IFileWatcher FileWatcher { get; }
         public IServiceProvider Services { get { return _compilerServices; } }
         public IAssemblyLoadContext DefaultLoadContext { get; set; }
         public IApplicationEnvironment ApplicationEnvironment { get; set; }
@@ -19,26 +18,14 @@ namespace Microsoft.Dnx.Compilation
         public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
                                         IRuntimeEnvironment runtimeEnvironment,
                                         IAssemblyLoadContext defaultLoadContext,
-                                        CompilationCache cache) :
-            this(applicationEnvironment, runtimeEnvironment, defaultLoadContext, cache, NoopWatcher.Instance)
-        {
-
-        }
-
-        public CompilationEngineContext(IApplicationEnvironment applicationEnvironment,
-                                        IRuntimeEnvironment runtimeEnvironment,
-                                        IAssemblyLoadContext defaultLoadContext,
-                                        CompilationCache cache,
-                                        IFileWatcher fileWatcher)
+                                        CompilationCache cache)
         {
             ApplicationEnvironment = applicationEnvironment;
             RuntimeEnvironment = runtimeEnvironment;
             DefaultLoadContext = defaultLoadContext;
             CompilationCache = cache;
-            FileWatcher = fileWatcher;
 
             // Register compiler services
-            AddCompilationService(typeof(IFileWatcher), FileWatcher);
             AddCompilationService(typeof(IApplicationEnvironment), ApplicationEnvironment);
             AddCompilationService(typeof(ICache), CompilationCache.Cache);
             AddCompilationService(typeof(ICacheContextAccessor), CompilationCache.CacheContextAccessor);

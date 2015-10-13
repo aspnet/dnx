@@ -13,23 +13,14 @@ namespace Microsoft.Dnx.Compilation.DesignTime
         private readonly IApplicationShutdown _shutdown;
         private readonly ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>> _compileResponses = new ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>>();
         private readonly TaskCompletionSource<Dictionary<string, int>> _projectContexts = new TaskCompletionSource<Dictionary<string, int>>();
-        private readonly IFileWatcher _watcher;
 
-        public DesignTimeHostCompiler(IApplicationShutdown shutdown, IFileWatcher watcher, Stream stream)
+        public DesignTimeHostCompiler(IApplicationShutdown shutdown, Stream stream)
         {
             _shutdown = shutdown;
-            _watcher = watcher;
             _queue = new ProcessingQueue(stream);
             _queue.ProjectCompiled += OnProjectCompiled;
             _queue.ProjectsInitialized += ProjectContextsInitialized;
             _queue.ProjectChanged += _ => { };
-            _queue.ProjectSources += files =>
-            {
-                foreach (var file in files)
-                {
-                    watcher.WatchFile(file);
-                }
-            };
             _queue.Error += OnError;
 
             _queue.Closed += OnClosed;
@@ -87,8 +78,6 @@ namespace Microsoft.Dnx.Compilation.DesignTime
                 Aspect = library.Aspect,
                 ContextId = contextId
             });
-
-            _watcher.WatchProject(projectPath);
 
             var task = _compileResponses.GetOrAdd(contextId, _ => new TaskCompletionSource<CompileResponse>()).Task;
             return await task.ConfigureAwait(false);

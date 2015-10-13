@@ -19,8 +19,6 @@ namespace Microsoft.Dnx.Runtime
 
         public string Configuration { get; set; }
 
-        public bool WatchFiles { get; set; }
-
         public int? CompilationServerPort { get; set; }
     }
 }
