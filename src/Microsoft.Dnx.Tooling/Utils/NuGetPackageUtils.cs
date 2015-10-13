@@ -77,23 +77,21 @@ namespace Microsoft.Dnx.Tooling
                     // Fixup the casing of the nuspec on disk to match what we expect
                     var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + NuGet.Constants.ManifestExtension).Single();
 
-                    if (!string.Equals(nuspecFile, targetNuspec, StringComparison.Ordinal))
+                    Manifest manifest = null;
+                    using (var nuspecStream = File.OpenRead(nuspecFile))
                     {
-                        Manifest manifest = null;
-                        using (var nuspecStream = File.OpenRead(nuspecFile))
-                        {
-                            manifest = Manifest.ReadFrom(nuspecStream, validateSchema: false);
-                            manifest.Metadata.Id = library.Name;
-                        }
+                        manifest = Manifest.ReadFrom(nuspecStream, validateSchema: false);
+                        manifest.Metadata.Id = library.Name;
+                        manifest.Metadata.Version = library.Version;
+                    }
 
-                        // Delete the previous nuspec file
-                        File.Delete(nuspecFile);
+                    // Delete the previous nuspec file
+                    File.Delete(nuspecFile);
 
-                        // Write the new manifest
-                        using (var targetNuspecStream = File.OpenWrite(targetNuspec))
-                        {
-                            manifest.Save(targetNuspecStream);
-                        }
+                    // Write the new manifest
+                    using (var targetNuspecStream = File.OpenWrite(targetNuspec))
+                    {
+                        manifest.Save(targetNuspecStream);
                     }
 
                     // Note: PackageRepository relies on the hash file being written out as the final operation as part of a package install
