@@ -6,6 +6,9 @@
       "bin": {
         "assembly": "../../src/ClassLibrary/obj/{configuration}/ClassLibrary.dll",
         "pdb": "../../src/ClassLibrary/obj/{configuration}/ClassLibrary.pdb"
+      },
+      "dependencies": {
+        "Newtonsoft.Json": "4.0.1"
       }
     }
   }

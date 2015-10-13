@@ -119,10 +119,27 @@ namespace Microsoft.Dnx.Tooling.Publish
                 root.Operations.Delete(TargetPath);
             }
 
+            var selectedFrameworks = new List<FrameworkName>();
+
+            // Make sure we only emit the nupkgs for the specified frameworks
+            // We need to pick actual project frameworks relevant to the publish
+            // but the project may not target exactly the right framework so we need
+            // to use a compatibility check.
+            foreach (var framework in root.Frameworks)
+            {
+                var selectedFramework = project.GetCompatibleTargetFramework(framework.Key);
+                if (selectedFramework == null)
+                {
+                    root.Reports.WriteError($"Unable to build {project.Name}. It is not compatible with the requested target framework: {framework.Key}");
+                    return false;
+                }
+                selectedFrameworks.Add(selectedFramework.FrameworkName);
+            }
+
             // If this is a wrapper project, we need to generate a lock file before building it
             if (IsWrappingAssembly())
             {
-                var success = Restore(root, publishProject: this, restoreDirectory: project.ProjectDirectory)
+                var success = Restore(root, publishProject: this, restoreDirectory: project.ProjectDirectory, targetFrameworks: selectedFrameworks)
                     .GetAwaiter().GetResult();
                 if (!success)
                 {
@@ -138,22 +155,9 @@ namespace Microsoft.Dnx.Tooling.Publish
             buildOptions.GeneratePackages = true;
             buildOptions.Reports = root.Reports.ShallowCopy();
 
-            if (root.Frameworks.Any())
+            foreach (var selectedFramework in selectedFrameworks)
             {
-                // Make sure we only emit the nupkgs for the specified frameworks
-                // We need to pick actual project frameworks relevant to the publish
-                // but the project may not target exactly the right framework so we need
-                // to use a compatibility check.
-                foreach (var framework in root.Frameworks)
-                {
-                    var selectedFramework = project.GetCompatibleTargetFramework(framework.Key);
-                    if (selectedFramework == null)
-                    {
-                        root.Reports.WriteError($"Unable to build {project.Name}. It is not compatible with the requested target framework: {framework.Key}");
-                        return false;
-                    }
-                    buildOptions.TargetFrameworks.Add(selectedFramework.FrameworkName, VersionUtility.GetShortFrameworkName(selectedFramework.FrameworkName));
-                }
+                buildOptions.TargetFrameworks.Add(selectedFramework, VersionUtility.GetShortFrameworkName(selectedFramework));
             }
 
             // Mute "dnu pack" completely if it is invoked by "dnu publish --quiet"
@@ -437,7 +441,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             return Path.Combine(path1, path2);
         }
 
-        private async Task<bool> Restore(PublishRoot root, PublishProject publishProject, string restoreDirectory)
+        private async Task<bool> Restore(PublishRoot root, PublishProject publishProject, string restoreDirectory, IEnumerable<FrameworkName> targetFrameworks)
         {
             var appEnv = (IApplicationEnvironment)root.HostServices.GetService(typeof(IApplicationEnvironment));
 
@@ -448,11 +452,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             var restoreCommand = new RestoreCommand(appEnv);
 
-            foreach (var framework in root.Frameworks)
-            {
-                restoreCommand.TargetFrameworks.Add(framework.Key);
-            }
-
+            restoreCommand.TargetFrameworks.AddRange(targetFrameworks);
             restoreCommand.SkipRestoreEvents = true;
             restoreCommand.SkipInstall = true;
             // This is a workaround for #1322. Since we use restore to generate the lock file
@@ -478,7 +478,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             {
                 var project = root.Projects[i];
                 var restoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
-                tasks[i] = Restore(root, project, restoreDirectory);
+                tasks[i] = Restore(root, project, restoreDirectory, root.Frameworks.Keys);
             }
 
             Task.WaitAll(tasks);
