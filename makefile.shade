@@ -1149,6 +1149,7 @@ functions @{
 
         try
         {
+            var filesList = new List<string>();
             foreach (var file in dependencies)
             {
                 if (!(ignoreDependencies != null && ignoreDependencies.Contains(Path.GetFileName(file))))
@@ -1156,8 +1157,12 @@ functions @{
                     var targetFilePath = Path.Combine(targetFolder, Path.GetFileName(file));
                     Log.Info("Copying " + file + " to " + targetFilePath);
                     File.Copy(file, targetFilePath, true);
+
+                    // Record the copied files
+                    filesList.Add(file + " => " + targetFilePath);
                 }
             }
+            File.WriteAllLines(Path.Combine(targetFolder, "files.lst"), filesList);
         }
         catch (Exception ex)
         {

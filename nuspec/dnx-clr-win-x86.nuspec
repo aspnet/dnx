@@ -8,6 +8,6 @@
         <description>Microsoft .NET Execution environment for Desktop CLR on Windows x86</description>
     </metadata>
     <files>
-        <file src="$RuntimeNamePrefix$clr-win-x86\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
+        <file src="$RuntimeNamePrefix$clr-win-x86\bin\**" exclude="**\*.pdb;**\*.xml;**\files.lst" target="bin" />
     </files>
 </package>
