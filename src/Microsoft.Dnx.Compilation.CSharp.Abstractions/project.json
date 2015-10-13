@@ -2,7 +2,7 @@
     "version": "1.0.0-*",
     "dependencies": {
         "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
-        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*"
+        "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*"
     },
 
     "frameworks": {
