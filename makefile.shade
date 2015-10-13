@@ -463,7 +463,10 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
                         var sourceFile = Path.Combine(target.TargetFolder, native + nativeExtension);
                         if (File.Exists(sourceFile))
                         {
-                            Log.Info("Copying " + sourceFile + " to " + targetFilePath);
+                            if (!Quiet)
+                            {
+                                Log.Info("Copying " + sourceFile + " to " + targetFilePath);
+                            }
                             File.Copy(sourceFile, targetFilePath);
                         }
                         else
@@ -535,9 +538,11 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
                 }
 
                 Directory.CreateDirectory(libPath);
+                if (!Quiet)
+                {
+                    Log.Info("Moving " + name + " to " + target);
+                }
                 File.Move(source, target);
-
-                Log.Info("Moving " + name + " to " + target);
             }
             else
             {
@@ -1154,7 +1159,10 @@ functions @{
                 if (!(ignoreDependencies != null && ignoreDependencies.Contains(Path.GetFileName(file))))
                 {
                     var targetFilePath = Path.Combine(targetFolder, Path.GetFileName(file));
-                    Log.Info("Copying " + file + " to " + targetFilePath);
+                    if (!Quiet)
+                    {
+                        Log.Info("Copying " + file + " to " + targetFilePath);
+                    }
                     File.Copy(file, targetFilePath, true);
                 }
             }
