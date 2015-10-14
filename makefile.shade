@@ -1253,7 +1253,7 @@ functions @{
                 {
                     continue;
                 }
-                projectAssemblies.Add(Path.Combine(Directory.GetCurrentDirectory(), "artifacts", "build", name, "dnxcore50", name + ".dll"));
+                projectAssemblies.Add(Path.Combine(Directory.GetCurrentDirectory(), "artifacts", "build", name, target.Framework, name + ".dll"));
             }
 
             if (package.Contains(".Sources") || package.Contains("Microsoft.Dnx.Runtime.Internals"))
