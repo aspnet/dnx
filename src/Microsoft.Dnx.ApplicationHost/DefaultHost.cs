@@ -29,7 +29,6 @@ namespace Microsoft.Dnx.ApplicationHost
 
         private readonly string _projectDirectory;
         private readonly FrameworkName _targetFramework;
-        private readonly ApplicationShutdown _shutdown = new ApplicationShutdown();
         private readonly IList<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly IRuntimeEnvironment _runtimeEnvironment;
@@ -145,7 +144,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Compilation services available only for runtime compilation
             compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
-            compilationContext.AddCompilationService(typeof(IApplicationShutdown), _shutdown);
 
             var compilationEngine = new CompilationEngine(compilationContext);
 
@@ -154,7 +152,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _serviceProvider.Add(typeof(ILibraryManager), new RuntimeLibraryManager(applicationHostContext));
 
             _serviceProvider.Add(typeof(ILibraryExporter), new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration)));
-            _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
 
             if (options.CompilationServerPort.HasValue)
             {
