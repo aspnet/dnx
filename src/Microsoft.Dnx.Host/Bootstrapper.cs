@@ -70,6 +70,15 @@ namespace Microsoft.Dnx.Host
                 serviceProvider.Add(typeof(IRuntimeEnvironment), env);
 
                 CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
+
+                PlatformServices.SetDefault(
+                    PlatformServices.Create(
+                        basePlatformServices: null,
+                        application: applicationEnvironment,
+                        runtime: env,
+                        container: container,
+                        accessor: accessor));
+
 #if DNX451
                 if (RuntimeEnvironmentHelper.IsMono)
                 {

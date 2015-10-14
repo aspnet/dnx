@@ -149,12 +149,20 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             var compilationEngine = new CompilationEngine(compilationContext);
 
-            // Default services
-            _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            _serviceProvider.Add(typeof(ILibraryManager), new RuntimeLibraryManager(applicationHostContext));
+            var runtimeLibraryManager = new RuntimeLibraryManager(applicationHostContext);
 
+            // Default services
             _serviceProvider.Add(typeof(ILibraryExporter), new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration)));
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
+            _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
+            _serviceProvider.Add(typeof(ILibraryManager), runtimeLibraryManager);
+
+            PlatformServices.SetDefault(
+                PlatformServices.Create(
+                    PlatformServices.Default,
+                    application: applicationEnvironment,
+                    libraryManager: runtimeLibraryManager
+                    ));
 
             if (options.CompilationServerPort.HasValue)
             {

@@ -18,14 +18,7 @@ namespace Microsoft.Dnx.CommonTestUtils
 {
     public static class TestUtils
     {
-        public static IRuntimeEnvironment CurrentRuntimeEnvironment
-        {
-            get
-            {
-                return CallContextServiceLocator.Locator.ServiceProvider
-                    .GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
-            }
-        }
+        public static IRuntimeEnvironment CurrentRuntimeEnvironment => PlatformServices.Default.Runtime;
 
         public static int Exec(string program, string commandLine)
         {

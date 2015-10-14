@@ -18,13 +18,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 {
     public class DnuRuntimeRestoreTests
     {
-        private readonly IApplicationEnvironment _appEnv;
         private static readonly FrameworkName Dnx451 = VersionUtility.ParseFrameworkName("dnx451");
-
-        public DnuRuntimeRestoreTests()
-        {
-            _appEnv = (IApplicationEnvironment)CallContextServiceLocator.Locator.ServiceProvider.GetService(typeof(IApplicationEnvironment));
-        }
 
         public static IEnumerable<object[]> RuntimeComponents
         {
