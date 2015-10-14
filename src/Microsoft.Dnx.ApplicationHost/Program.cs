@@ -129,6 +129,9 @@ namespace Microsoft.Dnx.ApplicationHost
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "Microsoft.Dnx.ApplicationHost";
             app.FullName = app.Name;
+
+            // TODO: Remove this when the final beta8 tooling is released
+            var optionWatch = app.Option("--watch", "Watch is deprecated, use Microsoft.Dnx.Watcher instead.", CommandOptionType.NoValue);
             var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
             var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
 
