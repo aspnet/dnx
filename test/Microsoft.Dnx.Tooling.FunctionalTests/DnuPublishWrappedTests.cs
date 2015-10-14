@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         [MemberData(nameof(ClrDnxSdks))] // project only supports dnx451
         public void PublishWrappedProjectForSpecificRuntime(DnxSdk sdk)
         {
-            DoPublish(sdk, $"--runtime {sdk.FullName}");
+            DoPublish(sdk, $"--runtime \"{sdk.Location}\"");
         }
 
         private static void DoPublish(DnxSdk sdk, string arguments = null)
