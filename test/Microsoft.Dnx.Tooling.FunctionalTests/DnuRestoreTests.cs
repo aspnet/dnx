@@ -98,5 +98,22 @@ B: This is Package B
 
             Assert.Equal(0, result.ExitCode);
         }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void Restore_OnlyRewriteInvalidLockfiles(DnxSdk sdk)
+        {
+            var solution = TestUtils.GetSolution<DnuRestoreTests>(
+                sdk,
+                "ThreeLockedProjects",
+                appendSolutionNameToTestFolder: true);
+
+            var result = sdk.Dnu.Restore(solution.SourcePath).EnsureSuccess();
+
+            var outputLines = result.StandardOutput.Split('\n');
+            Assert.Contains(outputLines, line => line.Contains("Following lock file") && line.Contains("Project1"));
+            Assert.Contains(outputLines, line => line.Contains("Writing lock file") && line.Contains("Project2"));
+            Assert.Contains(outputLines, line => line.Contains("Following lock file") && line.Contains("Project3"));
+        }
     }
 }
