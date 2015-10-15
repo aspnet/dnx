@@ -148,14 +148,16 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             compilationContext.AddCompilationService(typeof(IApplicationShutdown), _shutdown);
 
             var compilationEngine = new CompilationEngine(compilationContext);
+            var runtimeLibraryExporter = new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration));
 
             var runtimeLibraryManager = new RuntimeLibraryManager(applicationHostContext);
 
             // Default services
-            _serviceProvider.Add(typeof(ILibraryExporter), new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration)));
+            _serviceProvider.Add(typeof(ILibraryExporter), runtimeLibraryExporter);
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), runtimeLibraryManager);
+
 
             PlatformServices.SetDefault(
                 PlatformServices.Create(
@@ -163,6 +165,12 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                     application: applicationEnvironment,
                     libraryManager: runtimeLibraryManager
                     ));
+
+            CompilationServices.SetDefault(
+                    CompilationServices.Create(
+                            libraryExporter: runtimeLibraryExporter
+                        )
+                );
 
             if (options.CompilationServerPort.HasValue)
             {
