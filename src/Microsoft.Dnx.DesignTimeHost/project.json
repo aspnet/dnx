@@ -10,7 +10,11 @@
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Newtonsoft.Json": "6.0.6"
     },
-    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [ "TRACE" ],
+        "warningsAsErrors": true,
+        "emitEntryPoint": true
+    },
     "frameworks": {
         "dnx451": {
             "frameworkAssemblies": {

@@ -163,7 +163,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             // Mute "dnu pack" completely if it is invoked by "dnu publish --quiet"
             buildOptions.Reports.Information = root.Reports.Quiet;
 
-            var buildManager = new BuildManager(root.HostServices, buildOptions);
+            var buildManager = new BuildManager(buildOptions);
             if (!buildManager.Build())
             {
                 return false;
@@ -443,7 +443,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         private async Task<bool> Restore(PublishRoot root, PublishProject publishProject, string restoreDirectory, IEnumerable<FrameworkName> targetFrameworks)
         {
-            var appEnv = (IApplicationEnvironment)root.HostServices.GetService(typeof(IApplicationEnvironment));
+            var appEnv = PlatformServices.Default.Application;
 
             var feedOptions = new FeedOptions();
             feedOptions.IgnoreFailedSources = true;
@@ -518,8 +518,8 @@ namespace Microsoft.Dnx.Tooling.Publish
             //    <add name="httpplatformhandler" path="*" verb="*" modules="httpPlatformHandler" resourceType="Unspecified" />
             //  </handlers>
             //  <httpPlatform processPath="..\command.cmd"
-            //                arguments="" 
-            //                stdoutLogEnabled="true" 
+            //                arguments=""
+            //                stdoutLogEnabled="true"
             //                stdoutLogFile="..\logs\stdout.log">
             //  </httpPlatform>
             // </system.webServer>
@@ -563,8 +563,8 @@ namespace Microsoft.Dnx.Tooling.Publish
     <add name=""httpplatformhandler"" path=""*"" verb=""*"" modules=""httpPlatformHandler"" resourceType=""Unspecified"" />
   </handlers>
   <httpPlatform processPath=""{basePath}\approot\{command}.cmd""
-                arguments="""" 
-                stdoutLogEnabled=""true"" 
+                arguments=""""
+                stdoutLogEnabled=""true""
                 stdoutLogFile=""{baseLogPath}\stdout.log"">
   </httpPlatform>
 </system.webServer></configuration>");

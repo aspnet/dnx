@@ -1,6 +1,10 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [ "TRACE" ],
+        "warningsAsErrors": true,
+        "emitEntryPoint": true
+    },
     "dependencies": {
         "Microsoft.Dnx.Runtime": "1.0.0-*",
         "Microsoft.Dnx.Compilation": "1.0.0-*",

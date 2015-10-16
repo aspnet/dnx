@@ -10,7 +10,7 @@ namespace Microsoft.Dnx.Tooling
 {
     internal class PackConsoleCommand
     {
-        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IServiceProvider serviceProvider)
+        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory)
         {
             cmdApp.Command("pack", c =>
             {
@@ -43,7 +43,7 @@ namespace Microsoft.Dnx.Tooling
                     buildOptions.GeneratePackages = true;
                     buildOptions.Reports = reportsFactory.CreateReports(optionQuiet.HasValue());
 
-                    var projectManager = new BuildManager(serviceProvider, buildOptions);
+                    var projectManager = new BuildManager(buildOptions);
 
                     if (!projectManager.Build())
                     {

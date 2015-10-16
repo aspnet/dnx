@@ -20,7 +20,6 @@ namespace Microsoft.Dnx.Tooling
 {
     public class BuildManager
     {
-        private readonly IServiceProvider _hostServices;
         private readonly IApplicationEnvironment _applicationEnvironment;
         private readonly BuildOptions _buildOptions;
 
@@ -29,14 +28,13 @@ namespace Microsoft.Dnx.Tooling
 
         private Runtime.Project _currentProject;
 
-        public BuildManager(IServiceProvider hostServices, BuildOptions buildOptions)
+        public BuildManager(BuildOptions buildOptions)
         {
-            _hostServices = hostServices;
             _buildOptions = buildOptions;
 
-            _applicationEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
-            var runtimeEnvironment = (IRuntimeEnvironment)hostServices.GetService(typeof(IRuntimeEnvironment));
-            var loadContextAccessor = (IAssemblyLoadContextAccessor)hostServices.GetService(typeof(IAssemblyLoadContextAccessor));
+            _applicationEnvironment = PlatformServices.Default.Application;
+            var runtimeEnvironment = PlatformServices.Default.Runtime;
+            var loadContextAccessor = PlatformServices.Default.AssemblyLoadContextAccessor;
 
             _compilationEngine = new CompilationEngine(new CompilationEngineContext(
                 _applicationEnvironment,

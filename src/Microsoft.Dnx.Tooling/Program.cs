@@ -11,20 +11,11 @@ using Microsoft.Dnx.Runtime.Common.CommandLine;
 
 namespace Microsoft.Dnx.Tooling
 {
-    public class Program
+    public static class Program
     {
-        private readonly IServiceProvider _hostServices;
-        private readonly IApplicationEnvironment _environment;
-        private readonly IRuntimeEnvironment _runtimeEnv;
-
-        public Program(IServiceProvider hostServices, IApplicationEnvironment environment, IRuntimeEnvironment runtimeEnv)
+        public static int Main(string[] args)
         {
-            _hostServices = hostServices;
-            _environment = environment;
-            _runtimeEnv = runtimeEnv;
-
 #if DNX451
-            Thread.GetDomain().SetData(".appDomain", this);
             ServicePointManager.DefaultConnectionLimit = 1024;
 
             // Work around a Mono issue that makes restore unbearably slow,
@@ -35,10 +26,7 @@ namespace Microsoft.Dnx.Tooling
                 ServicePointManager.DefaultConnectionLimit = 1;
             }
 #endif
-        }
 
-        public int Main(string[] args)
-        {
 #if DEBUG
             // Add our own debug helper because DNU is usually run from a wrapper script,
             // making it too late to use the DNX one. Technically it's possible to use
@@ -52,13 +40,17 @@ namespace Microsoft.Dnx.Tooling
                 SpinWait.SpinUntil(() => Debugger.IsAttached);
             }
 #endif
+
+            var environment = PlatformServices.Default.Application;
+            var runtimeEnv = PlatformServices.Default.Runtime;
+
             var app = new CommandLineApplication();
             app.Name = "dnu";
             app.FullName = "Microsoft .NET Development Utility";
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");
-            app.VersionOption("--version", () => _runtimeEnv.GetShortVersion(), () => _runtimeEnv.GetFullVersion());
+            app.VersionOption("--version", () => runtimeEnv.GetShortVersion(), () => runtimeEnv.GetFullVersion());
 
             // Show help information if no subcommand/option was specified
             app.OnExecute(() =>
@@ -68,16 +60,16 @@ namespace Microsoft.Dnx.Tooling
             });
 
             // Defer reading option verbose until AFTER execute.
-            var reportsFactory = new ReportsFactory(_runtimeEnv, () => optionVerbose.HasValue());
+            var reportsFactory = new ReportsFactory(runtimeEnv, () => optionVerbose.HasValue());
 
-            BuildConsoleCommand.Register(app, reportsFactory, _hostServices);
-            CommandsConsoleCommand.Register(app, reportsFactory, _environment);
-            InstallConsoleCommand.Register(app, reportsFactory, _environment);
-            ListConsoleCommand.Register(app, reportsFactory, _environment);
-            PackConsoleCommand.Register(app, reportsFactory, _hostServices);
+            BuildConsoleCommand.Register(app, reportsFactory);
+            CommandsConsoleCommand.Register(app, reportsFactory, environment);
+            InstallConsoleCommand.Register(app, reportsFactory, environment);
+            ListConsoleCommand.Register(app, reportsFactory, environment);
+            PackConsoleCommand.Register(app, reportsFactory);
             PackagesConsoleCommand.Register(app, reportsFactory);
-            PublishConsoleCommand.Register(app, reportsFactory, _environment, _hostServices);
-            RestoreConsoleCommand.Register(app, reportsFactory, _environment, _runtimeEnv);
+            PublishConsoleCommand.Register(app, reportsFactory, environment);
+            RestoreConsoleCommand.Register(app, reportsFactory, environment, runtimeEnv);
             WrapConsoleCommand.Register(app, reportsFactory);
             FeedsConsoleCommand.Register(app, reportsFactory);
             ClearCacheConsoleCommand.Register(app, reportsFactory);
@@ -88,7 +80,7 @@ namespace Microsoft.Dnx.Tooling
             }
             catch (CommandParsingException ex)
             {
-                AnsiConsole.GetError(useConsoleColor: _runtimeEnv.OperatingSystem == "Windows").WriteLine($"Error: {ex.Message}".Red().Bold());
+                AnsiConsole.GetError(useConsoleColor: runtimeEnv.OperatingSystem == "Windows").WriteLine($"Error: {ex.Message}".Red().Bold());
                 ex.Command.ShowHelp();
                 return 1;
             }
@@ -102,22 +94,22 @@ namespace Microsoft.Dnx.Tooling
             {
                 foreach (var exception in aex.InnerExceptions)
                 {
-                    DumpException(exception);
+                    DumpException(exception, runtimeEnv);
                 }
                 return 1;
             }
             catch (Exception ex)
             {
-                DumpException(ex);
+                DumpException(exception, runtimeEnv);
                 return 1;
             }
 #endif
         }
 
-        private void DumpException(Exception ex)
+        private static void DumpException(Exception ex, IRuntimeEnvironment runtimeEnv)
         {
             AnsiConsole
-                .GetError(useConsoleColor: _runtimeEnv.OperatingSystem == "Windows")
+                .GetError(useConsoleColor: runtimeEnv.OperatingSystem == "Windows")
                 .WriteLine($"Error: {ex.Message}".Red().Bold());
             Logger.TraceError($"Full Exception: {ex.ToString()}");
         }

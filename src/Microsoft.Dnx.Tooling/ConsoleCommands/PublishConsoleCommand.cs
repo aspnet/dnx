@@ -10,7 +10,7 @@ namespace Microsoft.Dnx.Tooling
 {
     internal class PublishConsoleCommand
     {
-        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IApplicationEnvironment applicationEnvironment, IServiceProvider serviceProvider)
+        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IApplicationEnvironment applicationEnvironment)
         {
             cmdApp.Command("publish", c =>
             {
@@ -75,7 +75,7 @@ namespace Microsoft.Dnx.Tooling
 
                     options.AddFrameworkMonikers(optionFramework.Values);
 
-                    var manager = new PublishManager(serviceProvider, options, applicationEnvironment);
+                    var manager = new PublishManager(options, applicationEnvironment);
                     if (!manager.Publish())
                     {
                         return 1;

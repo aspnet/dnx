@@ -9,7 +9,7 @@ namespace Microsoft.Dnx.Tooling
 {
     internal class BuildConsoleCommand
     {
-        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IServiceProvider serviceProvider)
+        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory)
         {
             cmdApp.Command("build", c =>
             {
@@ -21,7 +21,7 @@ namespace Microsoft.Dnx.Tooling
                 var optionQuiet = c.Option("--quiet", "Do not show output such as dependencies in use",
                     CommandOptionType.NoValue);
                 var argProjectDir = c.Argument(
-                    "[projects]", 
+                    "[projects]",
                     "One or more projects build. If not specified, the project in the current directory will be used.",
                     multipleValues: true);
                 c.HelpOption("-?|-h|--help");
@@ -42,7 +42,7 @@ namespace Microsoft.Dnx.Tooling
                     buildOptions.GeneratePackages = false;
                     buildOptions.Reports = reportsFactory.CreateReports(optionQuiet.HasValue());
 
-                    var projectManager = new BuildManager(serviceProvider, buildOptions);
+                    var projectManager = new BuildManager(buildOptions);
 
                     if (!projectManager.Build())
                     {

@@ -1,6 +1,9 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions": { "warningsAsErrors": true },
+    "compilationOptions": {
+        "warningsAsErrors": true,
+        "emitEntryPoint": true
+    },
     "dependencies": {
         "Microsoft.Dnx.Compilation": "1.0.0-*",
         "Microsoft.Dnx.Project": "1.0.0-*",

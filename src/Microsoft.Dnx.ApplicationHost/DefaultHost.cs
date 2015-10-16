@@ -38,24 +38,21 @@ namespace Microsoft.Dnx.ApplicationHost
         private readonly ServiceProvider _serviceProvider;
 
         public DefaultHost(RuntimeOptions options,
-                           IServiceProvider hostServices,
                            IAssemblyLoadContextAccessor loadContextAccessor)
         {
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
             _loadContextAccessor = loadContextAccessor;
-            _runtimeEnvironment = (IRuntimeEnvironment)hostServices.GetService(typeof(IRuntimeEnvironment));
-
-            _serviceProvider = new ServiceProvider(hostServices);
-
-            Initialize(options, hostServices, loadContextAccessor);
+            _runtimeEnvironment = PlatformServices.Default.Runtime;
+            _serviceProvider = new ServiceProvider();
+            Initialize(options, loadContextAccessor);
         }
 
         public IServiceProvider ServiceProvider
         {
             get { return _serviceProvider; }
         }
-
+        
         public Project Project
         {
             get { return _project; }
@@ -106,7 +103,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             });
         }
 
-        private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor)
+        private void Initialize(RuntimeOptions options, IAssemblyLoadContextAccessor loadContextAccessor)
         {
             var applicationHostContext = new ApplicationHostContext
             {
@@ -134,7 +131,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             // (if any), which we can get from the service provider we were given.
             // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
             // will just have it's own independent set of global data.
-            var hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            var hostEnvironment = PlatformServices.Default.Application;
             var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration, hostEnvironment);
 
             var compilationContext = new CompilationEngineContext(
@@ -178,7 +175,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 Project.DefaultCompiler = Project.DefaultDesignTimeCompiler;
             }
 
-            CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
+            CallContextServiceLocator.Locator.ServiceProvider = _serviceProvider;
 
             // TODO: Dedupe this logic in the RuntimeLoadContext
             var projects = libraries.Where(p => p.Type == LibraryTypes.Project)

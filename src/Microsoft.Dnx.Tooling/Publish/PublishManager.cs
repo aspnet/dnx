@@ -16,14 +16,12 @@ namespace Microsoft.Dnx.Tooling.Publish
 {
     public class PublishManager
     {
-        private readonly IServiceProvider _hostServices;
         private readonly PublishOptions _options;
         private readonly IApplicationEnvironment _applicationEnvironment;
 
-        public PublishManager(IServiceProvider hostServices, PublishOptions options, IApplicationEnvironment applicationEnvironment)
+        public PublishManager(PublishOptions options, IApplicationEnvironment applicationEnvironment)
         {
             _applicationEnvironment = applicationEnvironment;
-            _hostServices = hostServices;
             _options = options;
             _options.ProjectDir = Normalize(_options.ProjectDir);
 
@@ -86,7 +84,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             var frameworkContexts = new Dictionary<FrameworkName, DependencyContext>();
 
-            var root = new PublishRoot(project, outputPath, _hostServices, _options.Reports)
+            var root = new PublishRoot(project, outputPath, _options.Reports)
             {
                 Configuration = _options.Configuration,
                 NoSource = _options.NoSource,

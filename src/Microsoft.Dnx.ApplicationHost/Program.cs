@@ -16,41 +16,28 @@ using Microsoft.Dnx.Runtime.Common.CommandLine;
 
 namespace Microsoft.Dnx.ApplicationHost
 {
-    public class Program
+    public static class Program
     {
-        private readonly IAssemblyLoaderContainer _container;
-        private readonly IApplicationEnvironment _environment;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
-
-        public Program(IAssemblyLoaderContainer container, IApplicationEnvironment environment, IAssemblyLoadContextAccessor loadContextAcessor, IServiceProvider serviceProvider)
-        {
-            _container = container;
-            _environment = environment;
-            _serviceProvider = serviceProvider;
-            _loadContextAccessor = loadContextAcessor;
-        }
-
-        public Task<int> Main(string[] args)
+        public static int Main(string[] args)
         {
             RuntimeOptions options;
             string[] programArgs;
             int exitCode;
             DefaultHost host;
-            
+
             try
             {
                 bool shouldExit = ParseArgs(args, out options, out programArgs, out exitCode);
                 if (shouldExit)
                 {
-                    return Task.FromResult(exitCode);
+                    return exitCode;
                 }
 
-                host = new DefaultHost(options, _serviceProvider, _loadContextAccessor);
+                host = new DefaultHost(options, PlatformServices.Default.AssemblyLoadContextAccessor);
 
                 if (host.Project == null)
                 {
-                    return Task.FromResult(1);
+                    return 1;
                 }
 
                 var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
@@ -81,7 +68,7 @@ namespace Microsoft.Dnx.ApplicationHost
 
             try
             {
-                disposable = host.AddLoaders(_container);
+                disposable = host.AddLoaders(PlatformServices.Default.AssemblyLoaderContainer);
 
                 return ExecuteMain(host, options.ApplicationName, programArgs)
                         .ContinueWith((t, state) =>
@@ -89,7 +76,7 @@ namespace Microsoft.Dnx.ApplicationHost
                             ((IDisposable)state).Dispose();
                             return t.GetAwaiter().GetResult();
                         },
-                        disposable);
+                        disposable).GetAwaiter().GetResult();
             }
             catch
             {
@@ -103,29 +90,29 @@ namespace Microsoft.Dnx.ApplicationHost
             }
         }
 
-        private string GetVariable(string key)
+        private static string GetVariable(string key)
         {
+            var environment = PlatformServices.Default.Application;
             if (string.Equals(key, "env:ApplicationBasePath", StringComparison.OrdinalIgnoreCase))
             {
-                return _environment.ApplicationBasePath;
+                return environment.ApplicationBasePath;
             }
             if (string.Equals(key, "env:ApplicationName", StringComparison.OrdinalIgnoreCase))
             {
-                return _environment.ApplicationName;
+                return environment.ApplicationName;
             }
             if (string.Equals(key, "env:Version", StringComparison.OrdinalIgnoreCase))
             {
-                return _environment.ApplicationVersion;
+                return environment.ApplicationVersion;
             }
             if (string.Equals(key, "env:TargetFramework", StringComparison.OrdinalIgnoreCase))
             {
-                return _environment.RuntimeFramework.Identifier;
+                return environment.RuntimeFramework.Identifier;
             }
             return Environment.GetEnvironmentVariable(key);
         }
 
-
-        private bool ParseArgs(string[] args, out RuntimeOptions defaultHostOptions, out string[] outArgs, out int exitCode)
+        private  static bool ParseArgs(string[] args, out RuntimeOptions defaultHostOptions, out string[] outArgs, out int exitCode)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "Microsoft.Dnx.ApplicationHost";
@@ -139,7 +126,7 @@ namespace Microsoft.Dnx.ApplicationHost
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
 
-            var env = (IRuntimeEnvironment)_serviceProvider.GetService(typeof(IRuntimeEnvironment));
+            var env = PlatformServices.Default.Runtime;
             app.VersionOption("--version", () => env.GetShortVersion(), () => env.GetFullVersion());
             var runCmd = app.Command("run", c =>
             {
@@ -172,12 +159,12 @@ namespace Microsoft.Dnx.ApplicationHost
                 exitCode = 2;
                 return true;
             }
-
+            var environment = PlatformServices.Default.Application;
             defaultHostOptions = new RuntimeOptions();
 
-            defaultHostOptions.TargetFramework = _environment.RuntimeFramework;
-            defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
-            defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
+            defaultHostOptions.TargetFramework = environment.RuntimeFramework;
+            defaultHostOptions.Configuration = optionConfiguration.Value() ?? environment.Configuration ?? "Debug";
+            defaultHostOptions.ApplicationBaseDirectory = environment.ApplicationBasePath;
             var portValue = optionCompilationServer.Value() ?? Environment.GetEnvironmentVariable(EnvironmentNames.CompilationServerPort);
 
             int port;
@@ -212,7 +199,7 @@ namespace Microsoft.Dnx.ApplicationHost
             return false;
         }
 
-        private Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
+        private static Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
         {
             Assembly assembly = null;
 
@@ -250,10 +237,10 @@ namespace Microsoft.Dnx.ApplicationHost
 
                             return t.Result;
                         });
-        
+
         }
 
-        private void SuppressCompilationExceptions(Exception exception)
+        private static void SuppressCompilationExceptions(Exception exception)
         {
             // Try to find compilation exception recursively to supress its stack
             var innerException = exception;

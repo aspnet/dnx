@@ -21,14 +21,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 {
     public class Program
     {
-        private readonly IServiceProvider _services;
-
-        public Program(IServiceProvider services)
-        {
-            _services = services;
-        }
-
-        public void Main(string[] args)
+        public static void Main(string[] args)
         {
             // Expect: port, host processid, hostID string
             if (args.Length < 3)
@@ -57,17 +50,24 @@ namespace Microsoft.Dnx.DesignTimeHost
             OpenChannel(port, hostId).Wait();
         }
 
-        private async Task OpenChannel(int port, string hostId)
+        private static async Task OpenChannel(int port, string hostId)
         {
             var contexts = new Dictionary<int, ApplicationContext>();
             var protocolManager = new ProtocolManager(maxVersion: 3);
 
             // REVIEW: Should these be on a shared context object that flows?
-            var applicationEnvironment = (IApplicationEnvironment)_services.GetService(typeof(IApplicationEnvironment));
-            var runtimeEnvironment = (IRuntimeEnvironment)_services.GetService(typeof(IRuntimeEnvironment));
-            var loadContextAccessor = (IAssemblyLoadContextAccessor)_services.GetService(typeof(IAssemblyLoadContextAccessor));
+            var applicationEnvironment = PlatformServices.Default.Application;
+            var runtimeEnvironment = PlatformServices.Default.Runtime;
+            var loadContextAccessor = PlatformServices.Default.AssemblyLoadContextAccessor;
             var compilationEngine = new CompilationEngine(new CompilationEngineContext(applicationEnvironment, runtimeEnvironment, loadContextAccessor.Default, new CompilationCache()));
             var frameworkResolver = new FrameworkReferenceResolver();
+
+            var services = new ServiceProvider();
+            services.Add(typeof(IApplicationEnvironment), PlatformServices.Default.Application);
+            services.Add(typeof(IRuntimeEnvironment), PlatformServices.Default.Runtime);
+            services.Add(typeof(IAssemblyLoadContextAccessor), PlatformServices.Default.AssemblyLoadContextAccessor);
+            services.Add(typeof(IAssemblyLoaderContainer), PlatformServices.Default.AssemblyLoaderContainer);
+            services.Add(typeof(ILibraryManager), PlatformServices.Default.LibraryManager);
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
             var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -87,7 +87,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                 var queue = new ProcessingQueue(stream);
                 var connection = new ConnectionContext(
                     contexts,
-                    _services,
+                    services,
                     applicationEnvironment,
                     runtimeEnvironment,
                     loadContextAccessor,

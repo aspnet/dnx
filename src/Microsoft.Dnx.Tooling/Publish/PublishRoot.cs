@@ -19,7 +19,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         public static readonly string AppRootName = "approot";
         public static readonly string SourceFolderName = "src";
 
-        public PublishRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices, Reports reports)
+        public PublishRoot(Runtime.Project project, string outputPath, Reports reports)
         {
             _project = project;
             Reports = reports;
@@ -28,7 +28,6 @@ namespace Microsoft.Dnx.Tooling.Publish
             Runtimes = new List<PublishRuntime>();
             Frameworks = new Dictionary<FrameworkName, string>();
             OutputPath = outputPath;
-            HostServices = hostServices;
             TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
             TargetRuntimesPath = Path.Combine(outputPath, AppRootName, "runtimes");
             Operations = new PublishOperations();
@@ -53,8 +52,6 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         // The lock file of the root project after the publish operation completes
         public LockFile LockFile { get; set; }
-
-        public IServiceProvider HostServices { get; private set; }
 
         public string IISCommand { get; set; }
 
