@@ -119,6 +119,13 @@ namespace Microsoft.Dnx.Runtime
 
                 if (!library.Resolved)
                 {
+                    if (string.Equals(
+                        library.Identity.Name,
+                        ImplicitRuntimePackageConstants.ImplicitRuntimePackageId))
+                    {
+                        continue;
+                    }
+
                     string message;
                     string errorCode;
                     if (library.Compatible)

@@ -51,19 +51,13 @@ namespace Microsoft.Dnx.Tooling
 
             var dependencies = project.Dependencies.Concat(targetFrameworkInfo.Dependencies).ToList();
             
-            if (!dependencies.Any(d => d.Name.Equals(ImplicitPackagesWalkProvider.ImplicitRuntimePackageId)))
+            if (!dependencies.Any(d => d.Name.Equals(ImplicitRuntimePackageConstants.ImplicitRuntimePackageId)))
             {
                 dependencies.Add(new LibraryDependency()
                 {
-                    LibraryRange = new LibraryRange(ImplicitPackagesWalkProvider.ImplicitRuntimePackageId, frameworkReference: false)
+                    LibraryRange = new LibraryRange(ImplicitRuntimePackageConstants.ImplicitRuntimePackageId, frameworkReference: false)
                     {
-                        VersionRange = new SemanticVersionRange()
-                        {
-                            MinVersion = ImplicitPackagesWalkProvider.ImplicitRuntimePackageVersion,
-                            MaxVersion = ImplicitPackagesWalkProvider.ImplicitRuntimePackageVersion,
-                            IsMaxInclusive = true,
-                            VersionFloatBehavior = SemanticVersionFloatBehavior.None
-                        }
+                        VersionRange = new SemanticVersionRange(ImplicitRuntimePackageConstants.ImplicitRuntimePackageVersion)
                     }
                 });
             }
