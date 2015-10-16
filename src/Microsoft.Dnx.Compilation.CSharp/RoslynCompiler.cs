@@ -115,6 +115,12 @@ namespace Microsoft.Dnx.Compilation.CSharp
             var references = new List<MetadataReference>();
             references.AddRange(exportedReferences);
 
+            if (isPreprocessAspect)
+            {
+                compilationSettings.CompilationOptions =
+                    compilationSettings.CompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
+            }
+
             var compilation = CSharpCompilation.Create(
                 name,
                 trees,

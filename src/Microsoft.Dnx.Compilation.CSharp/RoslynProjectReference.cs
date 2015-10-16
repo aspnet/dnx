@@ -310,6 +310,9 @@ namespace Microsoft.Dnx.Compilation.CSharp
             var resources = resourceDescriptors
                 .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true));
 
+            // Force dll for projects that have emitEntryPoint = true
+            compilationOptions = compilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
+
             var compilation = CSharpCompilation.Create(
                 assemblyName.Name,
                 references: CompilationContext.Compilation.References,
