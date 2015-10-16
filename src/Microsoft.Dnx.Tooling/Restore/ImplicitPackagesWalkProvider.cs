@@ -81,9 +81,6 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("linuxmint.17.2", "ubuntu.14.04"),
             new RuntimeSpec("linuxmint.17.2-x64", "ubuntu.14.04-x64"));
 
-        public static readonly SemanticVersion ImplicitRuntimePackageVersion = new SemanticVersion("0.0.0");
-        public static readonly string ImplicitRuntimePackageId = "Microsoft.NETCore.Platforms";
-
         public bool IsHttp
         {
             get
@@ -101,13 +98,16 @@ namespace Microsoft.Dnx.Tooling
         public Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, FrameworkName targetFramework, bool includeUnlisted)
         {
             // If the package matches an embedded package, return it
-            if (libraryRange.Name.Equals(ImplicitRuntimePackageId))
+            if (libraryRange.Name.Equals(ImplicitRuntimePackageConstants.ImplicitRuntimePackageId))
             {
                 return Task.FromResult(new WalkProviderMatch()
                 {
                     Provider = this,
                     LibraryType = LibraryTypes.Implicit,
-                    Library = new LibraryIdentity(ImplicitRuntimePackageId, ImplicitRuntimePackageVersion, isGacOrFrameworkReference: false)
+                    Library = new LibraryIdentity(
+                        ImplicitRuntimePackageConstants.ImplicitRuntimePackageId,
+                        ImplicitRuntimePackageConstants.ImplicitRuntimePackageVersion, 
+                        isGacOrFrameworkReference: false)
                 });
             }
             return Task.FromResult<WalkProviderMatch>(null);
@@ -120,7 +120,8 @@ namespace Microsoft.Dnx.Tooling
 
         public Task<RuntimeFile> GetRuntimes(WalkProviderMatch match, FrameworkName targetFramework)
         {
-            if (match.Library.Name.Equals(ImplicitRuntimePackageId) && match.Library.Version.Equals(ImplicitRuntimePackageVersion))
+            if (match.Library.Name.Equals(ImplicitRuntimePackageConstants.ImplicitRuntimePackageId) && 
+                match.Library.Version.Equals(ImplicitRuntimePackageConstants.ImplicitRuntimePackageVersion))
             {
                 return Task.FromResult(ImplicitRuntimeFile);
             }
