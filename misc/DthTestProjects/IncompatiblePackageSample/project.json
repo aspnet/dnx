@@ -1,8 +1,8 @@
 {
-  "dependencies": {
-    "Newtonsoft.Json": "4.5.11"
-  },
-  "frameworks": {
-    "dnxcore50": { }
-  }
+    "dependencies": {
+        "Newtonsoft.Json": "4.5.11"
+    },
+    "frameworks": {
+        "dnxcore50": {}
+    }
 }

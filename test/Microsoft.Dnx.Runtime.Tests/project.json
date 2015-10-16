@@ -1,14 +1,14 @@
 {
     "dependencies": {
-        "Microsoft.AspNet.Testing": "1.0.0-*",
+        "Microsoft.AspNet.Testing": "1.0.0-beta8",
         "Microsoft.Dnx.CommonTestUtils": "1.0.0-*",
-        "Microsoft.Dnx.Runtime": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
-        "xunit.runner.aspnet": "2.0.0-aspnet-*"
+        "Microsoft.Dnx.Runtime": "1.0.0-beta8",
+        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8",
+        "xunit.runner.aspnet": "2.0.0-aspnet-beta8"
     },
     "frameworks": {
-        "dnx451": { },
-        "dnxcore50": { }
+        "dnx451": {},
+        "dnxcore50": {}
     },
     "commands": {
         "test": "xunit.runner.aspnet"

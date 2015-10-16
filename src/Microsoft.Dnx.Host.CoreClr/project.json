@@ -1,11 +1,17 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "allowUnsafe": true,
+        "warningsAsErrors": true
+    },
     "dependencies": {
-        "Microsoft.Dnx.Host": "1.0.0-*"
+        "Microsoft.Dnx.Host": "1.0.0-beta8"
     },
     "frameworks": {
-        "dnxcore50": { }
+        "dnxcore50": {}
     },
     "compile": [
         "../Microsoft.Dnx.Runtime.Sources/Impl/EnvironmentNames.cs",
@@ -13,7 +19,6 @@
         "../Microsoft.Dnx.Runtime.Sources/Impl/Constants.cs",
         "../Microsoft.Dnx.Runtime.Sources/Impl/Logger.cs"
     ],
-
     "scripts": {
         "postbuild": [
             "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin",

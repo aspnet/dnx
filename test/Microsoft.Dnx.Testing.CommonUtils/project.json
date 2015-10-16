@@ -1,24 +1,23 @@
-﻿{
-  "dependencies": {
-    "Microsoft.Dnx.Runtime": "1.0.0-*",
-    "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
-    "Newtonsoft.Json": "6.0.6",
-    "xunit.runner.aspnet": "2.0.0-aspnet-*"
-  },
-  "frameworks": {
-    "dnx451": {
-      "frameworkAssemblies": {
-        "System.Reflection": ""
-      }
+{
+    "dependencies": {
+        "Microsoft.Dnx.Runtime": "1.0.0-beta8",
+        "Microsoft.Dnx.Runtime.Sources": "1.0.0-beta8",
+        "Newtonsoft.Json": "6.0.6",
+        "xunit.runner.aspnet": "2.0.0-aspnet-beta8"
     },
-    "dnxcore50": {
-      "dependencies": {
-        "System.Reflection": "4.0.11-beta-*"
-      }
+    "frameworks": {
+        "dnx451": {
+            "frameworkAssemblies": {
+                "System.Reflection": ""
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Reflection": "4.1.0-beta-23409"
+            }
+        }
+    },
+    "commands": {
+        "test": "xunit.runner.aspnet"
     }
-  },
-  
-  "commands": {
-    "test": "xunit.runner.aspnet"
-  }
 }

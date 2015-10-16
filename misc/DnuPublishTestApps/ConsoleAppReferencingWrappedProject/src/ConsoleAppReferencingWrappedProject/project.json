@@ -1,14 +1,11 @@
-﻿{
-  "version": "1.0.0-*",
-
-  "dependencies": {
-  },
-
-  "frameworks": {
-    "dnx451": {
-      "dependencies": {
-        "Net45Library": "1.0.0-*"
-      }
+{
+    "version": "1.0.0-*",
+    "dependencies": {},
+    "frameworks": {
+        "dnx451": {
+            "dependencies": {
+                "Net45Library": "1.0.0-*"
+            }
+        }
     }
-  }
 }

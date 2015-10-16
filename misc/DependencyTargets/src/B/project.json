@@ -1,17 +1,19 @@
-﻿{
+{
     "version": "1.0.0",
-
     "configurations": {
         "package": {
-            "compilationOptions": { "define": [ "PACKAGE" ] }
+            "compilationOptions": {
+                "define": [
+                    "PACKAGE"
+                ]
+            }
         }
     },
-
     "frameworks": {
-        "dnx451": { },
+        "dnx451": {},
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.0-beta-*"
+                "System.Runtime": "4.0.21-beta-23409"
             }
         }
     }

@@ -1,15 +1,17 @@
 {
     "version": "1.0.0-*",
     "compilationOptions": {
-        "define": [ "TRACE" ],
+        "define": [
+            "TRACE"
+        ],
         "warningsAsErrors": true
     },
     "shared": "**/*.cs",
     "frameworks": {
-        "dnx451": { },
+        "dnx451": {},
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.21-beta-*"
+                "System.Runtime": "4.0.21-beta-23409"
             }
         }
     }

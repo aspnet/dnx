@@ -1,11 +1,10 @@
 {
     "dependencies": {
-        "Microsoft.Dnx.Runtime": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
-        "xunit.runner.aspnet": "2.0.0-aspnet-*",
+        "Microsoft.Dnx.Runtime": "1.0.0-beta8",
+        "Microsoft.Dnx.Runtime.Sources": "1.0.0-beta8",
+        "xunit.runner.aspnet": "2.0.0-aspnet-beta8",
         "Newtonsoft.Json": "6.0.6"
     },
-
     "frameworks": {
         "dnx451": {
             "frameworkAssemblies": {
@@ -14,11 +13,10 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.IO.Compression.ZipFile": "4.0.0-*"
+                "System.IO.Compression.ZipFile": "4.0.1-beta-23409"
             }
         }
     },
-
     "commands": {
         "test": "xunit.runner.aspnet"
     }

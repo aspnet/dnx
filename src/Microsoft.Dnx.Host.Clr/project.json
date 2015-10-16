@@ -1,16 +1,21 @@
 {
-  "version": "1.0.0-*",
-  "compilationOptions": {
-    "define": [ "TRACE" ],
-    "allowUnsafe": true,
-    "warningsAsErrors": true,
-    "keyFile": "KeyFile.snk"
-  },
-  "dependencies": {
-    "Microsoft.Dnx.Runtime.Json.Sources": { "version": "1.0.0-*", "type": "build" }
-  },
+    "version": "1.0.0-*",
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "allowUnsafe": true,
+        "warningsAsErrors": true,
+        "keyFile": "KeyFile.snk"
+    },
+    "dependencies": {
+        "Microsoft.Dnx.Runtime.Json.Sources": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        }
+    },
     "frameworks": {
-        "dnx451": { }
+        "dnx451": {}
     },
     "compile": [
         "../Microsoft.Dnx.Runtime.Sources/Impl/EnvironmentNames.cs",

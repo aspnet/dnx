@@ -1,26 +1,49 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions": { "warningsAsErrors": true },
+    "compilationOptions": {
+        "warningsAsErrors": true
+    },
     "dependencies": {
-        "Microsoft.Dnx.Compilation": "1.0.0-*",
-        "Microsoft.Dnx.Project": "1.0.0-*",
-        "Microsoft.Dnx.Runtime": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.CommandParsing.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
-        "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.NotNullAttribute.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.HashCodeCombiner.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Dnx.Compilation": "1.0.0-beta8",
+        "Microsoft.Dnx.Project": "1.0.0-beta8",
+        "Microsoft.Dnx.Runtime": "1.0.0-beta8",
+        "Microsoft.Dnx.Runtime.CommandParsing.Sources": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Runtime.Internals": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Runtime.Sources": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8",
+        "Microsoft.Dnx.Compilation.CSharp.Abstractions": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        },
+        "Microsoft.Framework.CommandLineUtils.Sources": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        },
+        "Microsoft.Framework.NotNullAttribute.Sources": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        },
+        "Microsoft.Framework.HashCodeCombiner.Sources": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        },
         "Newtonsoft.Json": "6.0.6"
-    }, 
-    "compile": [ 
-         "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs" 
-    ], 
-    "preprocess": [ 
-        "../../ext/compiler/preprocess/Internalization.cs" 
-    ], 
+    },
+    "compile": [
+        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs"
+    ],
+    "preprocess": [
+        "../../ext/compiler/preprocess/Internalization.cs"
+    ],
     "frameworks": {
         "dnx451": {
             "frameworkAssemblies": {
@@ -37,22 +60,19 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.IO.FileSystem.Primitives": "4.0.1-beta-*",
-                "System.Threading.Tasks.Parallel": "4.0.1-beta-*",
-                "System.Linq.Parallel": "4.0.1-beta-*",
-                "System.Net.Http": "4.0.1-beta-*",
-                "System.ObjectModel": "4.0.11-beta-*",
-                "System.Reflection.TypeExtensions": "4.0.1-beta-*",
-                "System.Runtime.Serialization.Primitives": "4.0.11-beta-*",
-                "System.Security.Cryptography.Algorithms": "4.0.0-beta-*",
-                "System.Text.RegularExpressions": "4.0.11-beta-*"
+                "System.IO.FileSystem.Primitives": "4.0.1-beta-23409",
+                "System.Threading.Tasks.Parallel": "4.0.1-beta-23409",
+                "System.Linq.Parallel": "4.0.1-beta-23409",
+                "System.Net.Http": "4.0.1-beta-23409",
+                "System.ObjectModel": "4.0.11-beta-23409",
+                "System.Reflection.TypeExtensions": "4.0.1-beta-23409",
+                "System.Runtime.Serialization.Primitives": "4.0.11-beta-23409",
+                "System.Security.Cryptography.Algorithms": "4.0.0-beta-23409",
+                "System.Text.RegularExpressions": "4.0.11-beta-23409"
             }
         }
     },
-
-    "commands": {
-    },
-
+    "commands": {},
     "scripts": {
         "postbuild": [
             "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin/lib/Microsoft.Dnx.Tooling",

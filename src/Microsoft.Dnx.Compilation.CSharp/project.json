@@ -1,12 +1,24 @@
 {
     "version": "1.0.0-*",
     "description": "ASP.NET 5 Roslyn compiler implementation.",
-    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "allowUnsafe": true,
+        "warningsAsErrors": true
+    },
     "dependencies": {
-        "Microsoft.Dnx.Compilation": "1.0.0-*",
-        "Microsoft.Dnx.Compilation.CSharp.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" }
+        "Microsoft.Dnx.Compilation": "1.0.0-beta8",
+        "Microsoft.Dnx.Compilation.CSharp.Common": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-beta8",
+        "Microsoft.Dnx.Runtime.Sources": {
+            "version": "1.0.0-beta8",
+            "type": "build"
+        }
     },
     "frameworks": {
         "dnx451": {
@@ -19,9 +31,9 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Collections.Concurrent": "4.0.11-beta-*",
-                "System.Runtime.InteropServices": "4.0.21-beta-*",
-                "System.IO.FileSystem": "4.0.1-beta-*"
+                "System.Collections.Concurrent": "4.0.11-beta-23409",
+                "System.Runtime.InteropServices": "4.0.21-beta-23409",
+                "System.IO.FileSystem": "4.0.1-beta-23409"
             }
         }
     },
@@ -35,4 +47,3 @@
         ]
     }
 }
-

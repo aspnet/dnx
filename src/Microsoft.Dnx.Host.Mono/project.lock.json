@@ -1,0 +1,161 @@
+{
+  "locked": true,
+  "version": 2,
+  "targets": {
+    "DNX,Version=v4.5.1": {
+      "Microsoft.Dnx.Host/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Loader": "1.0.0-beta8",
+          "Microsoft.Dnx.Runtime.Internals": "1.0.0-beta8",
+          "Microsoft.Dnx.Runtime.Sources": "1.0.0-beta8",
+          "Microsoft.Framework.CommandLineUtils.Sources": "1.0.0-beta8"
+        },
+        "frameworkAssemblies": [
+          "System.Runtime"
+        ]
+      },
+      "Microsoft.Dnx.Loader/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8"
+        }
+      },
+      "Microsoft.Dnx.Runtime.Abstractions/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      },
+      "Microsoft.Dnx.Runtime.Internals/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8"
+        }
+      },
+      "Microsoft.Dnx.Runtime.Sources/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      },
+      "Microsoft.Framework.CommandLineUtils.Sources/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      }
+    },
+    "DNX,Version=v4.5.1/win7-x86": {
+      "Microsoft.Dnx.Host/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Loader": "1.0.0-beta8",
+          "Microsoft.Dnx.Runtime.Internals": "1.0.0-beta8",
+          "Microsoft.Dnx.Runtime.Sources": "1.0.0-beta8",
+          "Microsoft.Framework.CommandLineUtils.Sources": "1.0.0-beta8"
+        },
+        "frameworkAssemblies": [
+          "System.Runtime"
+        ]
+      },
+      "Microsoft.Dnx.Loader/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8"
+        }
+      },
+      "Microsoft.Dnx.Runtime.Abstractions/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      },
+      "Microsoft.Dnx.Runtime.Internals/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8"
+        }
+      },
+      "Microsoft.Dnx.Runtime.Sources/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      },
+      "Microsoft.Framework.CommandLineUtils.Sources/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      }
+    },
+    "DNX,Version=v4.5.1/win7-x64": {
+      "Microsoft.Dnx.Host/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Loader": "1.0.0-beta8",
+          "Microsoft.Dnx.Runtime.Internals": "1.0.0-beta8",
+          "Microsoft.Dnx.Runtime.Sources": "1.0.0-beta8",
+          "Microsoft.Framework.CommandLineUtils.Sources": "1.0.0-beta8"
+        },
+        "frameworkAssemblies": [
+          "System.Runtime"
+        ]
+      },
+      "Microsoft.Dnx.Loader/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8"
+        }
+      },
+      "Microsoft.Dnx.Runtime.Abstractions/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      },
+      "Microsoft.Dnx.Runtime.Internals/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1",
+        "dependencies": {
+          "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8"
+        }
+      },
+      "Microsoft.Dnx.Runtime.Sources/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      },
+      "Microsoft.Framework.CommandLineUtils.Sources/1.0.0-t151016012551": {
+        "type": "project",
+        "framework": "DNX,Version=v4.5.1"
+      }
+    }
+  },
+  "libraries": {
+    "Microsoft.Dnx.Host/1.0.0-t151016012551": {
+      "type": "project",
+      "path": "../Microsoft.Dnx.Host/project.json"
+    },
+    "Microsoft.Dnx.Loader/1.0.0-t151016012551": {
+      "type": "project",
+      "path": "../Microsoft.Dnx.Loader/project.json"
+    },
+    "Microsoft.Dnx.Runtime.Abstractions/1.0.0-t151016012551": {
+      "type": "project",
+      "path": "../Microsoft.Dnx.Runtime.Abstractions/project.json"
+    },
+    "Microsoft.Dnx.Runtime.Internals/1.0.0-t151016012551": {
+      "type": "project",
+      "path": "../Microsoft.Dnx.Runtime.Internals/project.json"
+    },
+    "Microsoft.Dnx.Runtime.Sources/1.0.0-t151016012551": {
+      "type": "project",
+      "path": "../Microsoft.Dnx.Runtime.Sources/project.json"
+    },
+    "Microsoft.Framework.CommandLineUtils.Sources/1.0.0-t151016012551": {
+      "type": "project",
+      "path": "../Microsoft.Framework.CommandLineUtils.Sources/project.json"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "": [
+      "Microsoft.Dnx.Host >= 1.0.0-beta8"
+    ],
+    "DNX,Version=v4.5.1": []
+  }
+}

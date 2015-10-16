@@ -1,25 +1,27 @@
 {
-  "version": "1.0.0-*",
-  "compilationOptions": {
-    "define": [ "TRACE" ],
-    "warningsAsErrors": true,
-    "emitEntryPoint": true
-  },
-  "dependencies": {
-    "Microsoft.Dnx.Host": "1.0.0-*"
-  },
-  "compileFiles": [
-    "../Microsoft.Dnx.Runtime.Sources/Impl/EnvironmentNames.cs",
-    "../Microsoft.Dnx.Runtime.Sources/Impl/FrameworkNames.cs",
-    "../Microsoft.Dnx.Runtime.Sources/Impl/Constants.cs",
-    "../Microsoft.Dnx.Runtime.Sources/Impl/Logger.cs"
-  ],
-  "frameworks": {
-    "dnx451": { }
-  },
-  "scripts": {
-    "postbuild": [
-      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin"
-    ]
-  }
+    "version": "1.0.0-*",
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "warningsAsErrors": true,
+        "emitEntryPoint": true
+    },
+    "dependencies": {
+        "Microsoft.Dnx.Host": "1.0.0-beta8"
+    },
+    "compileFiles": [
+        "../Microsoft.Dnx.Runtime.Sources/Impl/EnvironmentNames.cs",
+        "../Microsoft.Dnx.Runtime.Sources/Impl/FrameworkNames.cs",
+        "../Microsoft.Dnx.Runtime.Sources/Impl/Constants.cs",
+        "../Microsoft.Dnx.Runtime.Sources/Impl/Logger.cs"
+    ],
+    "frameworks": {
+        "dnx451": {}
+    },
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin"
+        ]
+    }
 }

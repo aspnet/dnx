@@ -1,16 +1,16 @@
 {
-  "dependencies": {
-    "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-*"
-  },
-  "frameworks": {
-    "dnx451": {
-      "frameworkAssemblies": {
-        "System.Runtime": "",
-        "System.Collections": "",
-        "System.Text.Encoding": "",
-        "System.Threading.Tasks": ""
-      }
+    "dependencies": {
+        "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-beta8"
     },
-    "dnxcore50": { }
-  }
+    "frameworks": {
+        "dnx451": {
+            "frameworkAssemblies": {
+                "System.Runtime": "",
+                "System.Collections": "",
+                "System.Text.Encoding": "",
+                "System.Threading.Tasks": ""
+            }
+        },
+        "dnxcore50": {}
+    }
 }

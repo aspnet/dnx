@@ -1,8 +1,8 @@
 {
-  "dependencies": { 
-    "EmptyLibrary": ""
-  },
-  "frameworks": {
-    "dnx451": { }
-  }
+    "dependencies": {
+        "EmptyLibrary": ""
+    },
+    "frameworks": {
+        "dnx451": {}
+    }
 }

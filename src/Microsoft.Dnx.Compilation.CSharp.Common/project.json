@@ -2,15 +2,17 @@
     "version": "1.0.0-*",
     "description": "ASP.NET 5 Roslyn implementation code shared with libraries performing runtime compilation.",
     "compilationOptions": {
-        "define": [ "TRACE" ],
+        "define": [
+            "TRACE"
+        ],
         "allowUnsafe": true,
         "warningsAsErrors": true
     },
     "dependencies": {
-        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*",
-        "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-*",
+        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-20150928-02",
+        "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-beta8",
         "Microsoft.Dnx.Runtime.Sources": {
-            "version": "1.0.0-*",
+            "version": "1.0.0-beta8",
             "type": "build"
         }
     },
@@ -23,12 +25,11 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Console": "4.0.0-beta-*",
-                "System.IO": "4.0.11-*"
+                "System.Console": "4.0.0-beta-23409",
+                "System.IO": "4.0.11-beta-23409"
             }
         }
     },
-
     "scripts": {
         "postbuild": [
             "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
