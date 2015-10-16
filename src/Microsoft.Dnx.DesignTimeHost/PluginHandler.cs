@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Dnx.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
-using Microsoft.Extensions.Internal;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 
@@ -27,8 +26,18 @@ namespace Microsoft.Dnx.DesignTimeHost
         private readonly IDictionary<string, Assembly> _assemblyCache;
         private readonly IDictionary<string, Type> _pluginTypeCache;
 
-        public PluginHandler([NotNull] IServiceProvider hostServices, [NotNull] Action<object> sendMessageMethod)
+        public PluginHandler(IServiceProvider hostServices, Action<object> sendMessageMethod)
         {
+            if (hostServices == null)
+            {
+                throw new ArgumentNullException(nameof(hostServices));
+            }
+
+            if (sendMessageMethod == null)
+            {
+                throw new ArgumentNullException(nameof(sendMessageMethod));
+            }
+
             _hostServices = hostServices;
             _sendMessageMethod = sendMessageMethod;
             _messageQueue = new Queue<PluginMessage>();
@@ -46,8 +55,13 @@ namespace Microsoft.Dnx.DesignTimeHost
             }
         }
 
-        public PluginHandlerOnReceiveResult OnReceive([NotNull] PluginMessage message)
+        public PluginHandlerOnReceiveResult OnReceive(PluginMessage message)
         {
+            if (message == null)
+            {
+                throw new ArgumentNullException(nameof(message));
+            }
+
             _messageQueue.Enqueue(message);
 
             if (message.MessageName == RegisterPluginMessageName)
@@ -58,8 +72,13 @@ namespace Microsoft.Dnx.DesignTimeHost
             return PluginHandlerOnReceiveResult.Default;
         }
 
-        public void TryRegisterFaultedPlugins([NotNull] IAssemblyLoadContext assemblyLoadContext)
+        public void TryRegisterFaultedPlugins(IAssemblyLoadContext assemblyLoadContext)
         {
+            if (assemblyLoadContext == null)
+            {
+                throw new ArgumentNullException(nameof(assemblyLoadContext));
+            }
+
             // Capture the messages here so we can clear the original list to potentially re-add messages if they
             // fail to recover.
             var faultedRegistrations = _faultedRegisterPluginMessages.ToArray();
@@ -81,8 +100,13 @@ namespace Microsoft.Dnx.DesignTimeHost
             }
         }
 
-        public void ProcessMessages([NotNull] IAssemblyLoadContext assemblyLoadContext)
+        public void ProcessMessages(IAssemblyLoadContext assemblyLoadContext)
         {
+            if (assemblyLoadContext == null)
+            {
+                throw new ArgumentNullException(nameof(assemblyLoadContext));
+            }
+
             while (_messageQueue.Count > 0)
             {
                 var message = _messageQueue.Dequeue();

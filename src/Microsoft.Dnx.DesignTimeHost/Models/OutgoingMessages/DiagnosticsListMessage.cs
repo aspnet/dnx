@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -13,22 +12,32 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
 {
     public class DiagnosticsListMessage
     {
-        public DiagnosticsListMessage([NotNull] IList<DiagnosticMessage> diagnostics) :
+        public DiagnosticsListMessage(IList<DiagnosticMessage> diagnostics) :
             this(diagnostics, frameworkData: null)
         {
         }
 
-        public DiagnosticsListMessage([NotNull] IList<DiagnosticMessage> diagnostics, FrameworkData frameworkData) :
+        public DiagnosticsListMessage(IList<DiagnosticMessage> diagnostics, FrameworkData frameworkData) :
             this(diagnostics.Select(msg => new DiagnosticMessageView(msg)).ToList(), frameworkData)
         {
+            if (diagnostics == null)
+            {
+                throw new ArgumentNullException(nameof(diagnostics));
+            }
         }
-        public DiagnosticsListMessage([NotNull] IList<DiagnosticMessageView> diagnostics) :
+
+        public DiagnosticsListMessage(IList<DiagnosticMessageView> diagnostics) :
             this(diagnostics, frameworkData: null)
         {
         }
 
-        public DiagnosticsListMessage([NotNull] IList<DiagnosticMessageView> diagnostics, FrameworkData frameworkData)
+        public DiagnosticsListMessage(IList<DiagnosticMessageView> diagnostics, FrameworkData frameworkData)
         {
+            if (diagnostics == null)
+            {
+                throw new ArgumentNullException(nameof(diagnostics));
+            }
+
             Diagnostics = diagnostics;
             Errors = diagnostics.Where(msg => msg.Severity == DiagnosticMessageSeverity.Error).ToList();
             Warnings = diagnostics.Where(msg => msg.Severity == DiagnosticMessageSeverity.Warning).ToList();
