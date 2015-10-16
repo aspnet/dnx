@@ -6,15 +6,25 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Tooling.Algorithms;
-using Microsoft.Extensions.Internal;
 
 namespace Microsoft.Dnx.Tooling.List
 {
     public class LibraryDependencyFinder
     {
-        public static IGraphNode<LibraryDependency> Build([NotNull] IEnumerable<LibraryDescription> libraries,
-                                                          [NotNull] Runtime.Project project)
+        public static IGraphNode<LibraryDependency> Build(
+            IEnumerable<LibraryDescription> libraries,
+            Runtime.Project project)
         {
+            if (libraries == null)
+            {
+                throw new ArgumentNullException(nameof(libraries));
+            }
+
+            if (project == null)
+            {
+                throw new ArgumentNullException(nameof(project));
+            }
+
             var root = new LibraryDependency
             {
                 Library = libraries.FirstOrDefault(p => string.Equals(p.Identity.Name, project.Name)),
