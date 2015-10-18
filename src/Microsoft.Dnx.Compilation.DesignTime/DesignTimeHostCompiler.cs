@@ -21,6 +21,7 @@ namespace Microsoft.Dnx.Compilation.DesignTime
             _queue.ProjectCompiled += OnProjectCompiled;
             _queue.ProjectsInitialized += ProjectContextsInitialized;
             _queue.ProjectChanged += _ => { };
+            _queue.ProjectSources += _ => { };
             _queue.Error += OnError;
 
             _queue.Closed += OnClosed;

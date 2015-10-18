@@ -98,8 +98,11 @@ namespace Microsoft.Dnx.Compilation.DesignTime
                             //    "MessageType": "Sources",
                             //    "Files": [],
                             //}
-                            var files = obj.ValueAsStringArray("Files");
-                            ProjectSources(files);
+                            if (ProjectSources != null)
+                            {
+                                var files = obj.ValueAsStringArray("Files");
+                                ProjectSources(files);
+                            }
                             break;
                         case "ProjectContexts":
                             //{
