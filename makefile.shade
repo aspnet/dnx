@@ -556,7 +556,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
             foreach (var runtimeTarget in RUNTIME_TARGETS)
             {
                 move(runtimeTarget.TargetFolder, libPackage, ".dll");
-                if (!IsMono)
+                if (!IsLinux)
                 {
                     move(runtimeTarget.TargetFolder, libPackage, ".pdb");
                 }
@@ -704,7 +704,7 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
             // Nuke any previously installed package
             UnzipPackage(nupkgPath, unpackagePath);
 
-            if (IsMono)
+            if (IsLinux)
             {
                 Exec("chmod", "+x " + Path.Combine(binPath, "dnx"));
                 Exec("chmod", "+x " + Path.Combine(binPath, "dnu"));
@@ -741,7 +741,6 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
             // any = [dnx-mono]
 
             // win
-
             // x86 = [dnx-clr-win-x86, dnx-coreclr-win-x86]
             // x64 = [dnx-clr-win-x64, dnx-coreclr-win-x64]
 
@@ -753,10 +752,19 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
 
             foreach (var target in group.GroupBy(t => t.Arch).First())
             {
-                // Skip mono if we're not running on mono
-                if (!IsMono && target.Flavor == "mono")
+                var testArgs = string.Empty;
+                if (target.Flavor == "mono")
                 {
-                    continue;
+                    if (IsLinux)
+                    {
+                        // Work around issue with testing in parallel on Mono.
+                        testArgs = " -parallel none";
+                    }
+                    else
+                    {
+                        // Skip Mono if we're not running on Linux or Mac.
+                        continue;
+                    }
                 }
 
                 var binPath = binPaths[target.Name];
@@ -772,14 +780,11 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                         var targetFrameworks = configs.Keys.Where(k => k.StartsWith("dnx", StringComparison.OrdinalIgnoreCase));
                         foreach (var framework in targetFrameworks)
                         {
-                            if(framework == target.Framework)
+                            if (framework == target.Framework)
                             {
-                                DnxTest(projectFile, testParallel: false);
+                                var projectFolder = Path.GetDirectoryName(projectFile);
+                                Dnx("test" + testArgs, projectFolder);
                                 break;
-                            }
-                            else
-                            {
-                                continue;
                             }
                         }
                     }
@@ -802,7 +807,8 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                 {
                     foreach(var projectFile in Files.Include("test/*.FunctionalTests/project.json"))
                     {
-                        DnxTest(projectFile, testParallel: false);
+                        var projectFolder = Path.GetDirectoryName(projectFile);
+                        Dnx("test" + testArgs, projectFolder);
                     }
                 });
             }
@@ -1047,7 +1053,7 @@ functions @{
         var versionManagerProgram = "cmd";
         var versionManagerProgramArgs = "/C dnvm alias {0} {1}";
 
-        if (IsMono)
+        if (IsLinux)
         {
             symlinkProgram = "ln";
             symlinkProgramArgs = "-s {1} {0}";
@@ -1212,7 +1218,7 @@ functions @{
 
         string tmp;
         var home = "USERPROFILE";
-        if (IsMono)
+        if (IsLinux)
         {
             ExecuteAndRedirectOutput("dnu", string.Format("restore {0} {1}", projectFolder, args), out tmp);
             home = "HOME";
