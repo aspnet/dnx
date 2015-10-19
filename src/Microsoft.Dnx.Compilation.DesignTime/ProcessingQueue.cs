@@ -62,36 +62,38 @@ namespace Microsoft.Dnx.Compilation.DesignTime
                             // Embedded Refs (special)
                             // Blob 1
                             // Blob 2
-                            var compileResponse = new CompileResponse();
-                            compileResponse.AssemblyPath = obj.ValueAsString(nameof(CompileResponse.AssemblyPath));
-                            compileResponse.Diagnostics = ValueAsCompilationMessages(obj, (nameof(CompileResponse.Diagnostics)));
-                            int contextId = obj.ValueAsInt("ContextId");
-                            int blobs = obj.ValueAsInt("Blobs");
-
-                            var embeddedReferencesCount = _reader.ReadInt32();
-                            compileResponse.EmbeddedReferences = new Dictionary<string, byte[]>();
-                            for (int i = 0; i < embeddedReferencesCount; i++)
+                            if (ProjectCompiled != null)
                             {
-                                var key = _reader.ReadString();
-                                int valueLength = _reader.ReadInt32();
-                                var value = _reader.ReadBytes(valueLength);
-                                compileResponse.EmbeddedReferences[key] = value;
+                                var compileResponse = new CompileResponse();
+                                compileResponse.AssemblyPath = obj.ValueAsString(nameof(CompileResponse.AssemblyPath));
+                                compileResponse.Diagnostics = ValueAsCompilationMessages(obj, (nameof(CompileResponse.Diagnostics)));
+                                int contextId = obj.ValueAsInt("ContextId");
+                                int blobs = obj.ValueAsInt("Blobs");
+
+                                var embeddedReferencesCount = _reader.ReadInt32();
+                                compileResponse.EmbeddedReferences = new Dictionary<string, byte[]>();
+                                for (int i = 0; i < embeddedReferencesCount; i++)
+                                {
+                                    var key = _reader.ReadString();
+                                    int valueLength = _reader.ReadInt32();
+                                    var value = _reader.ReadBytes(valueLength);
+                                    compileResponse.EmbeddedReferences[key] = value;
+                                }
+
+                                var assemblyBytesLength = _reader.ReadInt32();
+                                compileResponse.AssemblyBytes = _reader.ReadBytes(assemblyBytesLength);
+                                var pdbBytesLength = _reader.ReadInt32();
+                                compileResponse.PdbBytes = _reader.ReadBytes(pdbBytesLength);
+
+                                // Skip over blobs that aren't understood
+                                for (int i = 0; i < blobs - 2; i++)
+                                {
+                                    int length = _reader.ReadInt32();
+                                    _reader.ReadBytes(length);
+                                }
+
+                                ProjectCompiled(contextId, compileResponse);
                             }
-
-                            var assemblyBytesLength = _reader.ReadInt32();
-                            compileResponse.AssemblyBytes = _reader.ReadBytes(assemblyBytesLength);
-                            var pdbBytesLength = _reader.ReadInt32();
-                            compileResponse.PdbBytes = _reader.ReadBytes(pdbBytesLength);
-
-                            // Skip over blobs that aren't understood
-                            for (int i = 0; i < blobs - 2; i++)
-                            {
-                                int length = _reader.ReadInt32();
-                                _reader.ReadBytes(length);
-                            }
-
-                            ProjectCompiled(contextId, compileResponse);
-
                             break;
                         case "Sources":
                             //{
@@ -109,21 +111,25 @@ namespace Microsoft.Dnx.Compilation.DesignTime
                             //    "MessageType": "ProjectContexts",
                             //    "Projects": { "path": id },
                             //}
-                            var projects = obj.ValueAsJsonObject("Projects");
-                            var projectContexts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                            foreach (var key in projects.Keys)
+                            if (ProjectsInitialized != null)
                             {
-                                projectContexts[key] = projects.ValueAsInt(key);
-                            }
+                                var projects = obj.ValueAsJsonObject("Projects");
+                                var projectContexts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                                foreach (var key in projects.Keys)
+                                {
+                                    projectContexts[key] = projects.ValueAsInt(key);
+                                }
 
-                            ProjectsInitialized(projectContexts);
+                                ProjectsInitialized(projectContexts);
+                            }
                             break;
                         case "ProjectChanged":
+                            //{
+                            //    "MessageType": "ProjectChanged",
+                            //    "ContextId": id,
+                            //}
+                            if (ProjectChanged != null)
                             {
-                                //{
-                                //    "MessageType": "ProjectChanged",
-                                //    "ContextId": id,
-                                //}
                                 int id = obj.ValueAsInt("ContextId");
                                 ProjectChanged(id);
                             }
@@ -139,6 +145,7 @@ namespace Microsoft.Dnx.Compilation.DesignTime
                             //        "Column": 1
                             //    }
                             //}
+                            if (Error != null)
                             {
                                 var id = obj.ValueAsInt("ContextId");
                                 var message = obj.ValueAsJsonObject("Payload").
