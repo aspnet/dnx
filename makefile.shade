@@ -762,7 +762,7 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                     }
                     else
                     {
-                        // Skip Mono if we're not running on Linux.
+                        // Skip Mono if we're not running on Linux or Mac.
                         continue;
                     }
                 }
