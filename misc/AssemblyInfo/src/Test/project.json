@@ -1,8 +1,8 @@
 {
   "title": "Hello title",
-  "description": "Hello description",
+  "description": "Hello\r\ndescription",
   "language": "en",
-  "copyright": "Hello copyright",
+  "copyright": "Copyright \u00a9",
   "version": "1.2.3-*",
   "commands": {
     "HelloWorld": "HelloWorld"

@@ -245,12 +245,12 @@ namespace Microsoft.Dnx.Compilation.CSharp
         {
             var projectAttributes = new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                [typeof(System.Reflection.AssemblyTitleAttribute).FullName] = project.Title,
-                [typeof(System.Reflection.AssemblyDescriptionAttribute).FullName] = project.Description,
-                [typeof(System.Reflection.AssemblyCopyrightAttribute).FullName] = project.Copyright,
-                [typeof(System.Reflection.AssemblyFileVersionAttribute).FullName] = project.AssemblyFileVersion.ToString(),
-                [typeof(System.Reflection.AssemblyVersionAttribute).FullName] = RemovePrereleaseTag(project.Version),
-                [typeof(System.Reflection.AssemblyInformationalVersionAttribute).FullName] = project.Version
+                [typeof(AssemblyTitleAttribute).FullName] = EscapeCharacters(project.Title),
+                [typeof(AssemblyDescriptionAttribute).FullName] = EscapeCharacters(project.Description),
+                [typeof(AssemblyCopyrightAttribute).FullName] = EscapeCharacters(project.Copyright),
+                [typeof(AssemblyFileVersionAttribute).FullName] = EscapeCharacters(project.AssemblyFileVersion.ToString()),
+                [typeof(AssemblyVersionAttribute).FullName] = EscapeCharacters(RemovePrereleaseTag(project.Version)),
+                [typeof(AssemblyInformationalVersionAttribute).FullName] = EscapeCharacters(project.Version)
             };
 
             var assemblyAttributes = compilation.Assembly.GetAttributes()
@@ -263,7 +263,9 @@ namespace Microsoft.Dnx.Compilation.CSharp
             {
                 compilation = compilation.AddSyntaxTrees(new[]
                 {
-                    CSharpSyntaxTree.ParseText(newAttributes, parseOptions)
+                    CSharpSyntaxTree.ParseText(newAttributes, parseOptions,
+                        path: $"{nameof(ApplyProjectInfo)}.cs",
+                        encoding: Encoding.UTF8)
                 });
             }
 
@@ -272,6 +274,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
         private static string RemovePrereleaseTag(string version)
         {
+            if (version == null)
+            {
+                return null;
+            }
+
             // Simple reparse of the version string (because we don't want to pull in NuGet stuff
             // here because we're in an old-runtime/new-runtime limbo)
 
@@ -284,6 +291,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
             {
                 return version.Substring(0, dashIdx);
             }
+        }
+
+        private static string EscapeCharacters(string str)
+        {
+            return str != null ? SymbolDisplay.FormatLiteral(str, quote: false) : null;
         }
 
         private IList<SyntaxTree> GetSyntaxTrees(CompilationProjectContext project,
