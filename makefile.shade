@@ -753,14 +753,13 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
             foreach (var target in group.GroupBy(t => t.Arch).First())
             {
                 var testArgs = string.Empty;
-                if (target.Flavor == "mono")
+                if (IsLinux)
                 {
-                    if (IsLinux)
-                    {
-                        // Work around issue with testing in parallel on Mono.
-                        testArgs = " -parallel none";
-                    }
-                    else
+                    testArgs = " -parallel none";
+                }
+                else
+                {
+                    if (target.Flavor == "mono")
                     {
                         // Skip Mono if we're not running on Linux or Mac.
                         continue;
