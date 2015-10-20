@@ -100,7 +100,7 @@ namespace Microsoft.Dnx.Tooling
             }
             catch (Exception ex)
             {
-                DumpException(exception, runtimeEnv);
+                DumpException(ex, runtimeEnv);
                 return 1;
             }
 #endif
