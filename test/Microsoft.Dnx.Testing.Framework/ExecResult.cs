@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Text;
 
 namespace Microsoft.Dnx.Testing.Framework
 {
@@ -15,7 +16,13 @@ namespace Microsoft.Dnx.Testing.Framework
         {
             if (ExitCode != 0)
             {
-                throw new InvalidOperationException($"Exit code was {ExitCode}");
+                var messageBuilder = new StringBuilder();
+                messageBuilder.AppendLine($"Exit code was {ExitCode}");
+                messageBuilder.AppendLine("Stdout:");
+                messageBuilder.AppendLine(StandardOutput);
+                messageBuilder.AppendLine("Stderr:");
+                messageBuilder.AppendLine(StandardError);
+                throw new InvalidOperationException(messageBuilder.ToString());
             }
 
             return this;
