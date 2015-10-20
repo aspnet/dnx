@@ -16,7 +16,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
     public class RoslynCompilerTest
     {
 #if DNX451
-        [Fact(Skip = "#3014")]
+        [Fact]
         public void FlowsProjectPropertiesIntoAssembly()
         {
             const string testName = "Test name";

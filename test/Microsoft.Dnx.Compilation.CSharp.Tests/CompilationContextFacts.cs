@@ -13,7 +13,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
 {
     public class CompilationContextFacts
     {
-        [Fact(Skip = "#3014")]
+        [Fact]
         public void DefaultConstructorInitializeCorrectly()
         {
             var compilation = CSharpCompilation.Create("fakecompilation");
