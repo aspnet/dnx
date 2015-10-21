@@ -5,7 +5,7 @@
     "net45": {
 
     },
-    "dotnet": {
+    "dotnet5.5": {
       "dependencies": {
         "System.Collections": "4.0.11-*",
         "System.Console": "4.0.0-*"
