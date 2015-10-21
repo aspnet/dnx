@@ -1258,7 +1258,14 @@ functions @{
                 {
                     continue;
                 }
-                projectAssemblies.Add(Path.Combine(Directory.GetCurrentDirectory(), "artifacts", "build", name, target.Framework, name + ".dll"));
+                var path = Path.Combine(Directory.GetCurrentDirectory(), "artifacts", "build", name, target.Framework, name + ".dll");
+                if (!File.Exists(path))
+                {
+                    var directoryName = target.Framework == "dnx451" ? "net451" : "dotnet5.4";
+                    path = Path.Combine(Directory.GetCurrentDirectory(), "artifacts", "build", name, directoryName, name + ".dll");
+                }
+
+                projectAssemblies.Add(path);
             }
 
             if (package.Contains(".Sources") || package.Contains("Microsoft.Dnx.Runtime.Internals"))

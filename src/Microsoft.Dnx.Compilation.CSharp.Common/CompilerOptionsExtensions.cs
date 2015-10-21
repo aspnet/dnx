@@ -37,7 +37,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             }
 
             AssemblyIdentityComparer assemblyIdentityComparer =
-#if DNX451
+#if NET451
                 IsDesktop(targetFramework) ?
                 DesktopAssemblyIdentityComparer.Default :
 #endif
@@ -99,7 +99,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             if (!string.IsNullOrEmpty(keyFile))
             {
-#if DNXCORE50
+#if DOTNET5_45
                 return options.WithCryptoPublicKey(
                     SnkUtils.ExtractPublicKey(File.ReadAllBytes(keyFile)));
 #else
