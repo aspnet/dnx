@@ -51,7 +51,7 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
         }
 
         [Theory, TraceTest]
-        [MemberData(nameof(ClrDnxSdks))]
+        [MemberData(nameof(DnxSdks))]
         public void ApplicationWithEcmaEntryPoint(DnxSdk sdk)
         {
             // Arrange
@@ -65,7 +65,7 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
 
             // Assert
             Assert.Equal(0, result.ExitCode);
-            Assert.Contains($"EntryPoint: Main", result.StandardOutput);
+            Assert.Contains("ECMA EntryPoint Ran", result.StandardOutput);
 
             TestUtils.CleanUpTestDir<AppHostTests>(sdk);
         }

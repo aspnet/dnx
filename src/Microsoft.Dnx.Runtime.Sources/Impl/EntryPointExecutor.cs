@@ -72,17 +72,16 @@ namespace Microsoft.Dnx.Runtime.Common
             string name = assembly.GetName().Name;
 
             instance = null;
-            entryPoint = null;
-#if DNX451 || NET451
-            if (assembly.EntryPoint != null)
+
+            // Add support for console apps
+            // This allows us to boot any existing console application
+            // under the runtime
+            entryPoint = GetEntryPoint(assembly);
+            if (entryPoint != null)
             {
-                // Add support for console apps
-                // This allows us to boot any existing console application
-                // under the runtime
-                entryPoint = assembly.EntryPoint;
                 return true;
             }
-#endif
+
             var programType = assembly.GetType("Program") ?? assembly.GetType(name + ".Program");
 
             if (programType == null)
@@ -108,6 +107,16 @@ namespace Microsoft.Dnx.Runtime.Common
 
             instance = programType.GetTypeInfo().IsAbstract ? null : ActivatorUtilities.CreateInstance(serviceProvider, programType);
             return true;
+        }
+
+        private static MethodInfo GetEntryPoint(Assembly assembly)
+        {
+#if DNX451
+            return assembly.EntryPoint;
+#else
+            // Temporary until https://github.com/dotnet/corefx/issues/3336 is fully merged and built
+            return assembly.GetType().GetRuntimeProperty("EntryPoint").GetValue(assembly) as MethodInfo;
+#endif
         }
     }
 }
