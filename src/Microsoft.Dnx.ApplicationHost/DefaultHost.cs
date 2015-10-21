@@ -165,12 +165,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                     libraryManager: runtimeLibraryManager
                     ));
 
-            CompilationServices.SetDefault(
-                    CompilationServices.Create(
-                            libraryExporter: runtimeLibraryExporter
-                        )
-                );
-
             if (options.CompilationServerPort.HasValue)
             {
                 // Change the project reference provider
@@ -189,7 +183,16 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects.Values));
             _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, assemblies));
 
-            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(projects));
+            var compilerOptionsProvider = new CompilerOptionsProvider(projects);
+
+            _serviceProvider.Add(typeof(ICompilerOptionsProvider), compilerOptionsProvider);
+
+            CompilationServices.SetDefault(
+                    CompilationServices.Create(
+                            libraryExporter: runtimeLibraryExporter,
+                            compilerOptionsProvider: compilerOptionsProvider
+                        )
+                );
 
             AddBreadcrumbs(libraries);
         }

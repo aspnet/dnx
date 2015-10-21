@@ -5,11 +5,13 @@ namespace Microsoft.Dnx.Compilation
 {
     internal class DefaultCompilationServices : CompilationServices
     {
-        internal DefaultCompilationServices(ILibraryExporter libraryExporter)
+        internal DefaultCompilationServices(ILibraryExporter libraryExporter, ICompilerOptionsProvider compilerOptionsProvider)
         {
             LibraryExporter = libraryExporter;
+            CompilerOptionsProvider = compilerOptionsProvider;
         }
 
         public override ILibraryExporter LibraryExporter { get; }
+        public override ICompilerOptionsProvider CompilerOptionsProvider { get; }
     }
 }

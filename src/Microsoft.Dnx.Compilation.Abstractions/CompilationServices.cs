@@ -22,14 +22,16 @@ namespace Microsoft.Dnx.Compilation
         }
         public abstract ILibraryExporter LibraryExporter { get; }
 
+        public abstract ICompilerOptionsProvider CompilerOptionsProvider { get; }
+
         public static void SetDefault(CompilationServices compilationServices)
         {
             _defaultCompilationServices = compilationServices;
         }
 
-        public static CompilationServices Create(ILibraryExporter libraryExporter)
+        public static CompilationServices Create(ILibraryExporter libraryExporter, ICompilerOptionsProvider compilerOptionsProvider)
         {
-            return new DefaultCompilationServices(libraryExporter);
+            return new DefaultCompilationServices(libraryExporter, compilerOptionsProvider);
         }
 
     }
