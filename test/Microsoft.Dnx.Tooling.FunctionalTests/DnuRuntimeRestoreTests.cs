@@ -34,14 +34,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         {
             // TODO(anurse): Maybe this could be a condition? This is the only place we need it right now so it
             // didn't seem worth the refactor.
-            if (RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem.Equals("Darwin"))
+            // Travis has old versions of OSes and our test package doesn't work there
+            if(Environment.GetEnvironmentVariable("TRAVIS").Equals("true"))
             {
-                var ver = Version.Parse(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystemVersion);
-                if (ver < new Version(10, 10))
-                {
-                    // Not supported on this!
-                    return;
-                }
+                return;
             }
 
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);

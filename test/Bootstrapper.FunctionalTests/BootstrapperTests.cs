@@ -31,6 +31,14 @@ namespace Bootstrapper.FunctionalTests
 
         [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
+        public void OverrideRidWithEnvironmentVariable(DnxSdk sdk)
+        {
+            var result = sdk.Dnx.Execute("--version", envSetup: env => env["DNX_RUNTIME_ID"] = "woozlewuzzle");
+            Assert.Contains("Runtime Id:   woozlewuzzle", result.StandardOutput);
+        }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
         public void UnresolvedProjectDoesNotThrow(DnxSdk sdk)
         {
             const string solutionName = "BootstrapperSolution";

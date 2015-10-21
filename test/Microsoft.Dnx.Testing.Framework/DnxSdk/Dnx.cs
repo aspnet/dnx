@@ -1,6 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -21,7 +23,7 @@ namespace Microsoft.Dnx.Testing.Framework
             return Execute($"-p \"{project.ProjectDirectory}\" {commandLine ?? "run"}", dnxTraceOn);
         }
 
-        public ExecResult Execute(string commandLine, bool dnxTraceOn = false)
+        public ExecResult Execute(string commandLine, bool dnxTraceOn = false, Action<Dictionary<string, string>> envSetup = null)
         {
             string command;
             if (RuntimeEnvironmentHelper.IsWindows)
@@ -36,7 +38,11 @@ namespace Microsoft.Dnx.Testing.Framework
             return Exec.Run(
                 command,
                 commandLine,
-                env => env[EnvironmentNames.Trace] = dnxTraceOn ? "1" : null);
+                env =>
+                {
+                    env[EnvironmentNames.Trace] = dnxTraceOn ? "1" : null;
+                    envSetup?.Invoke(env);
+                });
         }
     }
 }

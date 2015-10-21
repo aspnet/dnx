@@ -127,6 +127,15 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
     {
         RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_DARWIN_x64_NAME, TargetFolder = RUNTIME_CORECLR_DARWIN_x64_BIN, Framework = "dnxcore50",  Arch = "x64", OS = "darwin", Flavor = "coreclr" });
     }
+
+    // Temporary until KoreBuild is updated
+    // It looks like it isn't possible to do this in .travis.yml because we only want
+    // to do it on Linux and I couldn't find an easy way to do that kind of selective
+    // environment variable set.
+    if(E('TRAVIS') == "true" && CanBuildForLinux)
+    {
+        E('DNX_RUNTIME_ID', 'ubuntu.14.04-x64');
+    }
 }
 
 -// Replace repo-initialize with a less greedy restore

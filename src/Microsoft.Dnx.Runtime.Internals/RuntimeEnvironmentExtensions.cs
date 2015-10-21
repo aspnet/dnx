@@ -10,6 +10,10 @@ namespace Microsoft.Dnx.Runtime
 {
     internal static class RuntimeEnvironmentExtensions
     {
+        // This code doesn't have access to EnvironmentNames and I don't want to shake things up too much
+        // This should be the only place it is used though so it should be fine
+        private const string DnxRuntimeIdEnvironmentVariable = "DNX_RUNTIME_ID";
+
         public static string GetFullVersion(this IRuntimeEnvironment env)
         {
             var str = new StringBuilder();
@@ -35,14 +39,32 @@ namespace Microsoft.Dnx.Runtime
 
         public static string GetRuntimeIdentifier(this IRuntimeEnvironment env)
         {
+            var overrideRid = GetOverrideRid();
+            return string.IsNullOrEmpty(overrideRid) ?
+                GetRuntimeIdentifierWithoutOverride(env) :
+                overrideRid;
+        }
+
+        // This is intentionally NOT an extension method because it is only really here for testing
+        internal static string GetRuntimeIdentifierWithoutOverride(IRuntimeEnvironment env)
+        {
             return $"{GetRuntimeOsName(env)}-{env.RuntimeArchitecture.ToLower()}";
         }
 
         public static IEnumerable<string> GetAllRuntimeIdentifiers(this IRuntimeEnvironment env)
         {
+            var overrideRid = GetOverrideRid();
+            return string.IsNullOrEmpty(overrideRid) ?
+                GetAllRuntimeIdentifiersWithoutOverride(env) :
+                new [] { overrideRid };
+        }
+
+        // This is intentionally NOT an extension method because it is only really here for testing
+        internal static IEnumerable<string> GetAllRuntimeIdentifiersWithoutOverride(IRuntimeEnvironment env)
+        {
             if (!string.Equals(env.OperatingSystem, RuntimeOperatingSystems.Windows, StringComparison.Ordinal))
             {
-                yield return env.GetRuntimeIdentifier();
+                yield return GetRuntimeIdentifierWithoutOverride(env);
             }
             else
             {
@@ -74,12 +96,12 @@ namespace Microsoft.Dnx.Runtime
 
         public static string GetRuntimeOsName(this IRuntimeEnvironment env)
         {
-            string os = env.OperatingSystem;
-            string ver = env.OperatingSystemVersion;
+            string os = env.OperatingSystem ?? string.Empty;
+            string ver = env.OperatingSystemVersion ?? string.Empty;
             if (string.Equals(os, RuntimeOperatingSystems.Windows, StringComparison.Ordinal))
             {
                 os = "win";
-                
+
                 if (env.OperatingSystemVersion.Equals("6.1", StringComparison.Ordinal))
                 {
                     ver = "7";
@@ -101,27 +123,18 @@ namespace Microsoft.Dnx.Runtime
             }
             else if (string.Equals(os, RuntimeOperatingSystems.Linux, StringComparison.Ordinal))
             {
-                // NOTE(anurse):
-                //  We've run in to so many problems with various little
-                //  distro differences that for now the easiest thing to do is just report that
-                //  we are on ubuntu.14.04 whenever we're on Linux...
-                //  All the current CoreCLR packages only have Ubuntu 14.04 variants, no other
-                //  Linux distros are/will be supported officially for Beta8, but since other
-                //  distros DO sometimes work (Linux Mint and other Ubuntu versions, mostly),
-                //  we unblock them from working (though we do not officially support them).
-                return "ubuntu.14.04";
-
-                //// Check if the version has a distro in it
-                //var segments = (ver ?? string.Empty).Split(' ');
-                //if (segments.Length == 2)
-                //{
-                //    os = segments[0].ToLowerInvariant();
-                //    ver = segments[1].ToLowerInvariant();
-                //}
-                //else
-                //{
-                //    os = os.ToLowerInvariant();
-                //}
+                // Generate the distro-based name
+                var split = ver.Split(new[] { ' ' }, 2);
+                if (split.Length == 2)
+                {
+                    os = split[0].ToLowerInvariant();
+                    ver = split[1].ToLowerInvariant();
+                }
+                else
+                {
+                    os = "linux";
+                    ver = string.Empty;
+                }
             }
             else if (string.Equals(os, RuntimeOperatingSystems.Darwin, StringComparison.Ordinal))
             {
@@ -138,6 +151,11 @@ namespace Microsoft.Dnx.Runtime
                 os = os + "." + ver;
             }
             return os;
+        }
+
+        private static string GetOverrideRid()
+        {
+            return Environment.GetEnvironmentVariable(DnxRuntimeIdEnvironmentVariable);
         }
     }
 }

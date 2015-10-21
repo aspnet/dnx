@@ -59,7 +59,7 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("osx.10.10", "osx"),
             new RuntimeSpec("osx.10.10-x64", "osx.10.10", "osx-x64"),
 
-            // Optimistically support Mac OS X El Capitan for now (again, informal support)
+            // Mac OS X El Capitan
             new RuntimeSpec("osx.10.11", "osx.10.10"),
             new RuntimeSpec("osx.10.11-x64", "osx.10.11", "osx.10.10-x64"),
 
@@ -72,15 +72,38 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("centos.7.1", "centos"),
             new RuntimeSpec("centos.7.1-x64", "centos.7.1", "centos-x64"),
 
+            // CentOS identifies itself as "7", but the BCL packages use "7.1" so we need this weird reversal mapping
+            new RuntimeSpec("centos.7", "centos.7.1"),
+            new RuntimeSpec("centos.7-x64", "centos.7", "centos.7.1-x64"),
+
             new RuntimeSpec("ubuntu", "linux"),
             new RuntimeSpec("ubuntu-x64", "ubuntu", "linux-x64"),
 
             new RuntimeSpec("ubuntu.14.04", "ubuntu"),
             new RuntimeSpec("ubuntu.14.04-x64", "ubuntu.14.04", "ubuntu-x64"),
 
-            // Linux Mint 17.2 is identical to Ubuntu 14.04 for our purposes (though we are not formally supporting it either)
-            new RuntimeSpec("linuxmint.17.2", "ubuntu.14.04"),
-            new RuntimeSpec("linuxmint.17.2-x64", "ubuntu.14.04-x64"));
+
+            // Informally supported RIDS: These are RIDs we believe work, but do not formally support
+
+            // Ubuntu 14.10 exists and is compatible with 14.04
+            new RuntimeSpec("ubuntu.14.10", "ubuntu.14.04"),
+            new RuntimeSpec("ubuntu.14.10-x64", "ubuntu.14.10", "ubuntu.14.04-x64"),
+
+            // Ubuntu 15.04 is believed to be compatible
+            new RuntimeSpec("ubuntu.15.04", "ubuntu.14.10"),
+            new RuntimeSpec("ubuntu.15.04-x64", "ubuntu.15.04", "ubuntu.14.10-x64"),
+
+            // Ubuntu 15.10 is not compatible. It upgraded icu to 55
+            
+            // Linux Mint 17.x is compatible with Ubuntu 14.04
+            new RuntimeSpec("linuxmint.17", "ubuntu.14.04"),
+            new RuntimeSpec("linuxmint.17-x64", "linuxmint.17", "ubuntu.14.04-x64"),
+            new RuntimeSpec("linuxmint.17.1", "linuxmint.17"),
+            new RuntimeSpec("linuxmint.17.1-x64", "linuxmint.17-x64"),
+            new RuntimeSpec("linuxmint.17.2", "linuxmint.17.1"),
+            new RuntimeSpec("linuxmint.17.2-x64", "linuxmint.17.2", "linuxmint.17.1-x64"),
+            new RuntimeSpec("linuxmint.17.3", "linuxmint.17.2"),
+            new RuntimeSpec("linuxmint.17.3-x64", "linuxmint.17.3", "linuxmint.17.2-x64"));
 
         public bool IsHttp
         {
