@@ -73,7 +73,7 @@ namespace Microsoft.Dnx.Runtime.Common
 
             instance = null;
             entryPoint = null;
-#if DNX451
+#if DNX451 || NET451
             if (assembly.EntryPoint != null)
             {
                 // Add support for console apps
