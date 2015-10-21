@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
 {

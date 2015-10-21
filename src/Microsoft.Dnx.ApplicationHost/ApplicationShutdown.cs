@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.ApplicationHost
 {

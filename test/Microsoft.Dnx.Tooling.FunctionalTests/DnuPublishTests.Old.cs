@@ -7,6 +7,7 @@ using System.Linq;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;
 
 namespace Microsoft.Dnx.Tooling.FunctionalTests.Old

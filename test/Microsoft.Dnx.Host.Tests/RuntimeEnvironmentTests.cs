@@ -6,6 +6,7 @@ using System.Linq;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Host;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;
 
 namespace dnx.hostTests

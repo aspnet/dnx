@@ -10,7 +10,8 @@
             "version": "1.0.0-*",
             "type": "build"
         },
-        "Microsoft.Dnx.Runtime": "1.0.0-*"
+      "Microsoft.Dnx.Runtime": "1.0.0-*",
+      "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*"
     },
 
     "frameworks": {

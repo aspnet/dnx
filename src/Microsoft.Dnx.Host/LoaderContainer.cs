@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Host
 {

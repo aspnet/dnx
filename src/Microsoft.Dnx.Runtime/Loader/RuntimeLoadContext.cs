@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Dnx.Runtime.Compilation;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Runtime.Loader
 {

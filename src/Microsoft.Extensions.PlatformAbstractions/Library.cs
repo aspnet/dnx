@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Exposes information about a library which can be an assembly, project, or a package.

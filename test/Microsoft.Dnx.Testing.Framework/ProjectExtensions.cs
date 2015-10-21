@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Dnx.Testing.Framework

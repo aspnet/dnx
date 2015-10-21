@@ -5,6 +5,7 @@ using System;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Helpers;
 using Microsoft.Dnx.Runtime.Internal;
 using Xunit;

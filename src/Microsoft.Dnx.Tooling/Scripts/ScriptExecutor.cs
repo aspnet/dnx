@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Runtime.CommandParsing;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Tooling
 {

@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
 
 namespace Microsoft.Dnx.Tooling

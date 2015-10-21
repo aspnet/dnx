@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.DesignTimeHost
 {

@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Tooling.Algorithms;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 using Microsoft.Dnx.Runtime.Loader;
 

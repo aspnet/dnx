@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 using Xunit;
 

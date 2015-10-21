@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Exposes methods that allow control over the application lifetime.

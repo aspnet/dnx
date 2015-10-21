@@ -12,6 +12,7 @@ using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
 using Newtonsoft.Json;

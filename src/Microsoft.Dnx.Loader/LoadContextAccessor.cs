@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Microsoft.Extensions.PlatformAbstractions;
+
 #if DNXCORE50
 using System.Runtime.Loader;
 #endif

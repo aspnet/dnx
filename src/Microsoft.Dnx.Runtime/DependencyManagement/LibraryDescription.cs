@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Runtime
 {

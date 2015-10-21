@@ -5,7 +5,7 @@
     "warningsAsErrors": true
   },
   "dependencies": {
-    "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
     "Newtonsoft.Json": "6.0.6"
   },
   "frameworks": {
@@ -25,4 +25,3 @@
       "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.DesignTimeHost"
     ]
   }
-}

@@ -4,7 +4,7 @@
 using System;
 using System.Reflection;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Defines a contract for an assembly loader. This is an extension point that can be used to implement custom assembly loading logic.

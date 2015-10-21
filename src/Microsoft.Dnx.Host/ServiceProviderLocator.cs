@@ -3,7 +3,7 @@
 
 using System;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Infrastructure;
+using Microsoft.Extensions.PlatformAbstractions;
 #if DNX451
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Remoting;

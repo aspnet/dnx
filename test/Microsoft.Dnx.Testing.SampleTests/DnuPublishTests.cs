@@ -4,6 +4,7 @@
 using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Helpers;
 using Microsoft.Dnx.Testing.Framework;
 using Microsoft.Dnx.Tooling.Publish;

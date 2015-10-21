@@ -10,6 +10,7 @@ using System.Security;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace NuGet
 {

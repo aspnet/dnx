@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Helpers;
 
 namespace Microsoft.Dnx.Testing.Framework

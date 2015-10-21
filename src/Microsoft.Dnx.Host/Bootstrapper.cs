@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
-using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
 
 namespace Microsoft.Dnx.Host

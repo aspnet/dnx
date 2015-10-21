@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Tooling.Publish;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Internal;
 using NuGet;
 

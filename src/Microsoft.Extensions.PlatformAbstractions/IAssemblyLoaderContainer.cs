@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Provides access to assembly loaders used for runtime assembly resolution.

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Runtime.Compilation
 {

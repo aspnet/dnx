@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Helpers;
 using Microsoft.Dnx.Tooling.Utils;
 using NuGet;

@@ -3,6 +3,7 @@
 
 using System.IO;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Testing.Framework
 {

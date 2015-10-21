@@ -9,7 +9,7 @@ using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Infrastructure;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
 using NuGet;
 using Xunit;

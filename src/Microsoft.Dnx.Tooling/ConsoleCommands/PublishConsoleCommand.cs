@@ -4,6 +4,7 @@
 using System;
 using Microsoft.Dnx.Tooling.Publish;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 
 namespace Microsoft.Dnx.Tooling

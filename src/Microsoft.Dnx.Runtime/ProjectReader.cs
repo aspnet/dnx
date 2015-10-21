@@ -8,6 +8,7 @@ using System.Linq;
 using Microsoft.Dnx.Runtime.Helpers;
 using Microsoft.Dnx.Runtime.Internals;
 using Microsoft.Extensions.JsonParser.Sources;
+using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime

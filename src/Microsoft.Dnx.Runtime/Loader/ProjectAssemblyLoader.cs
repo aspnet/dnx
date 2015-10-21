@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Linq;
 using Microsoft.Dnx.Runtime.Compilation;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Runtime.Loader
 {

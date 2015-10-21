@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
 using NuGet;
 

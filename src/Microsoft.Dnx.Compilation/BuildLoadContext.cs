@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Loader;
 
 namespace Microsoft.Dnx.Compilation

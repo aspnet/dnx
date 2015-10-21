@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Tooling.Restore.NuGet;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Tooling

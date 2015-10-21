@@ -4,6 +4,7 @@
 using System;
 using System.Reflection;
 using Microsoft.Dnx.Host;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Runtime
 {

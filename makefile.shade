@@ -85,7 +85,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Dnx.DesignTimeHost.Abstractions",
     "Microsoft.Dnx.Loader",
     "Microsoft.Dnx.Runtime",
-    "Microsoft.Dnx.Runtime.Abstractions",
+    "Microsoft.Extensions.PlatformAbstractions",
     "Microsoft.Dnx.Runtime.CommandParsing.Sources",
     "Microsoft.Dnx.Runtime.Internals",
     "Microsoft.Extensions.JsonParser.Sources",
@@ -834,7 +834,7 @@ macro name='DoRestore'
             var tpaProjects = new[] {
                 BOOTSTRAPPER_HOST_NAME,
                 BOOTSTRAPPER_CORECLR_MANAGED_NAME,
-                "Microsoft.Dnx.Runtime.Abstractions",
+                "Microsoft.Extensions.PlatformAbstractions",
                 "Microsoft.Dnx.Loader"
             };
 

@@ -10,7 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Dnx.Tooling;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Infrastructure;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 

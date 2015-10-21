@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.DesignTimeHost.InternalModels
 {

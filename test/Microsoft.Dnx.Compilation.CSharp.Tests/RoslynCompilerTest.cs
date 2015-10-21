@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 #if DNX451
 using Moq;
 #endif

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Provides a list of service types exposed by the runtime.

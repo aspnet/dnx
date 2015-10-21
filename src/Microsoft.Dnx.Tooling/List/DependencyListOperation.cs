@@ -4,6 +4,7 @@
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Tooling.Algorithms;
 using NuGet;
 

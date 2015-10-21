@@ -3,7 +3,7 @@
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "shared": "**/*.cs",
     "dependencies": {
-        "Microsoft.Dnx.Runtime.Abstractions": ""
+        "Microsoft.Extensions.PlatformAbstractions": ""
     },
     "frameworks": {
         "dnx451": { },

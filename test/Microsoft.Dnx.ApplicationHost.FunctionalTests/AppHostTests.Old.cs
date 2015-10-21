@@ -7,6 +7,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Tooling;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.Impl;
 using NuGet;
 using Xunit;

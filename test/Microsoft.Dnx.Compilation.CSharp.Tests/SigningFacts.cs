@@ -5,6 +5,7 @@ using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;
 
 namespace Microsoft.Dnx.Compilation.CSharp.Tests

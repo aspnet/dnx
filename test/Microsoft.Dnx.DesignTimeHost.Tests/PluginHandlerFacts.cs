@@ -7,6 +7,7 @@ using System.Reflection;
 using Microsoft.Dnx.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
 using Xunit;
 

@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json;
 
 namespace Microsoft.Dnx.DesignTimeHost

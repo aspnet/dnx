@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Compilation.DesignTime
 {

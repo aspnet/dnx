@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Provides access to created <see cref="IAssemblyLoadContext"/>

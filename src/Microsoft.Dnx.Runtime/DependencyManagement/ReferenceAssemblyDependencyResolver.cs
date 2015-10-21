@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime

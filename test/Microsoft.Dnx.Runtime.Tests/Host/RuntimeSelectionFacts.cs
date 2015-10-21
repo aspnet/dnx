@@ -228,7 +228,7 @@ namespace Microsoft.Dnx.Runtime.Tests.Host
             const string DummyProject = @"{ ""frameworks"": { ""dnx451"": {} } }";
             using (var strm = new MemoryStream(Encoding.UTF8.GetBytes(DummyProject)))
             {
-                return new ProjectReader().ReadProject(strm, "DummyProject", @"C:\DummyProject", new List<DiagnosticMessage>());
+                return new ProjectReader().ReadProject(strm, "DummyProject", @"C:\DummyProject", new List<Microsoft.Extensions.PlatformAbstractions.DiagnosticMessage>());
             }
         }
     }

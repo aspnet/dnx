@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.Impl;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;

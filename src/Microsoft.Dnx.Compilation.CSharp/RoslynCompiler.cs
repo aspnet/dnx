@@ -14,6 +14,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Dnx.Compilation.CSharp

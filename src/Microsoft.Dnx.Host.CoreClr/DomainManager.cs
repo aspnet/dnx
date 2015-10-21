@@ -7,6 +7,7 @@ using System.Runtime.Versioning;
 using System.Security;
 using Microsoft.Dnx.Host;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.Impl;
 
 [SecurityCritical]

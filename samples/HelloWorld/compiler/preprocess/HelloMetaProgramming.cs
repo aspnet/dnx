@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 //using Microsoft.CodeAnalysis;
 //using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace HelloWorld.Compiler.Preprocess
 {

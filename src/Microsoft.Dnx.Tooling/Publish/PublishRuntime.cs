@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Tooling.Publish
 {

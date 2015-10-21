@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace NuGet
 {

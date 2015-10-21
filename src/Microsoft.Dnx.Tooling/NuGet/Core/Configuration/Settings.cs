@@ -10,6 +10,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Tooling;
 using NuGet.Resources;
 

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Provides access to the complete graph of dependencies for the application.

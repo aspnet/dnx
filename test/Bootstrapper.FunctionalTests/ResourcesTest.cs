@@ -6,6 +6,7 @@ using System.IO;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;
 
 namespace Bootstrapper.FunctionalTests

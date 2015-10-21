@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using Microsoft.Dnx.Tooling.Publish;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;
 
 namespace Microsoft.Dnx.Tooling.Publish.Tests

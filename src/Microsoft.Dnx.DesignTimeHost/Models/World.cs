@@ -7,6 +7,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Dnx.DesignTimeHost.Models

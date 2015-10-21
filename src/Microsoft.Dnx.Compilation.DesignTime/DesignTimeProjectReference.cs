@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Compilation;
 
 namespace Microsoft.Dnx.Compilation.DesignTime

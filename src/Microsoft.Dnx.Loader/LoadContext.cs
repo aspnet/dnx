@@ -3,7 +3,8 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Reflection;
 using System.Threading;
-using Microsoft.Dnx.Runtime.Infrastructure;
+using Microsoft.Extensions.PlatformAbstractions;
+
 #if DNXCORE50
 using System.Runtime.Loader;
 #endif

@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Dnx.Runtime.Servicing;
+using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime

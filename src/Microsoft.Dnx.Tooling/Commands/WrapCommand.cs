@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
 using NuGet;
 

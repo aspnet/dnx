@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Dnx.Compilation

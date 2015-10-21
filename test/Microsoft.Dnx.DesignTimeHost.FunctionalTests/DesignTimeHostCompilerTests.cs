@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.DesignTime;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Testing.Framework;
 using Microsoft.Dnx.Testing.Framework.DesignTimeHost;
 using NuGet;

@@ -12,6 +12,7 @@ using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Tooling.Publish;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
 using Microsoft.Dnx.Tooling.Utils;

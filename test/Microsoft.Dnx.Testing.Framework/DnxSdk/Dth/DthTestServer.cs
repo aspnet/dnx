@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
 {

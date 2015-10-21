@@ -16,6 +16,7 @@ using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Loader;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

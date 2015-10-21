@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Microsoft.Dnx.Runtime.Infrastructure
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Provides access to the current <see cref="IServiceProvider"/>.

@@ -18,7 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{3F68
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.Tests", "test\Microsoft.Dnx.Runtime.Tests\Microsoft.Dnx.Runtime.Tests.xproj", "{CCC1F7F8-8D3B-49C3-BAD4-17C784499AF1}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.Abstractions", "src\Microsoft.Dnx.Runtime.Abstractions\Microsoft.Dnx.Runtime.Abstractions.xproj", "{34E6FF7E-EACA-4542-A569-812738A83EB8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Extensions.PlatformAbstractions", "src\Microsoft.Extensions.PlatformAbstractions\Microsoft.Extensions.PlatformAbstractions.xproj", "{34E6FF7E-EACA-4542-A569-812738A83EB8}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime", "src\Microsoft.Dnx.Runtime\Microsoft.Dnx.Runtime.xproj", "{D346515A-D457-49AC-B74D-1A343D870449}"
 EndProject

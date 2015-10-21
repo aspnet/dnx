@@ -3,7 +3,7 @@
 
 using System.Runtime.Versioning;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// Provides access to the runtime environment.

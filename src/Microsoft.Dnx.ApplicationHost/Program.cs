@@ -10,6 +10,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.CommandParsing;
 using Microsoft.Dnx.Runtime.Common;
 using Microsoft.Dnx.Runtime.Common.CommandLine;

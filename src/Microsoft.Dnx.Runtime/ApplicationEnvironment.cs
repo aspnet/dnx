@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Dnx.Runtime.Sources.Impl;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Runtime
 {

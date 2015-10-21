@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Compilation

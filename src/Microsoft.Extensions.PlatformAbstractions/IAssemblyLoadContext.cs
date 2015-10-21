@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Extensions.PlatformAbstractions
 {
     /// <summary>
     /// A context in which assemblies can be loaded.
