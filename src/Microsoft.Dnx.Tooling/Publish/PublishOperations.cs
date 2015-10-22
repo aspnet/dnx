@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using NuGet;
 
 namespace Microsoft.Dnx.Tooling.Publish
@@ -196,6 +197,38 @@ namespace Microsoft.Dnx.Tooling.Publish
                 "",
                 targetPath,
                 shouldInclude);
+        }
+
+        public static void SetWebRootJson(JObject jsonObj, string value)
+        {
+            // Need to loop over json values because we want case insensitive keys
+            // and json doesn't support case insensitive keys
+            foreach (KeyValuePair<string, JToken> property in jsonObj)
+            {
+                if (string.Equals(property.Key, "webroot", StringComparison.OrdinalIgnoreCase))
+                {
+                    jsonObj[property.Key] = value;
+                    return;
+                }
+            }
+
+            // webroot key was not found, create one
+            jsonObj.Add("webroot", new JValue(value));
+        }
+
+        public static JToken GetWebRootJson(JObject jsonObj)
+        {
+            // Need to loop over json values because we want case insensitive keys
+            // and json doesn't support case insensitive keys
+            foreach (KeyValuePair<string, JToken> property in jsonObj)
+            {
+                if (string.Equals(property.Key, "webroot", StringComparison.OrdinalIgnoreCase))
+                {
+                    return jsonObj[property.Key];
+                }
+            }
+
+            return null;
         }
 
         private void AddFilesRecursive(ZipArchive archive, string sourceBasePath, string sourcePath, string targetPath, Func<string, string, bool> shouldInclude)

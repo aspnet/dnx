@@ -61,7 +61,6 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("description", nameof(Project.Description))]
         [InlineData("copyright", nameof(Project.Copyright))]
         [InlineData("title", nameof(Project.Title))]
-        [InlineData("webroot", nameof(Project.WebRoot))]
         [InlineData("entryPoint", nameof(Project.EntryPoint))]
         [InlineData("projectUrl", nameof(Project.ProjectUrl))]
         [InlineData("licenseUrl", nameof(Project.LicenseUrl))]

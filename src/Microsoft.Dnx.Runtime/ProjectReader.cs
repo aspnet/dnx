@@ -75,7 +75,6 @@ namespace Microsoft.Dnx.Runtime
             project.Summary = rawProject.ValueAsString("summary");
             project.Copyright = rawProject.ValueAsString("copyright");
             project.Title = rawProject.ValueAsString("title");
-            project.WebRoot = rawProject.ValueAsString("webroot");
             project.EntryPoint = rawProject.ValueAsString("entryPoint");
             project.ProjectUrl = rawProject.ValueAsString("projectUrl");
             project.LicenseUrl = rawProject.ValueAsString("licenseUrl");

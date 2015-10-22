@@ -70,8 +70,6 @@ namespace Microsoft.Dnx.Runtime
 
         public CompilerServices CompilerServices { get; set; }
 
-        public string WebRoot { get; set; }
-
         public string EntryPoint { get; set; }
 
         public string ProjectUrl { get; set; }
