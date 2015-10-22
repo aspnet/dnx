@@ -99,7 +99,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             if (!string.IsNullOrEmpty(keyFile))
             {
-#if DOTNET5_45
+#if DOTNET5_4
                 return options.WithCryptoPublicKey(
                     SnkUtils.ExtractPublicKey(File.ReadAllBytes(keyFile)));
 #else
