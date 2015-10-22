@@ -12,7 +12,7 @@ namespace Microsoft.Dnx.Runtime.Sources.Impl
     internal class ApplicationGlobalData
     {
         private readonly IApplicationEnvironment _hostEnvironment;
-#if DNXCORE50
+#if DNXCORE50 || DOTNET5_4
         private readonly object _lock;
         private readonly Dictionary<string, object> _appGlobalData;
 #endif
@@ -20,7 +20,7 @@ namespace Microsoft.Dnx.Runtime.Sources.Impl
         public ApplicationGlobalData(IApplicationEnvironment hostEnvironment)
         {
             _hostEnvironment = hostEnvironment;
-#if DNXCORE50
+#if DNXCORE50 || DOTNET5_4
             // If there is no host environment that we are delegating to, we need a place to store this data in CoreCLR
             if (hostEnvironment == null)
             {
@@ -50,7 +50,7 @@ namespace Microsoft.Dnx.Runtime.Sources.Impl
             }
         }
 
-#if DNX451
+#if DNX451 || NET451
         private object GetDataCore(string name)
         {
             return AppDomain.CurrentDomain.GetData(name);
