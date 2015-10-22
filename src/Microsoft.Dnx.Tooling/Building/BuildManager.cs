@@ -168,7 +168,7 @@ namespace Microsoft.Dnx.Tooling
 
             if (_buildOptions.GeneratePackages)
             {
-                if(!ScriptExecutor.Execute(_currentProject, "prepack", getScriptVariable))
+                if (!ScriptExecutor.Execute(_currentProject, "prepack", getScriptVariable))
                 {
                     LogError(ScriptExecutor.ErrorMessage);
                     return false;
@@ -186,83 +186,101 @@ namespace Microsoft.Dnx.Tooling
 
             var outputPath = Path.Combine(baseOutputPath, configuration);
 
-            // Build all target frameworks a project supports
-            foreach (var targetFramework in frameworks)
+            if (_buildOptions.GeneratePackages && _currentProject.Scripts.ContainsKey("pack"))
             {
-                _buildOptions.Reports.Information.WriteLine();
-                _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
-                    _currentProject.Name, targetFramework.ToString().Yellow().Bold());
-
-                contextVariables["build:TargetFramework"] = VersionUtility.GetShortFrameworkName(targetFramework);
-
-                if (!ScriptExecutor.Execute(_currentProject, "prebuild", getScriptVariable))
+                success = ScriptExecutor.Execute(_currentProject, "pack", getScriptVariable);
+            }
+            else
+            {
+                // Build all target frameworks a project supports
+                foreach (var targetFramework in frameworks)
                 {
-                    LogError(ScriptExecutor.ErrorMessage);
-                    success = false;
-                    continue;
-                }
+                    _buildOptions.Reports.Information.WriteLine();
+                    _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
+                        _currentProject.Name, targetFramework.ToString().Yellow().Bold());
 
-                var diagnostics = new List<DiagnosticMessage>();
-                var context = new BuildContext(_compilationEngine,
-                                               _currentProject,
-                                               targetFramework,
-                                               configuration,
-                                               outputPath);
+                    var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
+                    var frameworkOutputPath = Path.Combine(outputPath, targetFrameworkFolder);
+                    contextVariables["build:TargetFramework"] = VersionUtility.GetShortFrameworkName(targetFramework);
+                    contextVariables["build:OutputDirectory"] = frameworkOutputPath;
 
-                context.Initialize(_buildOptions.Reports.Quiet);
-
-                success &= context.Build(diagnostics);
-
-                if (success)
-                {
-                    if (_buildOptions.GeneratePackages)
-                    {
-                        context.PopulateDependencies(packageBuilder);
-                        context.AddLibs(packageBuilder, "*.dll");
-                        context.AddLibs(packageBuilder, "*.xml");
-
-                        context.PopulateDependencies(symbolPackageBuilder);
-                        context.AddLibs(symbolPackageBuilder, "*.*");
-
-                        context.AddLibs(packageBuilder, "*.resources.dll", recursiveSearch: true);
-                    }
-
-                    if (!ScriptExecutor.Execute(_currentProject, "postbuild", getScriptVariable))
+                    if (!ScriptExecutor.Execute(_currentProject, "prebuild", getScriptVariable))
                     {
                         LogError(ScriptExecutor.ErrorMessage);
                         success = false;
+                        continue;
                     }
+
+                    var diagnostics = new List<DiagnosticMessage>();
+                    var context = new BuildContext(_compilationEngine,
+                                                   _currentProject,
+                                                   targetFramework,
+                                                   configuration,
+                                                   frameworkOutputPath);
+
+
+                    if (_currentProject.Scripts.ContainsKey("build"))
+                    {
+                        success &= ScriptExecutor.Execute(_currentProject, "build", getScriptVariable);
+                    }
+                    else
+                    {
+                        context.ShowDependencyInformation(_buildOptions.Reports.Quiet);
+                        success &= context.Build(diagnostics);
+                    }
+
+                    if (success)
+                    {
+                        if (_buildOptions.GeneratePackages)
+                        {
+                            context.PopulateDependencies(packageBuilder);
+                            context.AddLibs(packageBuilder, "*.dll");
+                            context.AddLibs(packageBuilder, "*.xml");
+
+                            context.PopulateDependencies(symbolPackageBuilder);
+                            context.AddLibs(symbolPackageBuilder, "*.*");
+
+                            context.AddLibs(packageBuilder, "*.resources.dll", recursiveSearch: true);
+                        }
+
+                        if (!ScriptExecutor.Execute(_currentProject, "postbuild", getScriptVariable))
+                        {
+                            LogError(ScriptExecutor.ErrorMessage);
+                            success = false;
+                        }
+                    }
+
+                    allDiagnostics.AddRange(diagnostics);
+
+                    WriteDiagnostics(diagnostics);
+
+                    contextVariables.Remove("build:TargetFramework");
                 }
 
-                allDiagnostics.AddRange(diagnostics);
+                if (_buildOptions.GeneratePackages)
+                {
+                    success = success &&
+                        // Generates the application package only if this is an application packages
+                        installBuilder.Build(outputPath);
 
-                WriteDiagnostics(diagnostics);
+                    if (success)
+                    {
+                        // Create a package per configuration
+                        var nupkg = GetPackagePath(_currentProject, outputPath);
+                        var symbolsNupkg = GetPackagePath(_currentProject, outputPath, symbols: true);
 
-                contextVariables.Remove("build:TargetFramework");
+                        success &= GeneratePackage(success, allDiagnostics, packageBuilder, symbolPackageBuilder, nupkg, symbolsNupkg);
+                    }
+                }
             }
 
-            if (_buildOptions.GeneratePackages)
+
+            if (success && _buildOptions.GeneratePackages)
             {
-                success = success &&
-                    // Generates the application package only if this is an application packages
-                    installBuilder.Build(outputPath);
-
-                if (success)
+                if (!ScriptExecutor.Execute(_currentProject, "postpack", getScriptVariable))
                 {
-                    // Create a package per configuration
-                    var nupkg = GetPackagePath(_currentProject, outputPath);
-                    var symbolsNupkg = GetPackagePath(_currentProject, outputPath, symbols: true);
-
-                    success &= GeneratePackage(success, allDiagnostics, packageBuilder, symbolPackageBuilder, nupkg, symbolsNupkg);
-                }
-
-                if (success)
-                {
-                    if (!ScriptExecutor.Execute(_currentProject, "postpack", getScriptVariable))
-                    {
-                        LogError(ScriptExecutor.ErrorMessage);
-                        return false;
-                    }
+                    LogError(ScriptExecutor.ErrorMessage);
+                    return false;
                 }
             }
 

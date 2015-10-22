@@ -30,16 +30,20 @@ namespace Microsoft.Dnx.Testing.Framework
 
         public string PackagePath { get; private set; }
 
-        public string GetAssemblyPath(FrameworkName framework)
+        public string GetOutputFilePath(FrameworkName framework, string relativePath)
         {
             var shortName = VersionUtility.GetShortFrameworkName(framework);
-            return Path.Combine(RootPath, Configuration, shortName, $"{PackageName}.dll");
+            return Path.Combine(RootPath, Configuration, shortName, relativePath);
+        }
+
+        public string GetAssemblyPath(FrameworkName framework)
+        {
+            return GetOutputFilePath(framework, $"{PackageName}.dll");
         }
 
         public string GetSateliteAssemblyPath(FrameworkName framework, string culture)
         {
-            var shortName = VersionUtility.GetShortFrameworkName(framework);
-            return Path.Combine(RootPath, Configuration, shortName, culture, $"{PackageName}.resources.dll");
+            return GetOutputFilePath(framework, Path.Combine(culture, $"{PackageName}.resources.dll"));
         }
     }
 }
