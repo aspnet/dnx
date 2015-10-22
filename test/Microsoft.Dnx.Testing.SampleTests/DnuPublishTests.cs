@@ -32,7 +32,6 @@ namespace Microsoft.Dnx.Testing.SampleTests
             var projectJson = new JObject
             {
                 ["publishExclude"] = "**.useless",
-                ["webroot"] = "public",
                 ["frameworks"] = new JObject
                 {
                     ["dnx451"] = new JObject { },
@@ -40,9 +39,15 @@ namespace Microsoft.Dnx.Testing.SampleTests
                 }
             };
 
+            var hostingJson = new JObject
+            {
+                ["webroot"] = "public"
+            };
+
             var projectStructure = new Dir
             {
                 ["project.json"] = projectJson,
+                ["Microsoft.AspNet.Hosting.json"] = hostingJson,
                 ["Config.json", "Program.cs"] = Dir.EmptyFile,
                 ["public"] = new Dir
                 {
@@ -66,12 +71,16 @@ namespace Microsoft.Dnx.Testing.SampleTests
             var expectedOutputProjectJson = new JObject
             {
                 ["publishExclude"] = "**.useless",
-                ["webroot"] = "../../../wwwroot",
                 ["frameworks"] = new JObject
                 {
                     ["dnx451"] = new JObject { },
                     ["dnxcore50"] = new JObject { }
                 }
+            };
+
+            var expectedOutputHostingJson = new JObject
+            {
+                ["webroot"] = "../../../wwwroot"
             };
 
             var expectedOutputGlobalJson = new JObject
@@ -132,6 +141,7 @@ namespace Microsoft.Dnx.Testing.SampleTests
                     {
                         ["project.json"] = expectedOutputProjectJson,
                         ["project.lock.json"] = expectedOutputLockFile,
+                        ["Microsoft.AspNet.Hosting.json"] = expectedOutputHostingJson,
                         ["Config.json", "Program.cs"] = Dir.EmptyFile,
                         ["Views"] = new Dir
                         {

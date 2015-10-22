@@ -11,7 +11,7 @@ using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Helpers;
 using Microsoft.Dnx.Tooling.Utils;
-using NuGet;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Dnx.Tooling.Publish
 {
@@ -58,8 +58,18 @@ namespace Microsoft.Dnx.Tooling.Publish
                 _options.Reports.Information.WriteLine(warning.FormattedMessage.Yellow());
             }
 
-            // '--wwwroot' option can override 'webroot' property in project.json
-            _options.WwwRoot = _options.WwwRoot ?? project.WebRoot;
+            if (string.IsNullOrEmpty(_options.WwwRoot) && File.Exists(Path.Combine(project.ProjectDirectory, "Microsoft.AspNet.Hosting.json")))
+            {
+                var jsonObj = JObject.Parse(File.ReadAllText(Path.Combine(project.ProjectDirectory, "Microsoft.AspNet.Hosting.json")));
+                _options.WwwRoot = PublishOperations.GetWebRootJson(jsonObj)?.ToString();
+            }
+
+            if (string.IsNullOrEmpty(_options.WwwRoot) && Directory.Exists(Path.Combine(project.ProjectDirectory, "wwwroot")))
+            {
+                _options.WwwRoot = "wwwroot";
+            }
+
+            _options.WwwRoot = _options.WwwRoot ?? "";
             _options.WwwRootOut = _options.WwwRootOut ?? _options.WwwRoot;
 
             if (string.IsNullOrEmpty(_options.WwwRoot) && !string.IsNullOrEmpty(_options.WwwRootOut))

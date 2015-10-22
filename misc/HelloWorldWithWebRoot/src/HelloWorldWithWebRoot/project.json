@@ -1,5 +1,4 @@
 {
-  "webroot":  "wwwroot",
   "commands": {
     "HelloWorld": "HelloWorld"
   },

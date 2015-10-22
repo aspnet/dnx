@@ -262,13 +262,22 @@ namespace Microsoft.Dnx.Tooling.Publish
             // Update the 'webroot' property, which was specified with '--wwwroot-out' option
             if (!string.IsNullOrEmpty(WwwRootOut))
             {
-                var targetProjectJson = Path.Combine(targetPath, Runtime.Project.ProjectFileName);
-
-                UpdateJson(targetProjectJson, jsonObj =>
+                var hostingConfig = Path.Combine(targetPath, "Microsoft.AspNet.Hosting.json");
+                if (!File.Exists(hostingConfig))
                 {
-                    var targetWebRootPath = Path.Combine(root.OutputPath, WwwRootOut);
-                    jsonObj["webroot"] = PathUtility.GetRelativePath(targetProjectJson, targetWebRootPath, separator: '/');
-                });
+                    File.AppendAllText(hostingConfig, $@"{{
+    ""webroot"": ""{PathUtility.GetRelativePath(hostingConfig, Path.Combine(root.OutputPath, WwwRootOut), separator: '/')}""
+    }}
+}}");
+                }
+                else
+                {
+                    UpdateJson(hostingConfig, jsonObj =>
+                    {
+                        var targetWebRootPath = Path.Combine(root.OutputPath, WwwRootOut);
+                        PublishOperations.SetWebRootJson(jsonObj, PathUtility.GetRelativePath(hostingConfig, targetWebRootPath, separator: '/'));
+                    });
+                }
             }
         }
 
