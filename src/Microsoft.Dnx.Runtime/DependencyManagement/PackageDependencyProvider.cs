@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Dnx.Runtime.Servicing;
@@ -243,26 +244,43 @@ namespace Microsoft.Dnx.Runtime
 #if DNX451
         public static void EnableLoadingNativeLibraries(IEnumerable<LibraryDescription> libraries)
         {
-            if (RuntimeEnvironmentHelper.IsWindows)
+            var nativeLibPaths = new StringBuilder();
+            foreach (var packageDescription in libraries.OfType<PackageDescription>())
             {
-                var nativeLibPaths = new StringBuilder();
-                foreach (var packageDescription in libraries.OfType<PackageDescription>())
+                foreach (var nativeLib in packageDescription.Target.NativeLibraries)
                 {
-                    foreach(var nativeLib in packageDescription.Target.NativeLibraries)
+                    var nativeLibFullPath = Path.Combine(packageDescription.Path, nativeLib.Path);
+
+                    if (RuntimeEnvironmentHelper.IsWindows)
                     {
-                        nativeLibPaths
-                            .Append(";")
-                            .Append(Path.GetDirectoryName(Path.Combine(packageDescription.Path, nativeLib.Path)));
+                        nativeLibPaths.Append(";").Append(Path.GetDirectoryName(nativeLibFullPath));
+                    }
+                    else
+                    {
+                        Logger.TraceInformation("[{0}]: Trying to preload : {1}", nameof(PackageDependencyProvider), nativeLibFullPath);
+                        var handle = dlopen(nativeLibFullPath, RTLD_GLOBAL | RTLD_LAZY);
+                        if (handle != IntPtr.Zero)
+                        {
+                            Logger.TraceInformation("[{0}]: Preloading : {1} succeeded", nameof(PackageDependencyProvider), nativeLibFullPath);
+                        }
                     }
                 }
 
-                if (nativeLibPaths.Length > 1)
+                if (nativeLibPaths.Length > 0)
                 {
                     var path = Environment.GetEnvironmentVariable("PATH");
                     Environment.SetEnvironmentVariable("PATH", path + nativeLibPaths.ToString());
                 }
             }
         }
+#endif
+
+#if DNX451
+        [DllImport("libdl")]
+        public static extern IntPtr dlopen(string fileName, int flags);
+
+        const int RTLD_LAZY = 0x01;
+        const int RTLD_GLOBAL = 0x08;
 #endif
 
         private static IEnumerable<IPackagePathResolver> GetCacheResolvers()
