@@ -13,10 +13,6 @@ namespace Microsoft.Dnx.Compilation
         {
             get
             {
-                if (_defaultCompilationServices == null)
-                {
-                    throw new InvalidOperationException("Trying to get CompilationServices Default before it was set");
-                }
                 return _defaultCompilationServices;
             }
         }

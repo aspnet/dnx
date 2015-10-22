@@ -14,10 +14,6 @@ namespace Microsoft.Dnx.Runtime
         {
             get
             {
-                if (_defaultPlatformServices == null)
-                {
-                    throw new InvalidOperationException("Trying to access Default PlatformServices before it was set");
-                }
                 return _defaultPlatformServices;
             }
         }
