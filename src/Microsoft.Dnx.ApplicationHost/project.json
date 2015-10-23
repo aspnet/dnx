@@ -3,7 +3,8 @@
     "compilationOptions": {
         "define": [ "TRACE" ],
         "warningsAsErrors": true,
-        "emitEntryPoint": true
+        "emitEntryPoint": true,
+        "keyFile": "../../tools/Key.snk"
     },
     "dependencies": {
         "Microsoft.Dnx.Runtime": "1.0.0-*",
