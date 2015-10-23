@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -13,16 +15,15 @@ namespace Microsoft.Dnx.Runtime
         {
             if (runtimeEnvironment.OperatingSystem == RuntimeOperatingSystems.Windows)
             {
-                return PlatformServices.Default.Runtime.GetAllRuntimeIdentifiers();
+                return runtimeEnvironment.GetAllRuntimeIdentifiers();
             }
 
-            var runtimeId = PlatformServices.Default.Runtime.GetRuntimeOsName();
+            var runtimeId = runtimeEnvironment.GetRuntimeOsName();
 
             return new[]
             {
-                runtimeId,
-                runtimeId.Split('-')[0],
-                runtimeId.Split('.')[0]
+                runtimeId + "-" + runtimeEnvironment.RuntimeArchitecture,
+                runtimeId.Split('.')[0] + "-" + runtimeEnvironment.RuntimeArchitecture
             };
         }
 

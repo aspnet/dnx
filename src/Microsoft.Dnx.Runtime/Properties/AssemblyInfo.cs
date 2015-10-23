@@ -9,3 +9,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Microsoft.Dnx.Runtime.FunctionalTests")]
 [assembly: AssemblyMetadata("Serviceable", "True")]
 [assembly: NeutralResourcesLanguage("en-US")]
+[assembly: InternalsVisibleTo("Microsoft.Dnx.Runtime.Tests")]

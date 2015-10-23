@@ -281,7 +281,7 @@ namespace Microsoft.Dnx.Runtime
 
         public static void EnableLoadingNativeLibraries(IEnumerable<ProjectDescription> projects)
         {
-            var folderCandidates = NativeLibPathUtils.GetNativeSubfolderCandidates();
+            var folderCandidates = NativeLibPathUtils.GetNativeSubfolderCandidates(RuntimeEnvironmentHelper.RuntimeEnvironment);
 
             var nativeLibPaths = new StringBuilder();
             foreach (var projectDescription in projects)
