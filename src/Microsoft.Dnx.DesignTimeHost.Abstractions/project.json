@@ -25,3 +25,4 @@
       "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.DesignTimeHost"
     ]
   }
+}
