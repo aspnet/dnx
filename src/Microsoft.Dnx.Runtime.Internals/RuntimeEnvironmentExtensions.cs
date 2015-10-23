@@ -78,7 +78,7 @@ namespace Microsoft.Dnx.Runtime
             if (string.Equals(os, RuntimeOperatingSystems.Windows, StringComparison.Ordinal))
             {
                 os = "win";
-                
+
                 if (env.OperatingSystemVersion.Equals("6.1", StringComparison.Ordinal))
                 {
                     ver = "7";
