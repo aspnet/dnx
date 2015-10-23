@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.IO;
 using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;
@@ -15,9 +16,14 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("Windows", "6.3", "x86", new[] { "win81-x86", "win8-x86", "win7-x86" })]
         [InlineData("Linux", "ubuntu 14.04", "x64", new[] { "ubuntu.14.04-x64", "ubuntu-x64" })]
         [InlineData("Darwin", "10.10", "x64", new[] { "osx.10.10-x64", "osx-x64" })]
-        public void GetNativeSubfolderCandidatesRetunsExpectedFolders_Windows(string os, string version,
+        public void GetNativeSubfolderCandidatesRetunsExpectedFolders(string os, string version,
             string architecture, string[] expected)
         {
+            if(!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DNX_RUNTIME_ID")))
+            {
+                return;
+            }
+
             var runtimeEnvironment = new FakeRuntimeEnvironment
             {
                 OperatingSystem = os,

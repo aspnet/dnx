@@ -217,10 +217,11 @@ public class EntryPoint
 
         if (operatingSystem == "Darwin")
         {
-            // sw_vers returns versions in format "10.10.4" so ".4" needs to be removed
+            // sw_vers returns versions in format "10.10{.4}" so ".4" needs to be removed if exists
             osVersion = RunProgram("sw_vers", "-productVersion");
+            var firstDot = osVersion.IndexOf('.');
             var lastDot = osVersion.LastIndexOf('.');
-            osVersion = lastDot >= 0 ? osVersion.Substring(0, lastDot) : osVersion;
+            osVersion = lastDot >= 0 && firstDot != lastDot ? osVersion.Substring(0, lastDot) : osVersion;
             return;
         }
 

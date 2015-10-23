@@ -273,8 +273,12 @@ namespace Microsoft.Dnx.Runtime
 
                 if (nativeLibPaths.Length > 0)
                 {
+                    var nativeLibsPathsStr = nativeLibPaths.ToString();
+                    Logger.TraceInformation("[{0}]: Enabling loading native libraries from packages by extendig %PATH% with: {1}",
+                        nameof(PackageDependencyProvider), nativeLibsPathsStr);
+
                     var path = Environment.GetEnvironmentVariable("PATH");
-                    Environment.SetEnvironmentVariable("PATH", path + nativeLibPaths.ToString());
+                    Environment.SetEnvironmentVariable("PATH", path + nativeLibsPathsStr);
                 }
             }
         }
@@ -309,8 +313,12 @@ namespace Microsoft.Dnx.Runtime
 
             if (nativeLibPaths.Length > 0)
             {
+                var nativeLibPathsStr = nativeLibPaths.ToString();
+                Logger.TraceInformation("[{0}]: Enabling loading native libraries from projects by extendig %PATH% with: {1}",
+                    nameof(PackageDependencyProvider), nativeLibPathsStr);
+
                 var path = Environment.GetEnvironmentVariable("PATH");
-                Environment.SetEnvironmentVariable("PATH", path + nativeLibPaths.ToString());
+                Environment.SetEnvironmentVariable("PATH", path + nativeLibPathsStr);
             }
         }
 
@@ -318,11 +326,18 @@ namespace Microsoft.Dnx.Runtime
         {
             Debug.Assert(RuntimeEnvironmentHelper.IsMono, "Mono specific");
 
-            Logger.TraceInformation("[{0}]: Attempting to preload : {1}", nameof(PackageDependencyProvider), nativeLibFullPath);
+            // Preloading does not work on Mono on Linux. As a workaround the user can set the LD_LIBRARY_PATH.
+            var runtimeEnvironment = RuntimeEnvironmentHelper.RuntimeEnvironment;
+            if (runtimeEnvironment.OperatingSystem == RuntimeOperatingSystems.Linux && RuntimeEnvironmentHelper.IsMono)
+            {
+                return;
+            }
+
+            Logger.TraceInformation("[{0}]: Attempting to preload: {1}", nameof(PackageDependencyProvider), nativeLibFullPath);
 
             var handle = dlopen(nativeLibFullPath, RTLD_GLOBAL | RTLD_LAZY);
 
-            Logger.TraceInformation("[{0}]: Preloading : {1} {2}", nameof(PackageDependencyProvider), nativeLibFullPath,
+            Logger.TraceInformation("[{0}]: Preloading: {1} {2}", nameof(PackageDependencyProvider), nativeLibFullPath,
                 handle != IntPtr.Zero ? "succeeded" : "failed");
         }
 #endif
