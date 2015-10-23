@@ -16,6 +16,12 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <Defines Condition="$(RuntimeType) == 'CORECLR_WIN'">CORECLR_WIN</Defines>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkKeyFile>../../tools/Key.snk</LinkKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkKeyFile>../../tools/Key.snk</LinkKeyFile>
+  </PropertyGroup>
   <PropertyGroup Label="Globals" Condition="'$(Platform)' == 'ARM'">
     <ProjectName>dnx</ProjectName>
     <ConfigurationType>Application</ConfigurationType>

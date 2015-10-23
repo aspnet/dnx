@@ -1,6 +1,11 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [ "TRACE" ],
+        "allowUnsafe": true,
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
+    },
     "dependencies": {
         "Microsoft.Extensions.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
