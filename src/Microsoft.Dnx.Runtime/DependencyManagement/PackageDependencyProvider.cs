@@ -1,3 +1,6 @@
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,7 +9,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Dnx.Runtime.Servicing;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -279,7 +281,7 @@ namespace Microsoft.Dnx.Runtime
 
         public static void EnableLoadingNativeLibraries(IEnumerable<ProjectDescription> projects)
         {
-            var folderCandidates = GetFolderCandidates();
+            var folderCandidates = NativeLibPathUtils.GetNativeSubfolderCandidates();
 
             var nativeLibPaths = new StringBuilder();
             foreach (var projectDescription in projects)
@@ -322,23 +324,6 @@ namespace Microsoft.Dnx.Runtime
 
             Logger.TraceInformation("[{0}]: Preloading : {1} {2}", nameof(PackageDependencyProvider), nativeLibFullPath,
                 handle != IntPtr.Zero ? "succeeded" : "failed");
-        }
-
-        private static IEnumerable<string> GetFolderCandidates()
-        {
-            if (RuntimeEnvironmentHelper.IsWindows)
-            {
-                return PlatformServices.Default.Runtime.GetAllRuntimeIdentifiers();
-            }
-
-            var runtimeId = PlatformServices.Default.Runtime.GetRuntimeOsName();
-
-            return new[]
-            {
-                runtimeId,
-                runtimeId.Split('-')[0],
-                runtimeId.Split('.')[0]
-            };
         }
 #endif
 

@@ -17,6 +17,7 @@ namespace Microsoft.Dnx.Runtime.Loader
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly ICompilationEngine _compilationEngine;
         private readonly IDictionary<string, RuntimeProject> _projects;
+        private readonly HashSet<string> _unloadableNativeLibs = new HashSet<string>();
 
         public ProjectAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
                                      ICompilationEngine compilationEngine,
@@ -25,6 +26,8 @@ namespace Microsoft.Dnx.Runtime.Loader
             _loadContextAccessor = loadContextAccessor;
             _compilationEngine = compilationEngine;
             _projects = projects.ToDictionary(p => p.Identity.Name, p => new RuntimeProject(p.Project, p.Framework));
+
+            var environment = RuntimeEnvironmentHelper.RuntimeEnvironment;
         }
 
         public Assembly Load(AssemblyName assemblyName)
@@ -83,7 +86,45 @@ namespace Microsoft.Dnx.Runtime.Loader
 
         public IntPtr LoadUnmanagedLibrary(string name)
         {
+            if (_unloadableNativeLibs.Contains(name))
+            {
+                return IntPtr.Zero;
+            }
+
+            foreach(var projectPath in _projects.Values.Select(p => p.Project.ProjectDirectory))
+            {
+                foreach (var folder in NativeLibPathUtils.GetNativeSubfolderCandidates(RuntimeEnvironmentHelper.RuntimeEnvironment))
+                {
+                    var path = NativeLibPathUtils.GetProjectNativeLibPath(projectPath, folder);
+                    if (Directory.Exists(path))
+                    {
+                        var handle = LoadUnamangedLibrary(path, name);
+                        if (handle != IntPtr.Zero)
+                        {
+                            return handle;
+                        }
+                    }
+                }
+            }
+
+            _unloadableNativeLibs.Add(name);
+
             return IntPtr.Zero;
         }
+
+        private IntPtr LoadUnamangedLibrary(string path, string name)
+        {
+            foreach (var nativeLibFullPath in Directory.EnumerateFiles(path))
+            {
+                if (NativeLibPathUtils.IsMatchingNativeLibrary(RuntimeEnvironmentHelper.RuntimeEnvironment, name, Path.GetFileName(nativeLibFullPath)))
+                {
+                    return _loadContextAccessor.Default.LoadUnmanagedLibraryFromPath(nativeLibFullPath);
+                }
+            }
+
+            return IntPtr.Zero;
+        }
+
+        private string ExpectedExtension { get; }
     }
 }
