@@ -18,12 +18,6 @@
     <IntDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
     <BuildForOneCore>False</BuildForOneCore>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkKeyFile>../../tools/Key.snk</LinkKeyFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkKeyFile>../../tools/Key.snk</LinkKeyFile>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)' == 'Win32'">
     <SDKSubFolder>i386</SDKSubFolder>
   </PropertyGroup>
