@@ -10,7 +10,7 @@ namespace NuGet
 {
     internal static class LocalizedResourceManager
     {
-        private static readonly ResourceManager _resourceManager = new ResourceManager("Microsoft.Dnx.Tooling.NuGet.NuGetResources", typeof(LocalizedResourceManager).GetTypeInfo().Assembly);
+        private static readonly ResourceManager _resourceManager = new ResourceManager("dnu.NuGet.NuGetResources", typeof(LocalizedResourceManager).GetTypeInfo().Assembly);
 
         public static string GetString(string resourceName)
         {

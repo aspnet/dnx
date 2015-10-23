@@ -1,67 +1,107 @@
 {
-    "version": "1.0.0-*",
-    "compilationOptions": {
-        "warningsAsErrors": true,
-        "emitEntryPoint": true
+  "name": "dnu",
+  "version": "1.0.0-*",
+  "compilationOptions": {
+    "warningsAsErrors": true,
+    "emitEntryPoint": true
+  },
+  "dependencies": {
+    "Microsoft.Dnx.Compilation": "1.0.0-*",
+    "Microsoft.Dnx.Project": "1.0.0-*",
+    "Microsoft.Dnx.Runtime": "1.0.0-*",
+    "Microsoft.Dnx.Runtime.CommandParsing.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
     },
-    "dependencies": {
-        "Microsoft.Dnx.Compilation": "1.0.0-*",
-        "Microsoft.Dnx.Project": "1.0.0-*",
-        "Microsoft.Dnx.Runtime": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.CommandParsing.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
-        "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Extensions.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Extensions.HashCodeCombiner.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Newtonsoft.Json": "6.0.6"
-    }, 
-    "compile": [ 
-         "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs" 
-    ], 
-    "preprocess": [ 
-        "../../ext/compiler/preprocess/Internalization.cs" 
-    ], 
-    "frameworks": {
-        "dnx451": {
-            "frameworkAssemblies": {
-                "System.Collections": "",
-                "System.IO": "",
-                "System.IO.Compression": "",
-                "System.Net.Http": "",
-                "System.Runtime": "",
-                "System.Runtime.Serialization": "",
-                "System.Security": "",
-                "System.Xml": "",
-                "System.Xml.Linq": ""
-            }
-        },
-        "dnxcore50": {
-            "dependencies": {
-                "System.IO.FileSystem.Primitives": "4.0.1-beta-*",
-                "System.Threading.Tasks.Parallel": "4.0.1-beta-*",
-                "System.Linq.Parallel": "4.0.1-beta-*",
-                "System.Net.Http": "4.0.1-beta-*",
-                "System.ObjectModel": "4.0.11-beta-*",
-                "System.Reflection.TypeExtensions": "4.0.1-beta-*",
-                "System.Runtime.Serialization.Primitives": "4.0.11-beta-*",
-                "System.Security.Cryptography.Algorithms": "4.0.0-beta-*",
-                "System.Text.RegularExpressions": "4.0.11-beta-*"
-            }
-        }
+    "Microsoft.Dnx.Runtime.Internals": {
+      "version": "1.0.0-*",
+      "type": "build"
     },
+    "Microsoft.Dnx.Runtime.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
+    },
+    "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
+    "Microsoft.Dnx.Compilation.CSharp.Abstractions": {
+      "version": "1.0.0-*",
+      "type": "build"
+    },
+    "Microsoft.Extensions.CommandLineUtils.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
+    },
+    "Microsoft.Extensions.HashCodeCombiner.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
+    },
+    "Newtonsoft.Json": "6.0.6"
+  },
+  "preprocess": [
+    "../../ext/compiler/preprocess/Internalization.cs"
+  ],
+  "frameworks": {
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.Collections": "",
+        "System.IO": "",
+        "System.IO.Compression": "",
+        "System.Net.Http": "",
+        "System.Runtime": "",
+        "System.Runtime.Serialization": "",
+        "System.Security": "",
+        "System.Xml": "",
+        "System.Xml.Linq": ""
+      }
+    },
+    "dnxcore50": {
+      "dependencies": {
+        "System.Runtime.InteropServices.RuntimeInformation": "4.0.0-beta-*",
+        "Microsoft.NETCore.Runtime": "1.0.1-beta-23413",
+        "System.IO.FileSystem.Primitives": "4.0.1-beta-*",
+        "System.Threading.Tasks.Parallel": "4.0.1-beta-*",
+        "System.Linq.Parallel": "4.0.1-beta-*",
+        "System.Net.Http": "4.0.1-beta-23413",
+        "System.Net.Primitives": "4.0.10",
+        "System.ObjectModel": "4.0.11-beta-*",
+        "System.Reflection.TypeExtensions": "4.0.1-beta-*",
+        "System.Runtime.Serialization.Primitives": "4.0.11-beta-*",
+        "System.Security.Cryptography.Algorithms": "4.0.0-beta-*",
+        "System.Text.RegularExpressions": "4.0.11-beta-*",
+        "Microsoft.VisualBasic": "10.0.0-*",
+        "Microsoft.Win32.Primitives": "4.0.1-*",
+        "Microsoft.Win32.Registry.AccessControl": "4.0.0-*",
+        "System.Data.SqlClient": "4.0.0-*",
+        "System.Diagnostics.Process": "4.1.0-*",
+        "System.IO.Compression": "4.0.1-*",
+        "System.IO.UnmanagedMemoryStream": "4.0.1-*",
+        "System.Runtime.Serialization.Json": "4.0.1-*",
+        "System.Security.Cryptography.X509Certificates": "4.0.0-*",
 
-    "commands": {
-    },
-
-    "scripts": {
-        "postbuild": [
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin/lib/Microsoft.Dnx.Tooling",
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin/lib/Microsoft.Dnx.Tooling",
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin/lib/Microsoft.Dnx.Tooling",
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin/lib/Microsoft.Dnx.Tooling",
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.Tooling"
-        ]
+        "System.Diagnostics.FileVersionInfo": "4.0.0-*",
+        "System.Diagnostics.TraceSource": "4.0.0-*",
+        "System.IO.Compression.ZipFile": "4.0.1-*",
+        "System.IO.FileSystem.DriveInfo": "4.0.0-*",
+        "System.IO.MemoryMappedFiles": "4.0.0-*",
+        "System.IO.Pipes": "4.0.0-*",
+        "System.Net.NameResolution": "4.0.0-*",
+        "System.Net.Requests": "4.0.11-*",
+        "System.Text.Encoding.CodePages": "4.0.1-*",
+        "System.Threading": "4.0.11-*",
+        "System.Globalization.Extensions": "4.0.1-*"
+      }
     }
+  },
+
+  "commands": {
+  },
+
+  "scripts": {
+    "postbuild": [
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin/lib/Microsoft.Dnx.Tooling",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin/lib/Microsoft.Dnx.Tooling",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin/lib/Microsoft.Dnx.Tooling",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin/lib/Microsoft.Dnx.Tooling",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.Tooling"
+    ]
+  }
 }

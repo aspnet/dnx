@@ -9,7 +9,7 @@ namespace Microsoft.Dnx.Tooling
 {
     internal static class RestoreConsoleCommand
     {
-        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IApplicationEnvironment applicationEnvironment, IRuntimeEnvironment runtimeEnvironment)
+        public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory, IRuntimeEnvironment runtimeEnvironment)
         {
             cmdApp.Command("restore", c =>
             {
@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.Tooling
                     c.ShowRootCommandFullNameAndVersion();
 
                     var feedOptions = feedCommandLineOptions.GetOptions();
-                    var command = new RestoreCommand(applicationEnvironment);
+                    var command = new RestoreCommand();
                     command.Reports = reportsFactory.CreateReports(feedOptions.Quiet);
                     command.RestoreDirectories.AddRange(argRoot.Values);
                     command.FeedOptions = feedOptions;

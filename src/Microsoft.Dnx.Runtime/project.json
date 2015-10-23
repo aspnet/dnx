@@ -6,15 +6,13 @@
         "allowUnsafe": true,
         "warningsAsErrors": true
     },
-    "compile": [
-        "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"
-    ],
     "preprocess": [
         "../../ext/compiler/preprocess/Internalization.cs"
     ],
     "dependencies": {
         "Microsoft.Dnx.Loader": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
+        "Microsoft.Extensions.FileSystemGlobbing": "1.0.0-*",
         "Microsoft.Extensions.JsonParser.Sources": {
             "version": "1.0.0-*",
             "type": "build"

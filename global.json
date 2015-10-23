@@ -1,6 +1,7 @@
 {
-    "projects": [
-        "src",
-        "submodules/FileSystem/src"
-    ]
+  "projects": [
+    "src",
+    "submodules/FileSystem/src"
+  ],
+  "packages": "packages"
 }
