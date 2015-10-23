@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -245,8 +246,14 @@ namespace Microsoft.Dnx.Runtime
 #if DNX451
         public static void EnableLoadingNativeLibraries(IEnumerable<LibraryDescription> libraries)
         {
+            EnableLoadingNativeLibraries(libraries.OfType<PackageDescription>());
+            EnableLoadingNativeLibraries(libraries.OfType<ProjectDescription>());
+        }
+
+        public static void EnableLoadingNativeLibraries(IEnumerable<PackageDescription> packages)
+        {
             var nativeLibPaths = new StringBuilder();
-            foreach (var packageDescription in libraries.OfType<PackageDescription>())
+            foreach (var packageDescription in packages)
             {
                 foreach (var nativeLib in packageDescription.Target.NativeLibraries)
                 {
@@ -258,12 +265,7 @@ namespace Microsoft.Dnx.Runtime
                     }
                     else
                     {
-                        Logger.TraceInformation("[{0}]: Trying to preload : {1}", nameof(PackageDependencyProvider), nativeLibFullPath);
-                        var handle = dlopen(nativeLibFullPath, RTLD_GLOBAL | RTLD_LAZY);
-                        if (handle != IntPtr.Zero)
-                        {
-                            Logger.TraceInformation("[{0}]: Preloading : {1} succeeded", nameof(PackageDependencyProvider), nativeLibFullPath);
-                        }
+                        PreLoadNativeLib(nativeLibFullPath);
                     }
                 }
 
@@ -273,6 +275,70 @@ namespace Microsoft.Dnx.Runtime
                     Environment.SetEnvironmentVariable("PATH", path + nativeLibPaths.ToString());
                 }
             }
+        }
+
+        public static void EnableLoadingNativeLibraries(IEnumerable<ProjectDescription> projects)
+        {
+            var folderCandidates = GetFolderCandidates();
+
+            var nativeLibPaths = new StringBuilder();
+            foreach (var projectDescription in projects)
+            {
+                foreach (var folder in folderCandidates)
+                {
+                    var path = Path.Combine(Path.GetDirectoryName(projectDescription.Path), "runtimes", folder, "native");
+
+                    if (Directory.Exists(path))
+                    {
+                        if (RuntimeEnvironmentHelper.IsWindows)
+                        {
+                            nativeLibPaths.Append(";").Append(path);
+                        }
+                        else
+                        {
+                            foreach (var nativeLibFullPath in Directory.EnumerateFiles(path))
+                            {
+                                PreLoadNativeLib(nativeLibFullPath);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (nativeLibPaths.Length > 0)
+            {
+                var path = Environment.GetEnvironmentVariable("PATH");
+                Environment.SetEnvironmentVariable("PATH", path + nativeLibPaths.ToString());
+            }
+        }
+
+        private static void PreLoadNativeLib(string nativeLibFullPath)
+        {
+            Debug.Assert(RuntimeEnvironmentHelper.IsMono, "Mono specific");
+
+            Logger.TraceInformation("[{0}]: Attempting to preload : {1}", nameof(PackageDependencyProvider), nativeLibFullPath);
+
+            var handle = dlopen(nativeLibFullPath, RTLD_GLOBAL | RTLD_LAZY);
+
+            Logger.TraceInformation("[{0}]: Preloading : {1} {2}", nameof(PackageDependencyProvider), nativeLibFullPath,
+                handle != IntPtr.Zero ? "succeeded" : "failed");
+        }
+
+        private static IEnumerable<string> GetFolderCandidates()
+        {
+            if (RuntimeEnvironmentHelper.IsWindows)
+            {
+                return PlatformServices.Default.Runtime.GetAllRuntimeIdentifiers();
+            }
+
+            var runtimeId = PlatformServices.Default.Runtime.GetRuntimeOsName();
+
+            return new[]
+            {
+                runtimeId,
+                runtimeId.Split('-')[0],
+                runtimeId.Split('.')[0]
+            };
         }
 #endif
 
