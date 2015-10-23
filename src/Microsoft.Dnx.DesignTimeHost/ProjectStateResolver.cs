@@ -129,7 +129,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     FrameworkName = frameworkName,
                     // TODO: This shouldn't be Roslyn specific compilation options
                     CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
-                                                 .ToCompilationSettings(frameworkName),
+                                                 .ToCompilationSettings(frameworkName, project.ProjectDirectory),
                     SourceFiles = dependencySources,
                     DependencyInfo = dependencyInfo
                 };

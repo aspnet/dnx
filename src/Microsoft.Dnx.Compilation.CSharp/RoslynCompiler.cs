@@ -91,7 +91,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             var sw = Stopwatch.StartNew();
 
             var compilationSettings = projectContext.CompilerOptions.ToCompilationSettings(
-                projectContext.Target.TargetFramework);
+                projectContext.Target.TargetFramework, projectContext.ProjectDirectory);
 
             var sourceFiles = Enumerable.Empty<string>();
             if (isMainAspect)

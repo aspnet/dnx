@@ -255,7 +255,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         {
             var project = ProjectUtilities.GetProject(@"
 {
-    ""dependencies"": {  
+    ""dependencies"": {
         ""A"": """",
         ""B"": ""1.0-alpha-*"",
         ""C"": ""1.0.0"",
@@ -301,7 +301,7 @@ namespace Microsoft.Dnx.Runtime.Tests
 {
     ""frameworks"": {
         ""net45"": {
-            ""dependencies"": {  
+            ""dependencies"": {
                 ""A"": """",
                 ""B"": ""1.0-alpha-*"",
                 ""C"": ""1.0.0"",
@@ -341,7 +341,7 @@ namespace Microsoft.Dnx.Runtime.Tests
 {
     ""frameworks"": {
         ""net45"": {
-            ""frameworkAssemblies"": {  
+            ""frameworkAssemblies"": {
                 ""A"": """",
                 ""B"": ""1.0-alpha-*"",
                 ""C"": ""1.0.0"",
@@ -382,10 +382,10 @@ namespace Microsoft.Dnx.Runtime.Tests
         {
             var project = ProjectUtilities.GetProject(@"
 {
-    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""keyFile"" : ""c:\\keyfile.snk"", ""delaySign"" : true, ""useOssSigning"" : true }
+    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""keyFile"" : ""keyfile.snk"", ""delaySign"" : true, ""useOssSigning"" : true }
 }",
 "foo",
-@"c:\foo\project.json");
+@"foo/project.json");
 
             var compilerOptions = project.GetCompilerOptions();
             Assert.NotNull(compilerOptions);
@@ -394,7 +394,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             Assert.True(compilerOptions.WarningsAsErrors.Value);
             Assert.Equal("x86", compilerOptions.Platform);
             Assert.True(compilerOptions.Optimize.Value);
-            Assert.Equal(compilerOptions.KeyFile, @"c:\keyfile.snk");
+            Assert.Equal("keyfile.snk", compilerOptions.KeyFile);
             Assert.True(compilerOptions.DelaySign);
             Assert.True(compilerOptions.UseOssSigning);
         }

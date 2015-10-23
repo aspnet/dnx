@@ -179,7 +179,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         {
             var framework = FrameworkNameHelper.ParseFrameworkName(frameworkName);
             return project.GetCompilerOptions(framework, "Debug")
-                          .ToCompilationSettings(framework);
+                          .ToCompilationSettings(framework, project.ProjectDirectory);
         }
     }
 }

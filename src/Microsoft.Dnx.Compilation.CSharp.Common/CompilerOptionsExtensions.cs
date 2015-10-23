@@ -20,9 +20,10 @@ namespace Microsoft.Dnx.Compilation.CSharp
         private const string NetFrameworkIdentifier = ".NETFramework";
 
         public static CompilationSettings ToCompilationSettings(this ICompilerOptions compilerOptions,
-                                                                FrameworkName targetFramework)
+                                                                FrameworkName targetFramework,
+                                                                string projectDirectory)
         {
-            var options = GetCompilationOptions(compilerOptions);
+            var options = GetCompilationOptions(compilerOptions, projectDirectory);
 
             // Disable 1702 until roslyn turns this off by default
             options = options.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>
@@ -64,7 +65,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             return settings;
         }
 
-        private static CSharpCompilationOptions GetCompilationOptions(ICompilerOptions compilerOptions)
+        private static CSharpCompilationOptions GetCompilationOptions(ICompilerOptions compilerOptions, string projectDirectory)
         {
             var outputKind = compilerOptions.EmitEntryPoint.GetValueOrDefault() ?
                 OutputKind.ConsoleApplication : OutputKind.DynamicallyLinkedLibrary;
@@ -87,10 +88,10 @@ namespace Microsoft.Dnx.Compilation.CSharp
                         .WithGeneralDiagnosticOption(warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default)
                         .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug);
 
-            return AddSigningOptions(options, compilerOptions);
+            return AddSigningOptions(options, compilerOptions, projectDirectory);
         }
 
-        private static CSharpCompilationOptions AddSigningOptions(CSharpCompilationOptions options, ICompilerOptions compilerOptions)
+        private static CSharpCompilationOptions AddSigningOptions(CSharpCompilationOptions options, ICompilerOptions compilerOptions, string projectDirectory)
         {
             var useOssSigning = compilerOptions.UseOssSigning == true;
 
@@ -100,6 +101,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             if (!string.IsNullOrEmpty(keyFile))
             {
+                keyFile = Path.GetFullPath(Path.Combine(projectDirectory, compilerOptions.KeyFile));
 #if DOTNET5_4
                 return options.WithCryptoPublicKey(
                     SnkUtils.ExtractPublicKey(File.ReadAllBytes(keyFile)));
