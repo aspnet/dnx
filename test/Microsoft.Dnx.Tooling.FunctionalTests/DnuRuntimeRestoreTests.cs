@@ -35,7 +35,8 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             // TODO(anurse): Maybe this could be a condition? This is the only place we need it right now so it
             // didn't seem worth the refactor.
             // Travis has old versions of OSes and our test package doesn't work there
-            if(Environment.GetEnvironmentVariable("TRAVIS").Equals("true"))
+            var isTravisEnvironment = Environment.GetEnvironmentVariable("TRAVIS") ?? "false";
+            if (isTravisEnvironment.Equals("true"))
             {
                 return;
             }
