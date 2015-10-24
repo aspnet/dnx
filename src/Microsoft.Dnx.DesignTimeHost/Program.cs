@@ -119,7 +119,29 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         private static Task<Socket> AcceptAsync(Socket socket)
         {
-            return Task.Factory.FromAsync((cb, state) => socket.BeginAccept(cb, state), ar => socket.EndAccept(ar), null);
+            var tcs = new TaskCompletionSource<Socket>();
+
+            var args = new SocketAsyncEventArgs();
+            args.Completed += (sender, e) =>
+            {
+                if (e.SocketError == SocketError.Success)
+                {
+                    tcs.SetResult(e.AcceptSocket);
+                }
+                else
+                {
+                    tcs.SetException(new Exception($"Failed to accept connection: {e.SocketError}."));
+                }
+            };
+
+            if (socket.AcceptAsync(args))
+            {
+                return tcs.Task;
+            }
+            else
+            {
+                return Task.FromResult(args.AcceptSocket);
+            }
         }
 
         private static void WriteProjectContexts(Message message, ProcessingQueue queue, IDictionary<int, ApplicationContext> contexts)
