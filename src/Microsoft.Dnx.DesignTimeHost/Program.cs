@@ -14,7 +14,6 @@ using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
-using Microsoft.Dnx.Runtime.Compilation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -48,10 +47,10 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             string hostId = args[2];
 
-            OpenChannel(port, hostId).Wait();
+            OpenChannel(port, hostId);
         }
 
-        private static async Task OpenChannel(int port, string hostId)
+        private static void OpenChannel(int port, string hostId)
         {
             var contexts = new Dictionary<int, ApplicationContext>();
             var protocolManager = new ProtocolManager(maxVersion: 3);
@@ -80,7 +79,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             while (true)
             {
-                var acceptSocket = await AcceptAsync(listenSocket);
+                var acceptSocket = listenSocket.Accept();
 
                 Console.WriteLine("Client accepted {0}", acceptSocket.LocalEndPoint);
 
@@ -114,33 +113,6 @@ namespace Microsoft.Dnx.DesignTimeHost
                 };
 
                 queue.Start();
-            }
-        }
-
-        private static Task<Socket> AcceptAsync(Socket socket)
-        {
-            var tcs = new TaskCompletionSource<Socket>();
-
-            var args = new SocketAsyncEventArgs();
-            args.Completed += (sender, e) =>
-            {
-                if (e.SocketError == SocketError.Success)
-                {
-                    tcs.SetResult(e.AcceptSocket);
-                }
-                else
-                {
-                    tcs.SetException(new Exception($"Failed to accept connection: {e.SocketError}."));
-                }
-            };
-
-            if (socket.AcceptAsync(args))
-            {
-                return tcs.Task;
-            }
-            else
-            {
-                return Task.FromResult(args.AcceptSocket);
             }
         }
 
