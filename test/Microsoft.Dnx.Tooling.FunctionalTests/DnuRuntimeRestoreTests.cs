@@ -65,18 +65,28 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 lockFile = (new LockFileFormat()).Read(Path.Combine(testDir, "project.lock.json"));
             }
 
-            // We can use the runtime environment to determine the expected RIDs because by default it only uses the current OSes RIDs
-            if (RuntimeEnvironmentHelper.IsWindows)
+            // We can use the runtime environment to determine the expected RIDs
+            var osName = RuntimeEnvironmentHelper.RuntimeEnvironment.GetDefaultRestoreRuntimes().First();
+            if (osName.StartsWith("win"))
             {
                 AssertLockFileTarget(lockFile, "win7-x86", "win7-x86");
                 AssertLockFileTarget(lockFile, "win7-x64", "win7-x64");
             }
+            else if (osName.StartsWith("ubuntu"))
+            {
+                // There is only ubuntu 14.04 in the package
+                AssertLockFileTarget(lockFile, osName + "-x86", assemblyRid: null); // There is no ubuntu/osx-x86 in the test package
+                AssertLockFileTarget(lockFile, osName + "-x64", "ubuntu.14.04-x64");
+            }
+            else if (osName.StartsWith("osx"))
+            {
+                // There is only osx 10.10 in the package
+                AssertLockFileTarget(lockFile, osName + "-x86", assemblyRid: null); // There is no ubuntu/osx-x86 in the test package
+                AssertLockFileTarget(lockFile, osName + "-x64", "osx.10.10-x64");
+            }
             else
             {
-                var osName = RuntimeEnvironmentHelper.RuntimeEnvironment.GetDefaultRestoreRuntimes().First();
-                osName = osName.Substring(0, osName.Length - 4); // Remove the -x86 suffix
-                AssertLockFileTarget(lockFile, osName + "-x86", assemblyRid: null); // There is no ubuntu/osx-x86 in the test package
-                AssertLockFileTarget(lockFile, osName + "-x64", osName + "-x64");
+                Assert.True(false, $"Unknown OS Name: {osName}");
             }
         }
 
