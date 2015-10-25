@@ -36,15 +36,16 @@ namespace Microsoft.Dnx.Tooling
         private static string FindRuntimeHome()
         {
             var runtimeHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
+            var pathSeparator = Path.PathSeparator;
             if (string.IsNullOrEmpty(runtimeHome))
             {
                 var runtimeGlobalPath = DnuEnvironment.GetFolderPath(DnuFolderPath.DnxGlobalPath);
                 var userRuntimeFolder = DnuEnvironment.GetFolderPath(DnuFolderPath.DefaultDnxHome);
 
-                runtimeHome = $"{userRuntimeFolder};{runtimeGlobalPath}";
+                runtimeHome = $"{userRuntimeFolder}{pathSeparator}{runtimeGlobalPath}";
             }
 
-            foreach (var probePath in runtimeHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var probePath in runtimeHome.Split(new[] { pathSeparator }, StringSplitOptions.RemoveEmptyEntries))
             {
                 string fullPath = Environment.ExpandEnvironmentVariables(probePath);
 
