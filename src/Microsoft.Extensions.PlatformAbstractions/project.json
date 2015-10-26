@@ -2,7 +2,8 @@
   "version": "1.0.0-*",
   "description": "Abstractions that unify behavior and API across .NET Framework, .NET Core and Mono",
   "compilationOptions": {
-    "warningsAsErrors": true
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {},
   "frameworks": {

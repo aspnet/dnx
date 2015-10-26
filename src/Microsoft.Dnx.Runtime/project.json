@@ -4,7 +4,8 @@
     "compilationOptions": {
         "define": [ "LOADER", "TRACE" ],
         "allowUnsafe": true,
-        "warningsAsErrors": true
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
     },
     "compile": [
         "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"
