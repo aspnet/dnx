@@ -191,8 +191,16 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     return;
                 }
 #endif
+                // Workaround for https://github.com/dotnet/roslyn/issues/6326
                 compilationContext.Diagnostics.Add(
-                    Diagnostic.Create(RoslynDiagnostics.RealSigningSupportedOnlyOnDesktopClr, null));
+                    Diagnostic.Create(id: "DNX1001",
+                        title: "Strong name generation with a private and public key pair is not supported on this platform",
+                        message: "Strong name generation with a private and public key pair is supported only on desktop CLR. Falling back to OSS signing.",
+                        category: "StrongNaming",
+                        defaultSeverity: DiagnosticSeverity.Warning,
+                        severity: DiagnosticSeverity.Warning,
+                        warningLevel: 1,
+                        isEnabledByDefault: true));
             }
         }
 
