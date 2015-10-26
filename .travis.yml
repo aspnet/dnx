@@ -1,5 +1,6 @@
 language: csharp
-sudo: false
+sudo: required
+dist: trusty
 env:
   - MONO_THREADS_PER_CPU=2000
 os:
@@ -7,9 +8,15 @@ os:
   - osx
 addons:
   apt:
-    sources:
-    - debian-sid
     packages:
+    - gettext
+    - libcurl4-openssl-dev
+    - libicu-dev
+    - libssl-dev
     - libunwind8
+    - zlib1g
+before_install:
+  - if test "$TRAVIS_OS_NAME" == "osx"; then brew update; fi
+  - if test "$TRAVIS_OS_NAME" == "osx"; then brew install icu4c; fi
 script:
   - ./build.sh --quiet verify
