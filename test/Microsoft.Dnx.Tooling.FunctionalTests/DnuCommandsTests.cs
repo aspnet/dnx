@@ -51,7 +51,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 {
                     commandFilePath = "hello";
                 }
-                commandFilePath = Path.Combine(testEnv.RootDir, ".dnx/bin", commandFilePath);
+                commandFilePath = Path.Combine(testEnv.RootDir, ".dnx", "bin", commandFilePath);
 
                 Assert.Equal(0, exitCode);
                 Assert.True(string.IsNullOrEmpty(stdErr));
@@ -59,6 +59,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
                 environment = new Dictionary<string, string>();
                 environment.Add("DNX_PACKAGES", null);
+                environment.Add("PATH", TestUtils.CurrentRuntimeEnvironment.RuntimePath);
 
                 if (!isWindows)
                 {
