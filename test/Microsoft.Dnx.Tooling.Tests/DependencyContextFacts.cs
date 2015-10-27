@@ -38,5 +38,31 @@ namespace Microsoft.Dnx.Tooling.Publish.Tests
                 Assert.Equal(NuGet.VersionUtility.ParseFrameworkName(framework), frameworkName);
             }
         }
+
+        [Theory]
+        [InlineData(Constants.RuntimeNamePrefix + "mono.1.0.0", "osx.10.10-x64,osx.10.10-x86,ubuntu.14.04-x64,ubuntu.14.04-x86")]
+        [InlineData(Constants.RuntimeNamePrefix + "mono-x86.1.0.0", "osx.10.10-x64,osx.10.10-x86,ubuntu.14.04-x64,ubuntu.14.04-x86")]
+        [InlineData(Constants.RuntimeNamePrefix + "clr-win-x86.1.0.0", "win7-x86")]
+        [InlineData(Constants.RuntimeNamePrefix + "clr-win-x64.1.0.0", "win7-x64")]
+        [InlineData(Constants.RuntimeNamePrefix + "coreclr-win-x86.1.0.0", "win7-x86")]
+        [InlineData(Constants.RuntimeNamePrefix + "coreclr-win-x64.1.0.0", "win7-x64")]
+
+        // Invalid Names
+        [InlineData(Constants.RuntimeNamePrefix + "mono", null)]
+        [InlineData(Constants.RuntimeNamePrefix + "coreclr-win-x86", null)]
+        [InlineData(Constants.RuntimeNamePrefix, "")]
+        public void GetCorrectRuntimeIdsForRuntimes(string runtimeName, string expectedRids)
+        {
+            var actual = DependencyContext.GetRuntimeIdentifiers(runtimeName).OrderBy(r => r).ToArray();
+            if (string.IsNullOrEmpty(expectedRids))
+            {
+                Assert.Empty(actual);
+            }
+            else {
+                var expected = expectedRids.Split(',');
+                expected = expected.OrderBy(r => r).ToArray();
+                Assert.Equal(expected, actual);
+            }
+        }
     }
 }

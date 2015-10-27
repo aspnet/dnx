@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
@@ -15,6 +16,9 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests.Old
     [Collection(nameof(PackageManagerFunctionalTestCollection))]
     public class DnuPublishTests
     {
+        private readonly FrameworkName DnxCore50 = NuGet.VersionUtility.ParseFrameworkName("dnxcore50");
+        private readonly FrameworkName Dnx451 = NuGet.VersionUtility.ParseFrameworkName("dnx451");
+        private readonly FrameworkName Dnx46 = NuGet.VersionUtility.ParseFrameworkName("dnx46");
         private readonly string _projectName = "TestProject";
         private readonly string _outputDirName = "PublishOutput";
         private readonly PackageManagerFunctionalTestFixture _fixture;
@@ -63,22 +67,6 @@ DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
 exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Replace("\r\n", "\n");
 
-        private static readonly string BasicLockFileTemplate = @"{
-  ""locked"": false,
-  ""version"": LOCKFILEFORMAT_VERSION,
-  ""targets"": {
-    ""FRAMEWORK_NAME"": {}
-  },
-  ""libraries"": {},
-  ""projectFileDependencyGroups"": {
-    """": [],
-    ""FRAMEWORK_NAME"": []
-  }
-}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
-
-        private static readonly string BasicLockFile = BasicLockFileTemplate
-            .Replace("FRAMEWORK_NAME", "DNX,Version=v4.5.1");
-
         public DnuPublishTests(PackageManagerFunctionalTestFixture fixture)
         {
             _fixture = fixture;
@@ -88,7 +76,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
         {
             get
             {
-                return TestUtils.GetRuntimeComponentsCombinations();
+                return CommonTestUtils.TestUtils.GetRuntimeComponentsCombinations();
             }
         }
 
@@ -110,7 +98,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
         {
             get
             {
-                return TestUtils.GetClrRuntimeComponents();
+                return CommonTestUtils.TestUtils.GetClrRuntimeComponents();
             }
         }
 
@@ -118,7 +106,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
         {
             get
             {
-                return TestUtils.GetCoreClrRuntimeComponents();
+                return CommonTestUtils.TestUtils.GetCoreClrRuntimeComponents();
             }
         }
 
@@ -214,8 +202,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "Microsoft.AspNet.Hosting.json"), @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
   ""publishExclude"": ""**.bconfig"",
   ""frameworks"": {
@@ -234,6 +220,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true, ignoreWhitespace: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -323,8 +310,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "Microsoft.AspNet.Hosting.json"), @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
@@ -337,6 +322,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true, ignoreWhitespace: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -456,8 +442,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""projects"": [
     ""src""
@@ -466,6 +450,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -684,32 +669,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     '.': [ 'global.json' ]
 }";
 
-            string expectedAppLockFile = @"{
-  ""locked"": false,
-  ""version"": LOCKFILEFORMAT_VERSION,
-  ""targets"": {
-    ""DNX,Version=v4.6"": {
-      ""Lib/1.0.0"": {
-        ""type"": ""project"",
-        ""framework"": ""DNX,Version=v4.5.1""
-      }
-    }
-  },
-  ""libraries"": {
-    ""Lib/1.0.0"": {
-      ""type"": ""project"",
-      ""path"": ""../Lib/project.json""
-    }
-  },
-  ""projectFileDependencyGroups"": {
-    """": [
-      ""Lib ""
-    ],
-    ""DNX,Version=v4.6"": []
-  }
-}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
-            string expectedLibLockFile = BasicLockFileTemplate.Replace("FRAMEWORK_NAME", "DNX,Version=v4.5.1");
-
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
@@ -751,9 +710,20 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     workingDir: Path.Combine(testEnv.ProjectPath, "App"));
                 Assert.Equal(0, exitCode);
 
-                // Check the lock files
-                Assert.Equal(expectedAppLockFile, File.ReadAllText(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", "App", "project.lock.json")));
-                Assert.Equal(expectedLibLockFile, File.ReadAllText(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", "Lib", "project.lock.json")));
+                // App lock file has DNX 4.6 target referring to lib with DNX 4.5.1 target
+                var appLockFile = new LockFileReader().Read(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", "App", "project.lock.json"));
+                foreach(var target in appLockFile.Targets)
+                {
+                    // Rid will differ
+                    Assert.Equal(Dnx46, target.TargetFramework);
+                    var lib = target.Libraries.FirstOrDefault(l => l.Name.Equals("Lib"));
+                    Assert.NotNull(lib);
+                    Assert.Equal("project", lib.Type);
+                    Assert.Equal(Dnx451, lib.TargetFramework);
+                }
+
+                // Lib lock file has DNX 4.5.1 target
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", "Lib", "project.lock.json"), Dnx451);
             }
         }
 
@@ -866,8 +836,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     "".git""
   ]
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""projects"": [
     ""src""
@@ -876,6 +844,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -968,8 +937,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""UselessFolder3\\**/*.*""
   ]
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""projects"": [
     ""src""
@@ -978,6 +945,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -1070,8 +1038,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""projects"": [
     ""src""
@@ -1080,6 +1046,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -1149,8 +1116,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""projects"": [
     ""src""
@@ -1159,6 +1124,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -1313,8 +1279,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "Microsoft.AspNet.Hosting.json"), @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
@@ -1327,6 +1291,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true, ignoreWhitespace: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -1409,8 +1374,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "Microsoft.AspNet.Hosting.json"), @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
@@ -1423,6 +1386,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigContents, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true, ignoreWhitespace: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -1619,20 +1583,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnxcore50"": { }
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"), @"{
-  ""locked"": false,
-  ""version"": LOCKFILEFORMAT_VERSION,
-  ""targets"": {
-    ""RUNTIME_TARGET"": {}
-  },
-  ""libraries"": {},
-  ""projectFileDependencyGroups"": {
-    """": [],
-    ""DNX,Version=v4.5.1"": [],
-    ""DNXCore,Version=v5.0"": []
-  }
-}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString())
-  .Replace("RUNTIME_TARGET", flavor == "coreclr" ? "DNXCore,Version=v5.0" : "DNX,Version=v4.5.1"))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""projects"": [
     ""src""
@@ -1649,6 +1599,17 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
+
+                var lockFile = new LockFileReader().Read(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"));
+                var fx = flavor == "coreclr" ? DnxCore50 : Dnx451;
+                Assert.True(lockFile.HasTarget(fx));
+
+                // GetRuntimeIdentifiers is tested separately, we're testing that the targets made the lock file here.
+                var rids = Publish.DependencyContext.GetRuntimeIdentifiers(runtimeName);
+                foreach(var rid in rids)
+                {
+                    Assert.True(lockFile.HasTarget(fx, rid));
+                }
             }
         }
 
@@ -1666,7 +1627,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
         '1.0.0': {
           '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
           'app': ['hello', 'hello.cmd', 'project.json'],
-          'root': ['project.json', 'LOCKFILE_NAME'],
+          'root': ['project.json', 'project.lock.json'],
           'lib': {
             'dnx451': ['NoDependencies.dll', 'NoDependencies.xml']
           }
@@ -1674,54 +1635,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
       }
     }
   }
-}".Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
-            string expectedLockFileContents = @"{
-  ""locked"": false,
-  ""version"": LOCKFILEFORMAT_VERSION,
-  ""targets"": {
-    ""DNX,Version=v4.5.1"": {
-      ""NoDependencies/1.0.0"": {
-        ""type"": ""package"",
-        ""frameworkAssemblies"": [
-          ""Microsoft.CSharp"",
-          ""mscorlib"",
-          ""System"",
-          ""System.Core""
-        ],
-        ""compile"": {
-          ""lib/dnx451/NoDependencies.dll"": {}
-        },
-        ""runtime"": {
-          ""lib/dnx451/NoDependencies.dll"": {}
-        }
-      }
-    }
-  },
-  ""libraries"": {
-    ""NoDependencies/1.0.0"": {
-      ""type"": ""package"",
-      ""sha512"": ""NUPKG_SHA_VALUE"",
-      ""files"": [
-        ""app/hello"",
-        ""app/hello.cmd"",
-        ""app/project.json"",
-        ""lib/dnx451/NoDependencies.dll"",
-        ""lib/dnx451/NoDependencies.xml"",
-        ""NoDependencies.1.0.0.nupkg"",
-        ""NoDependencies.1.0.0.nupkg.sha512"",
-        ""NoDependencies.nuspec"",
-        ""root/project.json"",
-        ""root/project.lock.json""
-      ]
-    }
-  },
-  ""projectFileDependencyGroups"": {
-    """": [
-      ""NoDependencies >= 1.0.0""
-    ],
-    ""DNX,Version=v4.5.1"": []
-  }
-}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
+}";
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -1748,11 +1662,9 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 
                 var outputLockFilePath = Path.Combine(publishOutputPath,
                     "approot", "packages", testApp, "1.0.0", "root", LockFileFormat.LockFileName);
-                var nupkgSha = File.ReadAllText(Path.Combine(publishOutputPath,
-                    "approot", "packages", testApp, "1.0.0", $"{testApp}.1.0.0.nupkg.sha512"));
 
-                Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
-                    File.ReadAllText(outputLockFilePath));
+                var lockFile = new LockFileReader().Read(outputLockFilePath);
+                Assert.True(lockFile.PackageLibraries.Any(p => p.Name.Equals("NoDependencies")));
             }
         }
 
@@ -1770,7 +1682,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
         '1.0.0': {
           '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
           'app': ['hello', 'hello.cmd', 'project.json'],
-          'root': ['project.json', 'LOCKFILE_NAME'],
+          'root': ['project.json', 'project.lock.json'],
           'lib': {
             'dnx451': ['NoDependencies.dll', 'NoDependencies.xml']
           }
@@ -1778,55 +1690,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
       }
     }
   }
-}".Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
-            var expectedLockFileContents = @"{
-  ""locked"": false,
-  ""version"": LOCKFILEFORMAT_VERSION,
-  ""targets"": {
-    ""DNX,Version=v4.5.1"": {
-      ""NoDependencies/1.0.0"": {
-        ""type"": ""package"",
-        ""frameworkAssemblies"": [
-          ""Microsoft.CSharp"",
-          ""mscorlib"",
-          ""System"",
-          ""System.Core""
-        ],
-        ""compile"": {
-          ""lib/dnx451/NoDependencies.dll"": {}
-        },
-        ""runtime"": {
-          ""lib/dnx451/NoDependencies.dll"": {}
-        }
-      }
-    }
-  },
-  ""libraries"": {
-    ""NoDependencies/1.0.0"": {
-      ""type"": ""package"",
-      ""sha512"": ""NUPKG_SHA_VALUE"",
-      ""files"": [
-        ""app/hello"",
-        ""app/hello.cmd"",
-        ""app/project.json"",
-        ""lib/dnx451/NoDependencies.dll"",
-        ""lib/dnx451/NoDependencies.xml"",
-        ""NoDependencies.1.0.0.nupkg"",
-        ""NoDependencies.1.0.0.nupkg.sha512"",
-        ""NoDependencies.nuspec"",
-        ""root/project.json"",
-        ""root/project.lock.json""
-      ]
-    }
-  },
-  ""projectFileDependencyGroups"": {
-    """": [
-      ""NoDependencies >= 1.0.0""
-    ],
-    ""DNX,Version=v4.5.1"": []
-  }
-}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString())
-.Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
+}";
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -1860,11 +1724,9 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 
                 var outputLockFilePath = Path.Combine(publishOutputPath,
                     "approot", "packages", testApp, "1.0.0", "root", LockFileFormat.LockFileName);
-                var nupkgSha = File.ReadAllText(Path.Combine(publishOutputPath,
-                    "approot", "packages", testApp, "1.0.0", $"{testApp}.1.0.0.nupkg.sha512"));
 
-                Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
-                    File.ReadAllText(outputLockFilePath));
+                var lockFile = new LockFileReader().Read(outputLockFilePath);
+                Assert.True(lockFile.PackageLibraries.Any(p => p.Name.Equals("NoDependencies")));
             }
         }
 
@@ -2052,8 +1914,6 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
   ""publishExclude"": ""Data/Backup/**"",
   ""exclude"": ""node_modules""
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
-                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""projects"": [
     ""src""
@@ -2062,6 +1922,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
+                AssertDefaultTargets(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", testEnv.ProjectName, "project.lock.json"), Dnx451);
             }
         }
 
@@ -2266,6 +2127,16 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
             }
 
             return resultPath;
+        }
+
+        private static void AssertDefaultTargets(string lockFilePath, FrameworkName framework)
+        {
+            var lockFile = new LockFileReader().Read(lockFilePath);
+            Assert.True(lockFile.HasTarget(framework));
+            foreach(var rid in PlatformServices.Default.Runtime.GetDefaultRestoreRuntimes())
+            {
+                Assert.True(lockFile.HasTarget(framework, rid));
+            }
         }
     }
 }

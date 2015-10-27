@@ -119,21 +119,14 @@ namespace Microsoft.Dnx.Tooling.Publish
                 root.Operations.Delete(TargetPath);
             }
 
-            var selectedFrameworks = new List<FrameworkName>();
-
             // Make sure we only emit the nupkgs for the specified frameworks
             // We need to pick actual project frameworks relevant to the publish
             // but the project may not target exactly the right framework so we need
             // to use a compatibility check.
-            foreach (var framework in root.Frameworks)
+            var selectedFrameworks = SelectCompatibleFrameworks(root, project, root.Frameworks.Keys);
+            if(selectedFrameworks == null)
             {
-                var selectedFramework = project.GetCompatibleTargetFramework(framework.Key);
-                if (selectedFramework == null)
-                {
-                    root.Reports.WriteError($"Unable to build {project.Name}. It is not compatible with the requested target framework: {framework.Key}");
-                    return false;
-                }
-                selectedFrameworks.Add(selectedFramework.FrameworkName);
+                return false;
             }
 
             // If this is a wrapper project, we need to generate a lock file before building it
@@ -219,6 +212,22 @@ namespace Microsoft.Dnx.Tooling.Publish
             File.Delete(srcSymbolsNupkgPath);
 
             return true;
+        }
+
+        private IEnumerable<FrameworkName> SelectCompatibleFrameworks(PublishRoot root, Runtime.Project project, IEnumerable<FrameworkName> requestedFrameworks)
+        {
+            var selectedFrameworks = new List<FrameworkName>();
+            foreach (var framework in requestedFrameworks)
+            {
+                var selectedFramework = project.GetCompatibleTargetFramework(framework);
+                if (selectedFramework == null)
+                {
+                    root.Reports.WriteError($"Unable to build {project.Name}. It is not compatible with the requested target framework: {framework}");
+                    return null;
+                }
+                selectedFrameworks.Add(selectedFramework.FrameworkName);
+            }
+            return selectedFrameworks;
         }
 
         private void CopyRelativeSources(Runtime.Project project)
@@ -375,7 +384,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                 foreach (var library in target.Libraries)
                 {
                     var packageDir = resolver.GetInstallPath(library.Name, library.Version);
-                    
+
                     if (library.Name != root.MainProjectName && string.Equals(library.Type, LibraryTypes.Package, StringComparison.OrdinalIgnoreCase))
                     {
                         filesToRemove.Add(resolver.GetHashPath(library.Name, library.Version));
@@ -403,7 +412,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             }
 
             foreach (var target in root.MainProjectLockFile.Targets.Where(projectTarget =>
-                string.IsNullOrEmpty(projectTarget.RuntimeIdentifier) && 
+                string.IsNullOrEmpty(projectTarget.RuntimeIdentifier) &&
                 !root.PublishedLockFile.Targets.Any(publishTarget =>
                 projectTarget.TargetFramework == publishTarget.TargetFramework)))
             {
@@ -458,6 +467,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             var restoreCommand = new RestoreCommand(appEnv);
 
             restoreCommand.TargetFrameworks.AddRange(targetFrameworks);
+            restoreCommand.RequestedRuntimes = root.RuntimeIdentifiers;
             restoreCommand.SkipRestoreEvents = true;
             restoreCommand.SkipInstall = true;
             // This is a workaround for #1322. Since we use restore to generate the lock file
@@ -483,7 +493,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             {
                 var project = root.Projects[i];
                 var restoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
-                tasks[i] = Restore(root, project, restoreDirectory, root.Frameworks.Keys);
+                tasks[i] = Restore(root, project, restoreDirectory, SelectCompatibleFrameworks(root, project.GetCurrentProject(), root.Frameworks.Keys));
             }
 
             Task.WaitAll(tasks);

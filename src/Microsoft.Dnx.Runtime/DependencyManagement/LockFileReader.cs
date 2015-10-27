@@ -12,7 +12,7 @@ using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    internal class LockFileReader
+    public class LockFileReader
     {
         public const string LockFileName = "project.lock.json";
 

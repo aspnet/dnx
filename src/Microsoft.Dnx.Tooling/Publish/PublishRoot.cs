@@ -29,6 +29,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             Projects = new List<PublishProject>();
             Packages = new List<PublishPackage>();
             Runtimes = new List<PublishRuntime>();
+            RuntimeIdentifiers = new HashSet<string>();
             Frameworks = new Dictionary<FrameworkName, string>();
             OutputPath = outputPath;
             TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
@@ -47,6 +48,7 @@ namespace Microsoft.Dnx.Tooling.Publish
         public string Configuration { get; set; }
 
         public IList<PublishRuntime> Runtimes { get; set; }
+        public ISet<string> RuntimeIdentifiers { get; set; }
         public IDictionary<FrameworkName, string> Frameworks { get; set; }
         public IList<PublishProject> Projects { get; private set; }
         public IList<PublishPackage> Packages { get; private set; }

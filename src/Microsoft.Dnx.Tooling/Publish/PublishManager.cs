@@ -134,6 +134,10 @@ namespace Microsoft.Dnx.Tooling.Publish
                 var frameworkName = DependencyContext.SelectFrameworkNameForRuntime(
                     project.GetTargetFrameworks().Select(x => x.FrameworkName),
                     runtimeName);
+                foreach (var rid in DependencyContext.GetRuntimeIdentifiers(runtimeName))
+                {
+                    root.RuntimeIdentifiers.Add(rid);
+                }
 
                 if (frameworkName == null)
                 {
@@ -223,6 +227,12 @@ namespace Microsoft.Dnx.Tooling.Publish
                     }
                 }
 
+                // Add runtime IDs for the currently running platform
+                foreach (var runtime in PlatformServices.Default.Runtime.GetDefaultRestoreRuntimes())
+                {
+                    root.RuntimeIdentifiers.Add(runtime);
+                }
+
                 foreach (var framework in frameworksToPublish)
                 {
                     if (!frameworkContexts.ContainsKey(framework))
@@ -266,7 +276,6 @@ namespace Microsoft.Dnx.Tooling.Publish
                                     publishProject.WwwRoot = _options.WwwRoot;
                                     publishProject.WwwRootOut = _options.WwwRootOut;
                                 }
-
                                 root.Projects.Add(publishProject);
                             }
                         }

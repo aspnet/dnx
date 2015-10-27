@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Dnx.CommonTestUtils
@@ -135,32 +136,36 @@ namespace Microsoft.Dnx.CommonTestUtils
             {
                 foreach (var file in dirFileList)
                 {
-                    var fullPath = Path.Combine(dirPath, file);
-                    var onDiskFileContents = File.ReadAllText(fullPath);
-                    var actual = onDiskFileContents;
-                    var expected = _pathToContents[file];
+                    // Lock files are too brittle to test this way. We check them explicitly where needed
+                    if (!Path.GetFileName(file).Equals("project.lock.json", StringComparison.Ordinal))
+                    {
+                        var fullPath = Path.Combine(dirPath, file);
+                        var onDiskFileContents = File.ReadAllText(fullPath);
+                        var actual = onDiskFileContents;
+                        var expected = _pathToContents[file];
 
-                    if (ignoreWhitespace)
-                    {
-                        actual = RemoveWhitespace(actual);
-                        expected = RemoveWhitespace(expected);
-                    }
-                    else
-                    {
-                        actual = actual.Replace("\r\n", "\n");
-                        expected = expected.Replace("\r\n", "\n");
-                    }
+                        if (ignoreWhitespace)
+                        {
+                            actual = RemoveWhitespace(actual);
+                            expected = RemoveWhitespace(expected);
+                        }
+                        else
+                        {
+                            actual = actual.Replace("\r\n", "\n");
+                            expected = expected.Replace("\r\n", "\n");
+                        }
 
-                    // ignoreWhitespace
-                    // Ignore new lines for compare
-                    if (!string.Equals(actual, expected))
-                    {
-                        Console.Error.WriteLine("The contents of '{0}' don't match expected contents.", fullPath);
-                        Console.Error.WriteLine("Expected:");
-                        Console.Error.WriteLine(expected);
-                        Console.Error.WriteLine("Actual:");
-                        Console.Error.WriteLine(actual);
-                        return false;
+                        // ignoreWhitespace
+                        // Ignore new lines for compare
+                        if (!string.Equals(actual, expected))
+                        {
+                            Console.Error.WriteLine("The contents of '{0}' don't match expected contents.", fullPath);
+                            Console.Error.WriteLine("Expected:");
+                            Console.Error.WriteLine(expected);
+                            Console.Error.WriteLine("Actual:");
+                            Console.Error.WriteLine(actual);
+                            return false;
+                        }
                     }
                 }
             }
