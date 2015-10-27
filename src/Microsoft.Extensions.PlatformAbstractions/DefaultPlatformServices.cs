@@ -5,20 +5,11 @@ namespace Microsoft.Extensions.PlatformAbstractions
 {
     internal class DefaultPlatformServices : PlatformServices
     {
-        internal DefaultPlatformServices(
-            IApplicationEnvironment application,
-            IRuntimeEnvironment runtime,
-            IAssemblyLoaderContainer container,
-            IAssemblyLoadContextAccessor accessor,
-            ILibraryManager libraryManager)
+        public DefaultPlatformServices()
         {
-            Application = application;
-            Runtime = runtime;
-            AssemblyLoaderContainer = container;
-            AssemblyLoadContextAccessor = accessor;
-            LibraryManager = libraryManager;
+            Application = new DefaultApplicationEnvironment();
+            Runtime = new DefaultRuntimeEnvironment();
         }
-
 
         public override IApplicationEnvironment Application { get; }
 

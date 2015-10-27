@@ -71,13 +71,7 @@ namespace Microsoft.Dnx.Host
 
                 CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 
-                PlatformServices.SetDefault(
-                    PlatformServices.Create(
-                        basePlatformServices: null,
-                        application: applicationEnvironment,
-                        runtime: env,
-                        container: container,
-                        accessor: accessor));
+                PlatformServices.SetDefault(new DnxHostPlatformServices(applicationEnvironment, env, container, accessor));
 
 #if DNX451
                 if (RuntimeEnvironmentHelper.IsMono)
