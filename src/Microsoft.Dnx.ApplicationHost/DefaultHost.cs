@@ -159,12 +159,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _serviceProvider.Add(typeof(IAssemblyLoaderContainer), PlatformServices.Default.AssemblyLoaderContainer);
 
 
-            PlatformServices.SetDefault(
-                PlatformServices.Create(
-                    PlatformServices.Default,
-                    application: applicationEnvironment,
-                    libraryManager: runtimeLibraryManager
-                    ));
+            PlatformServices.SetDefault(new ApplicationHostPlatformServices(PlatformServices.Default, applicationEnvironment, runtimeLibraryManager));
 
             if (options.CompilationServerPort.HasValue)
             {

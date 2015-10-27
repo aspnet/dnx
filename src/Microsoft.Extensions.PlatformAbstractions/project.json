@@ -2,20 +2,26 @@
   "version": "1.0.0-*",
   "description": "Abstractions that unify behavior and API across .NET Framework, .NET Core and Mono",
   "compilationOptions": {
-    "warningsAsErrors": true
+    "warningsAsErrors": true,
+    "allowUnsafe": true
   },
   "dependencies": {},
   "frameworks": {
     "net451": {},
     "dotnet5.4": {
       "dependencies": {
+        "System.AppContext": "4.0.1-beta-*",
         "System.Collections": "4.0.11-beta-*",
         "System.ComponentModel": "4.0.1-beta-*",
         "System.IO": "4.0.11-beta-*",
         "System.Linq": "4.0.1-beta-*",
         "System.Reflection": "4.0.11-beta-*",
+        "System.Reflection.Extensions": "4.0.1-beta-*",
+        "System.Reflection.TypeExtensions": "4.0.1-beta-*",
         "System.Runtime": "4.0.21-beta-*",
         "System.Runtime.Extensions": "4.0.11-beta-*",
+        "System.Runtime.InteropServices": "4.0.21-beta-*",
+        "System.Runtime.InteropServices.RuntimeInformation": "4.0.0-beta-*",
         "System.Threading.Tasks": "4.0.11-beta-*"
       }
     }
