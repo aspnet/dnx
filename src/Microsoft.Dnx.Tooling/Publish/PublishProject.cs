@@ -267,7 +267,6 @@ namespace Microsoft.Dnx.Tooling.Publish
                 {
                     File.AppendAllText(hostingConfig, $@"{{
     ""webroot"": ""{PathUtility.GetRelativePath(hostingConfig, Path.Combine(root.OutputPath, WwwRootOut), separator: '/')}""
-    }}
 }}");
                 }
                 else
