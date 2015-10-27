@@ -84,7 +84,7 @@ namespace Microsoft.Extensions.PlatformAbstractions
             return Assembly.GetEntryAssembly();
 #else
             // TODO: Remove private reflection when we get this: https://github.com/dotnet/corefx/issues/4146
-            return typeof(Assembly).GetRuntimeMethod("GetEntryAssembly", Type.EmptyTypes)?.Invoke(obj: null, parameters: Array.Empty<object>()) as Assembly;
+            return typeof(Assembly).GetMethod("GetEntryAssembly", BindingFlags.Static | BindingFlags.NonPublic).Invoke(obj: null, parameters: Array.Empty<object>()) as Assembly;
 #endif
         }
     }
