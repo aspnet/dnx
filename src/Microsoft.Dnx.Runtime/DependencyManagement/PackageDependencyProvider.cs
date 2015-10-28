@@ -254,6 +254,7 @@ namespace Microsoft.Dnx.Runtime
 
         public static void EnableLoadingNativeLibraries(IEnumerable<PackageDescription> packages)
         {
+            var existingPath = new HashSet<string>(Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator));
             var nativeLibPaths = new StringBuilder();
             foreach (var packageDescription in packages)
             {
@@ -263,7 +264,11 @@ namespace Microsoft.Dnx.Runtime
 
                     if (RuntimeEnvironmentHelper.IsWindows)
                     {
-                        nativeLibPaths.Append(";").Append(Path.GetDirectoryName(nativeLibFullPath));
+                        var newPath = Path.GetDirectoryName(nativeLibFullPath);
+                        if (existingPath.Add(newPath))
+                        {
+                            nativeLibPaths.Append(";").Append(newPath);
+                        }
                     }
                     else
                     {
