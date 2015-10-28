@@ -245,7 +245,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             sdk.Dnu.Publish(project.ProjectDirectory, outputPath).EnsureSuccess();
 
             var root = Path.Combine(Path.Combine(outputPath, "approot", "src"), project.Name);
-            var json = JObject.Parse(File.ReadAllText(Path.Combine(root, "Microsoft.AspNet.Hosting.json")));
+            var json = JObject.Parse(File.ReadAllText(Path.Combine(root, "hosting.json")));
             var config = File.ReadAllText(Path.Combine(root, json?["webroot"]?.ToString(), "web.config"));
 
             var expected = @"<configuration>
