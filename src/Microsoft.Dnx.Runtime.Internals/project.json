@@ -1,6 +1,10 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [ "TRACE" ],
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
+    },
     "shared": "**/*.cs",
     "dependencies": {
         "Microsoft.Extensions.PlatformAbstractions": ""

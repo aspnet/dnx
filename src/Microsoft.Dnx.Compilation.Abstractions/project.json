@@ -2,7 +2,8 @@
   "version": "1.0.0-*",
   "description": "Abstractions for compilers used by the runtime.",
   "compilationOptions": {
-    "warningsAsErrors": true
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
     "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
