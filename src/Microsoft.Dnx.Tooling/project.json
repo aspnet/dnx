@@ -17,13 +17,7 @@
         "Microsoft.Extensions.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Extensions.HashCodeCombiner.Sources": { "version": "1.0.0-*", "type": "build" },
         "Newtonsoft.Json": "6.0.6"
-    }, 
-    "compile": [ 
-         "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs" 
-    ], 
-    "preprocess": [ 
-        "../../ext/compiler/preprocess/Internalization.cs" 
-    ], 
+    },
     "frameworks": {
         "dnx451": {
             "frameworkAssemblies": {
