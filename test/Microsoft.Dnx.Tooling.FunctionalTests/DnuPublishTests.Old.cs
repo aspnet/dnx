@@ -116,7 +116,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
         {
 
             var projectStructure = @"{
-  '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig', 'Microsoft.AspNet.Hosting.json'],
+  '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig', 'hosting.json'],
   'Views': {
     'Home': ['index.cshtml'],
     'Shared': ['_Layout.cshtml']
@@ -141,7 +141,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json', 'project.lock.json', 'Config.json', 'Program.cs', 'Microsoft.AspNet.Hosting.json'],
+        '.': ['project.json', 'project.lock.json', 'Config.json', 'Program.cs', 'hosting.json'],
           'Views': {
             'Home': ['index.cshtml'],
             'Shared': ['_Layout.cshtml']
@@ -173,7 +173,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents("Microsoft.AspNet.Hosting.json", @"{
+                    .WithFileContents("hosting.json", @"{
     ""WebRoot"": ""to_be_overridden""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -199,7 +199,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "Microsoft.AspNet.Hosting.json"), @"{
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "hosting.json"), @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
@@ -208,7 +208,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("wwwroot", "Microsoft.AspNet.Hosting.json"), @"{
+                    .WithFileContents(Path.Combine("wwwroot", "hosting.json"), @"{
     ""WebRoot"": ""to_be_overridden""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -231,7 +231,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
-  '.': ['project.json', 'Microsoft.AspNet.Hosting.json', 'Config.json', 'Program.cs'],
+  '.': ['project.json', 'hosting.json', 'Config.json', 'Program.cs'],
   'public': {
     'Scripts': ['bootstrap.js', 'jquery.js'],
     'Images': ['logo.png'],
@@ -256,7 +256,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json', 'project.lock.json', 'Microsoft.AspNet.Hosting.json', 'Config.json', 'Program.cs'],
+        '.': ['project.json', 'project.lock.json', 'hosting.json', 'Config.json', 'Program.cs'],
           'Views': {
             'Home': ['index.cshtml'],
             'Shared': ['_Layout.cshtml']
@@ -284,7 +284,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents("Microsoft.AspNet.Hosting.json", @"{
+                    .WithFileContents("hosting.json", @"{
     ""WebRoot"": ""public""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -310,7 +310,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "Microsoft.AspNet.Hosting.json"), @"{
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "hosting.json"), @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -333,7 +333,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
-  '.': ['project.json', 'Microsoft.AspNet.Hosting.json'],
+  '.': ['project.json', 'hosting.json'],
 }";
             var expectedOutputStructure = @"{
   'wwwroot': {
@@ -343,7 +343,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json', 'project.lock.json', 'Microsoft.AspNet.Hosting.json'],
+        '.': ['project.json', 'project.lock.json', 'hosting.json'],
       }
     }
   }
@@ -357,7 +357,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents("Microsoft.AspNet.Hosting.json", @"{
+                    .WithFileContents("hosting.json", @"{
     ""WebRoot"": ""wwwroot""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -1214,7 +1214,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
-  '.': ['project.json', 'Microsoft.AspNet.Hosting.json'],
+  '.': ['project.json', 'hosting.json'],
   'public': ['index.html', 'web.config'],
   'packages': {}
 }";
@@ -1223,7 +1223,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
   'approot': {
     'global.json': '',
     'src': {
-      'PROJECT_NAME': ['project.json', 'project.lock.json', 'Microsoft.AspNet.Hosting.json']
+      'PROJECT_NAME': ['project.json', 'project.lock.json', 'hosting.json']
     }
   }
 }".Replace("PROJECT_NAME", _projectName);
@@ -1253,7 +1253,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents("Microsoft.AspNet.Hosting.json", @"{
+                    .WithFileContents("hosting.json", @"{
     ""WebRoot"": ""public""
 }")
                     .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
@@ -1279,7 +1279,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "Microsoft.AspNet.Hosting.json"), @"{
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "hosting.json"), @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -1302,7 +1302,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
-  '.': ['project.json', 'Microsoft.AspNet.Hosting.json'],
+  '.': ['project.json', 'hosting.json'],
   'public': ['index.html', 'web.config'],
   'packages': {}
 }";
@@ -1311,7 +1311,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
   'approot': {
     'global.json': '',
     'src': {
-      'PROJECT_NAME': ['project.json', 'project.lock.json', 'Microsoft.AspNet.Hosting.json']
+      'PROJECT_NAME': ['project.json', 'project.lock.json', 'hosting.json']
     }
   }
 }".Replace("PROJECT_NAME", _projectName);
@@ -1349,7 +1349,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
   }
 }")
                     .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
-                    .WithFileContents("Microsoft.AspNet.Hosting.json", @"{
+                    .WithFileContents("hosting.json", @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -1374,7 +1374,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
     ""dnx451"": {}
   }
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "Microsoft.AspNet.Hosting.json"), @"{
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "hosting.json"), @"{
     ""WebRoot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{

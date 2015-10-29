@@ -271,7 +271,7 @@ namespace Microsoft.Dnx.Tooling.Publish
             // Update the 'webroot' property, which was specified with '--wwwroot-out' option
             if (!string.IsNullOrEmpty(WwwRootOut))
             {
-                var hostingConfig = Path.Combine(targetPath, "Microsoft.AspNet.Hosting.json");
+                var hostingConfig = Path.Combine(targetPath, "hosting.json");
                 if (!File.Exists(hostingConfig))
                 {
                     File.AppendAllText(hostingConfig, $@"{{

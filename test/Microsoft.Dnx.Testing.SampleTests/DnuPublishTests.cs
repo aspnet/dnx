@@ -47,7 +47,7 @@ namespace Microsoft.Dnx.Testing.SampleTests
             var projectStructure = new Dir
             {
                 ["project.json"] = projectJson,
-                ["Microsoft.AspNet.Hosting.json"] = hostingJson,
+                ["hosting.json"] = hostingJson,
                 ["Config.json", "Program.cs"] = Dir.EmptyFile,
                 ["public"] = new Dir
                 {
@@ -141,7 +141,7 @@ namespace Microsoft.Dnx.Testing.SampleTests
                     {
                         ["project.json"] = expectedOutputProjectJson,
                         ["project.lock.json"] = expectedOutputLockFile,
-                        ["Microsoft.AspNet.Hosting.json"] = expectedOutputHostingJson,
+                        ["hosting.json"] = expectedOutputHostingJson,
                         ["Config.json", "Program.cs"] = Dir.EmptyFile,
                         ["Views"] = new Dir
                         {

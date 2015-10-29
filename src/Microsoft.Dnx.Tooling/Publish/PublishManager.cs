@@ -58,9 +58,9 @@ namespace Microsoft.Dnx.Tooling.Publish
                 _options.Reports.Information.WriteLine(warning.FormattedMessage.Yellow());
             }
 
-            if (string.IsNullOrEmpty(_options.WwwRoot) && File.Exists(Path.Combine(project.ProjectDirectory, "Microsoft.AspNet.Hosting.json")))
+            if (string.IsNullOrEmpty(_options.WwwRoot) && File.Exists(Path.Combine(project.ProjectDirectory, "hosting.json")))
             {
-                var jsonObj = JObject.Parse(File.ReadAllText(Path.Combine(project.ProjectDirectory, "Microsoft.AspNet.Hosting.json")));
+                var jsonObj = JObject.Parse(File.ReadAllText(Path.Combine(project.ProjectDirectory, "hosting.json")));
                 _options.WwwRoot = PublishOperations.GetWebRootJson(jsonObj)?.ToString();
             }
 
