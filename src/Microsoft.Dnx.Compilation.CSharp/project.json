@@ -10,7 +10,7 @@
     "dependencies": {
         "Microsoft.Dnx.Compilation": "1.0.0-*",
         "Microsoft.Dnx.Compilation.CSharp.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
+        "Microsoft.Extensions.Compilation.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" }
     },
     "frameworks": {

@@ -76,7 +76,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_CORECLR_MANAGED_NAME,
     "Microsoft.Dnx.ApplicationHost",
     "Microsoft.Dnx.Compilation",
-    "Microsoft.Dnx.Compilation.Abstractions",
+    "Microsoft.Extensions.Compilation.Abstractions",
     "Microsoft.Dnx.Compilation.CSharp",
     "Microsoft.Dnx.Compilation.CSharp.Abstractions",
     "Microsoft.Dnx.Compilation.CSharp.Common",
