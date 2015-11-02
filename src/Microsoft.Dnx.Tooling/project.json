@@ -5,6 +5,12 @@
         "emitEntryPoint": true,
         "keyFile": "../../tools/Key.snk"
     },
+    "compile": [ 		
+         "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs" 		
+    ], 		
+    "preprocess": [ 		
+        "../../ext/compiler/preprocess/Internalization.cs" 		
+    ], 
     "dependencies": {
         "Microsoft.Dnx.Compilation": "1.0.0-*",
         "Microsoft.Dnx.Project": "1.0.0-*",
