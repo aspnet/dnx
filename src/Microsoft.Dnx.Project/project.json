@@ -1,6 +1,10 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
+    "compilationOptions" : {
+        "define" : ["TRACE"],
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
+    },
     "dependencies": {
         "Microsoft.Dnx.Runtime" : "1.0.0-*",
         "Microsoft.Dnx.Runtime.Sources" : { "version": "1.0.0-*", "type": "build" },
