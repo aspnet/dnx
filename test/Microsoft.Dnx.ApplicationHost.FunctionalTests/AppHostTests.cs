@@ -25,7 +25,7 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
             // Assert
             Assert.Equal(0, result.ExitCode);
             Assert.Contains($"Project: {project.Name}", result.StandardOutput);
-            Assert.Contains($"Package: Microsoft.Dnx.Compilation.Abstractions", result.StandardOutput);
+            Assert.Contains($"Package: Microsoft.Extensions.Compilation.Abstractions", result.StandardOutput);
 
             TestUtils.CleanUpTestDir<AppHostTests>(sdk);
         }

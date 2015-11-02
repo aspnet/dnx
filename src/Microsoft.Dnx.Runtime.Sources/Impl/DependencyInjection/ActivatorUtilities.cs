@@ -76,6 +76,9 @@ namespace Microsoft.Dnx.Runtime.Common.DependencyInjection
 
             if (constructors.Length == 1)
             {
+                if (services == null)
+                    throw new InvalidOperationException($"Unable to inject into {type.Name} constructor, current host doesn't support dependency injection");
+
                 ParameterInfo[] parameters = constructors[0].GetParameters();
                 return services =>
                 {
