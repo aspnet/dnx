@@ -1199,7 +1199,14 @@ functions @{
         var runtimeTarget = "";
         if(target.OS == "win")
         {
-            runtimeTarget = "win7";
+            if(target.Arch == "arm")
+            {
+                runtimeTarget = "win10";
+            }
+            else
+            {
+                runtimeTarget = "win7";
+            }
         }
         else if(target.OS == "linux")
         {
@@ -1211,6 +1218,7 @@ functions @{
         }
 
         runtimeTarget += "-" + target.Arch;
+
         var args = string.Format("--runtime {0}", runtimeTarget);
 
         if (target.Flavor == "mono")
