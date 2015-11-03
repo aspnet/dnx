@@ -6,7 +6,7 @@ using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.PlatformAbstractions;
 
-namespace Microsoft.Dnx.Compilation
+namespace Microsoft.Extensions.Compilation
 {
     public interface IMetadataProjectReference : IMetadataReference
     {

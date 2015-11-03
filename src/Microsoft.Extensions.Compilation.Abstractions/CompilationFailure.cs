@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.PlatformAbstractions;
 
-namespace Microsoft.Dnx.Compilation
+namespace Microsoft.Extensions.Compilation
 {
     /// <summary>
     /// Describes a failure compiling a specific file. 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Microsoft.Extensions.Compilation.Caching;
 
 namespace Microsoft.Dnx.Compilation.Caching
 {

@@ -3,7 +3,7 @@
 
 using System.IO;
 
-namespace Microsoft.Dnx.Compilation
+namespace Microsoft.Extensions.Compilation
 {
     public interface ISourceReference
     {

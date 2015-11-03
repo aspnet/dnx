@@ -1,4 +1,6 @@
-﻿namespace Microsoft.Dnx.Compilation.Caching
+﻿using Microsoft.Extensions.Compilation.Caching;
+
+namespace Microsoft.Dnx.Compilation.Caching
 {
     public class NamedCacheDependency : ICacheDependency
     {

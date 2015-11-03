@@ -11,6 +11,8 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.Compilation;
+using Microsoft.Extensions.Compilation.Caching;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;

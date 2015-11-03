@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Microsoft.Dnx.Compilation
+namespace Microsoft.Extensions.Compilation
 {
     public class MetadataFileReference : IMetadataFileReference
     {

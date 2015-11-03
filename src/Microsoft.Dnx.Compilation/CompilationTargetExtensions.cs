@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Versioning;
+using Microsoft.Extensions.Compilation;
 
 namespace Microsoft.Dnx.Compilation
 {

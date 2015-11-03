@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Extensions.Compilation.Caching;
 
 namespace Microsoft.Dnx.Compilation.Caching
 {

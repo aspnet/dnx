@@ -5,7 +5,7 @@ using System;
 using System.Runtime.Versioning;
 using Microsoft.Extensions.Internal;
 
-namespace Microsoft.Dnx.Compilation
+namespace Microsoft.Extensions.Compilation
 {
     /// <summary>
     /// Provides the identity of a specific target for a compilation.

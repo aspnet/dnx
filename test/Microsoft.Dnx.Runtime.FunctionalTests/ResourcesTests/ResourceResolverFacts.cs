@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime.Internal;
+using Microsoft.Extensions.Compilation;
 using Xunit;
 
 namespace Microsoft.Dnx.Runtime.FunctionalTests.ResourcesTests

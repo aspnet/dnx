@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Dnx.Compilation.Caching
+﻿namespace Microsoft.Extensions.Compilation.Caching
 {
     public interface ICacheContextAccessor
     {

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.Compilation;
+using Microsoft.Extensions.Compilation.Caching;
 using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Compilation.CSharp

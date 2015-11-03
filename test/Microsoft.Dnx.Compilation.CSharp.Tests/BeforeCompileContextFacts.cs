@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Compilation;
 using Xunit;
 
 namespace Microsoft.Dnx.Compilation.CSharp.Tests

@@ -4,7 +4,7 @@
 using System.Runtime.Versioning;
 using Microsoft.Extensions.PlatformAbstractions;
 
-namespace Microsoft.Dnx.Compilation
+namespace Microsoft.Extensions.Compilation
 {
     /// <summary>
     /// Specifies the contracts for a type that provides the <see cref="ICompilerOptions"/> for

@@ -3,8 +3,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.Compilation;
+using Microsoft.Extensions.Compilation.Caching;
 using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;
 

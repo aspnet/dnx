@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.Compilation;
 
 namespace Microsoft.Dnx.Compilation
 {

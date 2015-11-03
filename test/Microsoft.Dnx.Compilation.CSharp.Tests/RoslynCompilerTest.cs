@@ -4,8 +4,10 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
-using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.Compilation;
+using Microsoft.Extensions.Compilation.Caching;
 using Microsoft.Extensions.PlatformAbstractions;
 #if DNX451
 using Moq;

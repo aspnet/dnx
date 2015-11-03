@@ -7,6 +7,7 @@ using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
+using Microsoft.Extensions.Compilation;
 
 namespace Microsoft.Dnx.Compilation
 {

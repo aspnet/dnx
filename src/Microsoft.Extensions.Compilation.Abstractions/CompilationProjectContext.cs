@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.PlatformAbstractions;
 
-namespace Microsoft.Dnx.Compilation
+namespace Microsoft.Extensions.Compilation
 {
     /// <summary>
     /// Represents the information needed to compile a project.
