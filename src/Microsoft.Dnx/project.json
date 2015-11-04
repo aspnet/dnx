@@ -14,6 +14,7 @@
             "dependencies": {
                 "Microsoft.CSharp": "4.0.0-*",
                 "Microsoft.Dnx.Host.CoreClr": "1.0.0-*",
+                "Microsoft.NETCore.Platforms": "1.0.1-*",
                 "Microsoft.NETCore.Runtime": "1.0.1-*",
                 "Microsoft.VisualBasic": "10.0.0-*",
                 "Microsoft.Win32.Primitives": "4.0.1-*",
@@ -23,7 +24,7 @@
                 "System.IO.FileSystem.Primitives": "4.0.1-*",
                 "System.IO.UnmanagedMemoryStream": "4.0.1-*",
                 "System.Runtime.Serialization.Json": "4.0.1-*",
-                "System.Runtime.Serialization.Primitives": "4.0.11-*",
+                "System.Runtime.Serialization.Primitives": "4.1.0-*",
                 "System.Security.Cryptography.X509Certificates": "4.0.0-*",
                 "System.Threading.Tasks.Parallel": "4.0.1-*",
 

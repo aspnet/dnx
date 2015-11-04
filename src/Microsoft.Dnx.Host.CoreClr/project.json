@@ -1,6 +1,11 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [ "TRACE" ],
+        "allowUnsafe": true,
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
+    },
     "dependencies": {
         "Microsoft.Dnx.Host": "1.0.0-*"
     },
