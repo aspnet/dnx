@@ -7,6 +7,12 @@
         "warningsAsErrors": true,
         "keyFile": "../../tools/Key.snk"
     },
+    "compile": [		
+        "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"		
+    ],		
+    "preprocess": [		
+        "../../ext/compiler/preprocess/Internalization.cs"		
+    ],
     "dependencies": {
         "Microsoft.Dnx.Loader": "1.0.0-*",
         "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
