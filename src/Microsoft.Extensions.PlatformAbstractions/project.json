@@ -3,8 +3,7 @@
   "description": "Abstractions that unify behavior and API across .NET Framework, .NET Core and Mono",
   "compilationOptions": {
     "warningsAsErrors": true,
-    "allowUnsafe": true,
-    "keyFile": "../../tools/Key.snk"
+    "allowUnsafe": true
   },
   "dependencies": {},
   "frameworks": {

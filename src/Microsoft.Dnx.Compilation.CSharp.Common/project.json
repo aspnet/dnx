@@ -6,8 +6,7 @@
       "TRACE"
     ],
     "allowUnsafe": true,
-    "warningsAsErrors": true,
-    "keyFile": "../../tools/Key.snk"
+    "warningsAsErrors": true
   },
   "dependencies": {
     "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*",

@@ -4,7 +4,7 @@
     "define": [ "TRACE" ],
     "allowUnsafe": true,
     "warningsAsErrors": true,
-    "keyFile": "../../tools/Key.snk"
+    "keyFile": "KeyFile.snk"
   },
   "dependencies": {
     "Microsoft.Extensions.JsonParser.Sources": { "version": "1.0.0-*", "type": "build" }

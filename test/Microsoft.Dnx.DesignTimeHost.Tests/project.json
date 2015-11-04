@@ -1,7 +1,4 @@
 {
-    "compilationOptions": {
-        "keyFile": "../../tools/Key.snk"
-    },
     "dependencies": {
         "Microsoft.Dnx.DesignTimeHost": "1.0.0-*",
         "Microsoft.Dnx.DesignTimeHost.Abstractions": "1.0.0-*",

@@ -13,8 +13,7 @@
     "compilationOptions": {
         "define": [ "TRACE" ],
         "warningsAsErrors": true,
-        "emitEntryPoint": true,
-        "keyFile": "../../tools/Key.snk"
+        "emitEntryPoint": true
     },
     "frameworks": {
         "dnx451": {

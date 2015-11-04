@@ -499,9 +499,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 
     @{
         var dnxCore50Pattern = Path.Combine(BUILD_DIR2, "*", "dnxcore50", "**.*");
-        var dotnet54Pattern = Path.Combine(BUILD_DIR2, "*", "dotnet5.4", "**.*");
         var dnx451Pattern = Path.Combine(BUILD_DIR2, "*", "dnx451", "**.*");
-        var net451Pattern = Path.Combine(BUILD_DIR2, "*", "net451", "**.*");
 
         var libPackages = new[] { "Microsoft.Dnx.Project",
                                   "Microsoft.Dnx.DesignTimeHost",
@@ -514,7 +512,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
             Path.Combine(BUILD_DIR2, "Microsoft.Extensions.CommandLineUtils.Sources/**/*.*"),
         };
 
-        foreach (var file in Files.Include(dnxCore50Pattern, dotnet54Pattern).Exclude(sharedSourceAssemblies))
+        foreach (var file in Files.Include(dnxCore50Pattern).Exclude(sharedSourceAssemblies))
         {
             foreach (var runtimeTarget in RUNTIME_TARGETS.Where(t => t.Flavor == "coreclr"))
             {
@@ -523,7 +521,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
             }
         }
 
-        foreach (var file in Files.Include(dnx451Pattern, net451Pattern).Exclude(sharedSourceAssemblies))
+        foreach (var file in Files.Include(dnx451Pattern).Exclude(sharedSourceAssemblies))
         {
             foreach (var runtimeTarget in RUNTIME_TARGETS.Where(t => t.Flavor != "coreclr"))
             {

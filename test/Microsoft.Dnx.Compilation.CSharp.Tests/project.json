@@ -1,7 +1,4 @@
 {
-    "compilationOptions": {
-        "keyFile": "../../tools/Key.snk"
-    },
     "dependencies": {
         "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
         "Microsoft.Dnx.Compilation.CSharp": "1.0.0-*",

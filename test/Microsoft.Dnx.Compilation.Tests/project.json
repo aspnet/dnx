@@ -1,7 +1,4 @@
 ﻿{
-    "compilationOptions": {
-        "keyFile": "../../tools/Key.snk"
-    },
     "dependencies": {
         "Microsoft.Dnx.Compilation": "1.0.0-*",
         "Microsoft.Dnx.CommonTestUtils": "1.0.0-*",

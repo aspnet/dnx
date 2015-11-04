@@ -2,7 +2,8 @@
     "version": "0.1-beta-*",
     "exclude": "more/*.cs",
     "dependencies": {
-        "HelloShared": { "version": "0.1-beta-*", "type": "build" }
+        "HelloShared": { "version": "0.1-beta-*", "type": "build" },
+        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*"
     },
     "commands": {
         "hi": "HelloWorld --mode amazing",
