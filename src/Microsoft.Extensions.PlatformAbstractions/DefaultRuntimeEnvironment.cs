@@ -80,7 +80,8 @@ namespace Microsoft.Extensions.PlatformAbstractions
 #endif
             else
             {
-                OperatingSystem = VersionHelper.GetUname();
+                OperatingSystem = VersionHelper.UnameData.sysname;
+                OperatingSystemVersion = VersionHelper.UnameData.version;
             }
         }
 

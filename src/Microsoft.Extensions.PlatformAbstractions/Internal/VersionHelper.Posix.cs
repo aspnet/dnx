@@ -1,39 +1,41 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace Microsoft.Extensions.PlatformAbstractions.Internal
 {
     internal static partial class VersionHelper
     {
-        public static string GetUname()
+        private static Lazy<utsname> _unameData = new Lazy<utsname>(GetUnameData);
+        
+        internal static utsname UnameData => _unameData.Value;
+        
+        private static utsname GetUnameData()
         {
-        }
-
-        private unsafe string GetUname()
-        {
-
-            var buffer = new byte[8192];
             try
             {
-                fixed (byte* buf = buffer)
+                utsname result = new utsname();
+                if (uname(ref result) == 0)
                 {
-                    if (uname((IntPtr)buf) == 0)
-                    {
-                        return Marshal.PtrToStringAnsi((IntPtr)buf);
-                    }
+                    return result;
                 }
-                return string.Empty;
             }
             catch
             {
-                return string.Empty;
+                // Should we do this? If we wanted the uname data but failed to read it, that's really bad...
             }
+            return new utsname();
         }
 
         [DllImport("libc")]
-        static extern int uname(IntPtr buf);
+        private static extern int uname(ref utsname result);
+        
+        internal struct utsname
+        {
+            public string sysname;
+            public string nodename;
+            public string release;
+            public string version;
+            public string machine;
+        }
     }
 }

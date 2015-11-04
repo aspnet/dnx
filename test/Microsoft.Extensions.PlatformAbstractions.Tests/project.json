@@ -1,0 +1,17 @@
+{
+    "compilationOptions": {
+        "keyFile": "../../tools/Key.snk"
+    },
+    "dependencies": {
+        "Microsoft.Extensions.PlatformAbstractions": { "target": "project" },
+        "xunit.runner.aspnet": "2.0.0-aspnet-*"
+    },
+    "frameworks": {
+        "dnxcore50":{
+            "System.Runtime.InteropServices.RuntimeInformation": "4.0.0-*"
+        }
+    },
+    "commands": {
+        "test": "xunit.runner.aspnet"
+    }
+}

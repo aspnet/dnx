@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Microsoft.Extensions.PlatformAbstractions.Internal
 {
@@ -9,6 +6,7 @@ namespace Microsoft.Extensions.PlatformAbstractions.Internal
     {
         public static string GetWindowsVersion()
         {
+            throw new NotImplementedException();
         }
     }
 }
