@@ -121,7 +121,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
             if (isPreprocessAspect)
             {
                 compilationSettings.CompilationOptions =
-                    compilationSettings.CompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
+                    compilationSettings.CompilationOptions
+                        .WithOutputKind(OutputKind.DynamicallyLinkedLibrary)
+                        .WithCryptoKeyFile(null)
+                        .WithCryptoPublicKey(ImmutableArray<byte>.Empty)
+                        .WithDelaySign(false);
             }
 
             var compilation = CSharpCompilation.Create(
