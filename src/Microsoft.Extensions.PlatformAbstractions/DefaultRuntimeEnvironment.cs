@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.PlatformAbstractions.Internal;
 
 namespace Microsoft.Extensions.PlatformAbstractions
 {
@@ -9,7 +10,7 @@ namespace Microsoft.Extensions.PlatformAbstractions
     {
         public DefaultRuntimeEnvironment()
         {
-            OperatingSystem = GetOs();
+            LoadOsInfo();
             RuntimePath = GetLocation(typeof(object).GetTypeInfo().Assembly);
             RuntimeType = GetRuntimeType();
             RuntimeVersion = typeof(object).GetTypeInfo().Assembly.GetName().Version.ToString();
@@ -17,9 +18,9 @@ namespace Microsoft.Extensions.PlatformAbstractions
         }
 
         // TODO: implement
-        public string OperatingSystemVersion { get; }
+        public string OperatingSystemVersion { get; private set; }
 
-        public string OperatingSystem { get; }
+        public string OperatingSystem { get; private set; }
 
         public string RuntimeArchitecture { get; }
 
@@ -49,7 +50,7 @@ namespace Microsoft.Extensions.PlatformAbstractions
             return string.IsNullOrEmpty(assemblyLocation) ? null : Path.GetDirectoryName(assemblyLocation);
         }
 
-        private string GetOs()
+        private void LoadOsInfo()
         {
 #if NET451
             var platform = (int)Environment.OSVersion.Platform;
@@ -57,25 +58,30 @@ namespace Microsoft.Extensions.PlatformAbstractions
 
             if (isWindows)
             {
-                return "Windows";
+                OperatingSystem = "Windows";
+                OperatingSystemVersion = VersionHelper.GetWindowsVersion();
             }
 #else
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return "Windows";
+                OperatingSystem = "Windows";
+                OperatingSystemVersion = VersionHelper.GetWindowsVersion();
             }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                return "Linux";
+                OperatingSystem = VersionHelper.GetLinuxOsName();
+                OperatingSystemVersion = VersionHelper.GetLinuxVersion();
             }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                return "Darwin";
+                OperatingSystem = "Darwin";
+                OperatingSystemVersion = VersionHelper.GetOSXVersion();
             }
 #endif
-            return GetUname();
+            else
+            {
+                OperatingSystem = VersionHelper.GetUname();
+            }
         }
 
         private static string GetArch()
@@ -87,28 +93,5 @@ namespace Microsoft.Extensions.PlatformAbstractions
 #endif
         }
 
-        private unsafe string GetUname()
-        {
-
-            var buffer = new byte[8192];
-            try
-            {
-                fixed (byte* buf = buffer)
-                {
-                    if (uname((IntPtr)buf) == 0)
-                    {
-                        return Marshal.PtrToStringAnsi((IntPtr)buf);
-                    }
-                }
-                return string.Empty;
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
-        [DllImport("libc")]
-        static extern int uname(IntPtr buf);
     }
 }
