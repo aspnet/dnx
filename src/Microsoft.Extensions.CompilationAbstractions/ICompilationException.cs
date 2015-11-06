@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.Extensions.Compilation
+namespace Microsoft.Extensions.CompilationAbstractions
 {
     /// <summary>
     /// Specifies the contract for an exception representing compilation failure.

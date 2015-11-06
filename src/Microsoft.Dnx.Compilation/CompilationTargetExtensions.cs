@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.Versioning;
-using Microsoft.Extensions.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 
 namespace Microsoft.Dnx.Compilation
 {

@@ -78,7 +78,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Bootstrapper.FunctionalTest
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.DesignTimeHost.Abstractions", "src\Microsoft.Dnx.DesignTimeHost.Abstractions\Microsoft.Dnx.DesignTimeHost.Abstractions.xproj", "{88772B8E-1D5D-47D5-BDEB-1FDADA481845}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Extensions.Compilation.Abstractions", "src\Microsoft.Extensions.Compilation.Abstractions\Microsoft.Extensions.Compilation.Abstractions.xproj", "{F8DC9AE8-54E1-443C-BF04-60AB0D169E3A}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Extensions.CompilationAbstractions", "src\Microsoft.Extensions.CompilationAbstractions\Microsoft.Extensions.CompilationAbstractions.xproj", "{F8DC9AE8-54E1-443C-BF04-60AB0D169E3A}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.DesignTimeHost.Tests", "test\Microsoft.Dnx.DesignTimeHost.Tests\Microsoft.Dnx.DesignTimeHost.Tests.xproj", "{D2B06998-051A-4BCA-B005-F9F03FA83AD6}"
 EndProject

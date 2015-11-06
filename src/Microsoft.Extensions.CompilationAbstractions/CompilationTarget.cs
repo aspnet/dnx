@@ -5,7 +5,7 @@ using System;
 using System.Runtime.Versioning;
 using Microsoft.Extensions.Internal;
 
-namespace Microsoft.Extensions.Compilation
+namespace Microsoft.Extensions.CompilationAbstractions
 {
     /// <summary>
     /// Provides the identity of a specific target for a compilation.

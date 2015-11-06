@@ -14,8 +14,8 @@ using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.Impl;
 using Microsoft.Dnx.Runtime.Internals;
-using Microsoft.Extensions.Compilation;
-using Microsoft.Extensions.Compilation.Caching;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 

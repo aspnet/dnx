@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using System.Runtime.Versioning;
-using Microsoft.Extensions.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Runtime.Compilation

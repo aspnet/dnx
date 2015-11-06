@@ -9,7 +9,7 @@ using System.Resources;
 using System.Xml.Linq;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
-using Microsoft.Extensions.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Compilation

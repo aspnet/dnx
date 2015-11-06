@@ -1,5 +1,5 @@
 ﻿using System;
-using Microsoft.Extensions.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 
 namespace Microsoft.Dnx.Runtime.Compilation
 {

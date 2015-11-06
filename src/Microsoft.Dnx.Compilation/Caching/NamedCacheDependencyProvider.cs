@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Compilation.Caching;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 
 namespace Microsoft.Dnx.Compilation.Caching
 {

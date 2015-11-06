@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.PlatformAbstractions;
 
-namespace Microsoft.Extensions.Compilation
+namespace Microsoft.Extensions.CompilationAbstractions
 {
     public class CompiledProjectMetadataReference : IMetadataProjectReference, IMetadataFileReference
     {

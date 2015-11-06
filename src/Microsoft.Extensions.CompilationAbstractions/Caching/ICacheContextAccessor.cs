@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Extensions.Compilation.Caching
+﻿namespace Microsoft.Extensions.CompilationAbstractions.Caching
 {
     public interface ICacheContextAccessor
     {

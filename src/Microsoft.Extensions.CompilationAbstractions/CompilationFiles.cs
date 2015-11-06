@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Microsoft.Extensions.Compilation
+namespace Microsoft.Extensions.CompilationAbstractions
 {
     /// <summary>
     /// Represents the resolved collection of files used for compilation

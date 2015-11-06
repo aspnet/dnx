@@ -4,7 +4,7 @@
 using System.Runtime.Versioning;
 using Microsoft.Extensions.PlatformAbstractions;
 
-namespace Microsoft.Extensions.Compilation
+namespace Microsoft.Extensions.CompilationAbstractions
 {
     /// <summary>
     /// Specifies the contracts for a type that provides the <see cref="ICompilerOptions"/> for

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Microsoft.Extensions.Compilation.Caching
+namespace Microsoft.Extensions.CompilationAbstractions.Caching
 {
     public static class CacheExtensions
     {

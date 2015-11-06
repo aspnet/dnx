@@ -1,5 +1,5 @@
 ﻿using System;
-using Microsoft.Extensions.Compilation.Caching;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 
 namespace Microsoft.Dnx.Compilation.Caching
 {
