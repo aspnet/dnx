@@ -25,7 +25,7 @@ namespace Microsoft.Dnx.Tooling
                 return false;
             }
 
-            _reports.Information.WriteLine("Avaliable commands:");
+            _reports.Information.WriteLine("Available commands:");
 
             foreach (var command in project.Commands)
             {
