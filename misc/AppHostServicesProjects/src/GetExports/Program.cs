@@ -9,7 +9,7 @@ namespace GetExports
         {
             var exporter = CompilationServices.Default.LibraryExporter;
             var projectExport = exporter.GetAllExports("GetExports");
-            var packageExport = exporter.GetAllExports("Microsoft.Extensions.Compilation.Abstractions");
+            var packageExport = exporter.GetAllExports("Microsoft.Extensions.CompilationAbstractions");
             
             Console.WriteLine($"Project: {projectExport.MetadataReferences[0].Name}");
             Console.WriteLine($"Package: {packageExport.MetadataReferences[0].Name}");
