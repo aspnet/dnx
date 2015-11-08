@@ -81,7 +81,7 @@ namespace Microsoft.Dnx.Runtime.Common
             {
                 return true;
             }
-
+            
             var programType = assembly.GetType("Program") ?? assembly.GetType(name + ".Program");
 
             if (programType == null)
@@ -90,7 +90,8 @@ namespace Microsoft.Dnx.Runtime.Common
 
                 if (programTypeInfo == null)
                 {
-                    System.Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
+                                        
+                    System.Console.WriteLine("'{0}' does not contain a type 'Program' for an entry point", name);
                     return false;
                 }
 
