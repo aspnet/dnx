@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Extensions.Internal;
 using NuGet.Resources;
 
 namespace NuGet
@@ -20,10 +21,10 @@ namespace NuGet
         /// <summary>
         /// Creates a portable profile with the given name and supported frameworks.
         /// </summary>
-        public NetPortableProfile(string name, IEnumerable<FrameworkName> supportedFrameworks)
+        public NetPortableProfile(string name, IEnumerable<FrameworkName> supportedFrameworks, IEnumerable<FrameworkName> optionalFrameworks = null)
             // This zero version is compatible with the existing behavior, which used 
             // the string "v0.0" as the version for constructed instances of this class always.
-            : this("v0.0", name, supportedFrameworks)
+            : this("v0.0", name, supportedFrameworks, optionalFrameworks)
         {
         }
 
@@ -38,7 +39,7 @@ namespace NuGet
         /// <param name="frameworkDirectory">.NET framework version that the profile belongs to, like "v4.0".</param>
         /// <param name="name">Name of the portable profile, like "win+net45".</param>
         /// <param name="supportedFrameworks">Supported frameworks.</param>
-        public NetPortableProfile(string frameworkDirectory, string name, IEnumerable<FrameworkName> supportedFrameworks)
+        public NetPortableProfile(string frameworkDirectory, string name, IEnumerable<FrameworkName> supportedFrameworks, IEnumerable<FrameworkName> optionalFrameworks)
         {
             if (String.IsNullOrEmpty(frameworkDirectory))
             {
@@ -67,6 +68,7 @@ namespace NuGet
 
             Name = name;
             SupportedFrameworks = new ReadOnlyHashSet<FrameworkName>(frameworks);
+            OptionalFrameworks = new ReadOnlyHashSet<FrameworkName>(optionalFrameworks ?? Enumerable.Empty<FrameworkName>());
             FrameworkDirectory = frameworkDirectory;
             FrameworkVersion = new DirectoryInfo(frameworkDirectory).Name.TrimStart('v');
             FrameworkName = new FrameworkName(".NETPortable", Version.Parse(FrameworkVersion), Name);
@@ -88,17 +90,24 @@ namespace NuGet
 
         public ISet<FrameworkName> SupportedFrameworks { get; private set; }
 
+        public ISet<FrameworkName> OptionalFrameworks { get; private set; }
+
         public bool Equals(NetPortableProfile other)
         {
             // NOTE: equality and hashcode does not change when you add Version, since 
             // no two profiles across framework versions have the same name.
             return Name.Equals(other.Name, StringComparison.OrdinalIgnoreCase) &&
-                   SupportedFrameworks.SetEquals(other.SupportedFrameworks);
+                   SupportedFrameworks.SetEquals(other.SupportedFrameworks) &&
+                   OptionalFrameworks.SetEquals(other.OptionalFrameworks);
         }
 
         public override int GetHashCode()
         {
-            return Name.GetHashCode() * 3137 + SupportedFrameworks.GetHashCode();
+            var combiner = new HashCodeCombiner();
+            combiner.Add(Name);
+            combiner.Add(SupportedFrameworks);
+            combiner.Add(OptionalFrameworks);
+            return combiner.CombinedHash;
         }
 
         /// <summary>
@@ -113,7 +122,7 @@ namespace NuGet
             {
                 if (_customProfile == null)
                 {
-                    _customProfile = String.Join("+", SupportedFrameworks.Select(f => VersionUtility.GetShortFrameworkName(f)));
+                    _customProfile = String.Join("+", SupportedFrameworks.Concat(OptionalFrameworks).Select(f => VersionUtility.GetShortFrameworkName(f)));
                 }
 
                 return _customProfile;
