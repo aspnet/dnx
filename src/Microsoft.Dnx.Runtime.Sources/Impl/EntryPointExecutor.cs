@@ -91,7 +91,7 @@ namespace Microsoft.Dnx.Runtime.Common
                 if (programTypeInfo == null)
                 {
                                         
-                    System.Console.WriteLine("'{0}' does not contain a type 'Program' for an entry point", name);
+                    System.Console.WriteLine("'{0}' does not contain a 'Program' type suitable for an entry point", name);
                     return false;
                 }
 
