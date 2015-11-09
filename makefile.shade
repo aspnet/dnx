@@ -899,6 +899,14 @@ functions @{
             return string.Equals(Uname(), "Linux");
         }
     }
+    
+    bool CanBuildForCentOS
+    {
+        get
+        {
+            return LinuxDistro("centos");
+        }
+    }
 
     bool CanBuildForDarwin
     {
@@ -924,6 +932,13 @@ functions @{
             var travis = Environment.GetEnvironmentVariable("TRAVIS");
             return string.Equals(travis, "true");
         }
+    }
+
+    public bool LinuxDistro(string distro)
+    {
+        string result;
+        ExecuteAndRedirectOutput("cat", "/etc/os-release", out result);
+        return result.Contains(distro);
     }
 
     public string Uname()
@@ -1210,7 +1225,14 @@ functions @{
         }
         else if(target.OS == "linux")
         {
-            runtimeTarget = "ubuntu.14.04";
+            if (CanBuildForCentOS)
+            {
+                runtimeTarget = "centos.7";
+            }
+            else
+            {
+                runtimeTarget = "ubuntu.14.04";
+            }
         }
         else if(target.OS == "darwin")
         {
