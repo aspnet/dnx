@@ -7,11 +7,11 @@
         "warningsAsErrors": true,
         "keyFile": "../../tools/Key.snk"
     },
-    "compile": [		
-        "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"		
-    ],		
-    "preprocess": [		
-        "../../ext/compiler/preprocess/Internalization.cs"		
+    "compile": [
+        "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"
+    ],
+    "preprocess": [
+        "../../ext/compiler/preprocess/Internalization.cs"
     ],
     "dependencies": {
         "Microsoft.Dnx.Loader": "1.0.0-*",
@@ -36,7 +36,7 @@
             "version": "1.0.0-*",
             "type": "build"
         },
-        "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*"
+        "Microsoft.CodeAnalysis.CSharp": "1.1.0"
     },
     "frameworks": {
         "dnx451": {
