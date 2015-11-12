@@ -81,7 +81,7 @@ namespace Microsoft.Dnx.Runtime.Common
             {
                 return true;
             }
-            
+
             var programType = assembly.GetType("Program") ?? assembly.GetType(name + ".Program");
 
             if (programType == null)
