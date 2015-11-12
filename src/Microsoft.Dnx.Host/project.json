@@ -20,18 +20,18 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.AppContext": "4.0.1-beta-*",
-                "System.Collections": "4.0.11-beta-*",
-                "System.ComponentModel": "4.0.1-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Diagnostics.Debug": "4.0.11-beta-*",
-                "System.Reflection": "4.0.11-beta-*",
-                "System.Reflection.Extensions": "4.0.1-beta-*",
-                "System.Runtime": "4.0.21-beta-*",
-                "System.Runtime.Extensions": "4.0.11-beta-*",
-                "System.Runtime.InteropServices": "4.0.21-beta-*",
-                "System.Threading": "4.0.11-beta-*",
-                "System.Threading.Tasks": "4.0.11-beta-*"
+                "System.AppContext": "4.0.1-*",
+                "System.Collections": "4.0.11-*",
+                "System.ComponentModel": "4.0.1-*",
+                "System.Console": "4.0.0-*",
+                "System.Diagnostics.Debug": "4.0.11-*",
+                "System.Reflection": "4.0.11-*",
+                "System.Reflection.Extensions": "4.0.1-*",
+                "System.Runtime": "4.0.21-*",
+                "System.Runtime.Extensions": "4.0.11-*",
+                "System.Runtime.InteropServices": "4.0.21-*",
+                "System.Threading": "4.0.11-*",
+                "System.Threading.Tasks": "4.0.11-*"
             }
         }
     },

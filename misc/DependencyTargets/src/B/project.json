@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "1.0.0",
 
     "configurations": {
@@ -11,7 +11,7 @@
         "dnx451": { },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.0-beta-*"
+                "System.Runtime": "4.0.0-*"
             }
         }
     }

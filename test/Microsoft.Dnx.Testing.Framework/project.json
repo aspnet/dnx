@@ -1,4 +1,4 @@
-﻿{
+{
   "dependencies": {
     "Microsoft.Dnx.Runtime": "1.0.0-*",
     "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
@@ -13,7 +13,7 @@
     },
     "dnxcore50": {
       "dependencies": {
-        "System.Reflection": "4.0.11-beta-*"
+        "System.Reflection": "4.0.11-*"
       }
     }
   },

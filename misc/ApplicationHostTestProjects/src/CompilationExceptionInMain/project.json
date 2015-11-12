@@ -1,4 +1,4 @@
-﻿{
+{
   "dependencies": {
     "Microsoft.Extensions.CompilationAbstractions": "1.0.0-*"
   },
@@ -6,7 +6,7 @@
     "dnx451": { },
     "dnxcore50": {
       "dependencies": {
-        "System.Runtime": "4.0.21-beta-*"
+        "System.Runtime": "4.0.21-*"
       }
     }
   }
