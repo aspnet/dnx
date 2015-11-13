@@ -36,7 +36,7 @@
             "version": "1.0.0-*",
             "type": "build"
         },
-        "Microsoft.CodeAnalysis.CSharp": "1.1.0"
+        "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*"
     },
     "frameworks": {
         "dnx451": {
