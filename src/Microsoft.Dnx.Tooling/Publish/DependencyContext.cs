@@ -98,7 +98,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                 var arch = parts[3];
                 switch (parts[2].ToLowerInvariant())
                 {
-                    case "osx":
+                    case "darwin":
                         yield return "osx.10.10-" + arch;
                         break;
                     case "linux":
