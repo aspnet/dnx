@@ -1,21 +1,21 @@
 {
   "version": "1.0.0",
-  
   "dependencies": {
-    "NativeLib" : { "version" : "1.0.0", "target" : "package" },
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*"
+    "NativeLib": {
+      "version": "1.0.0",
+      "target": "package"
+    },
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-final"
   },
-
-  "compile" : "../*.cs",
-
+  "compile": "../*.cs",
   "frameworks": {
-      "dnx451": {},
-      "dnxcore50": {
-        "dependencies": {
-          "System.Runtime": "4.0.21-*",
-          "System.Console": "4.0.0-*",
-          "System.Runtime.InteropServices": "4.0.21-*"
-        }
+    "dnx451": {},
+    "dnxcore50": {
+      "dependencies": {
+        "System.Runtime": "4.0.21-beta-23516",
+        "System.Console": "4.0.0-beta-23516",
+        "System.Runtime.InteropServices": "4.0.21-beta-23516"
       }
+    }
   }
 }

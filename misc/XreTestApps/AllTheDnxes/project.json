@@ -1,9 +1,8 @@
 {
-    "dependencies": {
-    },
-    "frameworks": {
-        "dnx46": {},
-        "dnx452": {},
-        "dnx451": {}
-    }
+  "dependencies": {},
+  "frameworks": {
+    "dnx46": {},
+    "dnx452": {},
+    "dnx451": {}
+  }
 }

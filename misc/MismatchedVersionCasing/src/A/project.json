@@ -1,6 +1,6 @@
 {
   "frameworks": {
-    "dnx451": { }
+    "dnx451": {}
   },
   "dependencies": {
     "Contentful.NET": "0.0.5-Alpha"

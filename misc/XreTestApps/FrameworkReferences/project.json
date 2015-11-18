@@ -1,9 +1,9 @@
 {
-    "frameworks": {
-        "dnx46": {
-            "frameworkAssemblies": {
-                "System.IO": ""
-            }
-        }
+  "frameworks": {
+    "dnx46": {
+      "frameworkAssemblies": {
+        "System.IO": ""
+      }
     }
+  }
 }

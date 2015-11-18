@@ -1,25 +1,24 @@
-﻿{
-    "version": "1.0.0",
-
-    "dependencies": {
-        "A": { "target": "project" },
-        "B": {
-            "version": "1.0.0-*",
-            "target": "package"
-        }
+{
+  "version": "1.0.0",
+  "dependencies": {
+    "A": {
+      "target": "project"
     },
-
-    "commands": {
-        "App": "App"
-    },
-
-    "frameworks": {
-        "dnx451": { },
-        "dnxcore50": {
-            "dependencies": {
-                "System.Runtime": "4.0.0-beta-*",
-                "System.Console": "4.0.0-beta-*"
-            }
-        }
+    "B": {
+      "version": "1.0.0-*",
+      "target": "package"
     }
+  },
+  "commands": {
+    "App": "App"
+  },
+  "frameworks": {
+    "dnx451": {},
+    "dnxcore50": {
+      "dependencies": {
+        "System.Runtime": "4.0.21-beta-23516",
+        "System.Console": "4.0.0-beta-23516"
+      }
+    }
+  }
 }

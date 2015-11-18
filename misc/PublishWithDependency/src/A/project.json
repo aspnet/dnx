@@ -1,18 +1,16 @@
 {
   "version": "1.0.0",
-  "dependencies": {
-  },
+  "dependencies": {},
   "packInclude": {
     "ref/": "ref/**/*",
     "lib/": "lib/**/*",
     "runtimes/": "runtimes/**/*.dll"
   },
   "frameworks": {
-    "dnx451": {
-    },
+    "dnx451": {},
     "dnxcore50": {
       "dependencies": {
-        "System.Runtime": "4.0.0-beta-*"
+        "System.Runtime": "4.0.21-beta-23516"
       }
     }
   }

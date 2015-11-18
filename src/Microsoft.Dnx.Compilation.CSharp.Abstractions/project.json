@@ -1,12 +1,12 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-final",
   "compilationOptions": {
     "warningsAsErrors": true,
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
-    "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*"
+    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-rc1-final",
+    "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-20151109-01"
   },
   "frameworks": {
     "net451": {
@@ -14,7 +14,7 @@
     },
     "dotnet5.4": {
       "dependencies": {
-        "System.Runtime": "4.0.21-beta-*"
+        "System.Runtime": "4.0.21-beta-23516"
       }
     }
   },

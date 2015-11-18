@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-*"
+    "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-rc1-final"
   },
   "frameworks": {
     "dnx451": {
@@ -11,6 +11,6 @@
         "System.Threading.Tasks": ""
       }
     },
-    "dnxcore50": { }
+    "dnxcore50": {}
   }
 }

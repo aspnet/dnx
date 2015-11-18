@@ -1,13 +1,15 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-final",
   "compilationOptions": {
-    "define": [ "TRACE" ],
+    "define": [
+      "TRACE"
+    ],
     "warningsAsErrors": true,
     "emitEntryPoint": true,
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Dnx.Host": "1.0.0-*"
+    "Microsoft.Dnx.Host": "1.0.0-rc1-final"
   },
   "compileFiles": [
     "../Microsoft.Dnx.Runtime.Sources/Impl/EnvironmentNames.cs",
@@ -16,7 +18,7 @@
     "../Microsoft.Dnx.Runtime.Sources/Impl/Logger.cs"
   ],
   "frameworks": {
-    "dnx451": { }
+    "dnx451": {}
   },
   "scripts": {
     "postbuild": [

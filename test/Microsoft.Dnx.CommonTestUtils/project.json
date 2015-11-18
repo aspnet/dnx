@@ -1,28 +1,26 @@
 {
-    "compilationOptions": {
-        "keyFile": "../../tools/Key.snk"
+  "compilationOptions": {
+    "keyFile": "../../tools/Key.snk"
+  },
+  "dependencies": {
+    "Microsoft.Dnx.Runtime": "1.0.0-rc1-final",
+    "Microsoft.Dnx.Runtime.Sources": "1.0.0-rc1-final",
+    "xunit.runner.aspnet": "2.0.0-aspnet-rc1-final",
+    "Newtonsoft.Json": "6.0.6"
+  },
+  "frameworks": {
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.IO.Compression.FileSystem": ""
+      }
     },
-    "dependencies": {
-        "Microsoft.Dnx.Runtime": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
-        "xunit.runner.aspnet": "2.0.0-aspnet-*",
-        "Newtonsoft.Json": "6.0.6"
-    },
-
-    "frameworks": {
-        "dnx451": {
-            "frameworkAssemblies": {
-                "System.IO.Compression.FileSystem": ""
-            }
-        },
-        "dnxcore50": {
-            "dependencies": {
-                "System.IO.Compression.ZipFile": "4.0.0-*"
-            }
-        }
-    },
-
-    "commands": {
-        "test": "xunit.runner.aspnet"
+    "dnxcore50": {
+      "dependencies": {
+        "System.IO.Compression.ZipFile": "4.0.1-beta-23516"
+      }
     }
+  },
+  "commands": {
+    "test": "xunit.runner.aspnet"
+  }
 }

@@ -1,12 +1,12 @@
-﻿{
+{
   "dependencies": {
-    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*"
+    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-rc1-final"
   },
   "frameworks": {
-    "dnx451": { },
+    "dnx451": {},
     "dnxcore50": {
       "dependencies": {
-        "System.Runtime": "4.0.21-beta-*"
+        "System.Runtime": "4.0.21-beta-23516"
       }
     }
   }
