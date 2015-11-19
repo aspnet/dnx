@@ -14,12 +14,13 @@ namespace Microsoft.Dnx.Tooling.Publish
 {
     public class DependencyContext
     {
-        public DependencyContext(Runtime.Project project, FrameworkName targetFramework)
+        public DependencyContext(Runtime.Project project, FrameworkName targetFramework, IEnumerable<string> runtimeIdentifiers)
         {
             var applicationHostContext = new ApplicationHostContext
             {
                 Project = project,
-                TargetFramework = targetFramework
+                TargetFramework = targetFramework,
+                RuntimeIdentifiers = runtimeIdentifiers
             };
 
             ApplicationHostContext.Initialize(applicationHostContext);
@@ -27,10 +28,12 @@ namespace Microsoft.Dnx.Tooling.Publish
             FrameworkName = targetFramework;
             LibraryManager = applicationHostContext.LibraryManager;
             PackagesDirectory = applicationHostContext.PackagesDirectory;
+            RuntimeIdentifiers = runtimeIdentifiers;
         }
 
         public LibraryManager LibraryManager { get; set; }
         public FrameworkName FrameworkName { get; set; }
+        public IEnumerable<string> RuntimeIdentifiers { get; set; }
         public string PackagesDirectory { get; private set; }
 
         public static FrameworkName SelectFrameworkNameForRuntime(IEnumerable<FrameworkName> availableFrameworks, FrameworkName currentFramework, string runtime)

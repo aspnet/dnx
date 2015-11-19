@@ -93,7 +93,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             var projectDir = project.ProjectDirectory;
 
-            var frameworkContexts = new Dictionary<FrameworkName, DependencyContext>();
+            var frameworkContexts = new Dictionary<Tuple<FrameworkName, string>, DependencyContext>();
 
             var root = new PublishRoot(project, outputPath, _options.Reports)
             {
@@ -134,11 +134,6 @@ namespace Microsoft.Dnx.Tooling.Publish
                 var frameworkName = DependencyContext.SelectFrameworkNameForRuntime(
                     project.GetTargetFrameworks().Select(x => x.FrameworkName),
                     runtimeName);
-                foreach (var rid in DependencyContext.GetRuntimeIdentifiers(runtimeName))
-                {
-                    root.RuntimeIdentifiers.Add(rid);
-                }
-
                 if (frameworkName == null)
                 {
                     _options.Reports.Error.WriteLine(
@@ -190,9 +185,18 @@ namespace Microsoft.Dnx.Tooling.Publish
                     return false;
                 }
 
-                if (!frameworkContexts.ContainsKey(frameworkName))
+                if (!frameworkContexts.ContainsKey(Tuple.Create(frameworkName, string.Empty)))
                 {
-                    frameworkContexts[frameworkName] = CreateDependencyContext(project, frameworkName);
+                    frameworkContexts[Tuple.Create(frameworkName, string.Empty)] = CreateDependencyContext(project, frameworkName, Enumerable.Empty<string>());
+                }
+
+                foreach (var rid in DependencyContext.GetRuntimeIdentifiers(runtimeName))
+                {
+                    root.RuntimeIdentifiers.Add(rid);
+                    if (!frameworkContexts.ContainsKey(Tuple.Create(frameworkName, rid)))
+                    {
+                        frameworkContexts[Tuple.Create(frameworkName, rid)] = CreateDependencyContext(project, frameworkName, new[] { rid });
+                    }
                 }
             }
 
@@ -235,9 +239,18 @@ namespace Microsoft.Dnx.Tooling.Publish
 
                 foreach (var framework in frameworksToPublish)
                 {
-                    if (!frameworkContexts.ContainsKey(framework))
+                    if (!frameworkContexts.ContainsKey(Tuple.Create(framework, string.Empty)))
                     {
-                        frameworkContexts[framework] = CreateDependencyContext(project, framework);
+                        frameworkContexts[Tuple.Create(framework, string.Empty)] = CreateDependencyContext(project, framework, Enumerable.Empty<string>());
+                    }
+
+                    foreach (var rid in RuntimeEnvironmentHelper.RuntimeEnvironment.GetDefaultRestoreRuntimes())
+                    {
+                        root.RuntimeIdentifiers.Add(rid);
+                        if (!frameworkContexts.ContainsKey(Tuple.Create(framework, rid)))
+                        {
+                            frameworkContexts[Tuple.Create(framework, rid)] = CreateDependencyContext(project, framework, new[] { rid });
+                        }
                     }
                 }
             }
@@ -333,9 +346,9 @@ namespace Microsoft.Dnx.Tooling.Publish
             return true;
         }
 
-        private DependencyContext CreateDependencyContext(Runtime.Project project, FrameworkName frameworkName)
+        private DependencyContext CreateDependencyContext(Runtime.Project project, FrameworkName frameworkName, IEnumerable<string> runtimeIdentifiers)
         {
-            var dependencyContext = new DependencyContext(project, frameworkName);
+            var dependencyContext = new DependencyContext(project, frameworkName, runtimeIdentifiers);
             return dependencyContext;
         }
 
