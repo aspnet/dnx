@@ -1,0 +1,18 @@
+{
+  "title": "Hello title",
+  "description": "Hello\r\ndescription",
+  "language": "en",
+  "copyright": "Copyright \u00a9",
+  "version": "1.2.3-*",
+  "commands": {
+    "HelloWorld": "HelloWorld"
+  },
+  "frameworks": {
+    "dnx451": { },
+    "dnxcore50": {
+      "dependencies": {
+        "System.Console": "4.0.0-*"
+      }
+    }
+  }
+}

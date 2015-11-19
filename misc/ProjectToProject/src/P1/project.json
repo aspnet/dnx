@@ -1,0 +1,21 @@
+{
+  "commands": {
+    "P1": "P1"
+  },
+  "dependencies": {
+    "P2": "1.0.0-*"
+  },
+  "frameworks": {
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.Runtime": ""
+      }
+    },
+    "dnxcore50": {
+      "dependencies": {
+        "System.Collections": "4.0.11-*",
+        "System.Console": "4.0.0-*"
+      }
+    }
+  }
+}

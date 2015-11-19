@@ -1,201 +1,73 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.IO;
-using Microsoft.Framework.CommonTestUtils;
-using Microsoft.Framework.PackageManager;
-using Microsoft.Framework.Runtime;
+using Microsoft.Dnx.Testing.Framework;
 using Xunit;
 
 namespace Bootstrapper.FunctionalTests
 {
-    [Collection("BootstrapperTestCollection")]
-    public class BootstrapperTests
+    [Collection(nameof(BootstrapperTestCollection))]
+    public class BootstrapperTests : DnxSdkFunctionalTestBase
     {
-        private readonly DnxRuntimeFixture _fixture;
-
-        public BootstrapperTests(DnxRuntimeFixture fixture)
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void UnknownCommandDoesNotThrow(DnxSdk sdk)
         {
-            _fixture = fixture;
+            const string solutionName = "BootstrapperSolution";
+            const string projectName = "TesterProgram";
+            const string unknownCommand = "unknownCommand";
+            const string testerCommand = "TesterProgram";
+            var solution = TestUtils.GetSolution<BootstrapperTests>(sdk, solutionName);
+            var project = solution.GetProject(projectName);
+
+            var result = sdk.Dnx.Execute($"--project {project.ProjectDirectory} {unknownCommand}");
+
+            Assert.Equal(1, result.ExitCode);
+            Assert.Equal($"Error: Unable to load application or execute command '{unknownCommand}'. Available commands: {testerCommand}.{Environment.NewLine}", result.StandardError);
+
+            TestUtils.CleanUpTestDir<BootstrapperTests>(sdk);
         }
 
-        public static IEnumerable<object[]> RuntimeComponents
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void OverrideRidWithEnvironmentVariable(DnxSdk sdk)
         {
-            get
-            {
-                return TestUtils.GetRuntimeComponentsCombinations();
-            }
+            var result = sdk.Dnx.Execute("--version", envSetup: env => env["DNX_RUNTIME_ID"] = "woozlewuzzle");
+            Assert.Contains("Runtime Id:   woozlewuzzle", result.StandardOutput);
         }
 
-        public static IEnumerable<object[]> ClrRuntimeComponents
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void UnresolvedProjectDoesNotThrow(DnxSdk sdk)
         {
-            get
-            {
-                return TestUtils.GetClrRuntimeComponents();
-            }
+            const string solutionName = "BootstrapperSolution";
+            var solution = TestUtils.GetSolution<BootstrapperTests>(sdk, solutionName);
+
+            var result = sdk.Dnx.Execute($"--project {solution.RootPath} run");
+
+            Assert.Equal(1, result.ExitCode);
+            Assert.Equal($"Error: Unable to resolve project from {solution.RootPath}{Environment.NewLine}", result.StandardError);
+
+            TestUtils.CleanUpTestDir<BootstrapperTests>(sdk);
         }
 
-        public static IEnumerable<object[]> CoreClrRuntimeComponents
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
+        public void UserExceptionsThrows(DnxSdk sdk)
         {
-            get
-            {
-                return TestUtils.GetCoreClrRuntimeComponents();
-            }
-        }
+            const string solutionName = "BootstrapperSolution";
+            const string projectName = "TesterProgram";
+            var solution = TestUtils.GetSolution<BootstrapperTests>(sdk, solutionName);
+            var project = solution.GetProject(projectName);
 
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void BootstrapperReturnsNonZeroExitCodeWhenNoArgumentWasGiven(string flavor, string os, string architecture)
-        {
-            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            var result = sdk.Dnx.Execute($"--project {project.ProjectDirectory} run");
 
-            string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                runtimeHomeDir,
-                arguments: string.Empty,
-                stdOut: out stdOut,
-                stdErr: out stdErr);
+            Assert.Equal(1, result.ExitCode);
+            Assert.Contains("System.Exception: foo", result.StandardError);
 
-            Assert.NotEqual(0, exitCode);
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void BootstrapperReturnsZeroExitCodeWhenHelpOptionWasGiven(string flavor, string os, string architecture)
-        {
-            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-
-            string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                runtimeHomeDir,
-                arguments: "--help",
-                stdOut: out stdOut,
-                stdErr: out stdErr);
-
-            Assert.Equal(0, exitCode);
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void BootstrapperShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(string flavor, string os, string architecture)
-        {
-            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-
-            string stdOut, stdErr;
-            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                runtimeHomeDir,
-                arguments: "--version",
-                stdOut: out stdOut,
-                stdErr: out stdErr);
-
-            Assert.Equal(0, exitCode);
-            Assert.Contains(TestUtils.GetRuntimeVersion(), stdOut);
-
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectDirAsArgument(string flavor, string os, string architecture)
-        {
-            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-
-            using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
-            {
-                var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
-
-                string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: string.Format("{0} run", testAppPath),
-                    stdOut: out stdOut,
-                    stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
-
-                Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
-Hello, code!
-I
-can
-customize
-the
-default
-command
-", stdOut);
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectFileAsArgument(string flavor, string os, string architecture)
-        {
-            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-
-            using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
-            {
-                var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
-                var testAppProjectFile = Path.Combine(testAppPath, Project.ProjectFileName);
-
-                string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: string.Format("{0} run", testAppProjectFile),
-                    stdOut: out stdOut,
-                    stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
-
-                Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
-Hello, code!
-I
-can
-customize
-the
-default
-command
-", stdOut);
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void BootstrapperInvokesAssemblyWithInferredAppBaseAndLibPathOnClr(string flavor, string os, string architecture)
-        {
-            var outputFolder = flavor == "coreclr" ? "dnxcore50" : "dnx451";
-            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-
-            using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
-            using (var tempDir = TestUtils.CreateTempDir())
-            {
-                var sampleAppRoot = Path.Combine(tempSamplesDir, "HelloWorld");
-
-                string stdOut, stdErr;
-                var exitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomeDir,
-                    subcommand: "build",
-                    arguments: string.Format("{0} --configuration=Release --out {1}", sampleAppRoot, tempDir),
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
-
-                if (exitCode != 0)
-                {
-                    Console.WriteLine(stdOut);
-                    Console.WriteLine(stdErr);
-                }
-
-                exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: Path.Combine(tempDir, "Release", outputFolder, "HelloWorld.dll"),
-                    stdOut: out stdOut,
-                    stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
-
-                Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
-Hello, code!
-", stdOut);
-            }
+            TestUtils.CleanUpTestDir<BootstrapperTests>(sdk);
         }
     }
 }

@@ -1,0 +1,24 @@
+{
+    "version": "1.0.0-*",
+    "compilationOptions": {
+        "define": [ "TRACE" ],
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
+    },
+    "shared": "**/*.cs",
+    "dependencies": { },
+    "frameworks": {
+        "dotnet5.4": {
+            "dependencies": {
+                "System.Runtime": "4.0.21-*",
+                "System.Threading": "4.0.11-*"
+            }
+        },
+        "net451": { },
+        "netcore50": {
+            "dependencies": {
+                "System.Runtime": "4.0.0"
+            }
+        }
+    }
+}

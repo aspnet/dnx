@@ -5,29 +5,33 @@
 
 #include "stdafx.h"
 
-#include "KatanaManager.h"
-#include "..\dnx\dnx.h"
+#include "ClrBootstrapper.h"
+#include "app_main.h"
+#include  <iostream>
 
-IKatanaManagerPtr g_katanaManager;
+IClrBootstrapperPtr g_clrBootstrapper;
 
 extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 {
     HRESULT hr = S_OK;
 
-    IKatanaManagerPtr manager = new ComObject<KatanaManager, IKatanaManager>();
+    IClrBootstrapperPtr bootstrapper = new ComObject<ClrBootstrapper, IClrBootstrapper>();
 
-    g_katanaManager = manager;
+    g_clrBootstrapper = bootstrapper;
 
-    hr = manager->InitializeRuntime(data->applicationBase);
+    auto framework = dnx::utils::get_option_value(data->argc, const_cast<wchar_t**>(data->argv), L"--framework");
+
+    hr = bootstrapper->InitializeRuntime(data->runtimeDirectory, data->applicationBase, framework);
     if (SUCCEEDED(hr))
     {
-        g_katanaManager = NULL;
-        data->exitcode = manager->CallApplicationMain(data->argc, data->argv);
+        dnx::utils::wait_for_debugger(data->argc, data->argv, L"--debug");
+
+        g_clrBootstrapper = NULL;
+        data->exitcode = bootstrapper->CallApplicationMain(data->argc, data->argv);
     }
     else
     {
-        printf_s("Failed to initalize runtime (%x)", hr);
-        data->exitcode = hr;
+        std::wcout << L"Failed to initialize runtime 0x" << std::hex << std::endl;
     }
 
     return hr;
@@ -38,8 +42,8 @@ extern "C" __declspec(dllexport) HRESULT __stdcall BindApplicationMain(Applicati
     HRESULT hr = S_OK;
 
     // LOCK g_
-    IKatanaManagerPtr katanaManager = g_katanaManager;
+    IClrBootstrapperPtr bootstrapper = g_clrBootstrapper;
 
-    _HR(katanaManager->BindApplicationMain(pInfo));
+    _HR(bootstrapper->BindApplicationMain(pInfo));
     return hr;
 }

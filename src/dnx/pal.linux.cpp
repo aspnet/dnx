@@ -23,8 +23,3 @@ std::string GetNativeBootstrapperDirectory()
 
     return std::string(buffer);
 }
-
-void WaitForDebuggerToAttach()
-{
-    // TODO: Implement this.  procfs will be able to tell us this.
-}

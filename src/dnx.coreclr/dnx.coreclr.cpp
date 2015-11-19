@@ -1,410 +1,168 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-// dnx.coreclr.cpp : Defines the exported functions for the DLL application.
-
 #include "stdafx.h"
-
-#include "..\dnx\dnx.h"
 #include "dnx.coreclr.h"
 #include "tpa.h"
+#include "utils.h"
+#include "trace_writer.h"
+#include "app_main.h"
 
-#define TRUSTED_PLATFORM_ASSEMBLIES_STRING_BUFFER_SIZE_CCH (63 * 1024) //32K WCHARs
-#define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno) { if (errno) { goto Finished;}}
-#define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno,SET_EXIT_STATE) { if (errno) { SET_EXIT_STATE; goto Finished;}}
+typedef int (STDMETHODCALLTYPE *HostMain)(const int argc, const wchar_t** argv, const bootstrapper_context* ctx);
 
-typedef int (STDMETHODCALLTYPE *HostMain)(
-    const int argc,
-    const wchar_t** argv
-    );
-
-void GetModuleDirectory(HMODULE module, LPWSTR szPath)
+std::wstring GetModuleDirectory(HMODULE module)
 {
-    DWORD dirLength = GetModuleFileName(module, szPath, MAX_PATH);
-    for (dirLength--; dirLength >= 0 && szPath[dirLength] != '\\'; dirLength--);
-    szPath[dirLength + 1] = '\0';
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileName(module, buffer, MAX_PATH);
+    return dnx::utils::remove_file_from_path(buffer);
 }
 
 // Generate a list of trusted platform assemblies.
-bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR pszTrustedPlatformAssemblies, size_t cchTrustedPlatformAssemblies)
+bool GetTrustedPlatformAssembliesList(const std::wstring& runtime_directory, bool bNative, std::wstring& tpa_paths)
 {
-    bool ret = true;
-    errno_t errno = 0;
-    WIN32_FIND_DATA ffd = {};
-    size_t cTpaAssemblyNames = 0;
-    LPCTSTR* ppszTpaAssemblyNames = nullptr;
-
     // Build the list of the tpa assemblies
-    CreateTpaBase(&ppszTpaAssemblyNames, &cTpaAssemblyNames, bNative);
+    auto tpas = CreateTpaBase(bNative);
 
     // Scan the directory to see if all the files in TPA list exist
-    for (size_t i = 0; i < cTpaAssemblyNames; ++i)
+    for (auto assembly_name : tpas)
     {
-        WCHAR wszPattern[MAX_PATH];
-        wszPattern[0] = L'\0';
-
-        errno = wcscpy_s(wszPattern, _countof(wszPattern), szDirectory);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-
-        errno = wcscat_s(wszPattern, _countof(wszPattern), ppszTpaAssemblyNames[i]);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-
-        HANDLE findHandle = FindFirstFile(wszPattern, &ffd);
-
-        if ((findHandle == INVALID_HANDLE_VALUE) ||
-            (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        if (!dnx::utils::file_exists(dnx::utils::path_combine(runtime_directory, assembly_name)))
         {
-            // if file is missing or a directory is found, breaks the loop and
-            // set the missing flag to true
-            ret = false;
-            goto Finished;
+            return false;
         }
     }
 
-    for (size_t i = 0; i < cTpaAssemblyNames; ++i)
+    for (auto assembly_name : tpas)
     {
-        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, szDirectory);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-
-        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, ppszTpaAssemblyNames[i]);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-
-        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, L";");
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
+        tpa_paths.append(dnx::utils::path_combine(runtime_directory, assembly_name)).append(L";");
     }
 
-Finished:
-    if (ppszTpaAssemblyNames != nullptr)
-    {
-        FreeTpaBase(ppszTpaAssemblyNames);
-    }
-
-    return ret;
+    return true;
 }
 
-bool KlrLoadLibraryExWAndGetProcAddress(
-            LPWSTR   pwszModuleFileName,
-            LPCSTR   pszFunctionName,
-            HMODULE* phModule,
-            FARPROC* ppFunction)
+bool GetTrustedPlatformAssembliesList(const std::wstring& runtime_directory, std::wstring& trusted_platform_assemblies)
 {
-    bool fSuccess = true;
-    HMODULE hModule = nullptr;
-    FARPROC pFunction = nullptr;
-
-    //Clear out params
-    *phModule = nullptr;
-    *(FARPROC*)ppFunction = nullptr;
-
-    //Load module and look for require DLL export
-    hModule = ::LoadLibraryExW(pwszModuleFileName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-    if (!hModule)
+    // Try native images first
+    if (!GetTrustedPlatformAssembliesList(runtime_directory, true, trusted_platform_assemblies))
     {
-        ::wprintf_s(L"Failed to load: %s\r\n", pwszModuleFileName);
-        hModule = nullptr;
-        fSuccess = false;
-        goto Finished;
-    }
-
-    pFunction = ::GetProcAddress(hModule, pszFunctionName);
-    if (!pFunction)
-    {
-        ::wprintf_s(L"Failed to find function %S in %s\n", pszFunctionName, pwszModuleFileName);
-        fSuccess = false;
-        goto Finished;
-    }
-
-Finished:
-    //Cleanup
-    if (fSuccess)
-    {
-        *phModule = hModule;
-        *(FARPROC*)ppFunction = pFunction;
-    }
-    else
-    {
-        if (hModule)
+        if (!GetTrustedPlatformAssembliesList(runtime_directory, false, trusted_platform_assemblies))
         {
-            FreeLibrary(hModule);
-            hModule = nullptr;
+             return false;
         }
     }
 
-    return fSuccess;
+    return true;
 }
 
-HMODULE LoadCoreClr()
+bool PinModule(HMODULE module, dnx::trace_writer& trace_writer)
 {
-    errno_t errno = 0;
-    bool fSuccess = true;
-    TCHAR szTrace[1] = {};
-    DWORD dwRet = GetEnvironmentVariableW(L"DNX_TRACE", szTrace, 1);
-    bool m_fVerboseTrace = dwRet > 0;
-    LPWSTR rgwzOSLoaderModuleNames[] = {
-                        L"api-ms-win-core-libraryloader-l1-1-1.dll",
-                        L"kernel32.dll",
-                        NULL
-    };
-    LPWSTR rgwszModuleFileName = NULL;
-    DWORD dwModuleFileName = 0;
+    wchar_t module_path_buffer[MAX_PATH];
+    GetModuleFileName(module, module_path_buffer, MAX_PATH);
 
-    HMODULE hOSLoaderModule = nullptr;
-
-    // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
-    LPCSTR pszAddDllDirectoryName = "AddDllDirectory";
-    FnAddDllDirectory pFnAddDllDirectory = nullptr;
-
-    LPCSTR pszSetDefaultDllDirectoriesName = "SetDefaultDllDirectories";
-    FnSetDefaultDllDirectories pFnSetDefaultDllDirectories = nullptr;
-
-    TCHAR szCoreClrDirectory[MAX_PATH];
-    DWORD dwCoreClrDirectory = GetEnvironmentVariableW(L"CORECLR_DIR", szCoreClrDirectory, MAX_PATH);
-    HMODULE hCoreCLRModule = nullptr;
-
-    if (dwCoreClrDirectory != 0)
+    HMODULE ignoreModule;
+    // Pin the module - CoreCLR.dll does not support being unloaded.
+    if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, module_path_buffer, &ignoreModule))
     {
-        WCHAR wszClrPath[MAX_PATH];
-        wszClrPath[0] = L'\0';
-
-        errno = wcscpy_s(wszClrPath, _countof(wszClrPath), szCoreClrDirectory);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-
-        if (wszClrPath[wcslen(wszClrPath) - 1] != L'\\')
-        {
-            errno = wcscat_s(wszClrPath, _countof(wszClrPath), L"\\");
-            CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-        }
-
-        errno = wcscat_s(wszClrPath, _countof(wszClrPath), L"coreclr.dll");
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-
-        //Scan through module name list looking for a valid module that has first DLL export
-        rgwszModuleFileName = rgwzOSLoaderModuleNames[dwModuleFileName];
-        while (rgwszModuleFileName != NULL)
-        {
-            fSuccess = KlrLoadLibraryExWAndGetProcAddress(
-                            rgwszModuleFileName,
-                            pszAddDllDirectoryName,
-                            &hOSLoaderModule,
-                            (FARPROC*)&pFnAddDllDirectory);
-            if (fSuccess)
-                break;
-
-            dwModuleFileName++;
-            rgwszModuleFileName = rgwzOSLoaderModuleNames[dwModuleFileName];
-         }
-
-        if (!hOSLoaderModule || !pFnAddDllDirectory)
-        {
-            fSuccess = false;
-            goto Finished;
-        }
-
-        //Find the second DLL export
-        pFnSetDefaultDllDirectories = (FnSetDefaultDllDirectories)::GetProcAddress(hOSLoaderModule, pszSetDefaultDllDirectoriesName);
-        if (!pFnSetDefaultDllDirectories)
-        {
-            if (m_fVerboseTrace)
-                ::wprintf_s(L"Failed to find function %S in %s\n", pszSetDefaultDllDirectoriesName, rgwszModuleFileName);
-
-            fSuccess = false;
-            goto Finished;
-        }
-
-        //Verify HANDLE and two DLL exports are valid before proceeding
-        if (!hOSLoaderModule || !pFnAddDllDirectory || !pFnSetDefaultDllDirectories)
-        {
-            fSuccess = false;
-            goto Finished;
-        }
-
-        pFnAddDllDirectory(szCoreClrDirectory);
-        // Modify the default dll flags so that dependencies can be found in this path
-        pFnSetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
-
-        fSuccess = true;
-
-        // Continue loading as usual
-        hCoreCLRModule = ::LoadLibraryExW(wszClrPath, NULL, 0);
+        trace_writer.write(L"Failed to pin coreclr.dll", false);
+        return false;
     }
 
-    if (hCoreCLRModule == nullptr)
-    {
-        // This is used when developing
-#if AMD64
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\build\\ProjectK\\Runtime\\amd64\\coreclr.dll", NULL, 0);
-#else
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\build\\ProjectK\\Runtime\\x86\\coreclr.dll", NULL, 0);
-#endif
-    }
-
-    if (hCoreCLRModule == nullptr)
-    {
-        // Try the relative location based in install
-
-        hCoreCLRModule = ::LoadLibraryExW(L"coreclr.dll", NULL, 0);
-    }
-
-Finished:
-    return hCoreCLRModule;
+    return true;
 }
 
+HMODULE LoadCoreClr(const std::wstring& runtime_directory, dnx::trace_writer& trace_writer)
+{
+    HMODULE coreclr_module = LoadLibraryExW(dnx::utils::path_combine(runtime_directory, L"coreclr.dll").c_str(), NULL, 0);
+
+    if (coreclr_module)
+    {
+        if (PinModule(coreclr_module, trace_writer))
+        {
+            return coreclr_module;
+        }
+
+        FreeLibrary(coreclr_module);
+    }
+
+    return nullptr;
+}
 
 /*
     Win2KDisable : DisallowWin32kSystemCalls
     SET DNX_WIN32K_DISABLE=1
 */
-
-bool Win32KDisable()
+void Win32KDisable(dnx::trace_writer& trace_writer)
 {
-    bool fSuccess = true;
-    TCHAR szWin32KDisable[2] = {};
-    LPWSTR lpwszModuleFileName = L"api-ms-win-core-processthreads-l1-1-1.dll";
-    HMODULE hProcessThreadsModule = nullptr;
-    // Note: Need to keep as ASCII as GetProcAddress function takes ASCII params
-    LPCSTR pszSetProcessMitigationPolicy = "SetProcessMitigationPolicy";
-    FnSetProcessMitigationPolicy pFnSetProcessMitigationPolicy = nullptr;
-    PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY systemCallDisablePolicy = {};
-    systemCallDisablePolicy.DisallowWin32kSystemCalls = 1;
+    wchar_t buff[2] = { 0 , 0 };
 
-    DWORD dwRet = GetEnvironmentVariableW(L"DNX_WIN32K_DISABLE", szWin32KDisable, _countof(szWin32KDisable));
-    fSuccess = dwRet > 0;
-    if (!fSuccess)
+    if (GetEnvironmentVariable(L"DNX_WIN32K_DISABLE", buff, 2) != 1 || buff[0] != L'1')
     {
-        goto Finished;
+        return;
     }
 
-    if (wcscmp(szWin32KDisable, L"1") != 0)
+    auto process_threads_module = LoadLibraryExW(L"api-ms-win-core-processthreads-l1-1-1.dll", NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    if (process_threads_module)
     {
-        fSuccess = false;
-        goto Finished;
+        auto SetProcessMitigationPolicy_function = (FnSetProcessMitigationPolicy)GetProcAddress(process_threads_module, "SetProcessMitigationPolicy");
+        if (SetProcessMitigationPolicy_function)
+        {
+            PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY system_call_disable_policy = {};
+            system_call_disable_policy.DisallowWin32kSystemCalls = 1;
+
+            if (SetProcessMitigationPolicy_function(ProcessSystemCallDisablePolicy,
+                &system_call_disable_policy, sizeof(system_call_disable_policy)))
+            {
+                trace_writer.write(L"DNX_WIN32K_DISABLE successful", false);
+            }
+        }
     }
 
-    fSuccess = KlrLoadLibraryExWAndGetProcAddress(
-                    lpwszModuleFileName,
-                    pszSetProcessMitigationPolicy,
-                    &hProcessThreadsModule,
-                    (FARPROC*)&pFnSetProcessMitigationPolicy);
-    if (!fSuccess)
-    {
-        goto Finished;
-    }
-
-    if (!hProcessThreadsModule || !pFnSetProcessMitigationPolicy)
-    {
-        fSuccess = false;
-        goto Finished;
-    }
-
-    if (pFnSetProcessMitigationPolicy(
-              ProcessSystemCallDisablePolicy,   //_In_  PROCESS_MITIGATION_POLICY MitigationPolicy,
-              &systemCallDisablePolicy,         //_In_  PVOID lpBuffer,
-              sizeof(systemCallDisablePolicy)  //_In_  SIZE_T dwLength
-            ))
-    {
-        printf_s("DNX_WIN32K_DISABLE successful.\n");
-    }
-
-Finished:
-    //Cleanup
-    if (pFnSetProcessMitigationPolicy)
-    {
-        pFnSetProcessMitigationPolicy = nullptr;
-    }
-
-    if (hProcessThreadsModule)
-    {
-        FreeLibrary(hProcessThreadsModule);
-        hProcessThreadsModule = nullptr;
-    }
-
-    return fSuccess;
+    FreeLibrary(process_threads_module);
 }
 
-extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
+HRESULT GetClrRuntimeHost(HMODULE coreclr_module, ICLRRuntimeHost2** ppClrRuntimeHost, dnx::trace_writer& trace_writer)
 {
-    HRESULT hr = S_OK;
-    errno_t errno = 0;
-    FnGetCLRRuntimeHost pfnGetCLRRuntimeHost = nullptr;
-    ICLRRuntimeHost2* pCLRRuntimeHost = nullptr;
-    TCHAR szCurrentDirectory[MAX_PATH];
-    TCHAR szCoreClrDirectory[MAX_PATH];
-    TCHAR lpCoreClrModulePath[MAX_PATH];
-    size_t cchTrustedPlatformAssemblies = 0;
-    LPWSTR pwszTrustedPlatformAssemblies = nullptr;
-
-    Win32KDisable();
-
-    if (data->runtimeDirectory) {
-        errno = wcscpy_s(szCurrentDirectory, data->runtimeDirectory);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-    }
-    else {
-        GetModuleDirectory(NULL, szCurrentDirectory);
-    }
-
-    HMODULE hCoreCLRModule = LoadCoreClr();
-    if (!hCoreCLRModule)
+    auto GetCLRRuntimeHost_function = (FnGetCLRRuntimeHost)GetProcAddress(coreclr_module, "GetCLRRuntimeHost");
+    if (!GetCLRRuntimeHost_function)
     {
-        printf_s("Failed to locate coreclr.dll.\n");
+        trace_writer.write(L"Failed to find export GetCLRRuntimeHost", false);
         return E_FAIL;
     }
 
-    // Get the path to the module
-    DWORD dwCoreClrModulePathSize = GetModuleFileName(hCoreCLRModule, lpCoreClrModulePath, MAX_PATH);
-    lpCoreClrModulePath[dwCoreClrModulePathSize] = '\0';
+    return GetCLRRuntimeHost_function(IID_ICLRRuntimeHost2, (IUnknown**)ppClrRuntimeHost);
+}
 
-    GetModuleDirectory(hCoreCLRModule, szCoreClrDirectory);
-
-    HMODULE ignoreModule;
-    // Pin the module - CoreCLR.dll does not support being unloaded.
-    if (!::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, lpCoreClrModulePath, &ignoreModule))
-    {
-        printf_s("Failed to pin coreclr.dll.\n");
-        return E_FAIL;
-    }
-
-    pfnGetCLRRuntimeHost = (FnGetCLRRuntimeHost)::GetProcAddress(hCoreCLRModule, "GetCLRRuntimeHost");
-    if (!pfnGetCLRRuntimeHost)
-    {
-        printf_s("Failed to find export GetCLRRuntimeHost.\n");
-        return E_FAIL;
-    }
-
-    hr = pfnGetCLRRuntimeHost(IID_ICLRRuntimeHost2, (IUnknown**)&pCLRRuntimeHost);
-    if (FAILED(hr))
-    {
-        printf_s("Failed to get IID_ICLRRuntimeHost2.\n");
-        return hr;
-    }
-
-    STARTUP_FLAGS dwStartupFlags = (STARTUP_FLAGS)(
+HRESULT StartClrHost(ICLRRuntimeHost2* pCLRRuntimeHost, dnx::trace_writer& trace_writer)
+{
+    STARTUP_FLAGS startup_flags = (STARTUP_FLAGS)(
         STARTUP_FLAGS::STARTUP_LOADER_OPTIMIZATION_SINGLE_DOMAIN |
         STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN
-// STARTUP_SERVER_GC flag is not supported by CoreCLR for ARM
+        // STARTUP_SERVER_GC flag is not supported by CoreCLR for ARM
 #ifndef ARM
         | STARTUP_FLAGS::STARTUP_SERVER_GC
 #endif
         );
 
-    pCLRRuntimeHost->SetStartupFlags(dwStartupFlags);
+    pCLRRuntimeHost->SetStartupFlags(startup_flags);
 
     // Authenticate with either CORECLR_HOST_AUTHENTICATION_KEY or CORECLR_HOST_AUTHENTICATION_KEY_NONGEN
-    hr = pCLRRuntimeHost->Authenticate(CORECLR_HOST_AUTHENTICATION_KEY);
+    HRESULT hr = pCLRRuntimeHost->Authenticate(CORECLR_HOST_AUTHENTICATION_KEY);
     if (FAILED(hr))
     {
-        printf_s("Failed to Authenticate().\n");
+        trace_writer.write(L"Failed to Authenticate()", false);
         return hr;
     }
 
-    hr = pCLRRuntimeHost->Start();
+    return pCLRRuntimeHost->Start();
+}
 
-    if (FAILED(hr))
-    {
-        printf_s("Failed to Start().\n");
-        return hr;
-    }
+HRESULT StopClrHost(ICLRRuntimeHost2* pCLRRuntimeHost)
+{
+    return pCLRRuntimeHost->Stop();
+}
 
+HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data, dnx::trace_writer& trace_writer)
+{
     const wchar_t* property_keys[] =
     {
         // Allowed property names:
@@ -429,126 +187,133 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
         L"AppDomainCompatSwitch",
     };
 
-    cchTrustedPlatformAssemblies = TRUSTED_PLATFORM_ASSEMBLIES_STRING_BUFFER_SIZE_CCH;
-    pwszTrustedPlatformAssemblies = (LPWSTR)calloc(cchTrustedPlatformAssemblies+1, sizeof(WCHAR));
-    if (pwszTrustedPlatformAssemblies == NULL)
-    {
-        goto Finished;
-    }
-    pwszTrustedPlatformAssemblies[0] = L'\0';
+    std::wstring trusted_platform_assemblies;
+    // Came up with 8192 empirically - the string we build is about 4000 characters on my machine but it contains
+    // paths to the user profile folder so it can be bigger.
+    trusted_platform_assemblies.reserve(8192);
 
-    // Try native images first
-    if (!GetTrustedPlatformAssembliesList(szCoreClrDirectory, true, pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies))
+    if (!GetTrustedPlatformAssembliesList(data->runtimeDirectory, trusted_platform_assemblies))
     {
-        if (!GetTrustedPlatformAssembliesList(szCoreClrDirectory, false, pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies))
-        {
-            printf_s("Failed to find files in the coreclr directory\n");
-            return E_FAIL;
-        }
+        trace_writer.write(L"Failed to find TPA files in the coreclr directory", false);
+        return E_FAIL;
     }
 
     // Add the assembly containing the app domain manager to the trusted list
-
-    errno = wcscat_s(pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, szCurrentDirectory);
-    CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-
-    errno = wcscat_s(pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, L"dnx.coreclr.managed.dll");
-    CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-
-    //wstring appPaths(szCurrentDirectory);
-    WCHAR wszAppPaths[MAX_PATH];
-    wszAppPaths[0] = L'\0';
-
-    errno = wcscat_s(wszAppPaths, _countof(wszAppPaths), szCurrentDirectory);
-    CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-
-    errno = wcscat_s(wszAppPaths, _countof(wszAppPaths), L";");
-    CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-
-    errno = wcscat_s(wszAppPaths, _countof(wszAppPaths), szCoreClrDirectory);
-    CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
-
-    errno = wcscat_s(wszAppPaths, _countof(wszAppPaths), L";");
-    CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
+    trusted_platform_assemblies.append(dnx::utils::path_combine(data->runtimeDirectory, L"Microsoft.Dnx.Host.CoreClr.dll"));
 
     const wchar_t* property_values[] = {
         // APPBASE
         data->applicationBase,
         // TRUSTED_PLATFORM_ASSEMBLIES
-        pwszTrustedPlatformAssemblies,
+        trusted_platform_assemblies.c_str(),
         // APP_PATHS
-        wszAppPaths,
+        data->runtimeDirectory,
         // Use the latest behavior when TFM not specified
         L"UseLatestBehaviorWhenTFMNotSpecified",
     };
 
     DWORD domainId;
-    DWORD dwFlagsAppDomain =
-        APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
-        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
-        APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT;
 
-    LPCWSTR szAssemblyName = L"dnx.coreclr.managed, Version=0.1.0.0";
-    LPCWSTR szEntryPointTypeName = L"DomainManager";
-    LPCWSTR szMainMethodName = L"Execute";
-
-    int nprops = sizeof(property_keys) / sizeof(wchar_t*);
-
-    hr = pCLRRuntimeHost->CreateAppDomainWithManager(
-        L"dnx.coreclr.managed",
-        dwFlagsAppDomain,
+    HRESULT hr = pCLRRuntimeHost->CreateAppDomainWithManager(
+        L"Microsoft.Dnx.Host.CoreClr",
+        APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS | APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP | APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT,
         NULL,
         NULL,
-        nprops,
+        sizeof(property_keys) / sizeof(wchar_t*),
         property_keys,
         property_values,
         &domainId);
 
     if (FAILED(hr))
     {
-        wprintf_s(L"TPA      %Iu %s\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
-        wprintf_s(L"AppPaths %s\n", wszAppPaths);
-        printf_s("Failed to create app domain (%x).\n", hr);
+        trace_writer.write(L"Failed to create app domain", false);
+        trace_writer.write(std::wstring(L"TPA: ").append(trusted_platform_assemblies), false);
+        trace_writer.write(std::wstring(L"AppPaths: ").append(data->runtimeDirectory), false);
         return hr;
     }
 
-    HostMain pHostMain;
-
-    hr = pCLRRuntimeHost->CreateDelegate(
-        domainId,
-        szAssemblyName,
-        szEntryPointTypeName,
-        szMainMethodName,
-        (INT_PTR*)&pHostMain);
-
+    HostMain main_function;
+    // looks like the Version in the assembly is mandatory but the value does not matter
+    hr = pCLRRuntimeHost->CreateDelegate(domainId, L"Microsoft.Dnx.Host.CoreClr, Version=0.0.0.0", L"DomainManager", L"Execute", (INT_PTR*)&main_function);
     if (FAILED(hr))
     {
-        printf_s("Failed to create main delegate (%x).\n", hr);
+        trace_writer.write(L"Failed to create main delegate", false);
         return hr;
     }
 
-    SetEnvironmentVariable(L"DNX_FRAMEWORK", L"dnxcore50");
+    auto windows_version = dnx::utils::get_windows_version();
+
+    dnx::utils::wait_for_debugger(data->argc, data->argv, L"--debug");
+
+    bootstrapper_context ctx;
+    ctx.operating_system = L"Windows";
+    ctx.os_version = windows_version.c_str();
+    ctx.runtime_directory = data->runtimeDirectory;
+    ctx.application_base = data->applicationBase;
+#if defined(AMD64)
+    ctx.architecture = L"x64";
+#elif defined(ARM)
+    ctx.architecture = L"arm";
+#else
+    ctx.architecture = L"x86";
+#endif
 
     // Call main
-    data->exitcode = pHostMain(data->argc, data->argv);
+    data->exitcode = main_function(data->argc, data->argv, &ctx);
 
     pCLRRuntimeHost->UnloadAppDomain(domainId, true);
 
-    pCLRRuntimeHost->Stop();
+    return S_OK;
+}
 
-Finished:
-    if (pwszTrustedPlatformAssemblies != NULL)
+bool IsTracingEnabled()
+{
+    wchar_t buff[2];
+    return GetEnvironmentVariable(L"DNX_TRACE", buff, 2) == 1 && buff[0] == L'1';
+}
+
+extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
+{
+    auto trace_writer = dnx::trace_writer{ IsTracingEnabled() };
+
+    Win32KDisable(trace_writer);
+
+    auto coreclr_module = LoadCoreClr(data->runtimeDirectory, trace_writer);
+    if (!coreclr_module)
     {
-        free(pwszTrustedPlatformAssemblies);
-        pwszTrustedPlatformAssemblies = NULL;
+        trace_writer.write(L"Failed to locate or load coreclr.dll", false);
+        return E_FAIL;
     }
 
+    ICLRRuntimeHost2* pCLRRuntimeHost = nullptr;
+
+    HRESULT hr = GetClrRuntimeHost(coreclr_module, &pCLRRuntimeHost, trace_writer);
     if (FAILED(hr))
     {
+        trace_writer.write(L"Failed to get IID_ICLRRuntimeHost2", false);
         return hr;
     }
-    else
+
+    hr = StartClrHost(pCLRRuntimeHost, trace_writer);
+    if (FAILED(hr))
     {
-        return S_OK;
+        trace_writer.write(L"Failed to start CLR host", false);
+        return hr;
     }
+
+    hr = ExecuteMain(pCLRRuntimeHost, data, trace_writer);
+    if (FAILED(hr))
+    {
+        trace_writer.write(L"Failed to execute Main", false);
+        return hr;
+    }
+
+    hr = StopClrHost(pCLRRuntimeHost);
+    if (FAILED(hr))
+    {
+        trace_writer.write(L"Failed to stop CLR host", false);
+        return hr;
+    }
+
+    return S_OK;
 }

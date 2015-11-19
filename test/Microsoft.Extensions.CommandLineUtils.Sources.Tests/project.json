@@ -1,0 +1,16 @@
+{
+    "dependencies": {
+        "Microsoft.Extensions.CommandLineUtils.Sources": "1.0.0-*",
+        "xunit.runner.aspnet": "2.0.0-aspnet-*"
+    },
+
+    "frameworks": {
+        "dnx451": { },
+        "dnxcore50": { }
+    },
+
+    "commands": {
+        "run": "xunit.runner.aspnet",
+        "test": "xunit.runner.aspnet"
+    }
+}

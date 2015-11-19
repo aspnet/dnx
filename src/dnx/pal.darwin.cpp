@@ -20,8 +20,3 @@ std::string GetNativeBootstrapperDirectory()
 
     return std::string(buffer);
 }
-
-void WaitForDebuggerToAttach()
-{
-    // TODO: Implement this.
-}

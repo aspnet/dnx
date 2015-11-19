@@ -2,8 +2,7 @@
     "version": "0.1-beta-*",
     "exclude": "more/*.cs",
     "dependencies": {
-        "HelloShared": { "version": "0.1-beta-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Roslyn.Abstractions": "1.0.0-*"
+        "HelloShared": { "version": "0.1-beta-*", "type": "build" }
     },
     "commands": {
         "hi": "HelloWorld --mode amazing",
@@ -23,13 +22,13 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.IO": "4.0.10-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Runtime": "4.0.20-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*"
+                "System.IO": "4.0.11-*",
+                "System.Console": "4.0.0-*",
+                "System.Linq": "4.0.1-*",
+                "System.Reflection": "4.0.11-*",
+                "System.Runtime": "4.0.21-*",
+                "System.Threading.Tasks": "4.0.11-*",
+                "System.ComponentModel": "4.0.1-*"
             }
         }
     }

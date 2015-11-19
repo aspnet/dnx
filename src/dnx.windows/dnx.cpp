@@ -3,6 +3,18 @@
 
 #include "stdafx.h"
 
+HMODULE load_dnx_dll(const wchar_t* dnx_dll_name)
+{
+    auto dnx_dll = LoadLibraryEx(dnx_dll_name, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    if (!dnx_dll)
+    {
+        auto last_error = GetLastError();
+        _tprintf(L"%s could not be loaded. Last error: %d\n", dnx_dll_name, last_error);
+    }
+
+    return dnx_dll;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     OSVERSIONINFO version_info;
@@ -15,13 +27,25 @@ int _tmain(int argc, _TCHAR* argv[])
 
     bool is_oneCore = version_info.dwMajorVersion >= 10;
 
-    auto dnx_dll_name = is_oneCore ? L"dnx.onecore.dll" : L"dnx.win32.dll";
+    HMODULE dnx_dll = nullptr;
 
-    auto dnx_dll = LoadLibraryEx(dnx_dll_name, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    if (is_oneCore)
+    {
+        dnx_dll = load_dnx_dll(L"dnx.onecore.dll");
+    }
+
     if (!dnx_dll)
     {
-        auto last_error = GetLastError();
-        _tprintf(L"%s could not be loaded. Last error: %d\n", dnx_dll_name, last_error);
+        if (is_oneCore)
+        {
+            _tprintf(L"Falling back to loading dnx.win32.dll\n");
+        }
+
+        dnx_dll = load_dnx_dll(L"dnx.win32.dll");
+    }
+
+    if (!dnx_dll)
+    {
         return -1;
     }
 

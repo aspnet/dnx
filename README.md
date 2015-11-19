@@ -1,8 +1,6 @@
 DNX
 ===
 
-AppVeyor: [![AppVeyor](https://ci.appveyor.com/api/projects/status/lua7cg8840t6v235/branch/dev?svg=true)](https://ci.appveyor.com/project/aspnetci/dnx/branch/dev)
-
 Travis:   [![Travis](https://travis-ci.org/aspnet/dnx.svg?branch=dev)](https://travis-ci.org/aspnet/dnx)
 
 The .NET Execution Environment contains the code required to bootstrap and run an application. This includes things like the compilation system, SDK tools, and the native CLR hosts.

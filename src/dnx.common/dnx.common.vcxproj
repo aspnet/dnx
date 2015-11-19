@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Config.Definitions.props" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Common.Targets" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1FE82655-09EE-456D-82B5-4625857FF53D}</ProjectGuid>
+    <Platform Condition="'$(Platform)'==''">Win32</Platform>
+    <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <Keyword>Win32Proj</Keyword>
+    <BuildForOneCore Condition="'$(BuildForOneCore)' == ''">False</BuildForOneCore>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <OutDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
+    <IntDir>bin\$(ProjectName)\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Native.Settings" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="include\app_main.h" />
+    <ClInclude Include="include\tpa.h" />
+    <ClInclude Include="include\utils.h" />
+    <ClInclude Include="include\xplat.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="tpa.cpp" />
+    <ClCompile Include="utils.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

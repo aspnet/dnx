@@ -2,267 +2,197 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
-#include "dnx.h"
+#include <vector>
 #include "pal.h"
 #include "utils.h"
+#include "app_main.h"
 
-bool LastIndexOfCharInPath(LPCTSTR pszStr, TCHAR c, size_t* pIndex)
+bool string_ends_with_ignore_case(const dnx::char_t* s, const dnx::char_t* suffix)
 {
-    size_t nIndex = _tcsnlen(pszStr, MAX_PATH) - 1;
-    for (; nIndex != 0; nIndex--)
+    auto str_len = x_strlen(s);
+    auto suffix_len = x_strlen(suffix);
+
+    if (suffix_len > str_len)
     {
-        if (pszStr[nIndex] == c)
+        return false;
+    }
+
+    return dnx::utils::strings_equal_ignore_case(s + str_len - suffix_len, suffix);
+}
+
+int split_path(const dnx::char_t* path)
+{
+    for (auto i = static_cast<int>(x_strlen(path)) - 1; i >= 0; i--)
+    {
+        if (path[i] == _X('\\') || path[i] == _X('/'))
         {
-            break;
+            return i;
         }
     }
 
-    *pIndex = nIndex;
-    return pszStr[nIndex] == c;
-}
-
-bool StringsEqual(LPCTSTR pszStrA, LPCTSTR pszStrB)
-{
-    return ::_tcsicmp(pszStrA, pszStrB) == 0;
-}
-
-bool PathEndsWith(LPCTSTR pszStr, LPCTSTR pszSuffix)
-{
-    size_t nStrLen = _tcsnlen(pszStr, MAX_PATH);
-    size_t nSuffixLen = _tcsnlen(pszSuffix, MAX_PATH);
-
-    if (nSuffixLen > nStrLen)
-    {
-        return false;
-    }
-
-    size_t nOffset = nStrLen - nSuffixLen;
-
-    return ::_tcsnicmp(pszStr + nOffset, pszSuffix, MAX_PATH - nOffset) == 0;
-}
-
-bool LastPathSeparatorIndex(LPCTSTR pszPath, size_t* pIndex)
-{
-    size_t nLastSlashIndex;
-    size_t nLastBackSlashIndex;
-
-    bool hasLastSlashIndex = LastIndexOfCharInPath(pszPath, _T('/'), &nLastSlashIndex);
-    bool hasLastBackSlashIndex = LastIndexOfCharInPath(pszPath, _T('\\'), &nLastBackSlashIndex);
-
-    if (hasLastSlashIndex && hasLastBackSlashIndex)
-    {
-        *pIndex = max(nLastSlashIndex, nLastBackSlashIndex);
-        return true;
-    }
-
-    if (!hasLastSlashIndex && !hasLastBackSlashIndex)
-    {
-        return false;
-    }
-
-    *pIndex = hasLastSlashIndex ? nLastSlashIndex : nLastBackSlashIndex;
-    return true;
-}
-
-void GetParentDir(LPCTSTR pszPath, LPTSTR pszParentDir)
-{
-    size_t nLastSeparatorIndex;
-    if (!LastPathSeparatorIndex(pszPath, &nLastSeparatorIndex))
-    {
-        _tcscpy_s(pszParentDir, MAX_PATH, _T("."));
-        return;
-    }
-
-    memcpy(pszParentDir, pszPath, (nLastSeparatorIndex + 1) * sizeof(TCHAR));
-    pszParentDir[nLastSeparatorIndex + 1] = _T('\0');
-}
-
-void GetFileName(LPCTSTR pszPath, LPTSTR pszFileName)
-{
-    size_t nLastSeparatorIndex;
-
-    if (!LastPathSeparatorIndex(pszPath, &nLastSeparatorIndex))
-    {
-        _tcscpy_s(pszFileName, MAX_PATH, pszPath);
-        return;
-    }
-
-    _tcscpy_s(pszFileName, MAX_PATH, pszPath + nLastSeparatorIndex + 1);
-}
-
-int BootstrapperOptionValueNum(LPCTSTR pszCandidate)
-{
-    if (StringsEqual(pszCandidate, _T("--appbase")) ||
-        StringsEqual(pszCandidate, _T("--lib")) ||
-        StringsEqual(pszCandidate, _T("--packages")) ||
-        StringsEqual(pszCandidate, _T("--configuration")) ||
-        StringsEqual(pszCandidate, _T("--port")))
-    {
-        return 1;
-    }
-    else if (StringsEqual(pszCandidate, _T("--watch")) ||
-        StringsEqual(pszCandidate, _T("--debug")) ||
-        StringsEqual(pszCandidate, _T("--help")) ||
-        StringsEqual(pszCandidate, _T("-h")) ||
-        StringsEqual(pszCandidate, _T("-?")) ||
-        StringsEqual(pszCandidate, _T("--version")))
-    {
-        return 0;
-    }
-
-    // It isn't a bootstrapper option
     return -1;
 }
 
-void FreeExpandedCommandLineArguments(int nArgc, LPTSTR* ppszArgv)
+const dnx::char_t* allocate_and_copy(const dnx::char_t* value, size_t count)
 {
-    for (int i = 0; i < nArgc; ++i)
+    auto buff_size = count + 1;
+    auto buffer = new dnx::char_t[buff_size];
+#if defined(_WIN32)
+    wcsncpy_s(buffer, buff_size, value, count);
+#else
+    strncpy(buffer, value, count);
+    buffer[count] = '\0';
+#endif
+    return buffer;
+}
+
+const dnx::char_t* allocate_and_copy(const dnx::char_t* value)
+{
+    return allocate_and_copy(value, x_strlen(value));
+}
+
+void AppendAppbaseFromFile(const dnx::char_t* path, std::vector<const dnx::char_t*>& expanded_args)
+{
+    auto split_idx = split_path(path);
+
+    expanded_args.push_back(allocate_and_copy(_X("--appbase")));
+
+    if (split_idx < 0)
+    {
+        expanded_args.push_back(allocate_and_copy(_X(".")));
+    }
+    else
+    {
+        expanded_args.push_back(allocate_and_copy(path, split_idx + 1));
+    }
+}
+
+void ExpandProject(const dnx::char_t* project_path, std::vector<const dnx::char_t*>& expanded_args)
+{
+    auto split_idx = split_path(project_path);
+
+    // note that we split the path first and check the file name to handle paths like c:\MyApp\my_project.json
+    // (`split_idx + 1` works fine since `split_path` returns -1 if it does not find `\` or '/')
+    if (dnx::utils::strings_equal_ignore_case(project_path + split_idx + 1, _X("project.json")))
+    {
+        // "dnx /path/project.json run" --> "dnx --appbase /path/ Microsoft.Dnx.ApplicationHost run"
+        AppendAppbaseFromFile(project_path, expanded_args);
+        expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
+        return;
+    }
+
+    expanded_args.push_back(allocate_and_copy(_X("--appbase")));
+    expanded_args.push_back(allocate_and_copy(project_path));
+    expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
+}
+
+void ExpandNonHostArgument(const dnx::char_t* value, std::vector<const dnx::char_t*>& expanded_args)
+{
+    if (string_ends_with_ignore_case(value, _X(".dll")) || string_ends_with_ignore_case(value, _X(".exe")))
+    {
+        // "dnx /path/App.dll arg1" --> "dnx --appbase /path/ /path/App.dll arg1"
+        // "dnx /path/App.exe arg1" --> "dnx --appbase /path/ /path/App.exe arg1"
+        // "dnx App.exe arg1" --> "dnx --appbase . App.exe arg1"
+        AppendAppbaseFromFile(value, expanded_args);
+        expanded_args.push_back(allocate_and_copy(value));
+        return;
+    }
+
+    // "dnx run" --> "dnx --appbase . Microsoft.Dnx.ApplicationHost run"
+    expanded_args.push_back(allocate_and_copy(_X("--appbase")));
+    expanded_args.push_back(allocate_and_copy(_X(".")));
+    expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
+    expanded_args.push_back(allocate_and_copy(value));
+}
+
+bool ExpandCommandLineArguments(int nArgc, dnx::char_t** ppszArgv, size_t& nExpandedArgc, dnx::char_t**& ppszExpandedArgv)
+{
+    // --appbase was found expansion not needed
+    if (dnx::utils::find_bootstrapper_option_index(nArgc, ppszArgv, _X("--appbase")) >= 0)
+    {
+        return false;
+    }
+
+    // no non-bootstrapper option found expansion is not needed
+    auto param_idx = dnx::utils::find_first_non_bootstrapper_param_index(nArgc, ppszArgv);
+    if (param_idx < 0)
+    {
+        return false;
+    }
+
+    bool arg_expanded = false;
+    std::vector<const dnx::char_t*> expanded_args_temp;
+    for (int source_idx = 0; source_idx < nArgc; source_idx++)
+    {
+        if (!arg_expanded)
+        {
+            if (dnx::utils::strings_equal_ignore_case(_X("-p"), ppszArgv[source_idx]) ||
+                dnx::utils::strings_equal_ignore_case(_X("--project"), ppszArgv[source_idx]))
+            {
+                // Note that ++source_idx is safe here since if we had a trailing -p/--project we would have exited
+                // before entering the loop because we wouldn't have found any non host option
+                ExpandProject(ppszArgv[++source_idx], expanded_args_temp);
+                arg_expanded = true;
+            }
+            else if (source_idx == param_idx)
+            {
+                ExpandNonHostArgument(ppszArgv[source_idx], expanded_args_temp);
+                arg_expanded = true;
+            }
+            else
+            {
+                expanded_args_temp.push_back(allocate_and_copy(ppszArgv[source_idx]));
+            }
+        }
+        else
+        {
+            expanded_args_temp.push_back(allocate_and_copy(ppszArgv[source_idx]));
+        }
+    }
+
+    nExpandedArgc = expanded_args_temp.size();
+    ppszExpandedArgv = new dnx::char_t*[nExpandedArgc];
+
+    for (size_t i = 0; i < nExpandedArgc; i++)
+    {
+        ppszExpandedArgv[i] = const_cast<dnx::char_t*>(expanded_args_temp[i]);
+    }
+
+    return true;
+}
+
+void FreeExpandedCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv)
+{
+    for (size_t i = 0; i < nArgc; ++i)
     {
         delete[] ppszArgv[i];
     }
     delete[] ppszArgv;
 }
 
-dnx::char_t* GetAppBaseParameterValue(int argc, dnx::char_t* argv[])
-{
-    for (auto i = 0; i < argc - 1; ++i)
-    {
-        if (StringsEqual(argv[i], _X("--appbase")))
-        {
-            return argv[i + 1];
-        }
-    }
-
-    return nullptr;
-}
-
-bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc, LPTSTR*& ppszExpandedArgv)
-{
-    // If no args or '--appbase' is already given and it has a value
-    if (nArgc == 0 || GetAppBaseParameterValue(nArgc, ppszArgv))
-    {
-        return false;
-    }
-
-    nExpandedArgc = nArgc + 2;
-    ppszExpandedArgv = new LPTSTR[nExpandedArgc];
-    memset(ppszExpandedArgv, 0, nExpandedArgc*sizeof(LPTSTR));
-    TCHAR szParentDir[MAX_PATH];
-
-    // Copy all arguments (options & values) as is before the project.json/assembly path
-    int nPathArgIndex = -1;
-    int nOptValNum;
-    while (++nPathArgIndex < nArgc)
-    {
-        nOptValNum = BootstrapperOptionValueNum(ppszArgv[nPathArgIndex]);
-
-        // It isn't a bootstrapper option, we treat it as the project.json/assembly path
-        if (nOptValNum < 0)
-        {
-            break;
-        }
-
-        // Copy the option
-        ppszExpandedArgv[nPathArgIndex] = new TCHAR[MAX_PATH];
-        _tcscpy_s(ppszExpandedArgv[nPathArgIndex], MAX_PATH, ppszArgv[nPathArgIndex]);
-
-        // Copy the value if the option has one
-        if (nOptValNum > 0 && (++nPathArgIndex < nArgc))
-        {
-            ppszExpandedArgv[nPathArgIndex] = new TCHAR[MAX_PATH];
-            _tcscpy_s(ppszExpandedArgv[nPathArgIndex], MAX_PATH, ppszArgv[nPathArgIndex]);
-        }
-    }
-
-    // No path argument was found, no expansion is needed
-    if (nPathArgIndex >= nArgc)
-    {
-        FreeExpandedCommandLineArguments(nExpandedArgc, ppszExpandedArgv);
-        return false;
-    }
-
-    // Allocate memory before doing expansion
-    for (int i = nPathArgIndex; i < nExpandedArgc; ++i)
-    {
-        ppszExpandedArgv[i] = new TCHAR[MAX_PATH];
-    }
-
-    // "dnx /path/App.dll arg1" --> "dnx --appbase /path/ /path/App.dll arg1"
-    // "dnx /path/App.exe arg1" --> "dnx --appbase /path/ /path/App.exe arg1"
-    LPTSTR pszPathArg = ppszArgv[nPathArgIndex];
-    if (PathEndsWith(pszPathArg, _T(".exe")) || PathEndsWith(pszPathArg, _T(".dll")))
-    {
-        GetParentDir(pszPathArg, szParentDir);
-
-        _tcscpy_s(ppszExpandedArgv[nPathArgIndex], MAX_PATH, _T("--appbase"));
-        _tcscpy_s(ppszExpandedArgv[nPathArgIndex + 1], MAX_PATH, szParentDir);
-
-        // Copy all arguments/options as is
-        for (int i = nPathArgIndex; i < nArgc; ++i)
-        {
-            _tcscpy_s(ppszExpandedArgv[i + 2], MAX_PATH, ppszArgv[i]);
-        }
-
-        return true;
-    }
-
-    // "dnx /path/project.json run" --> "dnx --appbase /path/ Microsoft.Framework.ApplicationHost run"
-    // "dnx /path/ run" --> "dnx --appbase /path/ Microsoft.Framework.ApplicationHost run"
-    TCHAR szFileName[MAX_PATH];
-    GetFileName(pszPathArg, szFileName);
-    if (StringsEqual(szFileName, _T("project.json")))
-    {
-        GetParentDir(pszPathArg, szParentDir);
-    }
-    else
-    {
-        _tcscpy_s(szParentDir, MAX_PATH, pszPathArg);
-    }
-
-    _tcscpy_s(ppszExpandedArgv[nPathArgIndex], MAX_PATH, _T("--appbase"));
-    _tcscpy_s(ppszExpandedArgv[nPathArgIndex + 1], MAX_PATH, szParentDir);
-    _tcscpy_s(ppszExpandedArgv[nPathArgIndex + 2], MAX_PATH, _T("Microsoft.Framework.ApplicationHost"));
-
-    for (int i = nPathArgIndex + 1; i < nArgc; ++i)
-    {
-        // Copy all other arguments/options as is
-        _tcscpy_s(ppszExpandedArgv[i + 2], MAX_PATH, ppszArgv[i]);
-    }
-
-    return true;
-}
-
 bool GetApplicationBase(const dnx::xstring_t& currentDirectory, int argc, dnx::char_t* argv[], /*out*/ dnx::char_t* fullAppBasePath)
 {
-    dnx::char_t buffer[MAX_PATH];
-    const dnx::char_t* appBase = GetAppBaseParameterValue(argc, argv);
-
-    // Note: We use application base from DNX_APPBASE environment variable only if --appbase
-    // did not exist. if neither --appBase nor DNX_APPBASE existed we use current directory
+    const dnx::char_t* appBase = dnx::utils::get_option_value(argc, argv, _X("--appbase"));
     if (!appBase)
     {
-        appBase = GetAppBasePathFromEnvironment(buffer) ? buffer : currentDirectory.c_str();
+        appBase = currentDirectory.c_str();
     }
 
     // Prevent coreclr native bootstrapper from failing with relative appbase
     return GetFullPath(appBase, fullAppBasePath) != 0;
 }
 
-int CallApplicationProcessMain(int argc, dnx::char_t* argv[], TraceWriter traceWriter)
+int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer)
 {
-    // Set the DNX_CONOSLE_HOST flag which will print exceptions to stderr instead of throwing
-    SetConsoleHost();
-
-    auto currentDirectory = GetNativeBootstrapperDirectory();
-
-    // Set the DEFAULT_LIB environment variable to be the same directory as the exe
-    SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), currentDirectory.c_str());
+    const auto currentDirectory = GetNativeBootstrapperDirectory();
 
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     data.argc = argc;
     data.argv = const_cast<const dnx::char_t**>(argv);
+    data.runtimeDirectory = currentDirectory.c_str();
 
     dnx::char_t appBaseBuffer[MAX_PATH];
+
     if (!GetApplicationBase(currentDirectory, argc, argv, appBaseBuffer))
     {
         return 1;
@@ -275,68 +205,24 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], TraceWriter traceW
         const dnx::char_t* hostModuleName =
 #if defined(CORECLR_WIN)
 #if defined(ONECORE) || defined(ARM)
-        _X("dnx.onecore.coreclr.dll");
+            _X("dnx.onecore.coreclr.dll");
 #else
-        _X("dnx.win32.coreclr.dll");
+            _X("dnx.win32.coreclr.dll");
 #endif
 #elif defined(CORECLR_DARWIN)
-        _X("dnx.coreclr.dylib");
+            _X("dnx.coreclr.dylib");
 #elif defined(CORECLR_LINUX)
-        _X("dnx.coreclr.so");
+            _X("dnx.coreclr.so");
 #else
-        _X("dnx.clr.dll");
+            _X("dnx.clr.dll");
 #endif
 
         // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
-        return CallApplicationMain(hostModuleName, "CallApplicationMain", &data, traceWriter);
+        return CallApplicationMain(hostModuleName, "CallApplicationMain", &data, trace_writer);
     }
     catch (const std::exception& ex)
     {
         xout << dnx::utils::to_xstring_t(ex.what()) << std::endl;
         return 1;
     }
-}
-
-#if defined(ARM)
-int wmain(int argc, wchar_t* argv[])
-#elif defined(PLATFORM_UNIX)
-int main(int argc, char* argv[])
-#else
-extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
-#endif
-{
-    // Check for the debug flag before doing anything else
-    for (int i = 1; i < argc; ++i)
-    {
-        //anything without - or -- is appbase or non-dnx command
-        if (argv[i][0] != _X('-'))
-        {
-            break;
-        }
-        if (StringsEqual(argv[i], _X("--appbase")))
-        {
-            //skip path argument
-            ++i;
-            continue;
-        }
-        if (StringsEqual(argv[i], _X("--debug")))
-        {
-            WaitForDebuggerToAttach();
-            break;
-        }
-    }
-
-    int nExpandedArgc = -1;
-    LPTSTR* ppszExpandedArgv = nullptr;
-    auto expanded = ExpandCommandLineArguments(argc - 1, &(argv[1]), nExpandedArgc, ppszExpandedArgv);
-
-    auto traceWriter = TraceWriter{ IsTracingEnabled() };
-    if (!expanded)
-    {
-        return CallApplicationProcessMain(argc - 1, &argv[1], traceWriter);
-    }
-
-    auto exitCode = CallApplicationProcessMain(nExpandedArgc, ppszExpandedArgv, traceWriter);
-    FreeExpandedCommandLineArguments(nExpandedArgc, ppszExpandedArgv);
-    return exitCode;
 }

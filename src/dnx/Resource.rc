@@ -70,9 +70,9 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Microsoft Corporation"
             VALUE "FileVersion", FileVersionStr
-            VALUE "InternalName", "dnx.exe"
+            VALUE "InternalName", FileName
             VALUE "LegalCopyright", "\251 Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "dnx.exe"
+            VALUE "OriginalFilename", FileName
             VALUE "ProductVersion", ProductVersionStr
         END
     END

@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0-*",
+  "description": "ASP.NET 5 Roslyn implementation code shared with libraries performing runtime compilation.",
+  "compilationOptions": {
+    "define": [
+      "TRACE"
+    ],
+    "allowUnsafe": true,
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk"
+  },
+  "dependencies": {
+    "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*",
+    "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-*",
+    "Microsoft.Dnx.Runtime.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
+    }
+  },
+  "frameworks": {
+    "net451": {
+      "frameworkAssemblies": {
+        "System.IO": "4.0.0.0",
+        "System.Runtime": ""
+      }
+    },
+    "dotnet5.4": {
+      "dependencies": {
+        "System.Console": "4.0.0-*",
+        "System.IO": "4.0.11-*"
+      }
+    }
+  },
+  "scripts": {
+    "postbuild": [
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dotnet5.4/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dotnet5.4/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin"
+    ]
+  }
+}

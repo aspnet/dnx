@@ -8,6 +8,6 @@
         <description>Microsoft .NET Execution environment for CoreCLR on Windows arm</description>
     </metadata>
     <files>
-        <file src="$RuntimeNamePrefix$coreclr-win-arm\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
+        <file src="$RuntimeNamePrefix$coreclr-win-arm\bin\**" exclude="**\*.pdb;**\*.xml;**\files.lst" target="bin" />
     </files>
 </package>

@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0-*",
+  "description": "ASP.NET 5 interfaces to take advantage of capabilities exposed by the design time host.",
+  "compilationOptions": {
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk"
+  },
+  "dependencies": {
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+    "Newtonsoft.Json": "6.0.6"
+  },
+  "frameworks": {
+    "net451": {},
+    "dotnet5.4": {
+      "dependencies": {
+        "System.Runtime": "4.0.21-*"
+      }
+    }
+  },
+  "scripts": {
+    "postbuild": [
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin/lib/Microsoft.Dnx.DesignTimeHost",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dotnet5.4/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin/lib/Microsoft.Dnx.DesignTimeHost",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin/lib/Microsoft.Dnx.DesignTimeHost",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dotnet5.4/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin/lib/Microsoft.Dnx.DesignTimeHost",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.DesignTimeHost"
+    ]
+  }
+}

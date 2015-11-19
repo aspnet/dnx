@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -9,7 +9,7 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 if [ -f "$DIR/mono" ]; then
-  exec "$DIR/mono" $MONO_OPTIONS "$DIR/dnx.mono.managed.dll" "$@"
+  exec "$DIR/mono" $MONO_OPTIONS "$DIR/Microsoft.Dnx.Host.Mono.dll" "$@"
 else
-  exec mono $MONO_OPTIONS "$DIR/dnx.mono.managed.dll" "$@"
+  exec mono $MONO_OPTIONS "$DIR/Microsoft.Dnx.Host.Mono.dll" "$@"
 fi

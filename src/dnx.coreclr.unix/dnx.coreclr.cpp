@@ -3,51 +3,52 @@
 
 #include "stdafx.h"
 #include "tpa.h"
+#include "utils.h"
+#include "app_main.h"
 #include <assert.h>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <sys/utsname.h>
 
-// Windows types used by the ExecuteAssembly function
-typedef int32_t HRESULT;
-typedef const char* LPCSTR;
-typedef uint32_t DWORD;
+typedef int (*coreclr_initialize_fn)(
+            const char* exePath,
+            const char* appDomainFriendlyName,
+            int propertyCount,
+            const char** propertyKeys,
+            const char** propertyValues,
+            void** hostHandle,
+            unsigned int* domainId);
 
-typedef struct CALL_APPLICATION_MAIN_DATA
-{
-    char* applicationBase;
-    char* runtimeDirectory;
-    int argc;
-    char** argv;
-    int exitcode;
-} *PCALL_APPLICATION_MAIN_DATA;
+typedef int (*coreclr_create_delegate_fn)(
+            void* hostHandle,
+            unsigned int domainId,
+            const char* entryPointAssemblyName,
+            const char* entryPointTypeName,
+            const char* entryPointMethodName,
+            void** delegate);
 
-// Prototype of the ExecuteAssembly function from the libcoreclr.so
-typedef HRESULT (*ExecuteAssemblyFunction)(
-                    LPCSTR exePath,
-                    LPCSTR coreClrPath,
-                    LPCSTR appDomainFriendlyName,
-                    int propertyCount,
-                    LPCSTR* propertyKeys,
-                    LPCSTR* propertyValues,
-                    int argc,
-                    LPCSTR* argv,
-                    LPCSTR managedAssemblyPath,
-                    LPCSTR entryPointAssemblyName,
-                    LPCSTR entryPointTypeName,
-                    LPCSTR entryPointMethodsName,
-                    DWORD* exitCode);
+typedef int (*coreclr_shutdown_fn)(
+            void* hostHandle,
+            unsigned int domainId);
 
-const HRESULT S_OK = 0;
-const HRESULT E_FAIL = -1;
+typedef int (*MultiByteToWideChar_fn)(
+            unsigned int CodePage,
+            int32_t dwFlags,
+            const char* lpMultiByteStr,
+            int cbMultiByte,
+            wchar_t* lpWideCharStr,
+            int cchWideChar);
+
+typedef int (*host_main_fn)(const int argc, const wchar_t** argv, const bootstrapper_context* ctx);
+
+#define BootstrapperName "Microsoft.Dnx.Host.CoreClr"
 
 namespace
 {
 
-#ifdef PLATFORM_DARWIN
-const char* LIBCORECLR_NAME = "libcoreclr.dylib";
-const char* LIBCORECLRPAL_NAME = "libcoreclrpal.dylib";
-#else
-const char* LIBCORECLR_NAME = "libcoreclr.so";
-const char* LIBCORECLRPAL_NAME = "libcoreclrpal.so";
-#endif
+void* pLibCoreClr = nullptr;
+MultiByteToWideChar_fn MultiByteToWideChar = nullptr;
 
 std::string GetPathToBootstrapper()
 {
@@ -69,97 +70,49 @@ std::string GetPathToBootstrapper()
 
 bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNative, std::string& trustedPlatformAssemblies)
 {
-    size_t cTpaAssemblyNames = 0;
-    LPCTSTR* ppszTpaAssemblyNames = nullptr;
-
-    CreateTpaBase(&ppszTpaAssemblyNames, &cTpaAssemblyNames, isNative);
-
-    assert(ppszTpaAssemblyNames != nullptr || cTpaAssemblyNames == 0);
-
-    //TODO: The Windows version of this actaully ensures the files are present.  We just fail for native and assume MSIL is present
+    //TODO: The Windows version of this actually ensures the files are present.  We just fail for native and assume MSIL is present
     if (isNative)
     {
         return false;
     }
 
-    for (size_t i = 0; i < cTpaAssemblyNames; i++)
+    for (auto assembly_name : CreateTpaBase(isNative))
     {
-        trustedPlatformAssemblies.append(tpaDirectory);
-        trustedPlatformAssemblies.append("/");
-        trustedPlatformAssemblies.append(ppszTpaAssemblyNames[i]);
+        trustedPlatformAssemblies.append(dnx::utils::path_combine(tpaDirectory, assembly_name));
         trustedPlatformAssemblies.append(":");
-    }
-
-    if (ppszTpaAssemblyNames)
-    {
-        FreeTpaBase(ppszTpaAssemblyNames);
     }
 
     return true;
 }
 
-void* pLibCoreClr = nullptr;
-void* pLibCoreClrPal = nullptr;
-
-bool LoadCoreClrAtPath(const std::string loadPath, void** ppLibCoreClr, void** ppLibCoreClrPal)
+bool GetTrustedPlatformAssembliesList(const std::string& runtime_directory, std::string& trusted_assemblies)
 {
-    std::string coreClrDllPath = loadPath;
-    std::string coreClrPalPath = loadPath;
-
-    coreClrDllPath.append("/");
-    coreClrDllPath.append(LIBCORECLR_NAME);
-
-    coreClrPalPath.append("/");
-    coreClrPalPath.append(LIBCORECLRPAL_NAME);
-
-    *ppLibCoreClrPal = dlopen(coreClrPalPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
-    *ppLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
-
-    return *ppLibCoreClrPal != nullptr && *ppLibCoreClr != nullptr;
-}
-
-// libcoreclr has a dependency on libcoreclrpal, which is commonly not on LD_LIBRARY_PATH, so for every
-// location we try to load libcoreclr from, we first try to load libcoreclrpal so when we load coreclr
-// itself the linker is happy.
-//
-// NOTE: The code here is structured in a way such that it is OK if the load of libcoreclrpal fails,
-// because depending on the version of the coreclr DNX has, the PAL may still be staticlly linked
-// into coreclr and we want to be able to load coreclr's that have been built this way.
-void LoadCoreClr(std::string& runtimeDirectory)
-{
-    void* ret = nullptr;
-
-    char* coreClrEnvVar = getenv("CORECLR_DIR");
-
-    if (coreClrEnvVar)
+        // Try native images first
+    if (!GetTrustedPlatformAssembliesList(runtime_directory, true, trusted_assemblies))
     {
-        runtimeDirectory = coreClrEnvVar;
-
-        LoadCoreClrAtPath(runtimeDirectory, &pLibCoreClr, &pLibCoreClrPal);
-
-        if (!pLibCoreClr && pLibCoreClrPal)
+        if (!GetTrustedPlatformAssembliesList(runtime_directory, false, trusted_assemblies))
         {
-            // The PAL loaded but CoreCLR did not.  We are going to try other places, so let's
-            // unload this PAL.
-            dlclose(pLibCoreClrPal);
-            pLibCoreClrPal = nullptr;
+            return false;
         }
     }
 
-    if (!pLibCoreClr)
-    {
-        // Try to load coreclr from application path.
+    return true;
+}
 
-        runtimeDirectory = GetPathToBootstrapper();
+bool LoadCoreClrAtPath(const char* runtime_directory, void** ppLibCoreClr)
+{
+    const char* LIBCORECLR_NAME =
+#ifdef PLATFORM_DARWIN
+        "libcoreclr.dylib";
+#else
+        "libcoreclr.so";
+#endif
 
-        size_t lastSlash = runtimeDirectory.rfind('/');
+    auto coreclr_lib_path = dnx::utils::path_combine(runtime_directory, LIBCORECLR_NAME);
 
-        assert(lastSlash != std::string::npos);
+    *ppLibCoreClr = dlopen(coreclr_lib_path.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
-        runtimeDirectory.erase(lastSlash);
-
-        LoadCoreClrAtPath(runtimeDirectory, &pLibCoreClr, &pLibCoreClrPal);
-    }
+    return *ppLibCoreClr != nullptr;
 }
 
 void FreeCoreClr()
@@ -169,40 +122,13 @@ void FreeCoreClr()
         dlclose(pLibCoreClr);
         pLibCoreClr = nullptr;
     }
-
-    if (pLibCoreClrPal)
-    {
-        dlclose(pLibCoreClrPal);
-        pLibCoreClrPal = nullptr;
-    }
-}
 }
 
-extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
+int LoadCoreClr(const char* runtime_directory)
 {
-    HRESULT hr = S_OK;
-    size_t cchTrustedPlatformAssemblies = 0;
-    std::string runtimeDirectory;
+    void* ret = nullptr;
 
-    if (data->runtimeDirectory)
-    {
-        runtimeDirectory = data->runtimeDirectory;
-    }
-    else
-    {
-        // TODO: This should get the directory that this library is in, not the CWD.
-        char szCurrentDirectory[PATH_MAX];
-
-        if (!getcwd(szCurrentDirectory, PATH_MAX))
-        {
-            return E_FAIL;
-        }
-
-        runtimeDirectory = std::string(szCurrentDirectory);
-    }
-
-    std::string coreClrDirectory;
-    LoadCoreClr(coreClrDirectory);
+    LoadCoreClrAtPath(runtime_directory, &pLibCoreClr);
 
     if (!pLibCoreClr)
     {
@@ -210,82 +136,302 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
         fprintf(stderr, "failed to locate libcoreclr with error %s\n", error);
 
         FreeCoreClr();
-        return E_FAIL;
+        return 1;
     }
+
+    return 0;
+}
+
+int32_t initialize_runtime(CALL_APPLICATION_MAIN_DATA* data, void **host_handle, unsigned int* domain_id)
+{
+    auto coreclr_initialize = (coreclr_initialize_fn)dlsym(pLibCoreClr, "coreclr_initialize");
+    if (!coreclr_initialize)
+    {
+        fprintf(stderr, "Could not find coreclr_initialize entrypoint in coreclr\n");
+        return 1;
+    }
+
+    auto bootstrapper_path = GetPathToBootstrapper();
 
     const char* property_keys[] =
     {
         "APPBASE",
         "TRUSTED_PLATFORM_ASSEMBLIES",
         "APP_PATHS",
+        "NATIVE_DLL_SEARCH_DIRECTORIES"
     };
 
-    std::string trustedPlatformAssemblies;
+    std::string trusted_assemblies;
 
-    // Try native images first
-    if (!GetTrustedPlatformAssembliesList(coreClrDirectory.c_str(), true, trustedPlatformAssemblies))
+    if (!GetTrustedPlatformAssembliesList(data->runtimeDirectory, trusted_assemblies))
     {
-        if (!GetTrustedPlatformAssembliesList(coreClrDirectory.c_str(), false, trustedPlatformAssemblies))
-        {
-            fprintf(stderr, "Failed to find files in the coreclr directory\n");
-
-            FreeCoreClr();
-            return E_FAIL;
-        }
+        fprintf(stderr, "Failed to find files in the coreclr directory\n");
+        return 1;
     }
 
     // Add the assembly containing the app domain manager to the trusted list
-    trustedPlatformAssemblies.append(runtimeDirectory);
-    trustedPlatformAssemblies.append("dnx.coreclr.managed.dll");
-
-    std::string appPaths(runtimeDirectory);
-
-    appPaths.append(":");
-    appPaths.append(coreClrDirectory);
-    appPaths.append(":");
+    trusted_assemblies.append(dnx::utils::path_combine(data->runtimeDirectory, BootstrapperName ".dll"));
 
     const char* property_values[] = {
         // APPBASE
         data->applicationBase,
         // TRUESTED_PLATFORM_ASSEMBLIES
-        trustedPlatformAssemblies.c_str(),
+        trusted_assemblies.c_str(),
         // APP_PATHS
-        appPaths.c_str(),
+        data->runtimeDirectory,
+        // NATIVE_DLL_SEARCH_DIRECTORIES
+        data->runtimeDirectory
     };
 
-    ExecuteAssemblyFunction executeAssembly = (ExecuteAssemblyFunction)dlsym(pLibCoreClr, "ExecuteAssembly");
+    return coreclr_initialize(bootstrapper_path.c_str(), BootstrapperName, sizeof(property_keys) / sizeof(const char*),
+                property_keys, property_values, host_handle, domain_id);
+}
 
-    if (!executeAssembly)
+int32_t create_delegate(void *host_handle, unsigned int domain_id, void** delegate)
+{
+    auto coreclr_create_delegate = (coreclr_create_delegate_fn)dlsym(pLibCoreClr, "coreclr_create_delegate");
+    if (!coreclr_create_delegate)
     {
-        fprintf(stderr, "Could not find ExecuteAssembly entrypoint in coreclr.\n");
-
-        FreeCoreClr();
-        return E_FAIL;
+        fprintf(stderr, "Could not find coreclr_create_delegate entrypoint in coreclr\n");
+        return 1;
     }
 
-    setenv("DNX_FRAMEWORK", "dnxcore50", 1);
+    return coreclr_create_delegate(host_handle, domain_id, BootstrapperName", Version=0.0.0.0",
+            "DomainManager", "Execute", delegate);
+}
 
-    std::string coreClrDllPath(coreClrDirectory);
-    coreClrDllPath.append("/");
-    coreClrDllPath.append(LIBCORECLR_NAME);
+int32_t shutdown_runtime(void* host_handle, unsigned int domain_id)
+{
+    auto coreclr_shutdown = (coreclr_shutdown_fn)dlsym(pLibCoreClr, "coreclr_shutdown");
+    if (!coreclr_shutdown)
+    {
+        fprintf(stderr, "Could not find coreclr_shutdown entrypoint in coreclr\n");
+        return 1;
+    }
 
-    std::string pathToBootstrapper = GetPathToBootstrapper();
+    return coreclr_shutdown(host_handle, domain_id);
+}
 
-    hr = executeAssembly(pathToBootstrapper.c_str(),
-                         coreClrDllPath.c_str(),
-                         "dnx.coreclr.managed",
-                         sizeof(property_keys) / sizeof(property_keys[0]),
-                         property_keys,
-                         property_values,
-                         data->argc,
-                         (const char**)data->argv,
-                         nullptr,
-                         "dnx.coreclr.managed, Version=0.1.0.0",
-                         "DomainManager",
-                         "Execute",
-                         (DWORD*)&(data->exitcode));
+// the caller is responsible for deleting the instance
+const wchar_t* to_wchar_t(const char* str)
+{
+    auto length = MultiByteToWideChar(0 /*CP_ACP*/, 0, str, -1, nullptr, 0);
+    auto str_w = new wchar_t[length];
+    MultiByteToWideChar(0 /*CP_ACP*/, 0, str, length, str_w, length);
+    return str_w;
+}
+
+int InvokeDelegate(host_main_fn host_main, int argc, const char** argv, const bootstrapper_context& ctx)
+{
+    const wchar_t** wchar_argv = new const wchar_t*[argc];
+    for (auto i = 0; i < argc; i++)
+    {
+        wchar_argv[i] = to_wchar_t(argv[i]);
+    }
+
+    auto exit_code = host_main(argc, wchar_argv, &ctx);
+
+    for (auto i = 0; i < argc; i++)
+    {
+        delete[] wchar_argv[i];
+    }
+    delete[] wchar_argv;
+
+    return exit_code;
+}
+
+#if defined(PLATFORM_LINUX)
+
+std::string get_os_version()
+{
+    std::vector<std::string> qualifiers { "ID=", "VERSION_ID=" };
+
+    std::ifstream lsb_release;
+    lsb_release.open("/etc/os-release", std::ifstream::in);
+    if (lsb_release.is_open())
+    {
+        std::string os_version;
+        for (std::string line; std::getline(lsb_release, line); )
+        {
+            for (auto& qualifier : qualifiers)
+            {
+                if (line.compare(0, qualifier.length(), qualifier) == 0)
+                {
+                    auto value = line.substr(qualifier.length());
+                   
+                    if (value.length() >= 2 &&
+                        ((value[0] == '"'  && value[value.length() - 1] == '"' ) ||
+                         (value[0] == '\'' && value[value.length() - 1] == '\''))
+                       )
+                    {
+                        value = value.substr(1, value.length() - 2);
+                    }
+
+                    if (value.length() == 0)
+                    {
+                        continue;
+                    }
+
+                    if (os_version.length() > 0)
+                    {
+                        os_version += " ";
+                    }
+
+                    os_version += value;
+                }
+            }
+        }
+
+        if (os_version.length() == 0)
+        {
+            fprintf(stderr, "Could not find version information. OS version will default to the empty string.\n");
+        }
+
+        return os_version;
+    }
+
+    fprintf(stderr, "Could not open /etc/os-release. OS version will default to the empty string.\n");
+    return "";
+}
+#else
+std::string translate_darwin_version(const std::string release)
+{
+    auto dot_position = release.find(".");
+    if (dot_position == std::string::npos)
+    {
+        fprintf(stderr, "Could not determine os version.\n");
+        return "10.1";
+    }
+
+    /*
+    release to OS X version mapping
+    15.x.x -> 10.11.x El Capitan
+    14.x.x -> 10.10.x Yosemite
+    13.x.x -> 10.9.x  Mavericks
+    12.x.x -> 10.8.x  Mountain Lion
+    11.x.x -> 10.7.x  Lion
+    10.x.x -> 10.6.x  Snow Leopard
+     9.x.x -> 10.5.x  Leopard
+     8.x.x -> 10.4.x  Tiger
+     7.x.x -> 10.3.x  Panther
+     6.x.x -> 10.2.x  Jaguar
+     5.x   -> 10.1.x  Puma
+    */
+
+    auto version = stoi(release.substr(0, dot_position));
+    return std::string("10.").append(std::to_string(version - 4));
+}
+#endif
+
+bootstrapper_context initialize_context(const CALL_APPLICATION_MAIN_DATA* data)
+{
+    bootstrapper_context ctx;
+
+    struct utsname uname_data;
+    if (uname(&uname_data) == 0)
+    {
+        ctx.operating_system = to_wchar_t(uname_data.sysname);
+
+#if defined(PLATFORM_DARWIN)
+        ctx.os_version = to_wchar_t(translate_darwin_version(uname_data.release).c_str());
+#endif
+    }
+    else
+    {
+        fprintf(stderr, "uname() failed using default os name and version.\n");
+
+        ctx.operating_system =
+#if defined(PLATFORM_LINUX)
+        to_wchar_t("Linux");
+#else
+        to_wchar_t("Darwin");
+        ctx.operating_system = to_wchar_t("10.1");
+#endif
+    }
+
+#if defined(PLATFORM_LINUX)
+    ctx.os_version = to_wchar_t(get_os_version().c_str());
+#endif
+
+    // currently we only support 64-bit Linux and Darwin
+    ctx.architecture = to_wchar_t("x64");
+    ctx.runtime_directory = to_wchar_t(data->runtimeDirectory);
+    ctx.application_base = to_wchar_t(data->applicationBase);
+
+    return ctx;
+}
+
+void clean_context(bootstrapper_context& ctx)
+{
+    delete[] ctx.operating_system;
+    ctx.operating_system = nullptr;
+    delete[] ctx.architecture;
+    ctx.architecture = nullptr;
+    delete[] ctx.os_version;
+    ctx.os_version = nullptr;
+    delete[] ctx.runtime_directory;
+    ctx.runtime_directory = nullptr;
+    delete[] ctx.application_base;
+    ctx.application_base = nullptr;
+}
+
+int CallMain(CALL_APPLICATION_MAIN_DATA* data)
+{
+    void* host_handle = nullptr;
+    unsigned int domain_id;
+
+    auto result = initialize_runtime(data, &host_handle, &domain_id);
+    if (result < 0)
+    {
+        fprintf(stderr, "Failed to initialize runtime: 0x%08x\n", result);
+        return 1;
+    }
+
+    void* host_main;
+    result = create_delegate(host_handle, domain_id, &host_main);
+    if (result < 0)
+    {
+        fprintf(stderr, "Failed to create delegate: 0x%08x\n", result);
+    }
+    else
+    {
+        auto ctx = initialize_context(data);
+        data->exitcode = InvokeDelegate((host_main_fn)host_main, data->argc, data->argv, ctx);
+        clean_context(ctx);
+    }
+
+    auto shutdown_result = shutdown_runtime(host_handle, domain_id);
+    if (shutdown_result < 0)
+    {
+        fprintf(stderr, "Failed to shutdown runtime: 0x%08x\n", shutdown_result);
+        return 1;
+    }
+
+    return result;
+}
+}
+
+extern "C" int CallApplicationMain(CALL_APPLICATION_MAIN_DATA* data)
+{
+    if (LoadCoreClr(data->runtimeDirectory) != 0)
+    {
+        return 1;
+    }
+
+    int result = 0;
+
+    MultiByteToWideChar = (MultiByteToWideChar_fn)dlsym(pLibCoreClr, "MultiByteToWideChar");
+    if (!MultiByteToWideChar)
+    {
+        fprintf(stderr, "Could not find MultiByteToWideChar entrypoint in coreclr\n");
+        result = 1;
+    }
+    else
+    {
+        result = CallMain(data);
+    }
 
     FreeCoreClr();
 
-    return hr;
+    return result;
 }

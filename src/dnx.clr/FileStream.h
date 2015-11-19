@@ -3,6 +3,12 @@
 
 #pragma once
 
+#include <fileapi.h>
+#include <winerror.h>
+
+#pragma warning(push)
+#pragma warning(disable: 4100)
+
 class FileStream : public IStream
 {
     HANDLE _handle;
@@ -131,9 +137,19 @@ public:
 
         STDMETHODIMP Stat(
             /* [out] */ __RPC__out STATSTG *pstatstg,
-            /* [in] */ DWORD grfStatFlag) { return E_NOTIMPL; }
+            /* [in] */ DWORD grfStatFlag)
+        {
+            if (GetFileSizeEx(_handle, (PLARGE_INTEGER)&pstatstg->cbSize) == 0)
+            {
+                return HRESULT_FROM_WIN32(GetLastError());
+            }
+
+            return S_OK;
+        }
 
         STDMETHODIMP Clone(
             /* [out] */ __RPC__deref_out_opt IStream **ppstm) { return E_NOTIMPL; }
 
 };
+
+#pragma warning(pop)

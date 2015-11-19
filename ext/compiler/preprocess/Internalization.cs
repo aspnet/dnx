@@ -8,7 +8,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Framework.Runtime.Roslyn;
+using Microsoft.Dnx.Compilation.CSharp;
 
 namespace Runtime.Ext.Compiler.Preprocess
 {
@@ -24,9 +24,9 @@ namespace Runtime.Ext.Compiler.Preprocess
 
             candidates.Add(Path.Combine(context.ProjectContext.ProjectDirectory, "..", "..", "submodules"));
 
-            if (context.ProjectContext.Name != "Microsoft.Framework.Runtime")
+            if (context.ProjectContext.Name != "Microsoft.Extensions.Runtime")
             {
-                candidates.Add(Path.Combine(context.ProjectContext.ProjectDirectory, "..", "Microsoft.Framework.Runtime.Hosting"));
+                candidates.Add(Path.Combine(context.ProjectContext.ProjectDirectory, "..", "Microsoft.Extensions.Runtime.Hosting"));
             }
 
             var submodulesDir = Path.Combine(context.ProjectContext.ProjectDirectory, "..", "..", "submodules");

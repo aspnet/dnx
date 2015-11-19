@@ -1,0 +1,7 @@
+{
+  "projects": [
+    "src",
+    "test",
+    "wrap"
+  ]
+}

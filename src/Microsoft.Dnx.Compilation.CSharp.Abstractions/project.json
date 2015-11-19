@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0-*",
+  "compilationOptions": {
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk"
+  },
+  "dependencies": {
+    "Microsoft.Extensions.CompilationAbstractions": "1.0.0-*",
+    "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*"
+  },
+  "frameworks": {
+    "net451": {
+      "dependencies": {}
+    },
+    "dotnet5.4": {
+      "dependencies": {
+        "System.Runtime": "4.0.21-*"
+      }
+    }
+  },
+  "scripts": {
+    "postbuild": [
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dotnet5.4/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dotnet5.4/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/net451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin"
+    ]
+  }
+}

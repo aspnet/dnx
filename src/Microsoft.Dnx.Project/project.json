@@ -1,0 +1,53 @@
+{
+    "version": "1.0.0-*",
+    "compilationOptions" : {
+        "define" : ["TRACE"],
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
+    },
+    "dependencies": {
+        "Microsoft.Dnx.Runtime" : "1.0.0-*",
+        "Microsoft.Dnx.Runtime.Sources" : { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+        "Microsoft.Extensions.CommandLineUtils.Sources" : { "version": "1.0.0-*", "type": "build" }
+    },
+    "frameworks" : {
+        "dnx451" : {
+            "frameworkAssemblies": {
+                "System.Collections" : "",
+                "System.IO" :  "",
+                "System.IO.Compression" : "",
+                "System.Runtime" : "",
+                "System.Xml": "",
+                "System.Xml.Linq": ""
+            }
+        },
+        "dnxcore50" : { 
+            "dependencies": {
+                "System.Collections": "4.0.11-*",
+                "System.ComponentModel": "4.0.1-*",
+                "System.Console": "4.0.0-*",
+                "System.Diagnostics.Debug": "4.0.11-*",
+                "System.Diagnostics.Process": "4.1.0-*",
+                "System.IO": "4.0.11-*",
+                "System.IO.Compression": "4.0.1-*",
+                "System.IO.FileSystem": "4.0.1-*",
+                "System.Linq": "4.0.1-*",
+                "System.Reflection": "4.0.11-*",
+                "System.Runtime": "4.0.21-*",
+                "System.Runtime.Extensions": "4.0.11-*",
+                "System.Runtime.InteropServices": "4.0.21-*",
+                "System.Threading.Tasks": "4.0.11-*"
+            }
+        }
+    },
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin/lib/Microsoft.Dnx.Project",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin/lib/Microsoft.Dnx.Project",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin/lib/Microsoft.Dnx.Project",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin/lib/Microsoft.Dnx.Project",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.Project"
+        ]
+    }
+}

@@ -22,22 +22,16 @@
 #include <string.h>
 #include <unistd.h>
 
-typedef int BOOL;
 typedef uint32_t DWORD;
-typedef DWORD HRESULT;
+typedef int32_t HRESULT;
 typedef void* HMODULE;
 typedef void* FARPROC;
 typedef void* HANDLE;
 
-#include "tchar.h"
-
 #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
 
-#define STDAPICALLTYPE
 #define MAX_PATH PATH_MAX
 #define S_OK 0
-#define TRUE 1
-#define FALSE 0
 
 inline int max(int a, int b) { return a > b ? a : b; }
 #endif // PLATFORM_UNIX

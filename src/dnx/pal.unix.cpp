@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <assert.h>
 #include <dlfcn.h>
-#include "dnx.h"
-#include "TraceWriter.h"
+#include "app_main.h"
+#include "trace_writer.h"
 
 std::string GetNativeBootstrapperDirectory();
 
@@ -18,41 +18,18 @@ bool IsTracingEnabled()
     return dnxTraceEnv != NULL && (strcmp(dnxTraceEnv, "1") == 0);
 }
 
-void SetConsoleHost()
-{
-    char* dnxConsoleHostEnv = getenv("DNX_CONSOLE_HOST");
-
-    if (dnxConsoleHostEnv == NULL)
-    {
-        setenv("DNX_CONSOLE_HOST", "1", 1);
-    }
-}
-
-BOOL GetAppBasePathFromEnvironment(LPTSTR szPath)
-{
-    char* appBaseEnv = getenv("DNX_APPBASE");
-
-    if (appBaseEnv != NULL && strlen(appBaseEnv) < PATH_MAX)
-    {
-        strcpy(szPath, appBaseEnv);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-BOOL GetFullPath(LPCTSTR szPath, LPTSTR szNormalizedPath)
+bool GetFullPath(const char* szPath, char* szNormalizedPath)
 {
     if (realpath(szPath, szNormalizedPath) == nullptr)
     {
         printf("Failed to get full path of application base: %s\r\n", szPath);
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
-int CallApplicationMain(const char* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
+int CallApplicationMain(const char* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, dnx::trace_writer& trace_writer)
 {
     auto localPath = GetNativeBootstrapperDirectory().append("/").append(moduleName);
 
@@ -62,10 +39,13 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
         host = dlopen(localPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
         if (!host)
         {
-            throw std::runtime_error(std::string("Failed to load: ").append(moduleName));
+            std::ostringstream oss;
+            oss << "Failed to load: '" << moduleName  << "' error: " << dlerror();
+
+            throw std::runtime_error(oss.str());
         }
 
-        traceWriter.Write(std::string("Loaded module: ").append(moduleName), true);
+        trace_writer.write(std::string("Loaded module: ").append(moduleName), true);
 
         auto pfnCallApplicationMain = reinterpret_cast<FnCallApplicationMain>(dlsym(host, functionName));
         if (!pfnCallApplicationMain)
@@ -75,7 +55,7 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
             throw std::runtime_error(oss.str());
         }
 
-        traceWriter.Write(std::string("Found export: ").append(functionName), true);
+        trace_writer.write(std::string("Found export: ").append(functionName), true);
 
         auto result = pfnCallApplicationMain(data);
         dlclose(host);
@@ -90,20 +70,4 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
 
         throw;
     }
-}
-
-BOOL SetEnvironmentVariable(LPCTSTR lpName, LPCTSTR lpValue)
-{
-    int ret;
-
-    if (lpValue != nullptr)
-    {
-        ret = setenv(lpName, lpValue, 1);
-    }
-    else
-    {
-        ret = unsetenv(lpName);
-    }
-
-    return ret == 0;
 }

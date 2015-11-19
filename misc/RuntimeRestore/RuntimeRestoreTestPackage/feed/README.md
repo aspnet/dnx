@@ -1,0 +1,3 @@
+# Testing package for runtime-restore
+
+Yes, I (@anurse) am a horrible person. I checked in a binary file. However, I believe it to be the most efficient way to do this :). We need a package that DNX cannot build (once with Runtime-specific binaries) at this time. We need to use it on Windows, Mac and Linux, and we rarely need to change it. It is 10KB of binary data, and it will almost never change. I think that's good enough reason to check this in and save the time it would take me to build scripts to regenerate these things on the fly...

@@ -1,0 +1,4 @@
+﻿{
+    "packages": "packages",
+    "projects": [ "src", "test" ]
+}
