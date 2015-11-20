@@ -24,7 +24,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
             PrepareCompilation(new FakeCompilerOptions { KeyFile = "keyfile.snk", UseOssSigning = false }, out compiler, out projectContext);
 
             var compilationContext = compiler.CompileProject(projectContext, Enumerable.Empty<IMetadataReference>(),
-                Enumerable.Empty<ISourceReference>(), () => new List<ResourceDescriptor>());
+                Enumerable.Empty<ISourceReference>(), () => new List<ResourceDescriptor>(), "Debug");
 
             Assert.Equal(1, compilationContext.Diagnostics.Count);
             Assert.Equal("DNX1001", compilationContext.Diagnostics[0].Id);
@@ -39,7 +39,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
             PrepareCompilation(new FakeCompilerOptions { KeyFile = "keyfile.snk", UseOssSigning = false }, out compiler, out projectContext);
 
             var compilationContext = compiler.CompileProject(projectContext, Enumerable.Empty<IMetadataReference>(),
-                Enumerable.Empty<ISourceReference>(), () => new List<ResourceDescriptor>());
+                Enumerable.Empty<ISourceReference>(), () => new List<ResourceDescriptor>(), "Debug");
 
             Assert.Equal(0, compilationContext.Diagnostics.Count);
         }

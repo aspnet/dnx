@@ -124,7 +124,8 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
                 compilationProjectContext,
                 new List<IMetadataReference> { metadataReference },
                 new List<ISourceReference> {},
-                () => new List<ResourceDescriptor>());
+                () => new List<ResourceDescriptor>(),
+                "Debug");
             return compilationContext;
         }
     }

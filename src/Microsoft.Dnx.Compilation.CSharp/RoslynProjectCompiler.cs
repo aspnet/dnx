@@ -32,7 +32,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
         public IMetadataProjectReference CompileProject(
             CompilationProjectContext projectContext,
             Func<LibraryExport> referenceResolver,
-            Func<IList<ResourceDescriptor>> resourcesResolver)
+            Func<IList<ResourceDescriptor>> resourcesResolver,
+            string configuration)
         {
             var export = referenceResolver();
             if (export == null)
@@ -47,7 +48,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 projectContext,
                 incomingReferences,
                 incomingSourceReferences,
-                resourcesResolver);
+                resourcesResolver,
+                configuration);
 
             if (compliationContext == null)
             {

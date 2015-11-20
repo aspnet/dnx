@@ -577,7 +577,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var appHostContext = CreateApplicationHostContext(ctx, project, _applicationEnvironment.RuntimeFramework, _runtimeEnvironment.GetAllRuntimeIdentifiers());
 
-                return new RuntimeLoadContext($"{project.Name}_plugin", appHostContext.LibraryManager.GetLibraryDescriptions(), _compilationEngine, _defaultLoadContext);
+                return new RuntimeLoadContext($"{project.Name}_plugin", appHostContext.LibraryManager.GetLibraryDescriptions(), _compilationEngine, _defaultLoadContext, _configuration.Value);
             });
         }
 

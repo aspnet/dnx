@@ -134,7 +134,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
             // will just have it's own independent set of global data.
             var hostEnvironment = PlatformServices.Default.Application;
-            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration, hostEnvironment);
+            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, hostEnvironment);
 
             var compilationContext = new CompilationEngineContext(
                 applicationEnvironment,
@@ -178,7 +178,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             var assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraries);
 
             // Configure Assembly loaders
-            _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects.Values));
+            _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects.Values, options.Configuration));
             _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, assemblies, libraries));
 
             var compilerOptionsProvider = new CompilerOptionsProvider(projects);

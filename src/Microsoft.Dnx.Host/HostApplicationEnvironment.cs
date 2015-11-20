@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
-using Microsoft.Dnx.Runtime.Sources.Impl;
 
 namespace Microsoft.Dnx.Host
 {
@@ -16,13 +15,11 @@ namespace Microsoft.Dnx.Host
     internal class HostApplicationEnvironment : IApplicationEnvironment
     {
         private readonly Assembly _assembly;
-        private readonly ApplicationGlobalData _globalData;
         private AssemblyName _assemblyName;
 
         public HostApplicationEnvironment(string appBase, FrameworkName targetFramework, string configuration, Assembly assembly)
         {
             _assembly = assembly;
-            _globalData = new ApplicationGlobalData(hostEnvironment: null);
 
             ApplicationBasePath = appBase;
             RuntimeFramework = targetFramework;
@@ -62,16 +59,6 @@ namespace Microsoft.Dnx.Host
 
                 return _assemblyName;
             }
-        }
-
-        public object GetData(string name)
-        {
-            return _globalData.GetData(name);
-        }
-
-        public void SetData(string name, object value)
-        {
-            _globalData.SetData(name, value);
         }
     }
 }

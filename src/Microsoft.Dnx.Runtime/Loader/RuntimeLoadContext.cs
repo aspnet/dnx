@@ -17,7 +17,8 @@ namespace Microsoft.Dnx.Runtime.Loader
         public RuntimeLoadContext(string friendlyName,
                                   IEnumerable<LibraryDescription> libraries,
                                   ICompilationEngine compilationEngine,
-                                  IAssemblyLoadContext defaultContext) : base(friendlyName)
+                                  IAssemblyLoadContext defaultContext,
+                                  string configuration) : base(friendlyName)
         {
             // TODO: Make this all lazy
             // TODO: Unify this logic with default host
@@ -26,7 +27,7 @@ namespace Microsoft.Dnx.Runtime.Loader
 
             var assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraries);
 
-            _projectAssemblyLoader = new ProjectAssemblyLoader(loadContextAccessor: null, compilationEngine: compilationEngine, projects: projects);
+            _projectAssemblyLoader = new ProjectAssemblyLoader(loadContextAccessor: null, compilationEngine: compilationEngine, projects: projects, configuration: configuration);
             _packageAssemblyLoader = new PackageAssemblyLoader(loadContextAccessor: null, assemblies: assemblies, libraryDescriptions: libraries);
             _defaultContext = defaultContext;
         }

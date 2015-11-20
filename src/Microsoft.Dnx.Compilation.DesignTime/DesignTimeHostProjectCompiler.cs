@@ -31,7 +31,8 @@ namespace Microsoft.Dnx.Compilation.DesignTime
         public IMetadataProjectReference CompileProject(
             CompilationProjectContext projectContext,
             Func<LibraryExport> referenceResolver,
-            Func<IList<ResourceDescriptor>> resourcesResolver)
+            Func<IList<ResourceDescriptor>> resourcesResolver,
+            string configuration)
         {
             // The target framework and configuration are assumed to be correct
             // in the design time process

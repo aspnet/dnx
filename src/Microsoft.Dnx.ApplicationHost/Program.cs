@@ -164,7 +164,7 @@ namespace Microsoft.Dnx.ApplicationHost
             defaultHostOptions = new RuntimeOptions();
 
             defaultHostOptions.TargetFramework = environment.RuntimeFramework;
-            defaultHostOptions.Configuration = optionConfiguration.Value() ?? environment.Configuration ?? "Debug";
+            defaultHostOptions.Configuration = optionConfiguration.Value() ?? "Debug";
             defaultHostOptions.ApplicationBaseDirectory = environment.ApplicationBasePath;
             var portValue = optionCompilationServer.Value() ?? Environment.GetEnvironmentVariable(EnvironmentNames.CompilationServerPort);
 

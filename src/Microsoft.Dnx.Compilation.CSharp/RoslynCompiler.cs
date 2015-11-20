@@ -58,7 +58,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
             CompilationProjectContext projectContext,
             IEnumerable<IMetadataReference> incomingReferences,
             IEnumerable<ISourceReference> incomingSourceReferences,
-            Func<IList<ResourceDescriptor>> resourcesResolver)
+            Func<IList<ResourceDescriptor>> resourcesResolver,
+            string configuration)
         {
             var path = projectContext.ProjectDirectory;
             var name = projectContext.Target.Name;
@@ -149,7 +150,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             {
                 try
                 {
-                    var modules = GetCompileModules(projectContext.Target).Modules;
+                    var modules = GetCompileModules(projectContext.Target, configuration).Modules;
 
                     foreach (var m in modules)
                     {
@@ -215,14 +216,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
             }
         }
 
-        private CompilationModules GetCompileModules(CompilationTarget target)
+        private CompilationModules GetCompileModules(CompilationTarget target, string configuration)
         {
             // The only thing that matters is the runtime environment
             // when loading the compilation modules, so use that as the cache key
             var key = Tuple.Create(
                 target.Name,
                 _environment.RuntimeFramework,
-                _environment.Configuration,
+                configuration,
                 "compilemodules");
 
             return _cache.Get<CompilationModules>(key, _ =>

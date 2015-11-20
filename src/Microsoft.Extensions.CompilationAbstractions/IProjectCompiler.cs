@@ -11,6 +11,7 @@ namespace Microsoft.Extensions.CompilationAbstractions
         IMetadataProjectReference CompileProject(
             CompilationProjectContext projectContext,
             Func<LibraryExport> referenceResolver,
-            Func<IList<ResourceDescriptor>> resourcesResolver);
+            Func<IList<ResourceDescriptor>> resourcesResolver,
+            string configuration);
     }
 }

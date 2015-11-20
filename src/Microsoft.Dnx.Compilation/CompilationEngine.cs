@@ -18,15 +18,14 @@ namespace Microsoft.Dnx.Compilation
         public CompilationEngine(CompilationEngineContext context)
         {
             _context = context;
-
             CompilationCache = _context.CompilationCache;
         }
 
         public CompilationCache CompilationCache { get; }
 
-        public Assembly LoadProject(Project project, FrameworkName targetFramework, string aspect, IAssemblyLoadContext loadContext, AssemblyName assemblyName)
+        public Assembly LoadProject(Project project, FrameworkName targetFramework, string aspect, IAssemblyLoadContext loadContext, AssemblyName assemblyName, string configuration)
         {
-            var exporter = CreateProjectExporter(project, targetFramework, _context.ApplicationEnvironment.Configuration);
+            var exporter = CreateProjectExporter(project, targetFramework, configuration);
 
             // Export the project
             var export = exporter.GetExport(project.Name, aspect);
@@ -64,11 +63,11 @@ namespace Microsoft.Dnx.Compilation
             return new LibraryExporter(context.LibraryManager, this, configuration);
         }
 
-        public IAssemblyLoadContext CreateBuildLoadContext(Project project)
+        public IAssemblyLoadContext CreateBuildLoadContext(Project project, string configuration)
         {
             // This load context represents the graph that will be used to *load* the compiler and other
             // build time related dependencies
-            return new BuildLoadContext(project, this, _context);
+            return new BuildLoadContext(project, this, _context, configuration);
         }
 
         public IProjectCompiler GetCompiler(TypeInformation provider, IAssemblyLoadContext loadContext)

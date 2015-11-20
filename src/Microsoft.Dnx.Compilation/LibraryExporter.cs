@@ -241,7 +241,7 @@ namespace Microsoft.Dnx.Compilation
 
                     // Create the project exporter
                     var exporter = _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration);
-                    context.LoadContext = _compilationEngine.CreateBuildLoadContext(project.Project);
+                    context.LoadContext = _compilationEngine.CreateBuildLoadContext(project.Project, _configuration);
 
                     // Get the exports for the project dependencies
                     var projectDependenciesExport = new Lazy<LibraryExport>(() => exporter.GetAllDependencies(project.Identity.Name, aspect));
@@ -255,7 +255,8 @@ namespace Microsoft.Dnx.Compilation
                     IMetadataProjectReference projectReference = projectCompiler.CompileProject(
                         compilationContext,
                         () => projectDependenciesExport.Value,
-                        () => CompositeResourceProvider.Default.GetResources(project.Project));
+                        () => CompositeResourceProvider.Default.GetResources(project.Project),
+                        _configuration);
 
                     metadataReferences.Add(projectReference);
 

@@ -13,17 +13,20 @@ namespace Microsoft.Dnx.Compilation
     {
         private readonly Project _project;
         private readonly CompilationEngine _compilationEngine;
+        private readonly string _configuration;
         private readonly CompilationEngineContext _compilationEngineContext;
         private RuntimeLoadContext _projectLoadContext;
         private readonly object _syncObject = new object();
 
         public BuildLoadContext(Project project,
                                 CompilationEngine compilationEngine,
-                                CompilationEngineContext compilationEngineContext)
+                                CompilationEngineContext compilationEngineContext,
+                                string configuration)
         {
             _project = project;
             _compilationEngine = compilationEngine;
             _compilationEngineContext = compilationEngineContext;
+            _configuration = configuration;
         }
 
         private RuntimeLoadContext LoadContext
@@ -71,7 +74,7 @@ namespace Microsoft.Dnx.Compilation
 
             var libraries = ApplicationHostContext.GetRuntimeLibraries(context);
 
-            return new RuntimeLoadContext($"{_project.Name}_build", libraries, _compilationEngine, _compilationEngineContext.DefaultLoadContext);
+            return new RuntimeLoadContext($"{_project.Name}_build", libraries, _compilationEngine, _compilationEngineContext.DefaultLoadContext, _configuration);
         }
 
         public override void Dispose()
