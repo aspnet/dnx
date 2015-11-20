@@ -215,7 +215,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
         [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
-        public void PublishedAppWithWebRootFailsIfIISCommandInvalid(DnxSdk sdk)
+        public void IISCommandInvalid(DnxSdk sdk)
         {
             // Arrange
             var solution = TestUtils.GetSolution<DnuPublishTests>(sdk, "HelloWorldWithWebRoot");
