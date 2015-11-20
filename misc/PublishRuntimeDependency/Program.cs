@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Data.SqlClient;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace PublishRuntimeDependency
 {
@@ -10,27 +15,55 @@ namespace PublishRuntimeDependency
     {
         public void Main(string[] args)
         {
-            if (args.Length < 1)
-            {
-                args = new[] { "https://www.microsoft.com" };
-            }
+            RunTest("System.Net.Security", TestSslStream);
+            RunTest("System.Net.NetworkInformation", TestNetworkInformation);
+            RunTest("System.Net.WebSockets.Client", TestWebSockets);
+            RunTest("System.Data.SqlClient", TestSqlClient);
+            RunTest("System.Reflection.DispatchProxy", TestDispatchProxy);
+        }
 
-            Console.WriteLine("=== Testing with raw Stream ===");
-            try
-            {
-                TestStream(args[0]);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("FAILED:");
-                Console.WriteLine(ex.ToString());
-            }
+        public interface ITestInterface
+        {
+            void DoTheThing();
+        }
+        public class TestProxy : DispatchProxy
+        {
+            public bool WasCalled { get; private set; }
 
+            protected override object Invoke(MethodInfo targetMethod, object[] args)
+            {
+                WasCalled = true;
+                Console.WriteLine($"Intercepted: {targetMethod.Name} with dispatch proxy");
+                return null;
+            }
+        }
+
+        private void TestDispatchProxy()
+        {
+            var proxy = DispatchProxy.Create<ITestInterface, TestProxy>();
+            proxy.DoTheThing();
+
+            if (!((TestProxy)proxy).WasCalled)
+            {
+                throw new Exception("The proxy was not called!");
+            }
+            Console.WriteLine("The proxy was called");
+        }
+
+        private void TestSqlClient()
+        {
+            // Don't want to take a dependency on Sql Server so we just force loading by constructing a type
+            var con = new SqlConnection();
+            Console.WriteLine("Successfully loaded System.Data.SqlClient");
+        }
+
+        private void RunTest(string name, Action act)
+        {
             Console.WriteLine();
-            Console.WriteLine("=== Testing with StreamReader ===");
+            Console.WriteLine($"=== Testing {name} ===");
             try
             {
-                TestStreamReader(args[0]);
+                act();
             }
             catch (Exception ex)
             {
@@ -39,10 +72,34 @@ namespace PublishRuntimeDependency
             }
         }
 
-        public void TestStreamReader(string urlStr)
+        private void TestWebSockets()
+        {
+            var socket = new ClientWebSocket();
+            Console.WriteLine("Connecting");
+            socket.ConnectAsync(new Uri("wss://echo.websocket.org"), CancellationToken.None).Wait();
+
+            Console.WriteLine("Sending");
+            socket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("Hello")), WebSocketMessageType.Text, true, CancellationToken.None).Wait();
+
+            var buffer = new byte[1024];
+            Console.WriteLine("Receiving");
+            var result = socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).Result;
+
+            Console.WriteLine($"Recieved: {Encoding.UTF8.GetString(buffer, 0, result.Count)}");
+        }
+
+        private void TestNetworkInformation()
+        {
+            foreach (var iface in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                Console.WriteLine($"Network Interface: {iface.Id} {iface.Name} ({iface.NetworkInterfaceType})");
+            }
+        }
+
+        public void TestSslStream()
         {
             // Make a simple HTTP request
-            var url = new Uri(urlStr);
+            var url = new Uri("https://www.microsoft.com");
 
             var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             socket.Connect(url.Host, url.Port);
@@ -58,33 +115,6 @@ namespace PublishRuntimeDependency
                 using (var reader = new StreamReader(stream, Encoding.UTF8))
                 {
                     Console.WriteLine(reader.ReadToEnd());
-                }
-            }
-        }
-
-        public void TestStream(string urlStr)
-        {
-            // Make a simple HTTP request
-            var url = new Uri(urlStr);
-
-            var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect(url.Host, url.Port);
-
-            using (var stream = GetStream(socket, url))
-            {
-                // Send the request
-                var request = $"GET {url.PathAndQuery} HTTP/1.1\r\nHost: {url.Host}\r\nConnection: close\r\n\r\n";
-                var buffer = Encoding.UTF8.GetBytes(request);
-                stream.Write(buffer, 0, buffer.Length);
-
-                // Read the response
-                byte[] readbuffer = new byte[1024];
-                int read = 0;
-                Console.WriteLine("Response:");
-                while ((read = stream.Read(readbuffer, 0, readbuffer.Length)) != 0)
-                {
-                    var converted = Encoding.UTF8.GetString(readbuffer, 0, read);
-                    Console.Write(converted);
                 }
             }
         }

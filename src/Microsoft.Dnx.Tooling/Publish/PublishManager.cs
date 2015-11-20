@@ -294,7 +294,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                         }
                         else if (library.Type == LibraryTypes.Package)
                         {
-                            if (!root.Packages.Any(p => p.Library.Name == library.Identity.Name))
+                            if (!root.Packages.Any(p => p.Library.Name == library.Identity.Name && p.Library.Version == library.Identity.Version))
                             {
                                 root.Packages.Add(new PublishPackage((PackageDescription)library));
                             }
