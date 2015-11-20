@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime.Helpers;
+using Microsoft.Dnx.Tooling.Publish.Bundling;
 
 namespace Microsoft.Dnx.Tooling.Publish
 {
@@ -35,6 +36,8 @@ namespace Microsoft.Dnx.Tooling.Publish
         public Reports Reports { get; set; }
 
         public string IISCommand { get; set; }
+
+        public IPublishBundler Bundler { get; set; }
 
         public void AddFrameworkMonikers(IEnumerable<string> monikers)
         {

@@ -10,6 +10,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Helpers;
+using Microsoft.Dnx.Tooling.Publish.Bundling;
 using Microsoft.Dnx.Tooling.Utils;
 using Newtonsoft.Json.Linq;
 
@@ -326,6 +327,12 @@ namespace Microsoft.Dnx.Tooling.Publish
             if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
             {
                 _options.Reports.Error.WriteLine("Native image generation failed.");
+                return false;
+            }
+            
+            if (_options.Bundler != null && !_options.Bundler.Bundle(project, root, _options.Reports))
+            {
+                _options.Reports.Error.WriteLine("Bundle failed.");
                 return false;
             }
 
