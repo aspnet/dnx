@@ -37,12 +37,12 @@ namespace Microsoft.Dnx.Tooling
                     CommandOptionType.NoValue);
                 var optionWwwRoot = c.Option("--wwwroot <NAME>", "Name of public folder in the project directory",
                     CommandOptionType.SingleValue);
+                var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
+                    "Name of public folder in the output, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
+                    CommandOptionType.SingleValue);
                 var optionBundleFormat = c.Option("--bundle <FORMAT>", $"After publishing, output files can be bundled together into a single artifact, using the specified format. Supported formats: {string.Join(", ", BundlerFactory.SupportedFormats)}",
                     CommandOptionType.SingleValue);
                 var optionBundleOutput = c.Option("--bundle-out <PATH>", "Where does the bundle go",
-                    CommandOptionType.SingleValue);
-                var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
-                    "Name of public folder in the output, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
                     CommandOptionType.SingleValue);
                 var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of published files",
                     CommandOptionType.NoValue);
