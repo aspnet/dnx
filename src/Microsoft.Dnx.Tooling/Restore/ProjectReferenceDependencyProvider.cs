@@ -52,17 +52,6 @@ namespace Microsoft.Dnx.Tooling
 
             var dependencies = project.Dependencies.Concat(targetFrameworkInfo.Dependencies).ToList();
             
-            if (!dependencies.Any(d => d.Name.Equals(ImplicitRuntimePackageConstants.ImplicitRuntimePackageId)))
-            {
-                dependencies.Add(new LibraryDependency()
-                {
-                    LibraryRange = new LibraryRange(ImplicitRuntimePackageConstants.ImplicitRuntimePackageId, frameworkReference: false)
-                    {
-                        VersionRange = new SemanticVersionRange(ImplicitRuntimePackageConstants.ImplicitRuntimePackageVersion)
-                    }
-                });
-            }
-
             return new ProjectDescription(
                 libraryRange,
                 project,

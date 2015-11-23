@@ -183,11 +183,8 @@ namespace Microsoft.Dnx.Tooling
             {
                 if (!library.Resolved)
                 {
-                    if (library.Identity.Name != ImplicitRuntimePackageConstants.ImplicitRuntimePackageId)
-                    {
-                        report.WriteLine("  Unable to resolve dependency {0}", library.Identity.ToString().Red().Bold());
-                        report.WriteLine();
-                    }
+                    report.WriteLine("  Unable to resolve dependency {0}", library.Identity.ToString().Red().Bold());
+                    report.WriteLine();
                     continue;
                 }
                 report.WriteLine("  Using {0} dependency {1}", library.Type, library.Identity);
