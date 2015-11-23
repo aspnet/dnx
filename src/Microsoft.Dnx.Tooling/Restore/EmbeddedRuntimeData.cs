@@ -1,16 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Versioning;
-using System.Threading.Tasks;
-using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
-using NuGet;
 
 namespace Microsoft.Dnx.Tooling
 {
-    internal class ImplicitPackagesWalkProvider : IWalkProvider
+    internal static class EmbeddedRuntimeData
     {
         // Based on values from the real Microsoft.NETCore.Platforms, but without 'aot' since DNX doesn't support .NET Native
         // These are designed to be an in-memory equivalent to a runtime.json.
@@ -94,7 +87,7 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("ubuntu.15.04-x64", "ubuntu.15.04", "ubuntu.14.10-x64"),
 
             // Ubuntu 15.10 is not compatible. It upgraded icu to 55
-            
+
             // Linux Mint 17.x is compatible with Ubuntu 14.04
             new RuntimeSpec("linuxmint.17", "ubuntu.14.04"),
             new RuntimeSpec("linuxmint.17-x64", "linuxmint.17", "ubuntu.14.04-x64"),
@@ -105,51 +98,14 @@ namespace Microsoft.Dnx.Tooling
             new RuntimeSpec("linuxmint.17.3", "linuxmint.17.2"),
             new RuntimeSpec("linuxmint.17.3-x64", "linuxmint.17.3", "linuxmint.17.2-x64"));
 
-        public bool IsHttp
+        internal static IEnumerable<string> GetEmbeddedImports(string runtimeName)
         {
-            get
+            RuntimeSpec spec;
+            if (ImplicitRuntimeFile.Runtimes.TryGetValue(runtimeName, out spec))
             {
-                return false;
+                return spec.Import;
             }
-        }
-
-        public Task CopyToAsync(WalkProviderMatch match, Stream stream)
-        {
-            // Do nothing, the package is embedded
-            return Task.FromResult(0);
-        }
-
-        public Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, FrameworkName targetFramework, bool includeUnlisted)
-        {
-            // If the package matches an embedded package, return it
-            if (libraryRange.Name.Equals(ImplicitRuntimePackageConstants.ImplicitRuntimePackageId))
-            {
-                return Task.FromResult(new WalkProviderMatch()
-                {
-                    Provider = this,
-                    LibraryType = LibraryTypes.Implicit,
-                    Library = new LibraryIdentity(
-                        ImplicitRuntimePackageConstants.ImplicitRuntimePackageId,
-                        ImplicitRuntimePackageConstants.ImplicitRuntimePackageVersion, 
-                        isGacOrFrameworkReference: false)
-                });
-            }
-            return Task.FromResult<WalkProviderMatch>(null);
-        }
-
-        public Task<IEnumerable<LibraryDependency>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework)
-        {
-            return Task.FromResult(Enumerable.Empty<LibraryDependency>());
-        }
-
-        public Task<RuntimeFile> GetRuntimes(WalkProviderMatch match, FrameworkName targetFramework)
-        {
-            if (match.Library.Name.Equals(ImplicitRuntimePackageConstants.ImplicitRuntimePackageId) && 
-                match.Library.Version.Equals(ImplicitRuntimePackageConstants.ImplicitRuntimePackageVersion))
-            {
-                return Task.FromResult(ImplicitRuntimeFile);
-            }
-            return Task.FromResult<RuntimeFile>(null);
+            return null;
         }
     }
 }
