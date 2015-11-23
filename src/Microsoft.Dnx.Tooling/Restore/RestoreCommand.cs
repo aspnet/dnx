@@ -633,6 +633,7 @@ namespace Microsoft.Dnx.Tooling
                             throw new ArgumentException($"Circular import for '{runtimeName}'", nameof(runtimeName));
                         }
                     }
+                    allRuntimeNames.Add(import);
                     FindRuntimeDependencies(
                         import,
                         runtimeFiles,
