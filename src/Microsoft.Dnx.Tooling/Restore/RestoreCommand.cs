@@ -12,10 +12,10 @@ using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Tooling.Publish;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
 using Microsoft.Dnx.Tooling.Utils;
+using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Tooling
@@ -273,9 +273,6 @@ namespace Microsoft.Dnx.Tooling
             localProviders.Add(
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(packageRepository)));
-
-            // Add the embedded package provider at the very end of the local providers
-            localProviders.Add(new ImplicitPackagesWalkProvider());
 
             var tasks = new List<Task<TargetContext>>();
 
@@ -617,6 +614,14 @@ namespace Microsoft.Dnx.Tooling
                     }
                 }
             }
+
+            // Add the embedded runtime data if we didn't find any imports
+            if (imports == null)
+            {
+                // This will return null if there are no embedded imports for this runtime, which is fine.
+                imports = EmbeddedRuntimeData.GetEmbeddedImports(runtimeName);
+            }
+
             if (imports != null)
             {
                 foreach (var import in imports)
@@ -628,6 +633,7 @@ namespace Microsoft.Dnx.Tooling
                             throw new ArgumentException($"Circular import for '{runtimeName}'", nameof(runtimeName));
                         }
                     }
+                    allRuntimeNames.Add(import);
                     FindRuntimeDependencies(
                         import,
                         runtimeFiles,

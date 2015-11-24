@@ -36,8 +36,7 @@ namespace Microsoft.Dnx.Tooling.Tests
         {
             var runtimeJson = ParseRuntimeFile(SystemNetPrimitivesSample);
             var files = new List<RuntimeFile> {
-                runtimeJson,
-                ImplicitPackagesWalkProvider.ImplicitRuntimeFile
+                runtimeJson
             };
 
             var effectiveDependencies = new Dictionary<string, DependencySpec>();
