@@ -107,6 +107,8 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         private void Initialize(RuntimeOptions options, IAssemblyLoadContextAccessor loadContextAccessor)
         {
+            Directory.SetCurrentDirectory(_projectDirectory);
+
             var applicationHostContext = new ApplicationHostContext
             {
                 ProjectDirectory = _projectDirectory,
