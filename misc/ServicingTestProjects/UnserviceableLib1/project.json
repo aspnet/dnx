@@ -1,7 +1,6 @@
-﻿{
-    "version": "1.0.0",
-
-    "frameworks" : {
-        "dnx451" : {}
-    }
+{
+  "version": "1.0.0",
+  "frameworks": {
+    "dnx451": {}
+  }
 }

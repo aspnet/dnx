@@ -1,24 +1,26 @@
 {
-    "version": "1.0.0-*",
-    "compilationOptions": {
-        "define": [ "TRACE" ],
-        "warningsAsErrors": true,
-        "keyFile": "../../tools/Key.snk"
+  "version": "1.0.0-rc1-update1",
+  "compilationOptions": {
+    "define": [
+      "TRACE"
+    ],
+    "warningsAsErrors": true,
+    "keyFile": "../../tools/Key.snk"
+  },
+  "shared": "**/*.cs",
+  "dependencies": {},
+  "frameworks": {
+    "dotnet5.4": {
+      "dependencies": {
+        "System.Runtime": "4.0.21-beta-23516",
+        "System.Threading": "4.0.11-beta-23516"
+      }
     },
-    "shared": "**/*.cs",
-    "dependencies": { },
-    "frameworks": {
-        "dotnet5.4": {
-            "dependencies": {
-                "System.Runtime": "4.0.21-beta-*",
-                "System.Threading": "4.0.11-beta-*"
-            }
-        },
-        "net451": { },
-        "netcore50": {
-            "dependencies": {
-                "System.Runtime": "4.0.0"
-            }
-        }
+    "net451": {},
+    "netcore50": {
+      "dependencies": {
+        "System.Runtime": "4.0.21-beta-23516"
+      }
     }
+  }
 }

@@ -1,9 +1,6 @@
-﻿{
+{
   "version": "1.0.0-*",
-
-  "dependencies": {
-  },
-
+  "dependencies": {},
   "frameworks": {
     "dnx451": {
       "dependencies": {

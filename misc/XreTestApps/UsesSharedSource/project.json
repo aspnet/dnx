@@ -1,8 +1,8 @@
 {
-    "dependencies": {
-        "SharedSource": ""
-    },
-    "frameworks": {
-        "dnx451": {}
-    }
+  "dependencies": {
+    "SharedSource": ""
+  },
+  "frameworks": {
+    "dnx451": {}
+  }
 }
