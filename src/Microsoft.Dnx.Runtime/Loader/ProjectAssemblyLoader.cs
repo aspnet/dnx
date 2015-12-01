@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Versioning;
@@ -18,7 +19,7 @@ namespace Microsoft.Dnx.Runtime.Loader
         private readonly ICompilationEngine _compilationEngine;
         private readonly string _configuration;
         private readonly IDictionary<string, RuntimeProject> _projects;
-        private readonly HashSet<string> _unloadableNativeLibs = new HashSet<string>();
+        private readonly ConcurrentDictionary<string, byte> _unloadableNativeLibs = new ConcurrentDictionary<string, byte>();
 
         public ProjectAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
                                      ICompilationEngine compilationEngine,
@@ -90,7 +91,7 @@ namespace Microsoft.Dnx.Runtime.Loader
 
         public IntPtr LoadUnmanagedLibrary(string name)
         {
-            if (_unloadableNativeLibs.Contains(name))
+            if (_unloadableNativeLibs.ContainsKey(name))
             {
                 return IntPtr.Zero;
             }
@@ -111,7 +112,7 @@ namespace Microsoft.Dnx.Runtime.Loader
                 }
             }
 
-            _unloadableNativeLibs.Add(name);
+            _unloadableNativeLibs.TryAdd(name, 0);
 
             return IntPtr.Zero;
         }
