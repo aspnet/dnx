@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.Versioning;
 
-namespace Microsoft.Extensions.PlatformAbstractions
+namespace Microsoft.Dnx.Runtime
 {
     /// <summary>
     /// Represents the options passed into the runtime on boot

@@ -16,7 +16,7 @@ namespace Microsoft.Dnx.Compilation.DesignTime
     {
         private readonly IDesignTimeHostCompiler _compiler;
 
-        public DesignTimeHostProjectCompiler(IApplicationShutdown shutdown,  RuntimeOptions runtimeOptions)
+        public DesignTimeHostProjectCompiler(RuntimeOptions runtimeOptions)
         {
             // Using this ctor because it works on mono, this is hard coded to ipv4
             // right now. Mono will eventually have the dualmode overload
@@ -25,7 +25,7 @@ namespace Microsoft.Dnx.Compilation.DesignTime
 
             var networkStream = new NetworkStream(socket);
 
-            _compiler = new DesignTimeHostCompiler(shutdown, networkStream);
+            _compiler = new DesignTimeHostCompiler(networkStream);
         }
 
         public IMetadataProjectReference CompileProject(

@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.JsonParser.Sources;
-using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
 
 namespace Microsoft.Dnx.Runtime
 {

@@ -17,7 +17,6 @@ namespace Microsoft.Dnx.Runtime.Common.DependencyInjection
         public ServiceProvider()
         {
             Add(typeof(IServiceProvider), this, includeInManifest: false);
-            Add(typeof(IRuntimeServices), new ServiceManifest(this), includeInManifest: false);
         }
 
         public ServiceProvider(IServiceProvider fallbackServiceProvider)
@@ -104,43 +103,10 @@ namespace Microsoft.Dnx.Runtime.Common.DependencyInjection
             return null;
         }
 
-        private IEnumerable<Type> GetManifestServices()
-        {
-            var services = _entries.Where(p => p.Value.IncludeInManifest)
-                                   .Select(p => p.Key);
-
-            var fallbackManifest = _fallbackServiceProvider?.GetService(typeof(IRuntimeServices)) as IRuntimeServices;
-
-            if (fallbackManifest != null)
-            {
-                return fallbackManifest.Services.Concat(services);
-            }
-
-            return services;
-        }
-
         private class ServiceEntry
         {
             public object Instance { get; set; }
             public bool IncludeInManifest { get; set; }
-        }
-
-        private class ServiceManifest : IRuntimeServices
-        {
-            private readonly ServiceProvider _serviceProvider;
-
-            public ServiceManifest(ServiceProvider serviceProvider)
-            {
-                _serviceProvider = serviceProvider;
-            }
-
-            public IEnumerable<Type> Services
-            {
-                get
-                {
-                    return _serviceProvider.GetManifestServices().Distinct();
-                }
-            }
         }
     }
 }

@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
 
 namespace Microsoft.Dnx.Runtime.Internal
 {

@@ -10,7 +10,7 @@ using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Dnx.Runtime.Common.Impl;
 
 namespace Microsoft.Dnx.Compilation.CSharp

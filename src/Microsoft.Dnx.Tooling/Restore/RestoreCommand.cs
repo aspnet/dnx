@@ -15,6 +15,7 @@ using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Tooling.Publish;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
 using Microsoft.Dnx.Tooling.Utils;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 

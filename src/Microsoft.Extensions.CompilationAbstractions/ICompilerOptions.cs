@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.Extensions.PlatformAbstractions
+namespace Microsoft.Extensions.CompilationAbstractions
 {
     /// <summary>
     /// Provides an interface to well-known Compiler Options like "defines" and "optimize", as well as a

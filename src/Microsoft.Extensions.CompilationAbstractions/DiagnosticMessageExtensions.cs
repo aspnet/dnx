@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.Extensions.PlatformAbstractions
+namespace Microsoft.Extensions.CompilationAbstractions
 {
     public static class DiagnosticMessageExtensions
     {

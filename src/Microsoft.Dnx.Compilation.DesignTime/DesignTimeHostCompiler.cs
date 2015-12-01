@@ -12,13 +12,11 @@ namespace Microsoft.Dnx.Compilation.DesignTime
     public class DesignTimeHostCompiler : IDesignTimeHostCompiler
     {
         private readonly ProcessingQueue _queue;
-        private readonly IApplicationShutdown _shutdown;
         private readonly ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>> _compileResponses = new ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>>();
         private readonly TaskCompletionSource<Dictionary<string, int>> _projectContexts = new TaskCompletionSource<Dictionary<string, int>>();
 
-        public DesignTimeHostCompiler(IApplicationShutdown shutdown, Stream stream)
+        public DesignTimeHostCompiler(Stream stream)
         {
-            _shutdown = shutdown;
             _queue = new ProcessingQueue(stream);
             _queue.ProjectCompiled += OnProjectCompiled;
             _queue.ProjectsInitialized += ProjectContextsInitialized;
@@ -38,7 +36,6 @@ namespace Microsoft.Dnx.Compilation.DesignTime
             if (contextId == null || contextId == -1)
             {
                 _projectContexts.TrySetException(exception);
-                _shutdown.RequestShutdown();
             }
             else
             {

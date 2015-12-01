@@ -31,7 +31,6 @@ namespace Microsoft.Dnx.ApplicationHost
 
         private readonly string _projectDirectory;
         private readonly FrameworkName _targetFramework;
-        private readonly ApplicationShutdown _shutdown = new ApplicationShutdown();
         private readonly IList<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly IRuntimeEnvironment _runtimeEnvironment;
@@ -144,7 +143,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Compilation services available only for runtime compilation
             compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
-            compilationContext.AddCompilationService(typeof(IApplicationShutdown), _shutdown);
 
             var compilationEngine = new CompilationEngine(compilationContext);
             var runtimeLibraryExporter = new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration));
@@ -153,14 +151,12 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Default services
             _serviceProvider.Add(typeof(ILibraryExporter), runtimeLibraryExporter);
-            _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             _serviceProvider.Add(typeof(IRuntimeEnvironment), PlatformServices.Default.Runtime);
             _serviceProvider.Add(typeof(ILibraryManager), runtimeLibraryManager);
             _serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), PlatformServices.Default.AssemblyLoadContextAccessor);
             _serviceProvider.Add(typeof(IAssemblyLoaderContainer), PlatformServices.Default.AssemblyLoaderContainer);
-
-
+            
             PlatformServices.SetDefault(new ApplicationHostPlatformServices(PlatformServices.Default, applicationEnvironment, runtimeLibraryManager));
 
             if (options.CompilationServerPort.HasValue)
@@ -168,8 +164,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 // Change the project reference provider
                 Project.DefaultCompiler = Project.DefaultDesignTimeCompiler;
             }
-
-            CallContextServiceLocator.Locator.ServiceProvider = _serviceProvider;
 
             // TODO: Dedupe this logic in the RuntimeLoadContext
             var projects = libraries.Where(p => p.Type == LibraryTypes.Project)

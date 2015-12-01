@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using Microsoft.Extensions.CompilationAbstractions;
 using NuGet;
 using Xunit;
 
@@ -228,7 +229,7 @@ namespace Microsoft.Dnx.Runtime.Tests.Host
             const string DummyProject = @"{ ""frameworks"": { ""dnx451"": {} } }";
             using (var strm = new MemoryStream(Encoding.UTF8.GetBytes(DummyProject)))
             {
-                return new ProjectReader().ReadProject(strm, "DummyProject", @"C:\DummyProject", new List<Microsoft.Extensions.PlatformAbstractions.DiagnosticMessage>());
+                return new ProjectReader().ReadProject(strm, "DummyProject", @"C:\DummyProject", new List<Microsoft.Extensions.CompilationAbstractions.DiagnosticMessage>());
             }
         }
     }

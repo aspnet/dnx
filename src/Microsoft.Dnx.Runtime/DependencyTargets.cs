@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Microsoft.Extensions.PlatformAbstractions
+namespace Microsoft.Dnx.Runtime
 {
     public static class DependencyTargets
     {
