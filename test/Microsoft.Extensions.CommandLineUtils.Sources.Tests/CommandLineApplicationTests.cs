@@ -426,5 +426,26 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
             Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal("this should throw", ex.Message);
         }
+
+        [Fact]
+        public void OptionSwitchWithSlashMayBeProvided()
+        {
+            CommandOption first = null;
+            CommandOption second = null;
+
+            var app = new CommandLineApplication();
+
+            app.Command("test", c =>
+            {
+                first = c.Option("/first <NAME>", "First argument", CommandOptionType.SingleValue);
+                second = c.Option("/second <NAME>", "Second argument", CommandOptionType.SingleValue);
+                c.OnExecute(() => 0);
+            });
+
+            app.Execute("test", "/first", "one", "/second", "two");
+
+            Assert.Equal("one", first.Values[0]);
+            Assert.Equal("two", second.Values[0]);
+        }        
     }
 }

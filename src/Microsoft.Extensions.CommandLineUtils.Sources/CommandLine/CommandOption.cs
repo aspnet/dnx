@@ -35,6 +35,22 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                         ShortName = optName;
                     }
                 }
+                else if (part.StartsWith("/"))
+                {
+                    var optName = part.Substring(1);
+
+                    if (optName.Length > 1)
+                        LongName = optName;
+                    // If there is only one char and it is not an English letter, it is a symbol option (e.g. "-?")
+                    else if (optName.Length == 1 && !IsEnglishLetter(optName[0]))
+                    {
+                        SymbolName = optName;
+                    }
+                    else
+                    {
+                        ShortName = optName;
+                    }
+                }
                 else if (part.StartsWith("<") && part.EndsWith(">"))
                 {
                     ValueName = part.Substring(1, part.Length - 2);
