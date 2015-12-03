@@ -119,6 +119,15 @@ namespace Microsoft.Dnx.Runtime.Common.CommandLine
                     {
                         shortOption = arg.Substring(1).Split(new[] { ':', '=' }, 2);
                     }
+                    else if (arg.StartsWith("/"))
+                    {
+                        var longOrShortoption = arg.Substring(1).Split(new[] { ':', '=' }, 2);
+
+                        if (longOrShortoption.Length > 0 && longOrShortoption[0].Length == 1)
+                            shortOption = longOrShortoption;
+                        else
+                            longOption = longOrShortoption;
+                    }
                     if (longOption != null)
                     {
                         processed = true;
