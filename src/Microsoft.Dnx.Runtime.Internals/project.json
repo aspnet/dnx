@@ -7,7 +7,7 @@
     },
     "shared": "**/*.cs",
     "dependencies": {
-        "Microsoft.Extensions.PlatformAbstractions": ""
+        "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*"
     },
     "frameworks": {
         "dnx451": { },
