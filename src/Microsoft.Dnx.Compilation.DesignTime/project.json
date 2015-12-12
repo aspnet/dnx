@@ -3,17 +3,18 @@
     "compilationOptions": {
         "keyFile": "../../tools/Key.snk"
     },
-    "dependencies": {
-        "Microsoft.Extensions.CompilationAbstractions": "1.0.0-*",
-        "Microsoft.Extensions.JsonParser.Sources": {
-            "version": "1.0.0-*",
-            "type": "build"
-        },
-        "Microsoft.Dnx.Runtime.Sources": {
-            "version": "1.0.0-*",
-            "type": "build"
-        }
+  "dependencies": {
+    "Microsoft.Dnx.Runtime": "1.0.0-*",
+    "Microsoft.Extensions.CompilationAbstractions": "1.0.0-*",
+    "Microsoft.Extensions.JsonParser.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
     },
+    "Microsoft.Dnx.Runtime.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
+    }
+  },
     "frameworks": {
         "dnx451": { },
         "dnxcore50": {

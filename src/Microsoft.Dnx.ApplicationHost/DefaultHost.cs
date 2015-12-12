@@ -38,7 +38,7 @@ namespace Microsoft.Dnx.ApplicationHost
         private Project _project;
         private readonly ServiceProvider _serviceProvider;
 
-        public DefaultHost(RuntimeOptions options,
+        public DefaultHost(DefaultHostOptions options,
                            IAssemblyLoadContextAccessor loadContextAccessor)
         {
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
@@ -104,7 +104,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             });
         }
 
-        private void Initialize(RuntimeOptions options, IAssemblyLoadContextAccessor loadContextAccessor)
+        private void Initialize(DefaultHostOptions options, IAssemblyLoadContextAccessor loadContextAccessor)
         {
             var applicationHostContext = new ApplicationHostContext
             {
@@ -141,9 +141,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 loadContextAccessor.Default,
                 new CompilationCache());
 
-            // Compilation services available only for runtime compilation
-            compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
-
             var compilationEngine = new CompilationEngine(compilationContext);
             var runtimeLibraryExporter = new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration));
 
@@ -163,6 +160,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             {
                 // Change the project reference provider
                 Project.DefaultCompiler = Project.DefaultDesignTimeCompiler;
+                Project.DesignTimeCompilerPort = options.CompilationServerPort.Value;
             }
 
             // TODO: Dedupe this logic in the RuntimeLoadContext

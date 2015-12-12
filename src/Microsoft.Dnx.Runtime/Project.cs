@@ -17,6 +17,7 @@ namespace Microsoft.Dnx.Runtime
 
         public static readonly TypeInformation DefaultRuntimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.CSharp", "Microsoft.Dnx.Compilation.CSharp.RoslynProjectCompiler");
         public static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.DesignTime", "Microsoft.Dnx.Compilation.DesignTime.DesignTimeHostProjectCompiler");
+        public static int DesignTimeCompilerPort;
 
         public static TypeInformation DefaultCompiler = DefaultRuntimeCompiler;
 

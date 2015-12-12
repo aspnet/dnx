@@ -16,12 +16,12 @@ namespace Microsoft.Dnx.Compilation.DesignTime
     {
         private readonly IDesignTimeHostCompiler _compiler;
 
-        public DesignTimeHostProjectCompiler(RuntimeOptions runtimeOptions)
+        public DesignTimeHostProjectCompiler()
         {
             // Using this ctor because it works on mono, this is hard coded to ipv4
             // right now. Mono will eventually have the dualmode overload
             var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect(new IPEndPoint(IPAddress.Loopback, runtimeOptions.CompilationServerPort.Value));
+            socket.Connect(new IPEndPoint(IPAddress.Loopback, Project.DesignTimeCompilerPort));
 
             var networkStream = new NetworkStream(socket);
 

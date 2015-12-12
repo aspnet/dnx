@@ -21,7 +21,7 @@ namespace Microsoft.Dnx.ApplicationHost
     {
         public static int Main(string[] args)
         {
-            RuntimeOptions options;
+            DefaultHostOptions options;
             string[] programArgs;
             int exitCode;
             DefaultHost host;
@@ -113,7 +113,7 @@ namespace Microsoft.Dnx.ApplicationHost
             return Environment.GetEnvironmentVariable(key);
         }
 
-        private  static bool ParseArgs(string[] args, out RuntimeOptions defaultHostOptions, out string[] outArgs, out int exitCode)
+        private  static bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs, out int exitCode)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "Microsoft.Dnx.ApplicationHost";
@@ -161,7 +161,7 @@ namespace Microsoft.Dnx.ApplicationHost
                 return true;
             }
             var environment = PlatformServices.Default.Application;
-            defaultHostOptions = new RuntimeOptions();
+            defaultHostOptions = new DefaultHostOptions();
 
             defaultHostOptions.TargetFramework = environment.RuntimeFramework;
             defaultHostOptions.Configuration = optionConfiguration.Value() ?? "Debug";

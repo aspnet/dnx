@@ -22,6 +22,7 @@ nuget.exe
 *.*sdf
 *.ipch
 *.aps
+*.opendb
 /KRuntime.sln.ide
 /*.vspx
 *.metaproj*
