@@ -65,29 +65,9 @@ namespace Microsoft.Dnx.ApplicationHost
                 throw SuppressStackTrace(ex);
             }
 
-            IDisposable disposable = null;
-
-            try
+            using (host.AddLoaders(PlatformServices.Default.AssemblyLoaderContainer))
             {
-                disposable = host.AddLoaders(PlatformServices.Default.AssemblyLoaderContainer);
-
-                return ExecuteMain(host, options.ApplicationName, programArgs)
-                        .ContinueWith((t, state) =>
-                        {
-                            ((IDisposable)state).Dispose();
-                            return t.GetAwaiter().GetResult();
-                        },
-                        disposable).GetAwaiter().GetResult();
-            }
-            catch
-            {
-                // If there's an error, dispose the host and throw
-                if (disposable != null)
-                {
-                    disposable.Dispose();
-                }
-
-                throw;
+                return ExecuteMain(host, options.ApplicationName, programArgs);
             }
         }
 
@@ -113,7 +93,7 @@ namespace Microsoft.Dnx.ApplicationHost
             return Environment.GetEnvironmentVariable(key);
         }
 
-        private  static bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs, out int exitCode)
+        private static bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs, out int exitCode)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "Microsoft.Dnx.ApplicationHost";
@@ -200,7 +180,7 @@ namespace Microsoft.Dnx.ApplicationHost
             return false;
         }
 
-        private static Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
+        private static int ExecuteMain(DefaultHost host, string applicationName, string[] args)
         {
             Assembly assembly = null;
 
@@ -224,20 +204,18 @@ namespace Microsoft.Dnx.ApplicationHost
 
             if (assembly == null)
             {
-                return Task.FromResult(1);
+                return 1;
             }
 
-            return Task.Run(()=> EntryPointExecutor.Execute(assembly, args, host.ServiceProvider))
-                        .ContinueWith(t =>
-                        {
-                            t.Exception?.Handle(e =>
-                            {
-                                SuppressCompilationExceptions(e);
-                                return false;
-                            });
-
-                            return t.Result;
-                        });
+            try
+            {
+                return EntryPointExecutor.ExecuteAssembly(assembly, args);
+            }
+            catch (Exception ex)
+            {
+                SuppressStackTrace(ex);
+                throw;
+            }
 
         }
 
@@ -263,7 +241,7 @@ namespace Microsoft.Dnx.ApplicationHost
         {
             var commands = host.Project.Commands;
             throw SuppressStackTrace(new InvalidOperationException(
-                $"Unable to load application or execute command '{applicationName}'.{(commands.Any() ? $" Available commands: {string.Join(", ", commands.Keys)}.": "")}",
+                $"Unable to load application or execute command '{applicationName}'.{(commands.Any() ? $" Available commands: {string.Join(", ", commands.Keys)}." : "")}",
                 innerException));
         }
 

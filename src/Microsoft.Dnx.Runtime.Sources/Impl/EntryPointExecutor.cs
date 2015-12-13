@@ -12,6 +12,15 @@ namespace Microsoft.Dnx.Runtime.Common
 {
     internal static class EntryPointExecutor
     {
+        public static int ExecuteAssembly(Assembly assembly, string[] args)
+        {
+#if NET451 || DNX451
+            return AppDomain.CurrentDomain.ExecuteAssemblyByName(assembly.FullName, args);
+#else
+            return Execute(assembly, args, serviceProvider: null).GetAwaiter().GetResult();
+#endif
+        }
+
         public static Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
         {
             object instance;
@@ -90,7 +99,7 @@ namespace Microsoft.Dnx.Runtime.Common
 
                 if (programTypeInfo == null)
                 {
-                                        
+
                     System.Console.WriteLine("'{0}' does not contain a 'Program' type suitable for an entry point", name);
                     return false;
                 }

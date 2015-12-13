@@ -5,9 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 
 namespace Microsoft.Dnx.Host
@@ -20,7 +18,7 @@ namespace Microsoft.Dnx.Host
         {
             try
             {
-                return ExecuteAsync(args, bootstrapperContext).GetAwaiter().GetResult();
+                return ExecuteCore(args, bootstrapperContext);
             }
             catch (Exception ex)
             {
@@ -59,7 +57,7 @@ namespace Microsoft.Dnx.Host
             }
         }
 
-        public static Task<int> ExecuteAsync(string[] args, BootstrapperContext bootstrapperContext)
+        private static int ExecuteCore(string[] args, BootstrapperContext bootstrapperContext)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = Constants.BootstrapperExeName;
@@ -107,14 +105,14 @@ namespace Microsoft.Dnx.Host
             // Help information was already shown because help option was specified
             if (app.IsShowingInformation)
             {
-                return Task.FromResult(0);
+                return 0;
             }
 
             // Show help information if no subcommand/option was specified
             if (!app.IsShowingInformation && app.RemainingArguments.Count == 0)
             {
                 app.ShowHelp();
-                return Task.FromResult(2);
+                return 2;
             }
 
             // Some options should be forwarded to Microsoft.Dnx.ApplicationHost
@@ -128,7 +126,7 @@ namespace Microsoft.Dnx.Host
                     if (appHostIndex < 0)
                     {
                         Console.WriteLine("The option '--{0}' can only be used with {1}", option.LongName, appHostName);
-                        return Task.FromResult(1);
+                        return 1;
                     }
 
                     if (option.OptionType == CommandOptionType.NoValue)
@@ -157,7 +155,7 @@ namespace Microsoft.Dnx.Host
 
             var bootstrapper = new Bootstrapper(searchPaths);
 
-            return bootstrapper.RunAsync(app.RemainingArguments, env, bootstrapperContext.ApplicationBase, bootstrapperContext.TargetFramework);
+            return bootstrapper.Run(app.RemainingArguments, env, bootstrapperContext.ApplicationBase, bootstrapperContext.TargetFramework);
         }
 
         private static IEnumerable<string> ResolveSearchPaths(string defaultLibPath, List<string> libPaths, List<string> remainingArgs)

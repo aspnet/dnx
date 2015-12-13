@@ -36,7 +36,6 @@ namespace Microsoft.Dnx.ApplicationHost
         private readonly IRuntimeEnvironment _runtimeEnvironment;
 
         private Project _project;
-        private readonly ServiceProvider _serviceProvider;
 
         public DefaultHost(DefaultHostOptions options,
                            IAssemblyLoadContextAccessor loadContextAccessor)
@@ -45,15 +44,9 @@ namespace Microsoft.Dnx.ApplicationHost
             _targetFramework = options.TargetFramework;
             _loadContextAccessor = loadContextAccessor;
             _runtimeEnvironment = PlatformServices.Default.Runtime;
-            _serviceProvider = new ServiceProvider();
             Initialize(options, loadContextAccessor);
         }
 
-        public IServiceProvider ServiceProvider
-        {
-            get { return _serviceProvider; }
-        }
-        
         public Project Project
         {
             get { return _project; }
@@ -146,14 +139,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             var runtimeLibraryManager = new RuntimeLibraryManager(applicationHostContext);
 
-            // Default services
-            _serviceProvider.Add(typeof(ILibraryExporter), runtimeLibraryExporter);
-            _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            _serviceProvider.Add(typeof(IRuntimeEnvironment), PlatformServices.Default.Runtime);
-            _serviceProvider.Add(typeof(ILibraryManager), runtimeLibraryManager);
-            _serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), PlatformServices.Default.AssemblyLoadContextAccessor);
-            _serviceProvider.Add(typeof(IAssemblyLoaderContainer), PlatformServices.Default.AssemblyLoaderContainer);
-            
             PlatformServices.SetDefault(new ApplicationHostPlatformServices(PlatformServices.Default, applicationEnvironment, runtimeLibraryManager));
 
             if (options.CompilationServerPort.HasValue)
@@ -174,9 +159,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, assemblies, libraries));
 
             var compilerOptionsProvider = new CompilerOptionsProvider(projects);
-
-            _serviceProvider.Add(typeof(ICompilerOptionsProvider), compilerOptionsProvider);
-
+            
             CompilationServices.SetDefault(
                     CompilationServices.Create(
                             libraryExporter: runtimeLibraryExporter,
