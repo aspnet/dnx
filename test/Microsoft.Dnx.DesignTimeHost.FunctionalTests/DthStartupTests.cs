@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Testing.Framework;
 using Microsoft.Dnx.Testing.Framework.DesignTimeHost;
 using Newtonsoft.Json;

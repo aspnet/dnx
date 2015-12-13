@@ -219,9 +219,9 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
 
         public void Dispose()
         {
-            _reader.Close();
-            _writer.Close();
-            _networkStream.Close();
+            _reader.Dispose();
+            _writer.Dispose();
+            _networkStream.Dispose();
             _readCancellationToken.Cancel();
         }
 
