@@ -385,7 +385,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                 {
                     var packageDir = resolver.GetInstallPath(library.Name, library.Version);
 
-                    if (library.Name != root.MainProjectName && string.Equals(library.Type, LibraryTypes.Package, StringComparison.OrdinalIgnoreCase))
+                    if (library.Name != root.MainProjectName && string.Equals(library.Type, Runtime.LibraryTypes.Package, StringComparison.OrdinalIgnoreCase))
                     {
                         filesToRemove.Add(resolver.GetHashPath(library.Name, library.Version));
                         filesToRemove.Add(resolver.GetPackageFilePath(library.Name, library.Version));

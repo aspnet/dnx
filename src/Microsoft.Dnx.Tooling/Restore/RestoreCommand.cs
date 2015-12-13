@@ -851,7 +851,7 @@ namespace Microsoft.Dnx.Tooling
             // Record all libraries used
             foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
             {
-                if (item.Match.LibraryType.Equals(LibraryTypes.Implicit))
+                if (item.Match.LibraryType.Equals(Runtime.LibraryTypes.Implicit))
                 {
                     continue;
                 }
@@ -862,14 +862,14 @@ namespace Microsoft.Dnx.Tooling
                     continue;
                 }
 
-                if (item.Match.LibraryType.Equals(LibraryTypes.Project))
+                if (item.Match.LibraryType.Equals(Runtime.LibraryTypes.Project))
                 {
                     var projectDependency = projectResolver.FindProject(library.Name);
                     var projectLibrary = LockFileUtils.CreateLockFileProjectLibrary(project, projectDependency);
 
                     lockFile.ProjectLibraries.Add(projectLibrary);
                 }
-                else if (item.Match.LibraryType.Equals(LibraryTypes.Package))
+                else if (item.Match.LibraryType.Equals(Runtime.LibraryTypes.Package))
                 {
                     var packageInfo = repository.FindPackagesById(library.Name)
                                                 .FirstOrDefault(p => p.Version == library.Version);
@@ -913,13 +913,13 @@ namespace Microsoft.Dnx.Tooling
                         continue;
                     }
 
-                    if (match.LibraryType.Equals(LibraryTypes.Project))
+                    if (match.LibraryType.Equals(Runtime.LibraryTypes.Project))
                     {
                         var projectDependency = projectResolver.FindProject(match.Library.Name);
                         var projectTargetLibrary = LockFileUtils.CreateLockFileTargetLibrary(projectDependency, context.RestoreContext);
                         target.Libraries.Add(projectTargetLibrary);
                     }
-                    else if (match.LibraryType.Equals(LibraryTypes.Package))
+                    else if (match.LibraryType.Equals(Runtime.LibraryTypes.Package))
                     {
                         var packageInfo = repository.FindPackagesById(match.Library.Name)
                                                     .FirstOrDefault(p => p.Version == match.Library.Version);

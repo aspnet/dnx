@@ -60,7 +60,7 @@ namespace Microsoft.Dnx.Tooling
             return new WalkProviderMatch
             {
                 Library = new LibraryIdentity(bestResult.Id, bestResult.Version, isGacOrFrameworkReference: false),
-                LibraryType = LibraryTypes.Package,
+                LibraryType = Runtime.LibraryTypes.Package,
                 Path = bestResult.ContentUri,
                 Provider = this,
             };

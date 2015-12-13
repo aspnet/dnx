@@ -164,7 +164,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             }
 
             // TODO: Dedupe this logic in the RuntimeLoadContext
-            var projects = libraries.Where(p => p.Type == LibraryTypes.Project)
+            var projects = libraries.Where(p => p.Type == Runtime.LibraryTypes.Project)
                                     .ToDictionary(p => p.Identity.Name, p => (ProjectDescription)p);
 
             var assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraries);
@@ -227,7 +227,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
         {
             foreach (var library in libraries)
             {
-                if (library.Type == LibraryTypes.Package)
+                if (library.Type == Runtime.LibraryTypes.Package)
                 {
                     var package = (PackageDescription)library;
 

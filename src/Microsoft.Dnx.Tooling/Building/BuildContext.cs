@@ -6,7 +6,6 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.CompilationAbstractions;
-using Microsoft.Extensions.PlatformAbstractions;
 
 using NuGet;
 
@@ -94,7 +93,7 @@ namespace Microsoft.Dnx.Tooling
                     continue;
                 }
 
-                if (dependencyDescription.Type == LibraryTypes.Project &&
+                if (dependencyDescription.Type == Runtime.LibraryTypes.Project &&
                     ((ProjectDescription)dependencyDescription).Project.EmbedInteropTypes)
                 {
                     continue;
@@ -191,7 +190,7 @@ namespace Microsoft.Dnx.Tooling
                 report.WriteLine("  Using {0} dependency {1}", library.Type, library.Identity);
                 report.WriteLine("    Source: {0}", HighlightFile(library.Path));
 
-                if (library.Type == LibraryTypes.Package)
+                if (library.Type == Runtime.LibraryTypes.Package)
                 {
                     // TODO: temporarily use prefix to tell whether an assembly belongs to a package
                     // Should expose LibraryName from IMetadataReference later for more efficient lookup

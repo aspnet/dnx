@@ -16,7 +16,6 @@ using Microsoft.Dnx.Runtime.Common.Impl;
 using Microsoft.Dnx.Runtime.Internals;
 using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.CompilationAbstractions.Caching;
-using Microsoft.Extensions.PlatformAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.DesignTimeHost

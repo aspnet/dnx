@@ -280,7 +280,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                     }
                     else
                     {
-                        if (library.Type == LibraryTypes.Project)
+                        if (library.Type == Runtime.LibraryTypes.Project)
                         {
                             if (!root.Projects.Any(p => p.Library.Name == library.Identity.Name))
                             {
@@ -294,7 +294,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                                 root.Projects.Add(publishProject);
                             }
                         }
-                        else if (library.Type == LibraryTypes.Package)
+                        else if (library.Type == Runtime.LibraryTypes.Package)
                         {
                             if (!root.Packages.Any(p => p.Library.Name == library.Identity.Name && p.Library.Version == library.Identity.Version))
                             {
