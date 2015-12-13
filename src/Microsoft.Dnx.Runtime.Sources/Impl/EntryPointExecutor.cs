@@ -15,10 +15,13 @@ namespace Microsoft.Dnx.Runtime.Common
         public static int ExecuteAssembly(Assembly assembly, string[] args)
         {
 #if NET451 || DNX451
-            return AppDomain.CurrentDomain.ExecuteAssemblyByName(assembly.FullName, args);
+            if (assembly.EntryPoint != null)
+            {
+                return AppDomain.CurrentDomain.ExecuteAssemblyByName(assembly.FullName, args);
+            }
 #else
-            return Execute(assembly, args, serviceProvider: null).GetAwaiter().GetResult();
 #endif
+            return Execute(assembly, args, serviceProvider: null).GetAwaiter().GetResult();
         }
 
         public static Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
