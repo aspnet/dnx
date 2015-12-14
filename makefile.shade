@@ -91,8 +91,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Extensions.JsonParser.Sources",
     "Microsoft.Dnx.Runtime.Sources",
     "Microsoft.Dnx.Project",
-    "Microsoft.Dnx.Tooling",
-    "Microsoft.Extensions.CommandLineUtils.Sources")}'
+    "Microsoft.Dnx.Tooling")}'
 
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_CLR_MANAGED_NAME)}'
@@ -511,7 +510,6 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.Sources/**/*.*"),
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.CommandParsing.Sources/**/*.*"),
             Path.Combine(BUILD_DIR2, "Microsoft.Extensions.JsonParser.Sources/**/*.*"),
-            Path.Combine(BUILD_DIR2, "Microsoft.Extensions.CommandLineUtils.Sources/**/*.*"),
         };
 
         foreach (var file in Files.Include(dnxCore50Pattern, dotnet54Pattern).Exclude(sharedSourceAssemblies))
