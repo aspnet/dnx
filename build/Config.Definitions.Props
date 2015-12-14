@@ -28,6 +28,8 @@
   </ItemGroup>
   <PropertyGroup>
     <!-- Enables building using Win10 SDK (One Core, ARM) on non-Win10 OS'es -->
-    <WindowsTargetPlatformVersion Condition="'$(BuildForOneCore)' == 'True' Or '$(Platform)'=='ARM'">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0', 'ProductVersion', null, RegistryView.Registry64, RegistryView.Registry32)).0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(BuildForOneCore)' == 'True' Or '$(Platform)'=='ARM'">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0', 'ProductVersion', null, RegistryView.Registry64, RegistryView.Registry32))</WindowsTargetPlatformVersion>
+    <!-- The Win10 SDK versions before 10.0.10586.0 had only 3 parts (e.g. 10.0.10240) so `.0` needs to be appended  -->
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)' != '' And '$(WindowsTargetPlatformVersion.Split(&quot;.&quot;).Length)' == '3'">$(WindowsTargetPlatformVersion).0</WindowsTargetPlatformVersion>
   </PropertyGroup>
 </Project>
