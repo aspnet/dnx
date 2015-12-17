@@ -98,21 +98,6 @@ namespace Microsoft.Dnx.Runtime
 
                 return os + ver;
             }
-            else if (env.OperatingSystemPlatform == Platform.Linux)
-            {
-                // Generate the distro-based name
-                var split = ver.Split(new[] { ' ' }, 2);
-                if (split.Length == 2)
-                {
-                    os = split[0].ToLowerInvariant();
-                    ver = split[1].ToLowerInvariant();
-                }
-                else
-                {
-                    os = "linux";
-                    ver = string.Empty;
-                }
-            }
             else if(env.OperatingSystemPlatform == Platform.Darwin)
             {
                 os = "osx";
