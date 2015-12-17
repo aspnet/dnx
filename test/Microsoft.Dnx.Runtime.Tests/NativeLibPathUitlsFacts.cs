@@ -54,7 +54,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void IsMatchingNativeLibraryPositiveMatches(string os, string requestedFileName, string actualFileName)
         {
             Assert.True(NativeLibPathUtils.IsMatchingNativeLibrary(
-                new FakeRuntimeEnvironment { OperatingSystem = os }, requestedFileName, actualFileName));
+                new FakeRuntimeEnvironment { OperatingSystem = os, OperatingSystemPlatform = (Platform)Enum.Parse(typeof(Platform), os) }, requestedFileName, actualFileName));
         }
 
         [Theory]
@@ -74,6 +74,8 @@ namespace Microsoft.Dnx.Runtime.Tests
         private class FakeRuntimeEnvironment : IRuntimeEnvironment
         {
             public string OperatingSystem { get; set; }
+
+            public Platform OperatingSystemPlatform { get; set; }
 
             public string OperatingSystemVersion { get; set; }
 

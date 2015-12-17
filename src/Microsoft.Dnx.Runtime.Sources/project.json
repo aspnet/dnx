@@ -11,7 +11,8 @@
         "dotnet5.4": {
             "dependencies": {
                 "System.Runtime": "4.0.21-*",
-                "System.Threading": "4.0.11-*"
+                "System.Threading": "4.0.11-*",
+                "System.ComponentModel": "4.0.1-*"
             }
         },
         "net451": { },

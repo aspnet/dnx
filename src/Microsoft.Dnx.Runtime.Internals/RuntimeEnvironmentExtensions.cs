@@ -37,54 +37,31 @@ namespace Microsoft.Dnx.Runtime
             return $"{env.RuntimeType}-{env.RuntimeArchitecture}-{env.RuntimeVersion}";
         }
 
-        public static string GetRuntimeIdentifier(this IRuntimeEnvironment env)
-        {
-            var overrideRid = GetOverrideRid();
-            return string.IsNullOrEmpty(overrideRid) ?
-                GetRuntimeIdentifierWithoutOverride(env) :
-                overrideRid;
-        }
-
-        // This is intentionally NOT an extension method because it is only really here for testing
-        internal static string GetRuntimeIdentifierWithoutOverride(IRuntimeEnvironment env)
-        {
-            return $"{GetRuntimeOsName(env)}-{env.RuntimeArchitecture.ToLower()}";
-        }
-
         public static IEnumerable<string> GetAllRuntimeIdentifiers(this IRuntimeEnvironment env)
         {
-            var overrideRid = GetOverrideRid();
-            return string.IsNullOrEmpty(overrideRid) ?
-                GetAllRuntimeIdentifiersWithoutOverride(env) :
-                new [] { overrideRid };
-        }
-
-        // This is intentionally NOT an extension method because it is only really here for testing
-        internal static IEnumerable<string> GetAllRuntimeIdentifiersWithoutOverride(IRuntimeEnvironment env)
-        {
-            if (!string.Equals(env.OperatingSystem, RuntimeOperatingSystems.Windows, StringComparison.Ordinal))
+            if (env.OperatingSystemPlatform != Platform.Windows)
             {
-                yield return GetRuntimeIdentifierWithoutOverride(env);
+                yield return env.GetRuntimeIdentifier();
             }
             else
             {
                 var arch = env.RuntimeArchitecture.ToLowerInvariant();
-                if (env.OperatingSystemVersion.Equals("6.1", StringComparison.Ordinal))
+                if (env.OperatingSystemVersion.StartsWith("6.1", StringComparison.Ordinal))
                 {
                     yield return "win7-" + arch;
                 }
-                else if (env.OperatingSystemVersion.Equals("6.2", StringComparison.Ordinal))
+                else if (env.OperatingSystemVersion.StartsWith("6.2", StringComparison.Ordinal))
                 {
                     yield return "win8-" + arch;
                     yield return "win7-" + arch;
                 }
-                else if (env.OperatingSystemVersion.Equals("6.3", StringComparison.Ordinal))
+                else if (env.OperatingSystemVersion.StartsWith("6.3", StringComparison.Ordinal))
                 {
                     yield return "win81-" + arch;
                     yield return "win8-" + arch;
                     yield return "win7-" + arch;
                 }
-                else if (env.OperatingSystemVersion.Equals("10.0", StringComparison.Ordinal))
+                else if (env.OperatingSystemVersion.StartsWith("10.0", StringComparison.Ordinal))
                 {
                     yield return "win10-" + arch;
                     yield return "win81-" + arch;
@@ -98,30 +75,30 @@ namespace Microsoft.Dnx.Runtime
         {
             string os = env.OperatingSystem ?? string.Empty;
             string ver = env.OperatingSystemVersion ?? string.Empty;
-            if (string.Equals(os, RuntimeOperatingSystems.Windows, StringComparison.Ordinal))
+            if (env.OperatingSystemPlatform == Platform.Windows)
             {
                 os = "win";
 
-                if (env.OperatingSystemVersion.Equals("6.1", StringComparison.Ordinal))
+                if (env.OperatingSystemVersion.StartsWith("6.1", StringComparison.Ordinal))
                 {
                     ver = "7";
                 }
-                else if (env.OperatingSystemVersion.Equals("6.2", StringComparison.Ordinal))
+                else if (env.OperatingSystemVersion.StartsWith("6.2", StringComparison.Ordinal))
                 {
                     ver = "8";
                 }
-                else if (env.OperatingSystemVersion.Equals("6.3", StringComparison.Ordinal))
+                else if (env.OperatingSystemVersion.StartsWith("6.3", StringComparison.Ordinal))
                 {
                     ver = "81";
                 }
-                else if (env.OperatingSystemVersion.Equals("10.0", StringComparison.Ordinal))
+                else if (env.OperatingSystemVersion.StartsWith("10.0", StringComparison.Ordinal))
                 {
                     ver = "10";
                 }
 
                 return os + ver;
             }
-            else if (string.Equals(os, RuntimeOperatingSystems.Linux, StringComparison.Ordinal))
+            else if (env.OperatingSystemPlatform == Platform.Linux)
             {
                 // Generate the distro-based name
                 var split = ver.Split(new[] { ' ' }, 2);
@@ -136,7 +113,7 @@ namespace Microsoft.Dnx.Runtime
                     ver = string.Empty;
                 }
             }
-            else if (string.Equals(os, RuntimeOperatingSystems.Darwin, StringComparison.Ordinal))
+            else if(env.OperatingSystemPlatform == Platform.Darwin)
             {
                 os = "osx";
             }
@@ -151,11 +128,6 @@ namespace Microsoft.Dnx.Runtime
                 os = os + "." + ver;
             }
             return os;
-        }
-
-        private static string GetOverrideRid()
-        {
-            return Environment.GetEnvironmentVariable(DnxRuntimeIdEnvironmentVariable);
         }
     }
 }

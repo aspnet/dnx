@@ -14,6 +14,12 @@ namespace Microsoft.Dnx.Runtime
 
         public RuntimeEnvironment(BootstrapperContext bootstrapperContext)
         {
+            // Use the DefaultRuntimeEnvironment to detect the OS details rather than bootstrapper context (temporary, this is probably going away anyway)
+            var defaultEnv = new DefaultRuntimeEnvironment();
+            OperatingSystem = defaultEnv.OperatingSystem;
+            OperatingSystemVersion = defaultEnv.OperatingSystemVersion;
+            OperatingSystemPlatform = defaultEnv.OperatingSystemPlatform;
+
             RuntimeType = bootstrapperContext.RuntimeType;
             RuntimeArchitecture = bootstrapperContext.Architecture;
             OperatingSystem = bootstrapperContext.OperatingSystem;
@@ -24,6 +30,8 @@ namespace Microsoft.Dnx.Runtime
         public string OperatingSystem { get; }
 
         public string OperatingSystemVersion { get; }
+
+        public Platform OperatingSystemPlatform { get; }
 
         public string RuntimeType { get; }
 
