@@ -15,7 +15,7 @@ namespace ProjectReferenceTest
         {
             var runtimeEnvironment = PlatformServices.Default.Runtime;
 
-            if (runtimeEnvironment.OperatingSystem == "Darwin" && runtimeEnvironment.RuntimeType == "Mono")
+            if (runtimeEnvironment.OperatingSystem == "Mac OS X" && runtimeEnvironment.RuntimeType == "Mono")
             {
                 return NativeLibDarwinMono.get_number();
             }

@@ -111,7 +111,7 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
 
                 // Preloading .so's on Linux does not work and setting
                 // LD_LIBRARY_PATH is not an option so skipping
-                return runtimeEnvironment.OperatingSystem == "Linux" && runtimeEnvironment.RuntimeType == "Mono";
+                return runtimeEnvironment.OperatingSystem == "ubuntu" && runtimeEnvironment.RuntimeType == "Mono";
             }
         }
     }

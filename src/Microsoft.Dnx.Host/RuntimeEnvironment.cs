@@ -22,8 +22,6 @@ namespace Microsoft.Dnx.Runtime
 
             RuntimeType = bootstrapperContext.RuntimeType;
             RuntimeArchitecture = bootstrapperContext.Architecture;
-            OperatingSystem = bootstrapperContext.OperatingSystem;
-            OperatingSystemVersion = bootstrapperContext.OsVersion;
             RuntimePath = bootstrapperContext.RuntimeDirectory;
         }
 

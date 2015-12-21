@@ -64,7 +64,7 @@ namespace Microsoft.Dnx.CommonTestUtils
             string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Directory.CreateDirectory(tempDirectory);
 
-            if (string.Equals(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem, "Darwin"))
+            if (string.Equals(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem, "Mac OS X"))
             {
                 // Resolves issues on Mac where GetTempPath gives /var and GetCurrentDirectory gives /private/var
                 var currentDirectory = Directory.GetCurrentDirectory();
