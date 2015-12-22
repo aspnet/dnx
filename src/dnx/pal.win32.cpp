@@ -16,8 +16,8 @@ std::wstring GetNativeBootstrapperDirectory()
 {
     wchar_t buffer[MAX_PATH];
     DWORD dirLength = GetModuleFileName(NULL, buffer, MAX_PATH);
-    for (dirLength--; dirLength >= 0 && buffer[dirLength] != _T('\\'); dirLength--);
-    buffer[dirLength + 1] = _T('\0');
+    for (dirLength--; dirLength >= 0 && buffer[dirLength] != L'\\'; dirLength--);
+    buffer[dirLength + 1] = L'\0';
     return std::wstring(buffer);
 }
 
