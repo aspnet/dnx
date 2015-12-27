@@ -279,6 +279,8 @@ namespace Microsoft.Dnx.Runtime
                 if (nativeLibPaths.Length > 0)
                 {
                     var nativeLibsPathsStr = nativeLibPaths.ToString();
+                    nativeLibPaths.Clear();
+
                     Logger.TraceInformation("[{0}]: Enabling loading native libraries from packages by extendig %PATH% with: {1}",
                         nameof(PackageDependencyProvider), nativeLibsPathsStr);
 
