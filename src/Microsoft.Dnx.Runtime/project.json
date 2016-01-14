@@ -7,11 +7,11 @@
         "warningsAsErrors": true,
         "keyFile": "../../tools/Key.snk"
     },
-    "compile": [		
-        "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"		
-    ],		
-    "preprocess": [		
-        "../../ext/compiler/preprocess/Internalization.cs"		
+    "compile": [
+        "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"
+    ],
+    "preprocess": [
+        "../../ext/compiler/preprocess/Internalization.cs"
     ],
     "dependencies": {
         "Microsoft.Dnx.Loader": "1.0.0-*",
@@ -61,7 +61,8 @@
                 "System.Linq": "4.0.1-*",
                 "System.Reflection.Extensions": "4.0.1-*",
                 "System.Resources.ResourceManager": "4.0.1-*",
-                "System.Resources.ReaderWriter": "4.0.0-*",
+                "System.Resources.Reader": "4.0.0-*",
+                "System.Resources.Writer": "4.0.0-*",
                 "System.Text.Encoding": "4.0.11-*",
                 "System.Threading.Timer": "4.0.1-*",
                 "System.Threading.Tasks": "4.0.11-*",
