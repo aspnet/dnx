@@ -10,7 +10,7 @@ namespace NuGet
         private static readonly Dictionary<FrameworkName, Version> _generationMappings = new Dictionary<FrameworkName, Version>()
         {
             // dnxcore50
-            { new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 5) },
+            { new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 6) },
 
             // netcore50/uap10
             { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 4) },
