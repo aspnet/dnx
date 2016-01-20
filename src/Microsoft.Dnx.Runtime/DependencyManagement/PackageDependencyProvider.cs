@@ -242,7 +242,7 @@ namespace Microsoft.Dnx.Runtime
                 profileDirectory = Environment.GetEnvironmentVariable("HOME");
             }
 
-            return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
+            return Path.Combine(profileDirectory, ".nuget", "packages");
         }
 
 #if DNX451
