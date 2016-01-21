@@ -19,7 +19,7 @@ public class DomainManager : AppDomainManager
 
     private ApplicationMainInfo _info;
     private HostExecutionContextManager _hostExecutionContextManager;
-    private FrameworkName _dnxTfm;
+    private FrameworkName _runtimeTfm;
 
     public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
     {
@@ -57,15 +57,17 @@ public class DomainManager : AppDomainManager
             }
         }
 
+        string identifier = FrameworkNames.LongNames.Dnx;
+
         // If we didn't get a version from parsing the framework name, use the highest one in project.json
         if (version == null)
         {
             // Calculate it from project.json
-            version = SelectHighestSupportedDnxVersion(_info.ApplicationBase);
+            version = SelectHighestSupportedFrameworkVersion(_info.ApplicationBase, out identifier);
         }
 
         // Now that we have a version, build the TFMs and the AppDomain quirking mode TFM
-        _dnxTfm = new FrameworkName(FrameworkNames.LongNames.Dnx, version);
+        _runtimeTfm = new FrameworkName(identifier, version);
         Logger.TraceInformation($"[{nameof(DomainManager)}] Using Desktop CLR v{version}");
 
         return $"{FrameworkNames.LongNames.NetFramework}, Version=v{version}";
@@ -95,11 +97,13 @@ public class DomainManager : AppDomainManager
         },
         null);
 
-        return RuntimeBootstrapper.Execute(argv, _dnxTfm, _info);
+        return RuntimeBootstrapper.Execute(argv, _runtimeTfm, _info);
     }
 
-    private Version SelectHighestSupportedDnxVersion(string applicationBase)
+    private Version SelectHighestSupportedFrameworkVersion(string applicationBase, out string identifier)
     {
+        identifier = FrameworkNames.LongNames.Dnx;
+
         var projectPath = Path.Combine(applicationBase, "project.json");
         if (!File.Exists(projectPath))
         {
@@ -130,10 +134,12 @@ public class DomainManager : AppDomainManager
                 {
                     FrameworkName fx;
                     if (Microsoft.Dnx.Host.FrameworkNameUtility.TryParseFrameworkName(key, out fx) &&
-                        fx.Identifier.Equals(FrameworkNames.LongNames.Dnx, StringComparison.Ordinal))
+                        fx.Identifier.Equals(FrameworkNames.LongNames.Dnx, StringComparison.Ordinal) ||
+                        fx.Identifier.Equals(FrameworkNames.LongNames.NetFramework, StringComparison.Ordinal))
                     {
                         if (version == null || version < fx.Version)
                         {
+                            identifier = fx.Identifier;
                             version = fx.Version;
                         }
                     }

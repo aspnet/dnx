@@ -19,7 +19,7 @@ namespace Microsoft.Dnx.Host
         internal static bool TryParseFrameworkName(string frameworkName, out FrameworkName parsed)
         {
             parsed = null;
-            
+
             if (frameworkName == FrameworkNames.ShortNames.Dnx451)
             {
                 parsed = new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 1));
@@ -33,6 +33,31 @@ namespace Microsoft.Dnx.Host
             else if (frameworkName == FrameworkNames.ShortNames.Dnx46)
             {
                 parsed = new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 6));
+                return true;
+            }
+            else if (frameworkName == FrameworkNames.ShortNames.Dnx461)
+            {
+                parsed = new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 6, 1));
+                return true;
+            }
+            if (frameworkName == FrameworkNames.ShortNames.Net451)
+            {
+                parsed = new FrameworkName(FrameworkNames.LongNames.NetFramework, new Version(4, 5, 1));
+                return true;
+            }
+            else if (frameworkName == FrameworkNames.ShortNames.Net452)
+            {
+                parsed = new FrameworkName(FrameworkNames.LongNames.NetFramework, new Version(4, 5, 2));
+                return true;
+            }
+            else if (frameworkName == FrameworkNames.ShortNames.Net46)
+            {
+                parsed = new FrameworkName(FrameworkNames.LongNames.NetFramework, new Version(4, 6));
+                return true;
+            }
+            else if (frameworkName == FrameworkNames.ShortNames.Net461)
+            {
+                parsed = new FrameworkName(FrameworkNames.LongNames.NetFramework, new Version(4, 6, 1));
                 return true;
             }
             else if (frameworkName == FrameworkNames.ShortNames.DnxCore50)
