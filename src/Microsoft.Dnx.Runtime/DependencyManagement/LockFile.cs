@@ -44,12 +44,20 @@ namespace Microsoft.Dnx.Runtime
             foreach (var group in ProjectFileDependencyGroups)
             {
                 IOrderedEnumerable<string> actualDependencies;
+
+                // HACK(anurse): Support the slightly-different NuGet-style lock file ordering/formatting as a fallback
+                IOrderedEnumerable<string> nugetStyleDependencies;
                 var expectedDependencies = group.Dependencies.OrderBy(x => x);
 
                 // If the framework name is empty, the associated dependencies are shared by all frameworks
                 if (string.IsNullOrEmpty(group.FrameworkName))
                 {
-                    actualDependencies = project.Dependencies.Select(x => x.LibraryRange.ToString()).OrderBy(x => x);
+                    actualDependencies = project.Dependencies
+                        .Select(d => d.LibraryRange.ToString())
+                        .OrderBy(x => x, StringComparer.Ordinal);
+                    nugetStyleDependencies = project.Dependencies
+                        .Select(d => d.LibraryRange.ToNuGetString())
+                        .OrderBy(x => x, StringComparer.OrdinalIgnoreCase);
                 }
                 else
                 {
@@ -61,10 +69,16 @@ namespace Microsoft.Dnx.Runtime
                         return false;
                     }
 
-                    actualDependencies = framework.Dependencies.Select(d => d.LibraryRange.ToString()).OrderBy(x => x);
+                    actualDependencies = framework.Dependencies
+                        .Select(d => d.LibraryRange.ToString())
+                        .OrderBy(x => x, StringComparer.Ordinal);
+                    nugetStyleDependencies = framework.Dependencies
+                        .Select(d => d.LibraryRange.ToNuGetString())
+                        .OrderBy(x => x, StringComparer.OrdinalIgnoreCase);
                 }
 
-                if (!actualDependencies.SequenceEqual(expectedDependencies))
+                if (!actualDependencies.SequenceEqual(expectedDependencies) &&
+                    !nugetStyleDependencies.SequenceEqual(expectedDependencies.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)))
                 {
                     return false;
                 }

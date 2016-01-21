@@ -49,6 +49,16 @@ namespace Microsoft.Dnx.Runtime
             return Name + " " + (VersionRange?.ToString());
         }
 
+        public string ToNuGetString()
+        {
+            var name = Name;
+            if(IsGacOrFrameworkReference && Name.StartsWith("fx/"))
+            {
+                name = Name.Substring(3);
+            }
+            return name + " " + (VersionRange?.ToString());
+        }
+
         public bool Equals(LibraryRange other)
         {
             if (ReferenceEquals(null, other)) return false;
