@@ -889,7 +889,7 @@ functions @{
         "Microsoft.Extensions.HashCodeCombiner.Sources"
     };
 
-    private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
+    private static readonly string _defaultLocalRuntimeHomeDir = ".nuget";
     private static readonly string _runtimesSubDir = "runtimes";
 
     bool CanBuildForLinux
@@ -1272,7 +1272,7 @@ functions @{
         var packagesFolder = Environment.GetEnvironmentVariable("DNX_PACKAGES");
         if (string.IsNullOrEmpty(packagesFolder))
         {
-            packagesFolder = Path.Combine(Environment.GetEnvironmentVariable(home), ".dnx", "packages");
+            packagesFolder = Path.Combine(Environment.GetEnvironmentVariable(home), ".nuget", "packages");
         }
 
         var lockFile = File.ReadAllText(Path.Combine(projectFolder, "project.lock.json"));
