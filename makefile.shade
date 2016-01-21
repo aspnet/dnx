@@ -85,7 +85,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Dnx.DesignTimeHost.Abstractions",
     "Microsoft.Dnx.Loader",
     "Microsoft.Dnx.Runtime",
-    "Microsoft.Extensions.PlatformAbstractions",
+    "Microsoft.Extensions.PlatformAbstractions.Dnx",
     "Microsoft.Dnx.Runtime.CommandParsing.Sources",
     "Microsoft.Dnx.Runtime.Internals",
     "Microsoft.Extensions.JsonParser.Sources",

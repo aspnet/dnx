@@ -1,0 +1,28 @@
+{
+    "version": "1.0.0-*",
+    "description": "Abstractions that unify behavior and API across .NET Framework, .NET Core and Mono",
+    "compilationOptions": {
+        "warningsAsErrors": true,
+        "allowUnsafe": true,
+        "keyFile": "../../tools/Key.snk"
+    },
+    "dependencies": { },
+    "frameworks": {
+        "net451": {
+        },
+        "dotnet5.4": {
+            "dependencies": {
+                "System.AppContext": "4.0.1-*",
+                "System.IO.FileSystem": "4.0.1-*",
+                "System.Linq": "4.0.1-*",
+                "System.Reflection": "4.1.0-*",
+                "System.Reflection.Extensions": "4.0.1-*",
+                "System.Reflection.TypeExtensions": "4.1.0-*",
+                "System.Runtime": "4.0.21-*",
+                "System.Runtime.InteropServices": "4.0.21-*",
+                "System.Runtime.InteropServices.RuntimeInformation": "4.0.0-*",
+                "System.Threading.Tasks": "4.0.11-*"
+            }
+        }
+    }
+}

@@ -59,16 +59,16 @@ namespace Microsoft.Dnx.DesignTimeHost
             // REVIEW: Should these be on a shared context object that flows?
             var applicationEnvironment = PlatformServices.Default.Application;
             var runtimeEnvironment = PlatformServices.Default.Runtime;
-            var loadContextAccessor = PlatformServices.Default.AssemblyLoadContextAccessor;
+            var loadContextAccessor = DnxPlatformServices.Default.AssemblyLoadContextAccessor;
             var compilationEngine = new CompilationEngine(new CompilationEngineContext(applicationEnvironment, runtimeEnvironment, loadContextAccessor.Default, new CompilationCache()));
             var frameworkResolver = new FrameworkReferenceResolver();
 
             var services = new ServiceProvider();
             services.Add(typeof(IApplicationEnvironment), PlatformServices.Default.Application);
             services.Add(typeof(IRuntimeEnvironment), PlatformServices.Default.Runtime);
-            services.Add(typeof(IAssemblyLoadContextAccessor), PlatformServices.Default.AssemblyLoadContextAccessor);
-            services.Add(typeof(IAssemblyLoaderContainer), PlatformServices.Default.AssemblyLoaderContainer);
-            services.Add(typeof(ILibraryManager), PlatformServices.Default.LibraryManager);
+            services.Add(typeof(IAssemblyLoadContextAccessor), DnxPlatformServices.Default.AssemblyLoadContextAccessor);
+            services.Add(typeof(IAssemblyLoaderContainer), DnxPlatformServices.Default.AssemblyLoaderContainer);
+            services.Add(typeof(ILibraryManager), DnxPlatformServices.Default.LibraryManager);
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
             var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);

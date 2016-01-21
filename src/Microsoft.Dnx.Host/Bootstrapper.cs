@@ -67,7 +67,8 @@ namespace Microsoft.Dnx.Host
                 serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
                 serviceProvider.Add(typeof(IRuntimeEnvironment), env);
 
-                PlatformServices.SetDefault(new DnxHostPlatformServices(applicationEnvironment, env, container, accessor));
+                PlatformServices.SetDefault(new DnxHostPlatformServices(applicationEnvironment, env));
+                DnxPlatformServices.SetDefault(new DnxHostDnxPlatformServices(container, accessor));
 
 #if DNX451
                 if (RuntimeEnvironmentHelper.IsMono)

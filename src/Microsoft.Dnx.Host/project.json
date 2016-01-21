@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "Microsoft.NETCore.Platforms": "1.0.1-*",
+        "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*",
         "Microsoft.Extensions.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },

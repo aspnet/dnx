@@ -34,7 +34,7 @@ namespace Microsoft.Dnx.ApplicationHost
                     return exitCode;
                 }
 
-                host = new DefaultHost(options, PlatformServices.Default.AssemblyLoadContextAccessor);
+                host = new DefaultHost(options, DnxPlatformServices.Default.AssemblyLoadContextAccessor);
 
                 if (host.Project == null)
                 {
@@ -69,7 +69,7 @@ namespace Microsoft.Dnx.ApplicationHost
 
             try
             {
-                disposable = host.AddLoaders(PlatformServices.Default.AssemblyLoaderContainer);
+                disposable = host.AddLoaders(DnxPlatformServices.Default.AssemblyLoaderContainer);
 
                 return ExecuteMain(host, options.ApplicationName, programArgs)
                         .ContinueWith((t, state) =>

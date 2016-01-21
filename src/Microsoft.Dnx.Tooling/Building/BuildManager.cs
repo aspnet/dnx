@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.Tooling
 
             _applicationEnvironment = PlatformServices.Default.Application;
             var runtimeEnvironment = PlatformServices.Default.Runtime;
-            var loadContextAccessor = PlatformServices.Default.AssemblyLoadContextAccessor;
+            var loadContextAccessor = DnxPlatformServices.Default.AssemblyLoadContextAccessor;
 
             _compilationEngine = new CompilationEngine(new CompilationEngineContext(
                 _applicationEnvironment,

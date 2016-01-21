@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*",
     "Microsoft.Extensions.HashCodeCombiner.Sources": {
       "type": "build",
       "version": "1.0.0-*"

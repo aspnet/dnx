@@ -16,6 +16,7 @@
     "dependencies": {
         "Microsoft.Dnx.Loader": "1.0.0-*",
         "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+        "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*",
         "Microsoft.Extensions.JsonParser.Sources": {
             "version": "1.0.0-*",
             "type": "build"

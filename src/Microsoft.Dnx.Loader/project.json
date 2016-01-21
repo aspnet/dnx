@@ -5,7 +5,8 @@
     },
     "description": "ASP.NET 5 runtime infrastructure for assembly load contexts.",
     "dependencies": {
-        "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*"
+        "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+        "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*"
     },
     "frameworks": {
         "dnx451": {
