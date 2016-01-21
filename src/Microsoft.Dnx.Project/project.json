@@ -29,13 +29,13 @@
                 "System.Console": "4.0.0-*",
                 "System.Diagnostics.Debug": "4.0.11-*",
                 "System.Diagnostics.Process": "4.1.0-*",
-                "System.IO": "4.0.11-*",
+                "System.IO": "4.1.0-*",
                 "System.IO.Compression": "4.1.0-*",
                 "System.IO.FileSystem": "4.0.1-*",
                 "System.Linq": "4.0.1-*",
                 "System.Reflection": "4.1.0-*",
                 "System.Runtime": "4.0.21-*",
-                "System.Runtime.Extensions": "4.0.11-*",
+                "System.Runtime.Extensions": "4.1.0-*",
                 "System.Runtime.InteropServices": "4.0.21-*",
                 "System.Threading.Tasks": "4.0.11-*"
             }
