@@ -238,14 +238,14 @@ namespace Microsoft.Dnx.Runtime.Tests
         {
             var project = ProjectUtilities.GetProject(@"
 {
-    ""commands"": { ""web"": ""Microsoft.AspNet.Hosting something"" }
+    ""commands"": { ""web"": ""Microsoft.AspNetCore.Hosting something"" }
 }",
 "foo",
 @"c:\foo\project.json");
 
             Assert.Equal(1, project.Commands.Count);
             Assert.True(project.Commands.ContainsKey("web"));
-            Assert.Equal("Microsoft.AspNet.Hosting something", project.Commands["web"]);
+            Assert.Equal("Microsoft.AspNetCore.Hosting something", project.Commands["web"]);
             Assert.True(project.Commands.ContainsKey("Web"));
         }
 

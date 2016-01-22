@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.AspNet.Testing.xunit;
+using Microsoft.AspNetCore.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -1418,7 +1418,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents("project.json", @"{
   ""commands"": {
     ""run"": ""run server.urls=http://localhost:5003"",
-    ""kestrel"": ""Microsoft.AspNet.Hosting --server Microsoft.AspNet.Server.Kestrel --server.urls http://localhost:5004""
+    ""kestrel"": ""Microsoft.AspNetCore.Hosting --server Microsoft.AspNetCore.Server.Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
     ""dnx451"": { },
@@ -1455,7 +1455,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""commands"": {
     ""run"": ""run server.urls=http://localhost:5003"",
-    ""kestrel"": ""Microsoft.AspNet.Hosting --server Microsoft.AspNet.Server.Kestrel --server.urls http://localhost:5004""
+    ""kestrel"": ""Microsoft.AspNetCore.Hosting --server Microsoft.AspNetCore.Server.Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
     ""dnx451"": { },
@@ -1530,7 +1530,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents("project.json", @"{
   ""commands"": {
     ""run"": ""run server.urls=http://localhost:5003"",
-    ""kestrel"": ""Microsoft.AspNet.Hosting --server Microsoft.AspNet.Server.Kestrel --server.urls http://localhost:5004""
+    ""kestrel"": ""Microsoft.AspNetCore.Hosting --server Microsoft.AspNetCore.Server.Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
     ""dnx451"": { },
@@ -1576,7 +1576,7 @@ exec ""{1}{2}"" --project ""$DIR/src/{0}"" --configuration {3} {4} ""$@""".Repla
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""commands"": {
     ""run"": ""run server.urls=http://localhost:5003"",
-    ""kestrel"": ""Microsoft.AspNet.Hosting --server Microsoft.AspNet.Server.Kestrel --server.urls http://localhost:5004""
+    ""kestrel"": ""Microsoft.AspNetCore.Hosting --server Microsoft.AspNetCore.Server.Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
     ""dnx451"": { },

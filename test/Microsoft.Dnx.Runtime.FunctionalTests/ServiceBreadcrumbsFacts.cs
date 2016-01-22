@@ -3,7 +3,7 @@
 
 using System.IO;
 using System.Security.AccessControl;
-using Microsoft.AspNet.Testing.xunit;
+using Microsoft.AspNetCore.Testing.xunit;
 using Xunit;
 
 namespace Microsoft.Dnx.Runtime.Tests

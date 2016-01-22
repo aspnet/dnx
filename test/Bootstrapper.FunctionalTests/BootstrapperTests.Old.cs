@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.AspNet.Testing.xunit;
+using Microsoft.AspNetCore.Testing.xunit;
 using Microsoft.Dnx.CommonTestUtils;
 using Microsoft.Dnx.Tooling;
 using Microsoft.Dnx.Runtime;

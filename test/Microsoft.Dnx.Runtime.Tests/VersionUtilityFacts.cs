@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime.Helpers;
 using NuGet;
 using Xunit;
-using Microsoft.AspNet.Testing;
-using Microsoft.AspNet.Testing.xunit;
+using Microsoft.AspNetCore.Testing;
+using Microsoft.AspNetCore.Testing.xunit;
 
 namespace Microsoft.Dnx.Runtime.Tests
 {

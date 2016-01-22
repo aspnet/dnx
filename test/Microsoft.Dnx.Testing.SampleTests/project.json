@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.0.0-*",
   "description": "",
   "authors": [ "" ],
@@ -7,7 +7,7 @@
   "licenseUrl": "",
 
   "dependencies": {
-    "Microsoft.AspNet.Testing": "1.0.0-*",
+    "Microsoft.AspNetCore.Testing": "1.0.0-*",
     "Microsoft.Dnx.Runtime": "1.0.0-*",
     "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
     "Microsoft.Dnx.Testing.Framework": "1.0.0-*",

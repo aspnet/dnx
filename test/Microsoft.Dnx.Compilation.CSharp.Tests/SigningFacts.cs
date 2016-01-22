@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.AspNet.Testing.xunit;
+using Microsoft.AspNetCore.Testing.xunit;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
