@@ -1,44 +1,50 @@
 {
-    "version": "1.0.0-*",
-    "dependencies": {
-        "Microsoft.Dnx.Compilation.CSharp": "1.0.0-*",
-        "Microsoft.Dnx.Compilation.DesignTime": "1.0.0-*",
-        "Microsoft.Dnx.DesignTimeHost.Abstractions": "1.0.0-*",
-        "Microsoft.Dnx.Runtime": "1.0.0-*",
-        "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
-        "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*",
-        "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
-        "Newtonsoft.Json": "6.0.6"
+  "version": "1.0.0-*",
+  "dependencies": {
+    "Microsoft.Dnx.Compilation.CSharp": "1.0.0-*",
+    "Microsoft.Dnx.Compilation.DesignTime": "1.0.0-*",
+    "Microsoft.Dnx.DesignTimeHost.Abstractions": "1.0.0-*",
+    "Microsoft.Dnx.Runtime": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*",
+    "Microsoft.Dnx.Runtime.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
     },
-    "compilationOptions": {
-        "define": [ "TRACE" ],
-        "warningsAsErrors": true,
-        "emitEntryPoint": true,
-        "keyFile": "../../tools/Key.snk"
+    "Microsoft.Dnx.Runtime.Internals": {
+      "version": "1.0.0-*",
+      "type": "build"
     },
-    "frameworks": {
-        "dnx451": {
-            "frameworkAssemblies": {
-                "System.Net": ""
-            }
-        },
-        "dnxcore50": {
-            "dependencies": {
-                "System.Diagnostics.Process": "4.1.0-*",
-                "System.Net.Primitives": "4.0.11-*",
-                "System.Threading.ThreadPool": "4.0.10-*"
-            }
-        }
+    "Microsoft.NETCore.Platforms": "1.0.1-*",
+    "Newtonsoft.Json": "6.0.6"
+  },
+  "compilationOptions": {
+    "define": [ "TRACE" ],
+    "warningsAsErrors": true,
+    "emitEntryPoint": true,
+    "keyFile": "../../tools/Key.snk"
+  },
+  "frameworks": {
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.Net": ""
+      }
     },
-    "scripts": {
-        "postbuild": [
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin/lib/Microsoft.Dnx.DesignTimeHost",
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin/lib/Microsoft.Dnx.DesignTimeHost",
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin/lib/Microsoft.Dnx.DesignTimeHost",
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin/lib/Microsoft.Dnx.DesignTimeHost",
-            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.DesignTimeHost"
-        ]
+    "dnxcore50": {
+      "dependencies": {
+        "System.Diagnostics.Process": "4.1.0-*",
+        "System.Net.Primitives": "4.0.11-*",
+        "System.Threading.ThreadPool": "4.0.10-*"
+      }
     }
+  },
+  "scripts": {
+    "postbuild": [
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin/lib/Microsoft.Dnx.DesignTimeHost",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin/lib/Microsoft.Dnx.DesignTimeHost",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x64/bin/lib/Microsoft.Dnx.DesignTimeHost",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x64/bin/lib/Microsoft.Dnx.DesignTimeHost",
+      "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin/lib/Microsoft.Dnx.DesignTimeHost"
+    ]
+  }
 }
-

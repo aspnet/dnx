@@ -6,7 +6,9 @@
         "allowUnsafe": true,
         "keyFile": "../../tools/Key.snk"
     },
-    "dependencies": { },
+    "dependencies": { 
+        "Microsoft.NETCore.Platforms": "1.0.1-*"
+    },
     "frameworks": {
         "net451": {
         },

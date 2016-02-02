@@ -15,7 +15,8 @@
         },
       "Microsoft.Dnx.Runtime": "1.0.0-*",
       "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
-      "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*"
+      "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*",
+      "Microsoft.NETCore.Platforms": "1.0.1-*"
     },
     "frameworks": {
         "dnx451": {

@@ -2,11 +2,12 @@
     "compilationOptions": {
         "keyFile": "../../tools/Key.snk"
     },
-    "dependencies": {
-        "Microsoft.Dnx.DesignTimeHost": "1.0.0-*",
-        "Microsoft.Dnx.DesignTimeHost.Abstractions": "1.0.0-*",
-        "xunit.runner.aspnet": "2.0.0-aspnet-*"
-    },
+  "dependencies": {
+    "Microsoft.Dnx.DesignTimeHost": "1.0.0-*",
+    "Microsoft.Dnx.DesignTimeHost.Abstractions": "1.0.0-*",
+    "Microsoft.NETCore.Platforms": "1.0.1-*",
+    "xunit.runner.aspnet": "2.0.0-aspnet-*"
+  },
     "frameworks": {
         "dnx451": { }
     },
