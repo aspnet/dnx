@@ -12,6 +12,7 @@
     },
     "dnxcore50": {
       "dependencies": {
+        "System.Runtime": "4.1.0-*"
       }
     }
   }
