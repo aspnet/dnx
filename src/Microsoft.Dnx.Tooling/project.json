@@ -41,7 +41,7 @@
       "type": "build"
     },
     "Microsoft.NETCore.Platforms": "1.0.1-*",
-    "Newtonsoft.Json": "6.0.6"
+    "Newtonsoft.Json": "8.0.2"
   },
   "frameworks": {
     "dnx451": {

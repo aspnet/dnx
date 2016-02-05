@@ -3,7 +3,7 @@
     "Microsoft.Dnx.Runtime": "1.0.0-*",
     "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
     "Microsoft.NETCore.Platforms": "1.0.1-*",
-    "Newtonsoft.Json": "6.0.6",
+    "Newtonsoft.Json": "8.0.2",
     "xunit.runner.aspnet": "2.0.0-aspnet-*"
   },
   "frameworks": {
