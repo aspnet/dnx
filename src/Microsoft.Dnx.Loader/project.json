@@ -15,7 +15,6 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Collections": "4.0.11-*",
                 "System.Collections.Concurrent": "4.0.11-*",
                 "System.Runtime.Loader": "4.0.0-*",
                 "System.IO.FileSystem": "4.0.1-*",
