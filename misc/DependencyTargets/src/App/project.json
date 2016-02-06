@@ -17,7 +17,6 @@
         "dnx451": { },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.0-*",
                 "System.Console": "4.0.0-*"
             }
         }

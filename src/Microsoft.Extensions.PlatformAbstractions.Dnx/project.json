@@ -20,7 +20,6 @@
                 "System.Reflection": "4.1.0-*",
                 "System.Reflection.Extensions": "4.0.1-*",
                 "System.Reflection.TypeExtensions": "4.1.0-*",
-                "System.Runtime": "4.0.21-*",
                 "System.Runtime.InteropServices": "4.0.21-*",
                 "System.Runtime.InteropServices.RuntimeInformation": "4.0.0-*",
                 "System.Threading.Tasks": "4.0.11-*"

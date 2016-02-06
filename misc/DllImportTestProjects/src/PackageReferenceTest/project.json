@@ -12,7 +12,6 @@
       "dnx451": {},
       "dnxcore50": {
         "dependencies": {
-          "System.Runtime": "4.0.21-*",
           "System.Console": "4.0.0-*",
           "System.Runtime.InteropServices": "4.0.21-*"
         }

@@ -7,7 +7,6 @@
         "dnxcore50": {
             "dependencies": {
                 "System.Linq": "4.0.1-*",
-                "System.Runtime": "4.0.21-*"
             }
         }
     }
