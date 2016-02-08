@@ -31,8 +31,8 @@
     },
     "dnxcore50": {
       "dependencies": {
-        "System.Collections.Concurrent": "4.0.11-*",
-        "System.Runtime.InteropServices": "4.0.21-*",
+        "System.Collections.Concurrent": "4.0.12-*",
+        "System.Runtime.InteropServices": "4.1.0-*",
         "System.IO.FileSystem": "4.0.1-*"
       }
     }
