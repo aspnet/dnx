@@ -60,7 +60,7 @@
                 "System.Dynamic.Runtime": "4.0.11-*",
                 "System.Globalization": "4.0.11-*",
                 "System.IO.FileSystem.Watcher": "4.0.0-*",
-                "System.Linq": "4.0.2-*",
+                "System.Linq": "4.1.0-*",
                 "System.Reflection.Extensions": "4.0.1-*",
                 "System.Resources.ResourceManager": "4.0.1-*",
                 "System.Resources.Reader": "4.0.0-*",
