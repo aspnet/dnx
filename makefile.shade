@@ -889,7 +889,7 @@ functions @{
         "Microsoft.Extensions.HashCodeCombiner.Sources"
     };
 
-    private static readonly string _defaultLocalRuntimeHomeDir = ".nuget";
+    private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
     private static readonly string _runtimesSubDir = "runtimes";
 
     bool CanBuildForLinux

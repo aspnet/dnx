@@ -23,6 +23,8 @@ namespace NuGet
         public static readonly string DnxCoreFrameworkIdentifier = "DNXCore";
         public static readonly string PortableFrameworkIdentifier = ".NETPortable";
         public static readonly string NetPlatformFrameworkIdentifier = ".NETPlatform";
+        public static readonly string NetStandardFrameworkIdentifier = ".NETStandard";
+        public static readonly string NetStandardAppFrameworkIdentifier = ".NETStandardApp";
         public static readonly string NetCoreFrameworkIdentifier = ".NETCore";
         public static readonly string UapFrameworkIdentifier = "UAP";
         public static readonly string WindowsFrameworkIdentifier = "Windows";
@@ -35,6 +37,8 @@ namespace NuGet
         internal const string DnxFrameworkShortName = "dnx";
         internal const string DnxCoreFrameworkShortName = "dnxcore";
         internal const string NetPlatformFrameworkShortName = "dotnet";
+        internal const string NetStandardFrameworkShortName = "netstandard";
+        internal const string NetStandardAppFrameworkShortName = "netstandardapp";
 
         private const string LessThanOrEqualTo = "\u2264";
         private const string GreaterThanOrEqualTo = "\u2265";
@@ -61,6 +65,8 @@ namespace NuGet
             { DnxFrameworkIdentifier, DnxFrameworkShortName },
             { DnxCoreFrameworkIdentifier, DnxCoreFrameworkShortName },
             { NetPlatformFrameworkIdentifier, NetPlatformFrameworkShortName },
+            { NetStandardFrameworkIdentifier, NetStandardFrameworkShortName },
+            { NetStandardAppFrameworkIdentifier, NetStandardAppFrameworkShortName },
             { UapFrameworkIdentifier, UapFrameworkIdentifier },
 
             { SilverlightFrameworkIdentifier, "sl" },
@@ -108,7 +114,7 @@ namespace NuGet
             { new FrameworkName("WindowsPhone, Version=v7.0"), new FrameworkName("Silverlight, Version=v3.0, Profile=WindowsPhone") },
             { new FrameworkName("WindowsPhone, Version=v7.1"), new FrameworkName("Silverlight, Version=v4.0, Profile=WindowsPhone71") },
             { new FrameworkName("WindowsPhone, Version=v8.0"), new FrameworkName("Silverlight, Version=v8.0, Profile=WindowsPhone") },
-
+            
             { new FrameworkName("Windows, Version=v0.0"), new FrameworkName(".NETCore, Version=v4.5") },
             { new FrameworkName("Windows, Version=v8.0"), new FrameworkName(".NETCore, Version=v4.5") },
             { new FrameworkName("Windows, Version=v8.1"), new FrameworkName(".NETCore, Version=v4.5.1") }
@@ -547,6 +553,8 @@ namespace NuGet
                     //  b) The identifier is .NETPlatform
                     var version = frameworkName.Version.ToString();
                     if (!frameworkName.Identifier.Equals(NetPlatformFrameworkIdentifier) &&
+                        !frameworkName.Identifier.Equals(NetStandardAppFrameworkIdentifier) &&
+                        !frameworkName.Identifier.Equals(NetStandardFrameworkIdentifier) &&
                         frameworkName.Version.Major < 10 &&
                         frameworkName.Version.Minor < 10 &&
                         frameworkName.Version.Build < 10 &&
@@ -880,7 +888,9 @@ namespace NuGet
                 {
                     // TODO: Remove this logic when out dependencies have moved to ASP.NET Core 5.0
                     // as this logic is super fuzzy and terrible
-                    if (string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) || 
+                    if (string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(frameworkName.Identifier, NetStandardAppFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(frameworkName.Identifier, NetStandardFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(frameworkName.Identifier, NetPlatformFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
                     {
                         var frameworkIdentifierLookup = targetFrameworkPortableProfile.SupportedFrameworks
@@ -1173,6 +1183,8 @@ namespace NuGet
                 { DnxCoreFrameworkShortName, DnxCoreFrameworkIdentifier },
                 { NetPlatformFrameworkShortName, NetPlatformFrameworkIdentifier },
                 { NetPlatformFrameworkIdentifier, NetPlatformFrameworkIdentifier },
+                { NetStandardFrameworkShortName, NetStandardFrameworkIdentifier },
+                { NetStandardAppFrameworkShortName, NetStandardAppFrameworkIdentifier },
                 { UapFrameworkIdentifier, UapFrameworkIdentifier },
 
                 { "NET", NetFrameworkIdentifier },

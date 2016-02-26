@@ -20,10 +20,10 @@ namespace Microsoft.Dnx.Runtime
                 return new ProjectDescription(name, path);
             }
 
-            return GetDescription(targetLibrary.TargetFramework, project);
+            return GetDescription(targetLibrary.TargetFramework, project, targetLibrary);
         }
 
-        public ProjectDescription GetDescription(FrameworkName targetFramework, Project project)
+        public ProjectDescription GetDescription(FrameworkName targetFramework, Project project, LockFileTargetLibrary targetLibrary)
         {
             // This never returns null
             var targetFrameworkInfo = project.GetTargetFramework(targetFramework);
@@ -59,6 +59,16 @@ namespace Microsoft.Dnx.Runtime
             }
 
             var dependencies = project.Dependencies.Concat(targetFrameworkDependencies).ToList();
+
+
+            if (targetLibrary != null)
+            {
+                // The lock file entry might have a filtered set of dependencies
+                var lockFileDependencies = targetLibrary.Dependencies.ToDictionary(d => d.Id);
+
+                // Remove all non-framework dependencies that don't appear in the lock file entry
+                dependencies.RemoveAll(m => !lockFileDependencies.ContainsKey(m.Name) && !m.LibraryRange.IsGacOrFrameworkReference);
+            }
 
             var loadableAssemblies = new List<string>();
 

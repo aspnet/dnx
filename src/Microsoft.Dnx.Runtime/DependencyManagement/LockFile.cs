@@ -47,16 +47,18 @@ namespace Microsoft.Dnx.Runtime
 
                 // HACK(anurse): Support the slightly-different NuGet-style lock file ordering/formatting as a fallback
                 IOrderedEnumerable<string> nugetStyleDependencies;
-                var expectedDependencies = group.Dependencies.OrderBy(x => x);
+                var expectedDependencies = group.Dependencies
+                    .Select(TrimFx)
+                    .OrderBy(x => x);
 
                 // If the framework name is empty, the associated dependencies are shared by all frameworks
                 if (string.IsNullOrEmpty(group.FrameworkName))
                 {
                     actualDependencies = project.Dependencies
-                        .Select(d => d.LibraryRange.ToString())
+                        .Select(d => TrimFx(d.LibraryRange.ToString()))
                         .OrderBy(x => x, StringComparer.Ordinal);
                     nugetStyleDependencies = project.Dependencies
-                        .Select(d => d.LibraryRange.ToNuGetString())
+                        .Select(d => TrimFx(d.LibraryRange.ToString()))
                         .OrderBy(x => x, StringComparer.OrdinalIgnoreCase);
                 }
                 else
@@ -70,10 +72,10 @@ namespace Microsoft.Dnx.Runtime
                     }
 
                     actualDependencies = framework.Dependencies
-                        .Select(d => d.LibraryRange.ToString())
+                        .Select(d => TrimFx(d.LibraryRange.ToString()))
                         .OrderBy(x => x, StringComparer.Ordinal);
                     nugetStyleDependencies = framework.Dependencies
-                        .Select(d => d.LibraryRange.ToNuGetString())
+                        .Select(d => TrimFx(d.LibraryRange.ToString()))
                         .OrderBy(x => x, StringComparer.OrdinalIgnoreCase);
                 }
 
@@ -86,6 +88,16 @@ namespace Microsoft.Dnx.Runtime
 
             message = null;
             return true;
+        }
+
+        private string TrimFx(string s)
+        {
+            var prefix = "fx/";
+            if (s.StartsWith(prefix))
+            {
+                return s.Substring(prefix.Length);
+            }
+            return s;
         }
     }
 }

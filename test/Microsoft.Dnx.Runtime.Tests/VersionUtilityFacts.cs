@@ -13,6 +13,36 @@ namespace Microsoft.Dnx.Runtime.Tests
     public class VersionUtilityFacts
     {
         [Theory]
+        [InlineData("netstandard1.3", "portable-net45+wp80+win8+wpa81+dnxcore50", true)]
+        
+        [InlineData("netstandard1.4", "dotnet5.5", true)]
+        [InlineData("netstandard1.3", "dotnet5.4", true)]
+        [InlineData("netstandard1.2", "dotnet5.3", true)]
+        [InlineData("netstandard1.1", "dotnet5.2", true)]
+        [InlineData("netstandard1.0", "dotnet5.1", true)]
+        [InlineData("netstandard1.3", "dnxcore50", false)]
+
+        [InlineData("netstandardapp1.5", "netstandard1.5", true)]
+        [InlineData("netstandardapp1.5", "netstandard1.4", true)]
+        [InlineData("netstandardapp1.5", "netstandard1.3", true)]
+        [InlineData("netstandardapp1.5", "netstandard1.2", true)]
+        [InlineData("netstandardapp1.5", "netstandard1.1", true)]
+        [InlineData("netstandardapp1.5", "netstandard1.0", true)]
+        [InlineData("netstandardapp1.5", "dnxcore50", true)]
+
+        [InlineData("dnxcore50", "netstandard1.4", true)]
+        [InlineData("dnxcore50", "netstandard1.3", true)]
+        [InlineData("dnxcore50", "netstandard1.2", true)]
+        [InlineData("dnxcore50", "netstandard1.1", true)]
+        [InlineData("dnxcore50", "netstandard1.0", true)]
+
+        [InlineData("dotnet5.5", "netstandard1.4", true)]
+        [InlineData("dotnet5.4", "netstandard1.3", true)]
+        [InlineData("dotnet5.3", "netstandard1.2", true)]
+        [InlineData("dotnet5.2", "netstandard1.1", true)]
+        [InlineData("dotnet5.1", "netstandard1.0", true)]
+
+
         // Compat rules that we have just because we need it for now
         [InlineData("dotnet", "portable-net45+win8", true)]
         [InlineData("dnxcore50", "portable-net40+win8+dnxcore50", true)]
@@ -26,6 +56,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         // dotnet
         [InlineData("dotnet", "dotnet", true)]
         [InlineData("dotnet5.1", "dotnet", true)]
+
 
         // dnxcore50 -> dotnet
         [InlineData("dnxcore50", "dotnet5.5", true)]

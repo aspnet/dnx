@@ -367,8 +367,14 @@ namespace Microsoft.Dnx.Tooling
                         var runtimeFileTasks = new List<Task<RuntimeFile>>();
                         ForEach(pair.graph.Root, node =>
                         {
+                            if (node?.Disposition != GraphNode.DispositionType.Accepted)
+                            {
+                                return;
+                            }
+
                             var match = node?.Item?.Match;
                             if (match == null) { return; }
+
                             runtimeFileTasks.Add(match.Provider.GetRuntimes(node.Item.Match, pair.context.FrameworkName));
                         });
 

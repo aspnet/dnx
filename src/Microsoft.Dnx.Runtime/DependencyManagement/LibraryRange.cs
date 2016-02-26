@@ -46,7 +46,11 @@ namespace Microsoft.Dnx.Runtime
 
         public override string ToString()
         {
-            return Name + " " + (VersionRange?.ToString());
+            if (VersionRange != null)
+            {
+                return Name + " " + VersionRange.ToString();
+            }
+            else return Name;
         }
 
         public string ToNuGetString()
@@ -56,7 +60,12 @@ namespace Microsoft.Dnx.Runtime
             {
                 name = Name.Substring(3);
             }
-            return name + " " + (VersionRange?.ToString());
+
+            if (VersionRange != null)
+            {
+                return name + " " + VersionRange.ToString();
+            }
+            else return name;
         }
 
         public bool Equals(LibraryRange other)

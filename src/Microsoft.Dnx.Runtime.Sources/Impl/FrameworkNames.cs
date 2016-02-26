@@ -22,6 +22,9 @@ namespace Microsoft.Dnx.Runtime.Common.Impl
             public const string Dnx46 = Dnx + "46";
             public const string Dnx461 = Dnx + "461";
             public const string DnxCore50 = DnxCore + "50";
+
+            public const string NetStandardApp = "netstandardapp";
+            public const string NetStandardApp15 = NetStandardApp + "1.5";
         }
 
         public static class LongNames
@@ -37,6 +40,8 @@ namespace Microsoft.Dnx.Runtime.Common.Impl
             public const string Dnx46 = Dnx + VersionPrefix + "4.6";
             public const string Dnx461 = Dnx + VersionPrefix + "4.6.1";
             public const string DnxCore50 = DnxCore + VersionPrefix + "5.0";
+
+            public const string NetStandardApp = ".NETStandardApp";
         }
     }
 }

@@ -15,7 +15,9 @@ namespace Microsoft.Dnx.Tooling.Restore.RuntimeModel
             {
                 using (var streamReader = new StreamReader(fileStream))
                 {
-                    return ReadRuntimeFile(streamReader);
+                    var file = ReadRuntimeFile(streamReader);
+                    file.Source = filePath;
+                    return file;
                 }
             }
         }

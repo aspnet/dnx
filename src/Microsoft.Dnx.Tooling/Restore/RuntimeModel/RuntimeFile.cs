@@ -9,7 +9,7 @@ namespace Microsoft.Dnx.Tooling.Restore.RuntimeModel
     public class RuntimeFile
     {
         public Dictionary<string, RuntimeSpec> Runtimes { get; set; } = new Dictionary<string, RuntimeSpec>();
-
+        public string Source { get; set; }
         public RuntimeFile() { }
         public RuntimeFile(params RuntimeSpec[] runtimes)
         {
@@ -20,6 +20,11 @@ namespace Microsoft.Dnx.Tooling.Restore.RuntimeModel
         {
             var runtimeFormatter = new RuntimeFileFormatter();
             return runtimeFormatter.ReadRuntimeFile(project.ProjectFilePath);
+        }
+
+        public override string ToString()
+        {
+            return $"{Source} [{string.Join(",",Runtimes.Keys)}]";
         }
     }
 

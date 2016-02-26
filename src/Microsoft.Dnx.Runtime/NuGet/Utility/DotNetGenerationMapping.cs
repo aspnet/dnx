@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Versioning;
 
 namespace NuGet
@@ -9,40 +10,50 @@ namespace NuGet
         private static readonly Version _version45 = new Version(4, 5);
         private static readonly Dictionary<FrameworkName, Version> _generationMappings = new Dictionary<FrameworkName, Version>()
         {
+            // netstandardapp
+            { new FrameworkName(VersionUtility.NetStandardAppFrameworkIdentifier, new Version(1, 5)), new Version(1, 5) },
+
+            // dotnet
+            { new FrameworkName(VersionUtility.NetPlatformFrameworkIdentifier, new Version(5, 1)), new Version(1, 0) },
+            { new FrameworkName(VersionUtility.NetPlatformFrameworkIdentifier, new Version(5, 2)), new Version(1, 1) },
+            { new FrameworkName(VersionUtility.NetPlatformFrameworkIdentifier, new Version(5, 3)), new Version(1, 2) },
+            { new FrameworkName(VersionUtility.NetPlatformFrameworkIdentifier, new Version(5, 4)), new Version(1, 3) },
+            { new FrameworkName(VersionUtility.NetPlatformFrameworkIdentifier, new Version(5, 5)), new Version(1, 4) },
+
             // dnxcore50
-            { new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 6) },
+            { new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, new Version(5, 0)), new Version(1, 5) },
 
             // netcore50/uap10
-            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(5, 0)), new Version(5, 4) },
-            { new FrameworkName(VersionUtility.UapFrameworkIdentifier, new Version(10, 0)), new Version(5, 4) },
+            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(5, 0)), new Version(1, 3) },
+            { new FrameworkName(VersionUtility.UapFrameworkIdentifier, new Version(10, 0)), new Version(1, 3) },
 
             // netN
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 3) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 2)), new Version(5, 3) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6)), new Version(5, 4) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6, 1)), new Version(5, 5) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5)), new Version(1, 1) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new Version(1, 2) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 2)), new Version(1, 2) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6)), new Version(1, 3) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6, 1)), new Version(1, 4) },
 
             // dnxN
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 3) },
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 2)), new Version(5, 3) },
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6)), new Version(5, 4) },
-            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6, 1)), new Version(5, 5) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5)), new Version(1, 1) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)), new Version(1, 2) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 2)), new Version(1, 2) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6)), new Version(1, 3) },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6, 1)), new Version(1, 4) },
 
             // winN
-            { new FrameworkName(VersionUtility.WindowsFrameworkIdentifier, new Version(8, 0)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(4, 5)), new Version(5, 2) },
-            { new FrameworkName(VersionUtility.WindowsFrameworkIdentifier, new Version(8, 1)), new Version(5, 3) },
-            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(4, 5, 1)), new Version(5, 3) },
+            { new FrameworkName(VersionUtility.WindowsFrameworkIdentifier, new Version(8, 0)), new Version(1, 1) },
+            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(4, 5)), new Version(1, 1) },
+            { new FrameworkName(VersionUtility.WindowsFrameworkIdentifier, new Version(8, 1)), new Version(1, 2) },
+            { new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, new Version(4, 5, 1)), new Version(1, 2) },
 
             // windows phone silverlight
-            { new FrameworkName(VersionUtility.WindowsPhoneFrameworkIdentifier, new Version(8, 0)), new Version(5, 1) },
-            { new FrameworkName(VersionUtility.WindowsPhoneFrameworkIdentifier, new Version(8, 1)), new Version(5, 1) },
-            { new FrameworkName(VersionUtility.SilverlightFrameworkIdentifier, new Version(8, 0), VersionUtility.WindowsPhoneFrameworkIdentifier), new Version(5, 1) },
+            { new FrameworkName(VersionUtility.WindowsPhoneFrameworkIdentifier, new Version(8, 0)), new Version(1, 0) },
+            { new FrameworkName(VersionUtility.WindowsPhoneFrameworkIdentifier, new Version(8, 1)), new Version(1, 0) },
+            { new FrameworkName(VersionUtility.SilverlightFrameworkIdentifier, new Version(8, 0), VersionUtility.WindowsPhoneFrameworkIdentifier), new Version(1, 0) },
 
             // wpaN
-            { new FrameworkName(VersionUtility.WindowsPhoneAppFrameworkIdentifier, new Version(8, 1)), new Version(5, 3) }
+            { new FrameworkName(VersionUtility.WindowsPhoneAppFrameworkIdentifier, new Version(8, 1)), new Version(1, 2) }
         };
 
         public static IEnumerable<FrameworkName> Expand(FrameworkName input)
@@ -56,53 +67,70 @@ namespace NuGet
             //  however, we still want direct DNX == DNX matches, so we do this ONLY if the identifiers don't already match
             // This also handles .NET Generation mappings
 
-            yield return input;
 
-            var gen = GetGeneration(input);
-
-            // dnxN -> netN -> dotnetY
-            if (input.Identifier.Equals(VersionUtility.DnxFrameworkIdentifier))
+            var candidates = new Queue<FrameworkName>();
+            candidates.Enqueue(input);
+            var results = new HashSet<FrameworkName>();
+            while (candidates.Any())
             {
-                yield return new FrameworkName(VersionUtility.NetFrameworkIdentifier, input.Version);
-                if (gen != null)
+                var candidate = candidates.Dequeue();
+                results.Add(candidate);
+
+                foreach (var name in ExpandOnce(candidate))
                 {
-                    yield return gen;
+                    if (!results.Contains(name))
+                    {
+                        candidates.Enqueue(name);
+                    }
                 }
             }
+            return results;
+        }
+
+        private static IEnumerable<FrameworkName> ExpandOnce(FrameworkName candidate)
+        {
+            var gen = GetGeneration(candidate);
+            foreach (var frameworkName in gen)
+            {
+                yield return frameworkName;
+            }
+
+            // netstandard -> dotnet
+            if (candidate.Identifier.Equals(VersionUtility.NetStandardFrameworkIdentifier))
+            {
+                yield return new FrameworkName(VersionUtility.NetPlatformFrameworkIdentifier, new Version(5, candidate.Version.Minor + 1));
+            }
+            // netstandardapp -> dnxcore
+            else if (candidate.Identifier.Equals(VersionUtility.NetStandardAppFrameworkIdentifier) && candidate.Version == new Version(1, 5))
+            {
+                yield return new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, Microsoft.Dnx.Runtime.Constants.Version50);
+            }
+            // dnxN -> netN -> dotnetY
+            else if (candidate.Identifier.Equals(VersionUtility.DnxFrameworkIdentifier))
+            {
+                yield return new FrameworkName(VersionUtility.NetFrameworkIdentifier, candidate.Version);
+            }
             // uap10 -> netcore50 -> wpa81 -> dotnetY
-            else if (input.Identifier.Equals(VersionUtility.UapFrameworkIdentifier) && input.Version == Microsoft.Dnx.Runtime.Constants.Version10_0)
+            else if (candidate.Identifier.Equals(VersionUtility.UapFrameworkIdentifier) && candidate.Version == Microsoft.Dnx.Runtime.Constants.Version10_0)
             {
                 yield return new FrameworkName(VersionUtility.NetCoreFrameworkIdentifier, Microsoft.Dnx.Runtime.Constants.Version50);
                 yield return new FrameworkName(VersionUtility.WindowsPhoneAppFrameworkIdentifier, new Version(8, 1));
-                if (gen != null)
-                {
-                    yield return gen;
-                }
             }
             // netcore50 (universal windows apps) -> wpa81 -> dotnetY
-            else if (input.Identifier.Equals(VersionUtility.NetCoreFrameworkIdentifier) && input.Version == Microsoft.Dnx.Runtime.Constants.Version50)
+            else if (candidate.Identifier.Equals(VersionUtility.NetCoreFrameworkIdentifier) && candidate.Version == Microsoft.Dnx.Runtime.Constants.Version50)
             {
                 yield return new FrameworkName(VersionUtility.WindowsPhoneAppFrameworkIdentifier, new Version(8, 1));
-                if (gen != null)
-                {
-                    yield return gen;
-                }
-            }
-            // others just map to a generation (if any)
-            else if (gen != null)
-            {
-                yield return gen;
             }
         }
 
-        public static FrameworkName GetGeneration(FrameworkName input)
+        public static IEnumerable<FrameworkName> GetGeneration(FrameworkName input)
         {
             Version version;
             if (!_generationMappings.TryGetValue(input, out version))
             {
-                return null;
+                yield break;
             }
-            return new FrameworkName(VersionUtility.NetPlatformFrameworkIdentifier, version);
+            yield return new FrameworkName(VersionUtility.NetStandardFrameworkIdentifier, version);
         }
     }
 }

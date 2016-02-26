@@ -29,7 +29,7 @@ namespace Microsoft.Dnx.Runtime.Tests
                 var project = new ProjectReader().ReadProject(strm, "TheTestProject", @"C:\TestProject", diagnostics: null);
                 var provider = new ProjectDependencyProvider();
                 var expected = expectedNames.Split(',').Select(s => "fx/" + s).ToArray();
-                var actual = provider.GetDescription(VersionUtility.ParseFrameworkName(shortFrameworkName), project)
+                var actual = provider.GetDescription(VersionUtility.ParseFrameworkName(shortFrameworkName), project, null)
                                      .Dependencies
                                      .Select(d => d.LibraryRange.Name).ToArray();
 

@@ -108,7 +108,8 @@ namespace Microsoft.Dnx.Tooling
                     var formatter = new RuntimeFileFormatter();
                     using (var reader = new StreamReader(stream))
                     {
-                        return formatter.ReadRuntimeFile(reader);
+                        var file = formatter.ReadRuntimeFile(reader);
+                        file.Source = $"{match.Library.Name} {match.Library.Version} {match.Path}";
                     }
                 }
             }

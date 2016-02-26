@@ -165,7 +165,7 @@ namespace Microsoft.Dnx.Runtime
             var packageResolver = new PackageDependencyProvider(context.PackagesDirectory);
             var projectResolver = new ProjectDependencyProvider();
 
-            context.MainProject = projectResolver.GetDescription(context.TargetFramework, context.Project);
+            context.MainProject = projectResolver.GetDescription(context.TargetFramework, context.Project, null);
 
             // Add the main project
             libraries.Add(context.MainProject);

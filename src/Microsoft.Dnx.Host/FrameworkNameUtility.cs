@@ -65,6 +65,11 @@ namespace Microsoft.Dnx.Host
                 parsed = new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
                 return true;
             }
+            else if (frameworkName == FrameworkNames.ShortNames.NetStandardApp15)
+            {
+                parsed = new FrameworkName(FrameworkNames.LongNames.NetStandardApp, new Version(1, 5));
+                return true;
+            }
             return false;
         }
 
