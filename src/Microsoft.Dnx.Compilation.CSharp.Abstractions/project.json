@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "Microsoft.Extensions.CompilationAbstractions": "1.0.0-*",
-    "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*",
+    "Microsoft.CodeAnalysis.CSharp": "1.2.0-beta1-*",
     "Microsoft.NETCore.Platforms": "1.0.1-*"
   },
   "frameworks": {
