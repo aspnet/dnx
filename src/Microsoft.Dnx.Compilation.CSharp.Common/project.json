@@ -10,7 +10,7 @@
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.CodeAnalysis.CSharp": "1.2.0-beta1-*",
+    "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*",
     "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-*",
     "Microsoft.Dnx.Runtime.Sources": {
       "version": "1.0.0-*",
