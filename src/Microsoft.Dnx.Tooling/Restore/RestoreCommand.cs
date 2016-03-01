@@ -365,6 +365,7 @@ namespace Microsoft.Dnx.Tooling
                     foreach (var pair in contexts.Zip(targetContexts, (context, graph) => new { context, graph }))
                     {
                         var runtimeFileTasks = new List<Task<RuntimeFile>>();
+                        var matches = new HashSet<WalkProviderMatch>();
                         ForEach(pair.graph.Root, node =>
                         {
                             if (node?.Disposition != GraphNode.DispositionType.Accepted)
@@ -374,8 +375,11 @@ namespace Microsoft.Dnx.Tooling
 
                             var match = node?.Item?.Match;
                             if (match == null) { return; }
-
-                            runtimeFileTasks.Add(match.Provider.GetRuntimes(node.Item.Match, pair.context.FrameworkName));
+                            // do not process same nodes multiple times
+                            if (matches.Add(match))
+                            {
+                                runtimeFileTasks.Add(match.Provider.GetRuntimes(match, pair.context.FrameworkName));
+                            }
                         });
 
                         var libraryRuntimeFiles = await Task.WhenAll(runtimeFileTasks);
@@ -589,6 +593,7 @@ namespace Microsoft.Dnx.Tooling
             Func<string, bool> circularImport)
         {
             IEnumerable<string> imports = null;
+            string importsSource = string.Empty;
             foreach (var runtimeFile in runtimeFiles)
             {
                 RuntimeSpec runtimeSpec;
@@ -598,9 +603,10 @@ namespace Microsoft.Dnx.Tooling
                     {
                         if (imports != null)
                         {
-                            throw new ArgumentException($"More than one runtime.json file has declared imports for '{runtimeName}'", nameof(runtimeName));
+                            throw new ArgumentException($"More than one runtime.json file has declared imports for '{runtimeName}' ({importsSource}, {runtimeFile.Source})", nameof(runtimeName));
                         }
                         imports = runtimeSpec.Import;
+                        importsSource = runtimeFile.Source;
                     }
 
                     allRuntimeNames.Add(runtimeSpec.Name);
