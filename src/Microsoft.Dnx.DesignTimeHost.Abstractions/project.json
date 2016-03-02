@@ -1,19 +1,19 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-update1",
   "description": "ASP.NET 5 interfaces to take advantage of capabilities exposed by the design time host.",
   "compilationOptions": {
     "warningsAsErrors": true,
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update1",
     "Newtonsoft.Json": "6.0.6"
   },
   "frameworks": {
     "net451": {},
     "dotnet5.4": {
       "dependencies": {
-        "System.Runtime": "4.0.21-beta-*"
+        "System.Runtime": "4.0.21-beta-23516"
       }
     }
   },

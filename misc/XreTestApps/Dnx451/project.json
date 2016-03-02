@@ -1,7 +1,6 @@
 {
-    "dependencies": {
-    },
-    "frameworks": {
-        "dnx451": {}
-    }
+  "dependencies": {},
+  "frameworks": {
+    "dnx451": {}
+  }
 }

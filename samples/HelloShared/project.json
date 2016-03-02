@@ -1,14 +1,14 @@
 {
-    "version": "0.1-beta-*",
-    "dependencies": { },
-    "shared": "*.cs",
-    "frameworks": {
-        "dnx451": { },
-        "dnxcore50": {
-            "dependencies": {
-                "System.Linq": "4.0.1-beta-*",
-                "System.Runtime": "4.0.21-beta-*"
-            }
-        }
+  "version": "0.1-beta-*",
+  "dependencies": {},
+  "shared": "*.cs",
+  "frameworks": {
+    "dnx451": {},
+    "dnxcore50": {
+      "dependencies": {
+        "System.Linq": "4.0.1-beta-23516",
+        "System.Runtime": "4.0.21-beta-23516"
+      }
     }
+  }
 }

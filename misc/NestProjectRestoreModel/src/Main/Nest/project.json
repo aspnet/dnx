@@ -1,6 +1,6 @@
 {
   "frameworks": {
-    "dnx451": { }
+    "dnx451": {}
   },
   "dependencies": {
     "Newtonsoft.Json": "6.0.8"

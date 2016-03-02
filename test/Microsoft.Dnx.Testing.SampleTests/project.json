@@ -1,24 +1,25 @@
-﻿{
+{
   "version": "1.0.0-*",
   "description": "",
-  "authors": [ "" ],
-  "tags": [ "" ],
+  "authors": [
+    ""
+  ],
+  "tags": [
+    ""
+  ],
   "projectUrl": "",
   "licenseUrl": "",
-
   "dependencies": {
-    "Microsoft.AspNet.Testing": "1.0.0-*",
-    "Microsoft.Dnx.Runtime": "1.0.0-*",
-    "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
+    "Microsoft.AspNet.Testing": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Runtime": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Runtime.Sources": "1.0.0-rc1-update1",
     "Microsoft.Dnx.Testing.Framework": "1.0.0-*",
-    "Microsoft.Dnx.Tooling": "1.0.0-*",
-    "xunit.runner.aspnet": "2.0.0-aspnet-*"
+    "Microsoft.Dnx.Tooling": "1.0.0-rc1-update1",
+    "xunit.runner.aspnet": "2.0.0-aspnet-rc1-update1"
   },
-
-  "frameworks" : {
-    "dnx451": { }
+  "frameworks": {
+    "dnx451": {}
   },
-
   "commands": {
     "test": "xunit.runner.aspnet"
   }
