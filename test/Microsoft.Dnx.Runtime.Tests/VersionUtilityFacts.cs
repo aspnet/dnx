@@ -13,8 +13,10 @@ namespace Microsoft.Dnx.Runtime.Tests
     public class VersionUtilityFacts
     {
         [Theory]
+
+        [InlineData("netstandard1.5", "netstandard1.3", true)]
         [InlineData("netstandard1.3", "portable-net45+wp80+win8+wpa81+dnxcore50", true)]
-        
+
         [InlineData("netstandard1.4", "dotnet5.5", true)]
         [InlineData("netstandard1.3", "dotnet5.4", true)]
         [InlineData("netstandard1.2", "dotnet5.3", true)]
@@ -35,6 +37,8 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("dnxcore50", "netstandard1.2", true)]
         [InlineData("dnxcore50", "netstandard1.1", true)]
         [InlineData("dnxcore50", "netstandard1.0", true)]
+
+        [InlineData("dnxcore50", "netstandardapp1.5", true)]
 
         [InlineData("dotnet5.5", "netstandard1.4", true)]
         [InlineData("dotnet5.4", "netstandard1.3", true)]

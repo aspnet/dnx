@@ -105,6 +105,11 @@ namespace NuGet
             {
                 yield return new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, Microsoft.Dnx.Runtime.Constants.Version50);
             }
+            // dnxcore -> netstandardapp
+            else if (candidate.Identifier.Equals(VersionUtility.DnxCoreFrameworkIdentifier) && candidate.Version == Microsoft.Dnx.Runtime.Constants.Version50)
+            {
+                yield return new FrameworkName(VersionUtility.NetStandardAppFrameworkIdentifier, new Version(1, 5));
+            }
             // dnxN -> netN -> dotnetY
             else if (candidate.Identifier.Equals(VersionUtility.DnxFrameworkIdentifier))
             {

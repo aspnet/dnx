@@ -1185,6 +1185,8 @@ namespace NuGet
                 { NetPlatformFrameworkIdentifier, NetPlatformFrameworkIdentifier },
                 { NetStandardFrameworkShortName, NetStandardFrameworkIdentifier },
                 { NetStandardAppFrameworkShortName, NetStandardAppFrameworkIdentifier },
+                { NetStandardFrameworkIdentifier, NetStandardFrameworkIdentifier },
+                { NetStandardAppFrameworkIdentifier, NetStandardAppFrameworkIdentifier },
                 { UapFrameworkIdentifier, UapFrameworkIdentifier },
 
                 { "NET", NetFrameworkIdentifier },
