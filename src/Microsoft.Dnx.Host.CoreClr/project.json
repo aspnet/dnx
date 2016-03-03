@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-rc1-update1",
+  "version": "1.0.0-*",
   "compilationOptions": {
     "define": [
       "TRACE"
@@ -9,7 +9,7 @@
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Dnx.Host": "1.0.0-rc1-update1"
+    "Microsoft.Dnx.Host": "1.0.0-*"
   },
   "frameworks": {
     "dnxcore50": {}

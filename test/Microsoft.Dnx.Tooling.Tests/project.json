@@ -4,7 +4,7 @@
   },
   "dependencies": {
     "Microsoft.Dnx.CommonTestUtils": "1.0.0-*",
-    "Microsoft.Dnx.Tooling": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Tooling": "1.0.0-*",
     "xunit.runner.aspnet": "2.0.0-aspnet-rc1-update1"
   },
   "frameworks": {

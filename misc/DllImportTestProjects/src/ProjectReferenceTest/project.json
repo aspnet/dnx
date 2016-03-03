@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "dependencies": {
     "NativeLib": "",
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update1"
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*"
   },
   "compile": "../*.cs",
   "frameworks": {

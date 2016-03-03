@@ -3,9 +3,9 @@
     "System.Reflection.Metadata": "1.1.1-beta-23516",
     "Microsoft.AspNet.Testing": "1.0.0-rc1-update1",
     "Microsoft.Dnx.CommonTestUtils": "1.0.0-*",
-    "Microsoft.Dnx.Runtime.Sources": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Runtime.Sources": "1.0.0-*",
     "Microsoft.Dnx.Testing.Framework": "1.0.0-*",
-    "Microsoft.Dnx.Tooling": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Tooling": "1.0.0-*",
     "xunit.runner.aspnet": "2.0.0-aspnet-rc1-update1"
   },
   "frameworks": {

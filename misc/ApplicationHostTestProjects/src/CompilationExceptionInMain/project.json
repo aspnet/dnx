@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-rc1-update1"
+    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*"
   },
   "frameworks": {
     "dnx451": {},

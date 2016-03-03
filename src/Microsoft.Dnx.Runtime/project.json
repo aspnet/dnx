@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-rc1-update1",
+  "version": "1.0.0-*",
   "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
   "compilationOptions": {
     "define": [
@@ -17,22 +17,22 @@
     "../../ext/compiler/preprocess/Internalization.cs"
   ],
   "dependencies": {
-    "Microsoft.Dnx.Loader": "1.0.0-rc1-update1",
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Loader": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
     "Microsoft.Extensions.JsonParser.Sources": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Dnx.Runtime.Internals": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Dnx.Runtime.Sources": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Dnx.Compilation.CSharp.Abstractions": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Extensions.HashCodeCombiner.Sources": {

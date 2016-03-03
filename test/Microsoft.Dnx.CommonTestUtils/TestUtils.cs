@@ -413,7 +413,13 @@ namespace Microsoft.Dnx.CommonTestUtils
 #endif
             }
 
-            return Path.Combine(programFilesPath, "MSBuild", "14.0", "Bin", "MSBuild.exe");
+            var msBuildPath = Path.Combine(programFilesPath, "MSBuild", "14.0", "Bin", "MSBuild.exe");
+            if (File.Exists(msBuildPath))
+            {
+                return msBuildPath;
+            }
+
+            return Path.Combine(programFilesPath, "MSBuild", "15.0", "Bin", "MSBuild.exe");
         }
 
         public static string GetRuntimeVersion()

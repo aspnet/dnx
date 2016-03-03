@@ -5,7 +5,7 @@
       "version": "1.0.0",
       "target": "package"
     },
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update1"
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*"
   },
   "compile": "../*.cs",
   "frameworks": {

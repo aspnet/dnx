@@ -20,7 +20,7 @@ copy %CACHED_NUGET% .nuget\nuget.exe > nul
 :restore
 IF EXIST packages\Sake goto getdnx
 IF "%BUILDCMD_KOREBUILD_VERSION%"=="" (
-    .nuget\nuget.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
+    .nuget\nuget.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre -Source https://myget.org/F/aspnetcirelease/api/v2
 ) ELSE (
     .nuget\nuget.exe install KoreBuild -version %BUILDCMD_KOREBUILD_VERSION% -ExcludeVersion -o packages -nocache -pre
 )

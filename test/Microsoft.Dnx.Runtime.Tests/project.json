@@ -5,8 +5,8 @@
   "dependencies": {
     "Microsoft.AspNet.Testing": "1.0.0-rc1-update1",
     "Microsoft.Dnx.CommonTestUtils": "1.0.0-*",
-    "Microsoft.Dnx.Runtime": "1.0.0-rc1-update1",
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Runtime": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
     "xunit.runner.aspnet": "2.0.0-aspnet-rc1-update1"
   },
   "frameworks": {

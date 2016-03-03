@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-rc1-update1",
+  "version": "1.0.0-*",
   "compilationOptions": {
     "warningsAsErrors": true,
     "emitEntryPoint": true,
@@ -12,28 +12,28 @@
     "../../ext/compiler/preprocess/Internalization.cs"
   ],
   "dependencies": {
-    "Microsoft.Dnx.Compilation": "1.0.0-rc1-update1",
-    "Microsoft.Dnx.Project": "1.0.0-rc1-update1",
-    "Microsoft.Dnx.Runtime": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Compilation": "1.0.0-*",
+    "Microsoft.Dnx.Project": "1.0.0-*",
+    "Microsoft.Dnx.Runtime": "1.0.0-*",
     "Microsoft.Dnx.Runtime.CommandParsing.Sources": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Dnx.Runtime.Internals": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Dnx.Runtime.Sources": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update1",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
     "Microsoft.Dnx.Compilation.CSharp.Abstractions": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Extensions.CommandLineUtils.Sources": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Extensions.HashCodeCombiner.Sources": {

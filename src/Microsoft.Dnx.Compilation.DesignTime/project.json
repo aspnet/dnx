@@ -1,16 +1,16 @@
 {
-  "version": "1.0.0-rc1-update1",
+  "version": "1.0.0-*",
   "compilationOptions": {
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-rc1-update1",
+    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
     "Microsoft.Extensions.JsonParser.Sources": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     },
     "Microsoft.Dnx.Runtime.Sources": {
-      "version": "1.0.0-rc1-update1",
+      "version": "1.0.0-*",
       "type": "build"
     }
   },
