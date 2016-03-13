@@ -91,6 +91,9 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Extensions.JsonParser.Sources",
     "Microsoft.Dnx.Runtime.Sources",
     "Microsoft.Dnx.Project",
+    "Microsoft.Dnx.TestHost",
+    "Microsoft.Dnx.TestHost",
+    "Microsoft.Dnx.Testing.Abstractions",
     "Microsoft.Dnx.Tooling",
     "Microsoft.Extensions.CommandLineUtils.Sources")}'
 
