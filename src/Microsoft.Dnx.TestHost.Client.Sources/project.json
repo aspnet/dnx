@@ -10,7 +10,9 @@
   "frameworks": {
     "net451": {},
     "netstandard1.3": {
-      "dependencies": {},
+      "dependencies": {
+        "System.Runtime": "4.1.0-*"
+      },
       "imports": [
         "dotnet5.4"
       ]
