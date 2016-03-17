@@ -25,6 +25,9 @@ namespace Microsoft.Dnx.Runtime.Common.Impl
 
             public const string NetStandardApp = "netstandardapp";
             public const string NetStandardApp15 = NetStandardApp + "1.5";
+
+            public const string NetCoreApp = "netcoreapp";
+            public const string NetCoreApp10 = NetCoreApp + "1.0";
         }
 
         public static class LongNames
@@ -42,6 +45,7 @@ namespace Microsoft.Dnx.Runtime.Common.Impl
             public const string DnxCore50 = DnxCore + VersionPrefix + "5.0";
 
             public const string NetStandardApp = ".NETStandardApp";
+            public const string NetCoreApp = ".NETCoreApp";
         }
     }
 }

@@ -26,6 +26,7 @@ namespace NuGet
         public static readonly string NetStandardFrameworkIdentifier = ".NETStandard";
         public static readonly string NetStandardAppFrameworkIdentifier = ".NETStandardApp";
         public static readonly string NetCoreFrameworkIdentifier = ".NETCore";
+        public static readonly string NetCoreAppFrameworkIdentifier = ".NETCoreApp";
         public static readonly string UapFrameworkIdentifier = "UAP";
         public static readonly string WindowsFrameworkIdentifier = "Windows";
         public static readonly string WindowsPhoneFrameworkIdentifier = "WindowsPhone";
@@ -39,6 +40,7 @@ namespace NuGet
         internal const string NetPlatformFrameworkShortName = "dotnet";
         internal const string NetStandardFrameworkShortName = "netstandard";
         internal const string NetStandardAppFrameworkShortName = "netstandardapp";
+        internal const string NetCoreAppFrameworkShortName = "netcoreapp";
 
         private const string LessThanOrEqualTo = "\u2264";
         private const string GreaterThanOrEqualTo = "\u2265";
@@ -67,6 +69,7 @@ namespace NuGet
             { NetPlatformFrameworkIdentifier, NetPlatformFrameworkShortName },
             { NetStandardFrameworkIdentifier, NetStandardFrameworkShortName },
             { NetStandardAppFrameworkIdentifier, NetStandardAppFrameworkShortName },
+            { NetCoreAppFrameworkIdentifier, NetCoreAppFrameworkShortName },
             { UapFrameworkIdentifier, UapFrameworkIdentifier },
 
             { SilverlightFrameworkIdentifier, "sl" },
@@ -554,6 +557,7 @@ namespace NuGet
                     var version = frameworkName.Version.ToString();
                     if (!frameworkName.Identifier.Equals(NetPlatformFrameworkIdentifier) &&
                         !frameworkName.Identifier.Equals(NetStandardAppFrameworkIdentifier) &&
+                        !frameworkName.Identifier.Equals(NetCoreAppFrameworkIdentifier) &&
                         !frameworkName.Identifier.Equals(NetStandardFrameworkIdentifier) &&
                         frameworkName.Version.Major < 10 &&
                         frameworkName.Version.Minor < 10 &&
@@ -890,6 +894,7 @@ namespace NuGet
                     // as this logic is super fuzzy and terrible
                     if (string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(frameworkName.Identifier, NetStandardAppFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(frameworkName.Identifier, NetCoreAppFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(frameworkName.Identifier, NetStandardFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(frameworkName.Identifier, NetPlatformFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
                     {
@@ -1187,6 +1192,8 @@ namespace NuGet
                 { NetStandardAppFrameworkShortName, NetStandardAppFrameworkIdentifier },
                 { NetStandardFrameworkIdentifier, NetStandardFrameworkIdentifier },
                 { NetStandardAppFrameworkIdentifier, NetStandardAppFrameworkIdentifier },
+                { NetCoreAppFrameworkShortName, NetCoreAppFrameworkIdentifier },
+                { NetCoreAppFrameworkIdentifier, NetCoreAppFrameworkIdentifier },
                 { UapFrameworkIdentifier, UapFrameworkIdentifier },
 
                 { "NET", NetFrameworkIdentifier },

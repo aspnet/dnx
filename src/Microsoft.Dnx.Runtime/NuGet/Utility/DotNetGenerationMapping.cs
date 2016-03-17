@@ -10,6 +10,9 @@ namespace NuGet
         private static readonly Version _version45 = new Version(4, 5);
         private static readonly Dictionary<FrameworkName, Version> _generationMappings = new Dictionary<FrameworkName, Version>()
         {
+            // netcoredapp
+            { new FrameworkName(VersionUtility.NetCoreAppFrameworkIdentifier, new Version(1, 0)), new Version(1, 5) },
+
             // netstandardapp
             { new FrameworkName(VersionUtility.NetStandardAppFrameworkIdentifier, new Version(1, 5)), new Version(1, 5) },
 
@@ -105,10 +108,16 @@ namespace NuGet
             {
                 yield return new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, Microsoft.Dnx.Runtime.Constants.Version50);
             }
+            // netcoreapp -> dnxcore
+            else if (candidate.Identifier.Equals(VersionUtility.NetCoreAppFrameworkIdentifier) && candidate.Version == new Version(1, 0))
+            {
+                yield return new FrameworkName(VersionUtility.DnxCoreFrameworkIdentifier, Microsoft.Dnx.Runtime.Constants.Version50);
+            }
             // dnxcore -> netstandardapp
             else if (candidate.Identifier.Equals(VersionUtility.DnxCoreFrameworkIdentifier) && candidate.Version == Microsoft.Dnx.Runtime.Constants.Version50)
             {
                 yield return new FrameworkName(VersionUtility.NetStandardAppFrameworkIdentifier, new Version(1, 5));
+                yield return new FrameworkName(VersionUtility.NetCoreAppFrameworkIdentifier, new Version(1, 0));
             }
             // dnxN -> netN -> dotnetY
             else if (candidate.Identifier.Equals(VersionUtility.DnxFrameworkIdentifier))
