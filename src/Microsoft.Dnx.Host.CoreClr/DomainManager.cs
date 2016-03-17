@@ -92,7 +92,8 @@ sealed class DomainManager
                     FrameworkName fx;
                     if (Microsoft.Dnx.Host.FrameworkNameUtility.TryParseFrameworkName(key, out fx) &&
                         fx.Identifier.Equals(FrameworkNames.LongNames.DnxCore, StringComparison.Ordinal) ||
-                        fx.Identifier.Equals(FrameworkNames.LongNames.NetStandardApp, StringComparison.Ordinal))
+                        fx.Identifier.Equals(FrameworkNames.LongNames.NetStandardApp, StringComparison.Ordinal) ||
+                        fx.Identifier.Equals(FrameworkNames.LongNames.NetCoreApp, StringComparison.Ordinal))
                     {
                         return fx;
                     }
