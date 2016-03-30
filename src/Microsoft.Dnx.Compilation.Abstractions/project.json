@@ -1,12 +1,12 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-update2",
   "description": "Abstractions for compilers used by the runtime.",
   "compilationOptions": {
     "warningsAsErrors": true,
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update2",
     "Microsoft.Extensions.HashCodeCombiner.Sources": {
       "type": "build",
       "version": "1.0.0-rc1-update1"

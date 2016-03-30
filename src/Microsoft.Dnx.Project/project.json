@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-update2",
   "compilationOptions": {
     "define": [
       "TRACE"
@@ -8,14 +8,14 @@
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Dnx.Runtime": "1.0.0-*",
+    "Microsoft.Dnx.Runtime": "1.0.0-rc1-update2",
     "Microsoft.Dnx.Runtime.Sources": {
-      "version": "1.0.0-*",
+      "version": "1.0.0-rc1-update2",
       "type": "build"
     },
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update2",
     "Microsoft.Extensions.CommandLineUtils.Sources": {
-      "version": "1.0.0-*",
+      "version": "1.0.0-rc1-update2",
       "type": "build"
     }
   },

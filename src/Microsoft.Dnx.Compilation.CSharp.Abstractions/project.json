@@ -1,11 +1,11 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-update2",
   "compilationOptions": {
     "warningsAsErrors": true,
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
+    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-rc1-update2",
     "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-20151109-01"
   },
   "frameworks": {

@@ -3,8 +3,8 @@
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
-    "Microsoft.Dnx.DesignTimeHost": "1.0.0-*",
-    "Microsoft.Dnx.DesignTimeHost.Abstractions": "1.0.0-*",
+    "Microsoft.Dnx.DesignTimeHost": "1.0.0-rc1-update2",
+    "Microsoft.Dnx.DesignTimeHost.Abstractions": "1.0.0-rc1-update2",
     "xunit.runner.aspnet": "2.0.0-aspnet-rc1-update1"
   },
   "frameworks": {

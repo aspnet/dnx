@@ -1,11 +1,11 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-update2",
   "compilationOptions": {
     "keyFile": "../../tools/Key.snk"
   },
   "description": "ASP.NET 5 runtime infrastructure for assembly load contexts.",
   "dependencies": {
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*"
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-update2"
   },
   "frameworks": {
     "dnx451": {

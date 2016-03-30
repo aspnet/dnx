@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-update2",
   "description": "ASP.NET 5 Roslyn implementation code shared with libraries performing runtime compilation.",
   "compilationOptions": {
     "define": [
@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-20151109-01",
-    "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-*",
+    "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-rc1-update2",
     "Microsoft.Dnx.Runtime.Sources": {
-      "version": "1.0.0-*",
+      "version": "1.0.0-rc1-update2",
       "type": "build"
     }
   },

@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-update2",
   "compilationOptions": {
     "define": [
       "TRACE"
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "Microsoft.Extensions.JsonParser.Sources": {
-      "version": "1.0.0-*",
+      "version": "1.0.0-rc1-update2",
       "type": "build"
     }
   },

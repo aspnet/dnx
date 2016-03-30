@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0-rc1-update2",
   "compilationOptions": {
     "define": [
       "TRACE"
@@ -10,18 +10,18 @@
   },
   "dependencies": {
     "Microsoft.Extensions.CommandLineUtils.Sources": {
-      "version": "1.0.0-*",
+      "version": "1.0.0-rc1-update2",
       "type": "build"
     },
     "Microsoft.Dnx.Runtime.Internals": {
-      "version": "1.0.0-*",
+      "version": "1.0.0-rc1-update2",
       "type": "build"
     },
     "Microsoft.Dnx.Runtime.Sources": {
-      "version": "1.0.0-*",
+      "version": "1.0.0-rc1-update2",
       "type": "build"
     },
-    "Microsoft.Dnx.Loader": "1.0.0-*"
+    "Microsoft.Dnx.Loader": "1.0.0-rc1-update2"
   },
   "frameworks": {
     "dnx451": {
