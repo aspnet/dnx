@@ -36,7 +36,7 @@ namespace Microsoft.Dnx.TestHost
                 _channel = channel;
             }
 
-            public IDisposable BeginScopeImpl(object state)
+            public IDisposable BeginScope<TState>(TState state)
             {
                 return null;
             }
