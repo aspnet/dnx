@@ -7,16 +7,11 @@
         "warningsAsErrors": true,
         "keyFile": "../../tools/Key.snk"
     },
-    "compile": [
-        "../../submodules/FileSystem/src/Microsoft.Extensions.FileSystemGlobbing/**/*.cs"
-    ],
-    "preprocess": [
-        "../../ext/compiler/preprocess/Internalization.cs"
-    ],
     "dependencies": {
         "Microsoft.Dnx.Loader": "1.0.0-*",
         "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
         "Microsoft.Extensions.PlatformAbstractions.Dnx": "1.0.0-*",
+        "Microsoft.Extensions.FileSystemGlobbing": "1.0.0-*",
         "Microsoft.Extensions.JsonParser.Sources": {
             "version": "1.0.0-*",
             "type": "build"
@@ -40,7 +35,7 @@
         "Microsoft.CodeAnalysis.CSharp": "1.3.0-*",
         "Microsoft.NETCore.Platforms": "1.0.1-*",
         "System.Collections.Immutable": "1.2.0-*",
-         "System.Reflection.Metadata": "1.3.0-*"
+        "System.Reflection.Metadata": "1.3.0-*"
     },
     "frameworks": {
         "dnx451": {
@@ -67,6 +62,7 @@
                 "System.Resources.ResourceManager": "4.0.1-*",
                 "System.Resources.Reader": "4.0.0-*",
                 "System.Resources.Writer": "4.0.0-*",
+                "System.Runtime": "4.1.0-*",
                 "System.Text.Encoding": "4.0.11-*",
                 "System.Threading.Timer": "4.0.1-*",
                 "System.Threading.Tasks": "4.0.11-*",

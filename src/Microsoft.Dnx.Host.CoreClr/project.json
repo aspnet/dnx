@@ -8,7 +8,8 @@
     },
     "dependencies": {
         "Microsoft.Dnx.Host": "1.0.0-*",
-        "Microsoft.Extensions.JsonParser.Sources": { "version": "1.0.0-*", "type": "build" }
+        "Microsoft.Extensions.JsonParser.Sources": { "version": "1.0.0-*", "type": "build" },
+        "System.Runtime": "4.1.0-*"
     },
     "frameworks": {
         "dnxcore50": { }

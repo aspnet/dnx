@@ -46,7 +46,8 @@
         "System.Diagnostics.Process": "4.1.0-*",
         "System.Diagnostics.TextWriterTraceListener": "4.0.0-*",
         "System.Net.Sockets": "4.1.0-*",
-        "System.Threading.Thread": "4.0.0-*"
+        "System.Threading.Thread": "4.0.0-*",
+        "System.Runtime": "4.1.0-*"
       },
       "imports": [
         "dnxcore50",

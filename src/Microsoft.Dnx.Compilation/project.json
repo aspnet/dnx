@@ -29,7 +29,9 @@
                 "System.IO.FileSystem": "4.0.1-*",
                 "System.IO.FileSystem.Watcher": "4.0.0-*",
                 "System.Linq": "4.1.0-*",
-                "System.Collections.Concurrent": "4.0.12-*"
+                "System.Collections.Concurrent": "4.0.12-*",
+                "System.Runtime": "4.1.0-*",
+                "System.Runtime.Extensions": "4.1.0-*"
             }
         }
     },

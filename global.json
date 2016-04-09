@@ -1,6 +1,5 @@
 {
     "projects": [
-        "src",
-        "submodules/FileSystem/src"
+        "src"
     ]
 }
