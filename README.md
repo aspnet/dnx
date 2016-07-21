@@ -1,7 +1,10 @@
-DNX (retired)
+DNX
 ===
 
-The DNX is being retired in favor of the new dotnet CLI command line tools. See:
+## This repository is obsolete and no longer used or maintained.
+
+
+ DNX and DNVM have been replaced by the new .NET CLI. See:
 
 - http://dotnet.github.io/getting-started/
 - http://github.com/dotnet/cli
