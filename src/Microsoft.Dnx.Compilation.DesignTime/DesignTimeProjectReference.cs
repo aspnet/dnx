@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.PlatformAbstractions;
-using Microsoft.Dnx.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 
 namespace Microsoft.Dnx.Compilation.DesignTime
 {

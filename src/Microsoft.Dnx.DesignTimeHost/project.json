@@ -14,6 +14,7 @@
       "version": "1.0.0-rc1-update2",
       "type": "build"
     },
+<<<<<<< HEAD
     "Newtonsoft.Json": "6.0.6"
   },
   "compilationOptions": {
@@ -29,6 +30,21 @@
       "frameworkAssemblies": {
         "System.Net": ""
       }
+=======
+    "frameworks": {
+        "dnx451": {
+            "frameworkAssemblies": {
+                "System.Net": ""
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Diagnostics.Process": "4.1.0-*",
+                "System.Net.Primitives": "4.0.11-*",
+                "System.Threading.ThreadPool": "4.0.10-*"
+            }
+        }
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
     },
     "dnxcore50": {
       "dependencies": {

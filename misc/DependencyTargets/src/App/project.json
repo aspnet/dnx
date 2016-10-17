@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "version": "1.0.0",
   "dependencies": {
     "A": {
@@ -19,6 +20,30 @@
         "System.Runtime": "4.0.21-beta-23516",
         "System.Console": "4.0.0-beta-23516"
       }
+=======
+    "version": "1.0.0",
+
+    "dependencies": {
+        "A": { "target": "project" },
+        "B": {
+            "version": "1.0.0-*",
+            "target": "package"
+        }
+    },
+
+    "commands": {
+        "App": "App"
+    },
+
+    "frameworks": {
+        "dnx451": { },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Runtime": "4.0.0-*",
+                "System.Console": "4.0.0-*"
+            }
+        }
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
     }
   }
 }

@@ -2,6 +2,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 
 namespace Microsoft.Dnx.Compilation.Caching
 {

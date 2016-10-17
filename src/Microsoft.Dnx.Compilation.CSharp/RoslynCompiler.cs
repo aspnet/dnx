@@ -14,8 +14,10 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
+using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {
@@ -119,7 +121,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
             if (isPreprocessAspect)
             {
                 compilationSettings.CompilationOptions =
-                    compilationSettings.CompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
+                    compilationSettings.CompilationOptions
+                        .WithOutputKind(OutputKind.DynamicallyLinkedLibrary)
+                        .WithCryptoKeyFile(null)
+                        .WithCryptoPublicKey(ImmutableArray<byte>.Empty)
+                        .WithDelaySign(false);
             }
 
             var compilation = CSharpCompilation.Create(
@@ -191,16 +197,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     return;
                 }
 #endif
-                // Workaround for https://github.com/dotnet/roslyn/issues/6326
                 compilationContext.Diagnostics.Add(
-                    Diagnostic.Create(id: "DNX1001",
-                        title: "Strong name generation with a private and public key pair is not supported on this platform",
-                        message: "Strong name generation with a private and public key pair is supported only on desktop CLR. Falling back to OSS signing.",
-                        category: "StrongNaming",
-                        defaultSeverity: DiagnosticSeverity.Warning,
-                        severity: DiagnosticSeverity.Warning,
-                        warningLevel: 1,
-                        isEnabledByDefault: true));
+                    Diagnostic.Create(RoslynDiagnostics.RealSigningSupportedOnlyOnDesktopClr, null));
             }
         }
 

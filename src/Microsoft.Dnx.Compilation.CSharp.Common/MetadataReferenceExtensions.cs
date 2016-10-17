@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Reflection.PortableExecutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.Extensions.CompilationAbstractions;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {

@@ -5,7 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 
 namespace Microsoft.Dnx.Compilation
 {

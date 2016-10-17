@@ -5,6 +5,7 @@
     "dnx451": {
       "dependencies": {}
     },
+<<<<<<< HEAD
     "dnxcore50": {
       "dependencies": {
         "System.Runtime": "4.0.21-beta-23516",
@@ -22,3 +23,28 @@
     "../someresources/*.txt"
   ]
 }
+=======
+
+    "frameworks": {
+        "dnx451": {
+            "dependencies": {
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Runtime": "4.0.21-*",
+                "System.Reflection": "4.0.0",
+                "System.Console": "4.0.0-*"
+            }
+        }
+    },
+    "resource": [
+        "*.resx",
+        "subfolder/*.resx",
+        "*.txt",
+        "subfolder/*.txt",
+        "../someresources/*.resx",
+        "../someresources/*.txt"
+    ]
+}
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1

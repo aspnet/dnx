@@ -17,9 +17,34 @@
       "version": "1.0.0-rc1-update2",
       "type": "build"
     },
+<<<<<<< HEAD
     "Microsoft.Dnx.Runtime.Sources": {
       "version": "1.0.0-rc1-update2",
       "type": "build"
+=======
+    "frameworks": {
+        "dnx451": {
+            "frameworkAssemblies": {
+                "System.Runtime": ""
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.AppContext": "4.0.1-*",
+                "System.Collections": "4.0.11-*",
+                "System.ComponentModel": "4.0.1-*",
+                "System.Console": "4.0.0-*",
+                "System.Diagnostics.Debug": "4.0.11-*",
+                "System.Reflection": "4.0.11-*",
+                "System.Reflection.Extensions": "4.0.1-*",
+                "System.Runtime": "4.0.21-*",
+                "System.Runtime.Extensions": "4.0.11-*",
+                "System.Runtime.InteropServices": "4.0.21-*",
+                "System.Threading": "4.0.11-*",
+                "System.Threading.Tasks": "4.0.11-*"
+            }
+        }
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
     },
     "Microsoft.Dnx.Loader": "1.0.0-rc1-update2"
   },

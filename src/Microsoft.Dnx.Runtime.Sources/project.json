@@ -16,6 +16,7 @@
         "System.Threading": "4.0.11-beta-23516"
       }
     },
+<<<<<<< HEAD
     "net451": {},
     "netcore50": {
       "dependencies": {
@@ -24,3 +25,22 @@
     }
   }
 }
+=======
+    "shared": "**/*.cs",
+    "dependencies": { },
+    "frameworks": {
+        "dotnet5.4": {
+            "dependencies": {
+                "System.Runtime": "4.0.21-*",
+                "System.Threading": "4.0.11-*"
+            }
+        },
+        "net451": { },
+        "netcore50": {
+            "dependencies": {
+                "System.Runtime": "4.0.0"
+            }
+        }
+    }
+}
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1

@@ -129,11 +129,20 @@ namespace NuGet
                 return null;
             }
 
-            var supportedFrameworks = Directory.EnumerateFiles(supportedFrameworkDirectory, "*.xml")
+            var allFrameworks = Directory.EnumerateFiles(supportedFrameworkDirectory, "*.xml")
                                                .Select(LoadSupportedFramework)
-                                               .Where(p => p != null);
+                                               .Where(p => p != null)
+                                               .ToList();
+            var supportedFrameworks = allFrameworks.Where(f => !IsOptionalFramework(f));
+            var optionalFrameworks = allFrameworks.Where(f => IsOptionalFramework(f));
 
-            return new NetPortableProfile(versionDirectory, profileName, supportedFrameworks);
+            return new NetPortableProfile(versionDirectory, profileName, supportedFrameworks, optionalFrameworks);
+        }
+
+        private static bool IsOptionalFramework(FrameworkName framework)
+        {
+            return framework.Identifier.StartsWith("Mono", StringComparison.OrdinalIgnoreCase) ||
+                framework.Identifier.StartsWith("Xamarin", StringComparison.OrdinalIgnoreCase);
         }
 
         private static FrameworkName LoadSupportedFramework(string frameworkFile)

@@ -26,8 +26,13 @@
     },
     "dotnet5.4": {
       "dependencies": {
+<<<<<<< HEAD
         "System.Console": "4.0.0-beta-23516",
         "System.IO": "4.0.11-beta-23516"
+=======
+        "System.Console": "4.0.0-*",
+        "System.IO": "4.0.11-*"
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
       }
     }
   },

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;

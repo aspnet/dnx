@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Dnx.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;

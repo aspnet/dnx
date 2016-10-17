@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "version": "1.0.0-rc1-update2",
   "compilationOptions": {
     "define": [
@@ -17,6 +18,25 @@
       "dependencies": {
         "System.Runtime": "4.0.21-beta-23516"
       }
+=======
+    "version": "1.0.0-*",
+    "compilationOptions": {
+        "define": [ "TRACE" ],
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
+    },
+    "shared": "**/*.cs",
+    "dependencies": {
+        "Microsoft.Extensions.PlatformAbstractions": ""
+    },
+    "frameworks": {
+        "dnx451": { },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Runtime": "4.0.21-*"
+            }
+        }
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
     }
   }
 }

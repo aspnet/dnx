@@ -6,7 +6,7 @@ namespace Microsoft.Extensions.PlatformAbstractions
 {
     public abstract class PlatformServices
     {
-        private static PlatformServices _defaultPlatformServices;
+        private static PlatformServices _defaultPlatformServices = new DefaultPlatformServices();
 
         public static PlatformServices Default
         {
@@ -29,33 +29,6 @@ namespace Microsoft.Extensions.PlatformAbstractions
         public static void SetDefault(PlatformServices defaultPlatformServices)
         {
             _defaultPlatformServices = defaultPlatformServices;
-        }
-
-        public static PlatformServices Create(
-            PlatformServices basePlatformServices,
-            IApplicationEnvironment application = null,
-            IRuntimeEnvironment runtime = null,
-            IAssemblyLoaderContainer container = null,
-            IAssemblyLoadContextAccessor accessor = null,
-            ILibraryManager libraryManager = null)
-        {
-            if (basePlatformServices == null)
-            {
-                return new DefaultPlatformServices(
-                    application,
-                    runtime,
-                    container,
-                    accessor,
-                    libraryManager
-                );
-            }
-            return new DefaultPlatformServices(
-                    application ?? basePlatformServices.Application,
-                    runtime ?? basePlatformServices.Runtime,
-                    container ?? basePlatformServices.AssemblyLoaderContainer,
-                    accessor ?? basePlatformServices.AssemblyLoadContextAccessor,
-                    libraryManager ?? basePlatformServices.LibraryManager
-                );
         }
     }
 }

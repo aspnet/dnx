@@ -9,6 +9,8 @@ using System.Linq;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 using NuGet;
 
 namespace Microsoft.Dnx.Compilation

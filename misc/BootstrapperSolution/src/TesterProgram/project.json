@@ -1,5 +1,11 @@
 {
+<<<<<<< HEAD
   "dependencies": {},
+=======
+  "dependencies": {
+  },
+
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
   "commands": {
     "TesterProgram": "TesterProgram"
   },
@@ -7,7 +13,11 @@
     "dnx451": {},
     "dnxcore50": {
       "dependencies": {
+<<<<<<< HEAD
         "Microsoft.CSharp": "4.0.1-beta-23516"
+=======
+        "Microsoft.CSharp": "4.0.1-*"
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
       }
     }
   }

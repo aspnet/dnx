@@ -11,6 +11,8 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
@@ -159,12 +161,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _serviceProvider.Add(typeof(IAssemblyLoaderContainer), PlatformServices.Default.AssemblyLoaderContainer);
 
 
-            PlatformServices.SetDefault(
-                PlatformServices.Create(
-                    PlatformServices.Default,
-                    application: applicationEnvironment,
-                    libraryManager: runtimeLibraryManager
-                    ));
+            PlatformServices.SetDefault(new ApplicationHostPlatformServices(PlatformServices.Default, applicationEnvironment, runtimeLibraryManager));
 
             if (options.CompilationServerPort.HasValue)
             {

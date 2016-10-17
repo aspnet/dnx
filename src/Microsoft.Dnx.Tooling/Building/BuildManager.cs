@@ -10,6 +10,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Internals;
 using Microsoft.Dnx.Tooling.Utils;

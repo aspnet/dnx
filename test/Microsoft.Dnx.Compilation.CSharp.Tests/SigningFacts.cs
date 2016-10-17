@@ -3,8 +3,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.AspNet.Testing.xunit;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 using Microsoft.Extensions.PlatformAbstractions;
 using Xunit;
 
@@ -51,45 +54,6 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
                 compilationTarget, Directory.GetCurrentDirectory(), "project.json", "title", "description", "copyright",
                 "1.0.0", new System.Version(1, 0), false, new CompilationFiles(Enumerable.Empty<string>(),
                 Enumerable.Empty<string>()), compilerOptions);
-        }
-
-        private class FakeCacheContextAccessor : ICacheContextAccessor
-        {
-            public CacheContext Current { get; set; }
-        }
-
-        private class FakeCompilerOptions : ICompilerOptions
-        {
-            public bool? AllowUnsafe { get; set; }
-
-            public IEnumerable<string> Defines { get; set; }
-
-            public bool? DelaySign { get; set; }
-
-            public bool? EmitEntryPoint { get; set; }
-
-            public string KeyFile { get; set; }
-
-            public string LanguageVersion { get; set; }
-
-            public bool? Optimize { get; set; }
-
-            public string Platform { get; set; }
-
-            public bool? UseOssSigning { get; set; }
-
-            public bool? WarningsAsErrors { get; set; }
-        }
-
-        private class FakeNamedDependencyProvider : INamedCacheDependencyProvider
-        {
-            public ICacheDependency GetNamedDependency(string name)
-            {
-                return null;
-            }
-
-            public void Trigger(string name)
-            { }
         }
     }
 }

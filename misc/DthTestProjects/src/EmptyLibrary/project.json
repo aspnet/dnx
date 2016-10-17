@@ -2,8 +2,13 @@
   "dependencies": {},
   "frameworks": {
     "dnxcore50": {
+<<<<<<< HEAD
       "dependencies": {
         "System.Runtime": "4.0.21-beta-23516"
+=======
+      "dependencies":{
+        "System.Runtime": "4.0.21-*"
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
       }
     }
   }

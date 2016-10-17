@@ -76,7 +76,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_CORECLR_MANAGED_NAME,
     "Microsoft.Dnx.ApplicationHost",
     "Microsoft.Dnx.Compilation",
-    "Microsoft.Dnx.Compilation.Abstractions",
+    "Microsoft.Extensions.CompilationAbstractions",
     "Microsoft.Dnx.Compilation.CSharp",
     "Microsoft.Dnx.Compilation.CSharp.Abstractions",
     "Microsoft.Dnx.Compilation.CSharp.Common",
@@ -142,7 +142,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFil
 #repo-initialize target='initialize'
     git gitCommand="submodule update --init"
     @{
-        DoRestore();
+        DoRestore("default -runtime coreclr");
     }
 
 - // k-standard-goal overrides
@@ -722,22 +722,14 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
             }
         }
 
-        // We need to run restore with the new runtime (just one of them)
-        // On windows, grab a random windows target, otherwise use mono
-        string path = null;
-
-        if (CanBuildForWindows)
-        {
-            path = binPaths[RUNTIME_CLR_WIN_x86_NAME];
-        }
-        else
-        {
-            path = binPaths[RUNTIME_MONO_NAME];
-        }
+        // We need to run restore with the new runtime (just one of them).
+        // Avoid Mono since it can be unreliable; use first DNX Core target.
+        var coreTarget = RUNTIME_TARGETS.First(target => target.Flavor == "coreclr");
+        var path = binPaths[coreTarget.Name];
 
         ExecuteWithPath(path, () =>
         {
-            DoRestore();
+            DoRestore(dnvmUse: null);
         });
 
         // Group by operation system since we only want to run unit tests on a single bitness
@@ -826,8 +818,8 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
     }
 
 - // ===================== SHARED UTILITIES =====================
-macro name='DoRestore'
-    dnu command='restore ${ E("KOREBUILD_DNU_RESTORE_OPTIONS") } ${ IsLinux ? string.Empty : "--parallel" } src test samples'
+macro name='DoRestore' dnvmUse='string'
+    dnu command='restore ${ E("KOREBUILD_DNU_RESTORE_OPTIONS") } --parallel src test samples'
 
 #update-tpa
     @{
@@ -907,6 +899,14 @@ functions @{
             return string.Equals(Uname(), "Linux");
         }
     }
+    
+    bool CanBuildForCentOS
+    {
+        get
+        {
+            return LinuxDistro("centos");
+        }
+    }
 
     bool CanBuildForDarwin
     {
@@ -932,6 +932,13 @@ functions @{
             var travis = Environment.GetEnvironmentVariable("TRAVIS");
             return string.Equals(travis, "true");
         }
+    }
+
+    public bool LinuxDistro(string distro)
+    {
+        string result;
+        ExecuteAndRedirectOutput("cat", "/etc/os-release", out result);
+        return result.Contains(distro);
     }
 
     public string Uname()
@@ -1207,11 +1214,25 @@ functions @{
         var runtimeTarget = "";
         if(target.OS == "win")
         {
-            runtimeTarget = "win7";
+            if(target.Arch == "arm")
+            {
+                runtimeTarget = "win10";
+            }
+            else
+            {
+                runtimeTarget = "win7";
+            }
         }
         else if(target.OS == "linux")
         {
-            runtimeTarget = "ubuntu.14.04";
+            if (CanBuildForCentOS)
+            {
+                runtimeTarget = "centos.7";
+            }
+            else
+            {
+                runtimeTarget = "ubuntu.14.04";
+            }
         }
         else if(target.OS == "darwin")
         {
@@ -1219,6 +1240,7 @@ functions @{
         }
 
         runtimeTarget += "-" + target.Arch;
+
         var args = string.Format("--runtime {0}", runtimeTarget);
 
         if (target.Flavor == "mono")

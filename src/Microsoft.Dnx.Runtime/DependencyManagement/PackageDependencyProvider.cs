@@ -364,7 +364,7 @@ namespace Microsoft.Dnx.Runtime
                 return Enumerable.Empty<IPackagePathResolver>();
             }
 
-            return packageCachePathValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+            return packageCachePathValue.Split(new[] { Path.PathSeparator }, StringSplitOptions.RemoveEmptyEntries)
                                         .Select(path => new DefaultPackagePathResolver(path));
         }
 

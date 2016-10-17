@@ -151,14 +151,15 @@ namespace Microsoft.Dnx.Tooling.Publish
                     runtimeProbePaths = new List<string>();
                     runtimeProbePaths.Add(runtime);
                     var runtimeHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
+                    var pathSeparator = Path.PathSeparator;
                     if (string.IsNullOrEmpty(runtimeHome))
                     {
                         var runtimeGlobalPath = DnuEnvironment.GetFolderPath(DnuFolderPath.DnxGlobalPath);
                         var defaultRuntimeHome = DnuEnvironment.GetFolderPath(DnuFolderPath.DefaultDnxHome);
-                        runtimeHome = $"{defaultRuntimeHome};{runtimeGlobalPath}";
+                        runtimeHome = $"{defaultRuntimeHome}{pathSeparator}{runtimeGlobalPath}";
                     }
 
-                    foreach (var portion in runtimeHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                    foreach (var portion in runtimeHome.Split(new[] { pathSeparator }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         var packagesPath = Path.Combine(
                             Environment.ExpandEnvironmentVariables(portion),

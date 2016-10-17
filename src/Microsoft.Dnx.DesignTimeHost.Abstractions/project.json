@@ -13,7 +13,11 @@
     "net451": {},
     "dotnet5.4": {
       "dependencies": {
+<<<<<<< HEAD
         "System.Runtime": "4.0.21-beta-23516"
+=======
+        "System.Runtime": "4.0.21-*"
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
       }
     }
   },

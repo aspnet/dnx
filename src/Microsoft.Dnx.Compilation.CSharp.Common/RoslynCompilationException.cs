@@ -7,7 +7,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Dnx.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {

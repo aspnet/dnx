@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.PlatformAbstractions;
 
 using NuGet;

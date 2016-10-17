@@ -20,12 +20,11 @@ namespace Microsoft.Dnx.ApplicationHost.FunctionalTests
             sdk.Dnu.Restore(project.ProjectDirectory).EnsureSuccess();
 
             // Act
-            var result = sdk.Dnx.Execute(project);
+            var result = sdk.Dnx.Execute(project).EnsureSuccess();
 
             // Assert
-            Assert.Equal(0, result.ExitCode);
             Assert.Contains($"Project: {project.Name}", result.StandardOutput);
-            Assert.Contains($"Package: Microsoft.Dnx.Compilation.Abstractions", result.StandardOutput);
+            Assert.Contains($"Package: Microsoft.Extensions.CompilationAbstractions", result.StandardOutput);
 
             TestUtils.CleanUpTestDir<AppHostTests>(sdk);
         }

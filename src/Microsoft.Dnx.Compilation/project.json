@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "version": "1.0.0-rc1-update2",
   "compilationOptions": {
     "keyFile": "../../tools/Key.snk"
@@ -19,6 +20,40 @@
   "frameworks": {
     "dnx451": {
       "dependencies": {}
+=======
+    "version": "1.0.0-*",
+    "compilationOptions": {
+        "keyFile": "../../tools/Key.snk"
+    },
+    "dependencies": {
+        "Microsoft.Extensions.CompilationAbstractions": "1.0.0-*",
+        "Microsoft.Dnx.Runtime.Sources": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Runtime.Internals": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+      "Microsoft.Dnx.Runtime": "1.0.0-*",
+      "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*"
+    },
+    "frameworks": {
+        "dnx451": {
+            "dependencies": {
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Console": "4.0.0-*",
+                "System.Runtime": "4.0.21-*",
+                "System.IO.FileSystem": "4.0.1-*",
+                "System.IO.FileSystem.Watcher": "4.0.0-*",
+                "System.Linq": "4.0.1-*",
+                "System.Collections.Concurrent": "4.0.11-*"
+            }
+        }
+>>>>>>> 9cec6043a5564206d0fd412011b0a629e59b69a1
     },
     "dnxcore50": {
       "dependencies": {
