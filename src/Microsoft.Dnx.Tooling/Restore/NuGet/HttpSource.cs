@@ -32,6 +32,13 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
         // the default is 256 which is easy to hit if we don't limit concurrency
         private readonly static SemaphoreSlim _throttle = new SemaphoreSlim(ConcurrencyLimit);
 
+#if DNX451
+        // Limiting concurrent Http requests as HttpClient on Mono only allows one http
+        // request at a time to a single remote host. If a large number of simultaneous requests
+        // are made, HttpClient will timeout waiting to use one of the two sockets.
+        private readonly SemaphoreSlim _httpClientThrottle;
+#endif
+
         private const string UserAgentName = "Microsoft_.NET_Development_Utility";
 
         public HttpSource(
@@ -79,6 +86,10 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             var env = RuntimeEnvironmentHelper.RuntimeEnvironment;
             var userAgentHeader = $"{UserAgentName}/{env.RuntimeVersion}({env.OperatingSystem}{env.OperatingSystemVersion})";
             _client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgentHeader);
+
+#if DNX451
+            _httpClientThrottle = new SemaphoreSlim(ServicePointManager.DefaultConnectionLimit);
+#endif
         }
 
         public string BaseUri
@@ -126,19 +137,32 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 {
                     HttpStatusCode statusCode;
 
-                    using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+#if DNX451
+                    try
                     {
-                        if (!throwNotFound && response.StatusCode == HttpStatusCode.NotFound)
+                        await _httpClientThrottle.WaitAsync();
+#endif
+                        using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+                            )
                         {
-                            _reports.Quiet.WriteLine(
-                                $"  {response.StatusCode.ToString().Green()} {uri} {sw.ElapsedMilliseconds.ToString().Bold()}ms");
-                            return new HttpSourceResult();
-                        }
+                            if (!throwNotFound && response.StatusCode == HttpStatusCode.NotFound)
+                            {
+                                _reports.Quiet.WriteLine(
+                                    $"  {response.StatusCode.ToString().Green()} {uri} {sw.ElapsedMilliseconds.ToString().Bold()}ms");
+                                return new HttpSourceResult();
+                            }
 
-                        response.EnsureSuccessStatusCode();
-                        statusCode = response.StatusCode;
-                        await response.Content.CopyToAsync(responseStream);
+                            response.EnsureSuccessStatusCode();
+                            statusCode = response.StatusCode;
+                            await response.Content.CopyToAsync(responseStream);
+                        }
+#if DNX451
                     }
+                    finally
+                    {
+                        _httpClientThrottle.Release();
+                    }
+#endif
 
                     responseStream.Seek(0, SeekOrigin.Begin);
                     ensureValidContents?.Invoke(responseStream);
