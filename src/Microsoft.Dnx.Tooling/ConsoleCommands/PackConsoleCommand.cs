@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -11,6 +12,8 @@ namespace Microsoft.Dnx.Tooling
 {
     internal class PackConsoleCommand
     {
+        private static readonly IList<string> DefaultConfigurations = new[] { "Release" };
+
         public static void Register(CommandLineApplication cmdApp, ReportsFactory reportsFactory)
         {
             cmdApp.Command("pack", c =>
@@ -39,7 +42,7 @@ namespace Microsoft.Dnx.Tooling
                     {
                         buildOptions.ProjectPatterns.Add(Path.Combine(Directory.GetCurrentDirectory(), "project.json"));
                     }
-                    buildOptions.Configurations = optionConfiguration.Values;
+                    buildOptions.Configurations = optionConfiguration.HasValue() ? optionConfiguration.Values : DefaultConfigurations;
                     buildOptions.AddFrameworkMonikers(optionFramework.Values);
                     buildOptions.GeneratePackages = true;
                     buildOptions.Reports = reportsFactory.CreateReports(optionQuiet.HasValue());
