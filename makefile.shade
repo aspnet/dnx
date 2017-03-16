@@ -105,6 +105,10 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 var CAN_BUILD_ONECORE = '${Directory.Exists(VS_ONECORE_ROOT) && Directory.GetFiles(VS_ONECORE_ROOT, "vcruntime.lib", SearchOption.AllDirectories).Any() && Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles(WIN10_SDK_LIB, "onecore.lib", SearchOption.AllDirectories).Any()}'
 
 @{
+  E("CORECLR_RUNTIME_VERSION", "1.0.0-dev");
+}
+
+@{
     // Always build mono
     RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_MONO_NAME, TargetFolder = RUNTIME_MONO_BIN, Framework = "dnx451", Arch = "any", OS = "any", Flavor = "mono" });
 
