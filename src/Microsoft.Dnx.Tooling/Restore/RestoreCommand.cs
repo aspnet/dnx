@@ -221,8 +221,10 @@ namespace Microsoft.Dnx.Tooling
 
             var lockFile = await ReadLockFile(projectLockFilePath);
 
+            bool relock = Lock;
+
             var useLockFile = false;
-            if (Lock == false &&
+            if (relock == false &&
                 Unlock == false &&
                 lockFile != null &&
                 lockFile.Islocked)
@@ -236,7 +238,7 @@ namespace Microsoft.Dnx.Tooling
                 Reports.Information.WriteLine("Updating the invalid lock file with {0}",
                     "dnu restore --lock".Yellow().Bold());
                 useLockFile = false;
-                Lock = true;
+                relock = true;
             }
 
             Func<string, string> getVariable = key =>
@@ -523,7 +525,8 @@ namespace Microsoft.Dnx.Tooling
                               graphItems,
                               repository,
                               projectResolver,
-                              targetContexts);
+                              targetContexts,
+                              relock);
             }
 
             if (!SkipRestoreEvents)
@@ -840,13 +843,14 @@ namespace Microsoft.Dnx.Tooling
                                    List<GraphItem> graphItems,
                                    PackageRepository repository,
                                    IProjectResolver projectResolver,
-                                   IEnumerable<TargetContext> contexts)
+                                   IEnumerable<TargetContext> contexts,
+                                   bool relock)
         {
             var resolver = new DefaultPackagePathResolver(repository.RepositoryRoot.Root);
             var previousPackageLibraries = previousLockFile?.PackageLibraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
 
             var lockFile = new LockFile();
-            lockFile.Islocked = Lock;
+            lockFile.Islocked = relock;
 
             // Use empty string as the key of dependencies shared by all frameworks
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
