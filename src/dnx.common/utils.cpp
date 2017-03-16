@@ -5,6 +5,7 @@
 
 #include "xplat.h"
 #include <string>
+#include <cpprest\json.h>
 
 // <codecvt> not supported in libstdc++ (gcc, Clang) but conversions from wstring are only
 // meant to be used on Windows
@@ -56,6 +57,9 @@ namespace dnx
         bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2)
         {
 #if defined(_WIN32)
+            auto value = web::json::value::parse(_X("{ \"a\" : 123 }"));
+            std::wcout << value[_X("a")] << std::endl;
+
             return _wcsicmp(s1, s2) == 0;
 #else
             return strcasecmp(s1, s2) == 0;

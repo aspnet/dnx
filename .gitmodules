@@ -1,3 +1,6 @@
 [submodule "submodules/FileSystem"]
 	path = submodules/FileSystem
 	url = https://github.com/aspnet/FileSystem.git
+[submodule "submodules/cpprestsdk"]
+	path = submodules/cpprestsdk
+	url = https://github.com/Microsoft/cpprestsdk
