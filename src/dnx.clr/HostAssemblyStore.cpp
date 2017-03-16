@@ -5,7 +5,7 @@
 #include <string>
 #include "utils.h"
 
-const wchar_t* AppDomainManagerAssemblyName = L"Microsoft.Dnx.Host.Clr, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, ProcessorArchitecture=MSIL";
+const wchar_t* AppDomainManagerAssemblyName = L"Microsoft.Dnx.Host.Clr, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, ProcessorArchitecture=MSIL, CodeBase=.";
 
 // IHostAssemblyStore
 HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *pBindInfo, UINT64* pAssemblyId, UINT64* pContext,
