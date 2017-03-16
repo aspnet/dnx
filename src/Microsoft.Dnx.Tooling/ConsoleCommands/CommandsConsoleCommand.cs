@@ -5,6 +5,7 @@ using System;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
+using Microsoft.Dnx.Runtime.Internal;
 
 namespace Microsoft.Dnx.Tooling
 {
@@ -24,6 +25,7 @@ namespace Microsoft.Dnx.Tooling
 
                 RegisterInstallSubcommand(cmd, reportsFactory, appEnvironment);
                 RegisterUninstallSubcommand(cmd, reportsFactory);
+                RegisterListSubcommand(cmd, reportsFactory);
             });
         }
 
@@ -98,6 +100,28 @@ namespace Microsoft.Dnx.Tooling
 
                     var success = command.Execute(argCommand.Value);
                     return success ? 0 : 1;
+                });
+            });
+        }
+
+        private static void RegisterListSubcommand(CommandLineApplication commandsCmd, ReportsFactory reportsFactory)
+        {
+            commandsCmd.Command("list", c =>
+            {
+                c.Description = "Lists application commands";
+
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    c.ShowRootCommandFullNameAndVersion();
+
+                    var command = new ListCommandsCommand(
+                        reports: reportsFactory.CreateReports(quiet: false));
+
+                    var success = command.Execute();
+                    return success ? 0 : 1;
+
                 });
             });
         }
