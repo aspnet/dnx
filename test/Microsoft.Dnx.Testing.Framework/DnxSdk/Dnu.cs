@@ -92,11 +92,30 @@ namespace Microsoft.Dnx.Testing.Framework
             return Execute($"wrap \"{csprojPath}\" {additionalArguments}");
         }
 
+        public DnuPackOutput Build(
+            string projectDir, 
+            string outputPath = null, 
+            string configuration = "Debug",
+            string additionalArguments = null)
+        {
+            return PackOrBuild("build", projectDir, outputPath, configuration, additionalArguments);
+        }
+
         public DnuPackOutput Pack(
             string projectDir, 
             string outputPath = null, 
             string configuration = "Debug",
             string additionalArguments = null)
+        {
+            return PackOrBuild("pack", projectDir, outputPath, configuration, additionalArguments);
+        }
+
+        private DnuPackOutput PackOrBuild(
+            string dnuCommand,
+            string projectDir, 
+            string outputPath, 
+            string configuration,
+            string additionalArguments)
         {
             var sb = new StringBuilder();
             sb.Append($@"pack ""{projectDir}""");

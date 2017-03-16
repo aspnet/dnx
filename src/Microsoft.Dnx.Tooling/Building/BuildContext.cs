@@ -30,18 +30,13 @@ namespace Microsoft.Dnx.Tooling
             _project = project;
             _targetFramework = targetFramework;
             _configuration = configuration;
-            _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
-            _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
+            _outputPath = outputPath;
+            _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
 
             _libraryExporter = compilationEngine.CreateProjectExporter(
                 _project, _targetFramework, _configuration);
 
             _libraryManager = _libraryExporter.LibraryManager;
-        }
-
-        public void Initialize(IReport report)
-        {
-            ShowDependencyInformation(report);
         }
 
         public bool Build(List<DiagnosticMessage> diagnostics)
@@ -168,8 +163,13 @@ namespace Microsoft.Dnx.Tooling
             }
         }
 
-        private void ShowDependencyInformation(IReport report)
+        public void ShowDependencyInformation(IReport report)
         {
+            if(report == null)
+            {
+                throw new ArgumentNullException(nameof(report));
+            }
+
             // Make lookup for actual package dependency assemblies
             var projectExport = _libraryExporter.GetAllExports(_project.Name);
             if (projectExport == null)
