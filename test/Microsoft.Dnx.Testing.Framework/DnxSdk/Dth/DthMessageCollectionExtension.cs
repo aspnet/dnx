@@ -42,6 +42,30 @@ namespace Microsoft.Dnx.Testing.Framework.DesignTimeHost
             return result;
         }
 
+        public static DthMessage RetrieveSingleMessage(this IEnumerable<DthMessage> messages,
+                                                       string typename,
+                                                       int contextId)
+        {
+            var result = messages.SingleOrDefault(msg => contextId == msg.ContextId &&
+                                                         string.Equals(msg.MessageType, typename, StringComparison.Ordinal));
+
+            if (result == null)
+            {
+                if (messages.FirstOrDefault(msg => contextId == msg.ContextId && 
+                                                   string.Equals(msg.MessageType, typename, StringComparison.Ordinal)) != null)
+                {
+                    Assert.False(true, $"More than one {typename} messages from context {contextId} exist.");
+                }
+                else
+                {
+                    Assert.False(true, $"{typename} message from context {contextId} doesn't exists.");
+                }
+            }
+
+            return result;
+        }
+
+
         public static IEnumerable<DthMessage> ContainsMessage(this IEnumerable<DthMessage> messages,
                                                               string typename)
         {
