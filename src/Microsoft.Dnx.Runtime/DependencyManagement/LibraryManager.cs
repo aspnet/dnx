@@ -125,14 +125,14 @@ namespace Microsoft.Dnx.Runtime
                     string errorCode;
                     if (library.Compatible)
                     {
-                        errorCode = DiagnosticMonikers.NU1001;
-                        message = $"The dependency {library.RequestedRange} could not be resolved.";
-                    }
-                    else
-                    {
                         errorCode = DiagnosticMonikers.NU1002;
                         var projectName = Directory.GetParent(_projectPath).Name;
                         message = $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
+                    }
+                    else
+                    {
+                        errorCode = DiagnosticMonikers.NU1001;
+                        message = $"The dependency {library.RequestedRange} could not be resolved.";
                     }
 
                     messages.Add(
