@@ -12,16 +12,8 @@ namespace Microsoft.Dnx.Runtime.Common
 {
     internal static class EntryPointExecutor
     {
-        public static Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
+        public static Task<int> Execute(object instance, MethodInfo entryPoint, object[] args)
         {
-            object instance;
-            MethodInfo entryPoint;
-
-            if (!TryGetEntryPoint(assembly, serviceProvider, out instance, out entryPoint))
-            {
-                return Task.FromResult(1);
-            }
-
             object result = null;
             var parameters = entryPoint.GetParameters();
 
@@ -31,9 +23,13 @@ namespace Microsoft.Dnx.Runtime.Common
                 {
                     result = entryPoint.Invoke(instance, null);
                 }
-                else if (parameters.Length == 1)
+                else if (parameters.Length == args.Length)
                 {
-                    result = entryPoint.Invoke(instance, new object[] { args });
+                    result = entryPoint.Invoke(instance, args);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Entry point argument count mismatch, expected 0 or {args.Length}");
                 }
             }
             catch (Exception ex)
@@ -67,7 +63,20 @@ namespace Microsoft.Dnx.Runtime.Common
             return Task.FromResult(0);
         }
 
-        private static bool TryGetEntryPoint(Assembly assembly, IServiceProvider serviceProvider, out object instance, out MethodInfo entryPoint)
+        public static Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
+        {
+            object instance;
+            MethodInfo entryPoint;
+
+            if (!TryGetEntryPoint(assembly, serviceProvider, out instance, out entryPoint))
+            {
+                return Task.FromResult(1);
+            }
+
+            return Execute(instance, entryPoint, new object[] { args });
+        }
+
+        public static bool TryGetEntryPoint(Assembly assembly, IServiceProvider serviceProvider, out object instance, out MethodInfo entryPoint)
         {
             string name = assembly.GetName().Name;
 
