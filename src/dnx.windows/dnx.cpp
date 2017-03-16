@@ -9,13 +9,13 @@ HMODULE load_dnx_dll(const wchar_t* dnx_dll_name)
     if (!dnx_dll)
     {
         auto last_error = GetLastError();
-        _tprintf(L"%s could not be loaded. Last error: %d\n", dnx_dll_name, last_error);
+        wprintf(L"%s could not be loaded. Last error: %d\n", dnx_dll_name, last_error);
     }
 
     return dnx_dll;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int wmain(int argc, wchar_t* argv[])
 {
     OSVERSIONINFO version_info;
     ZeroMemory(&version_info, sizeof(OSVERSIONINFO));
@@ -38,7 +38,7 @@ int _tmain(int argc, _TCHAR* argv[])
     {
         if (is_oneCore)
         {
-            _tprintf(L"Falling back to loading dnx.win32.dll\n");
+            wprintf(L"Falling back to loading dnx.win32.dll\n");
         }
 
         dnx_dll = load_dnx_dll(L"dnx.win32.dll");
@@ -52,7 +52,7 @@ int _tmain(int argc, _TCHAR* argv[])
     auto entry_point = (int (STDAPICALLTYPE*)(int, wchar_t **))GetProcAddress(dnx_dll, "DnxMain");
     if (!entry_point)
     {
-        _tprintf(L"Getting entry point failed\n");
+        wprintf(L"Getting entry point failed\n");
         return -1;
     }
 

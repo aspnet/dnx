@@ -8,7 +8,6 @@
 #ifndef PLATFORM_UNIX
 #include "targetver.h"
 
-#include <tchar.h>
 #include <strsafe.h>
 
 #define WIN32_LEAN_AND_MEAN
