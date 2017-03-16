@@ -967,16 +967,19 @@ functions @{
             return CXX;
         }
 
-        foreach(var dir in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator))
+        foreach(var dir in Environment.GetEnvironmentVariable("PATH").Split(new string[] { ";" }, StringSplitOptions.None))
         {
-            if (File.Exists(Path.Combine(dir, "clang++")))
-            {
-                return Path.Combine(dir, "clang++");
+            try {
+                if (File.Exists(Path.Combine(dir, "clang++")))
+                {
+                    return Path.Combine(dir, "clang++");
+                }
+                else if (File.Exists(Path.Combine(dir, "clang++-3.5")))
+                {
+                    return Path.Combine(dir, "clang++-3.5");
+                }
             }
-            else if (File.Exists(Path.Combine(dir, "clang++-3.5")))
-            {
-                return Path.Combine(dir, "clang++-3.5");
-            }
+            catch (Exception ex) { }
         }
 
         return null;
