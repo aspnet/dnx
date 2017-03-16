@@ -114,7 +114,7 @@ namespace Microsoft.Dnx.Host
             if (!app.IsShowingInformation && app.RemainingArguments.Count == 0)
             {
                 app.ShowHelp();
-                return Task.FromResult(2);
+                return Task.FromResult(0);
             }
 
             // Some options should be forwarded to Microsoft.Dnx.ApplicationHost

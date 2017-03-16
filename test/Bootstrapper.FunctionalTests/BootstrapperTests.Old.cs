@@ -79,7 +79,7 @@ namespace ConfigTest
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
-        public void BootstrapperReturnsNonZeroExitCodeWhenNoArgumentWasGiven(string flavor, string os, string architecture)
+        public void BootstrapperReturnsZeroExitCodeWhenNoArgumentWasGiven(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -90,7 +90,7 @@ namespace ConfigTest
                 stdOut: out stdOut,
                 stdErr: out stdErr);
 
-            Assert.Equal(2, exitCode);
+            Assert.Equal(0, exitCode);
         }
 
         [Theory]
