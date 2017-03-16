@@ -6,6 +6,7 @@ using Microsoft.Dnx.Tooling.Publish;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
+using Microsoft.Dnx.Tooling.Publish.Bundling;
 
 namespace Microsoft.Dnx.Tooling
 {
@@ -39,6 +40,10 @@ namespace Microsoft.Dnx.Tooling
                 var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
                     "Name of public folder in the output, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
                     CommandOptionType.SingleValue);
+                var optionBundleFormat = c.Option("--bundle <FORMAT>", $"After publishing, output files can be bundled together into a single artifact, using the specified format. Supported formats: {string.Join(", ", BundlerFactory.SupportedFormats)}",
+                    CommandOptionType.SingleValue);
+                var optionBundleOutput = c.Option("--bundle-out <PATH>", "Where does the bundle go",
+                    CommandOptionType.SingleValue);
                 var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of published files",
                     CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
@@ -56,6 +61,11 @@ namespace Microsoft.Dnx.Tooling
                         return 1;
                     }
 
+                    if (optionBundleFormat.HasValue() && !BundlerFactory.IsSupportedFormat(optionBundleFormat.Value()))
+                    {
+                        reports.WriteError($"Unknown bundle format passed to --{optionBundleFormat.LongName}. Supported formats are: {string.Join(", ", BundlerFactory.SupportedFormats)}");
+                    }
+
                     var options = new PublishOptions
                     {
                         OutputDir = optionOut.Value(),
@@ -71,7 +81,8 @@ namespace Microsoft.Dnx.Tooling
                         IISCommand = optionIISCommand.Value(),
                         Native = optionNative.HasValue(),
                         IncludeSymbols = optionIncludeSymbols.HasValue(),
-                        Reports = reports
+                        Reports = reports,
+                        Bundler = optionBundleFormat.HasValue() ? BundlerFactory.Create(optionBundleFormat.Value(), optionBundleOutput.HasValue() ? optionBundleOutput.Value() : optionOut.Value()) : null
                     };
 
                     options.AddFrameworkMonikers(optionFramework.Values);

@@ -13,6 +13,7 @@ using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Internals;
+using Microsoft.Dnx.Tooling.Building;
 using Microsoft.Dnx.Tooling.Utils;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
@@ -178,8 +179,8 @@ namespace Microsoft.Dnx.Tooling
                 // Create a new builder per configuration
                 packageBuilder = new PackageBuilder();
                 symbolPackageBuilder = new PackageBuilder();
-                InitializeBuilder(_currentProject, packageBuilder);
-                InitializeBuilder(_currentProject, symbolPackageBuilder);
+                packageBuilder.InitializeFromProject(_currentProject);
+                symbolPackageBuilder.InitializeFromProject(_currentProject);
                 installBuilder = new InstallBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
             }
 
@@ -423,52 +424,6 @@ namespace Microsoft.Dnx.Tooling
                 contextVariables.TryGetValue(key, out value);
                 return value;
             };
-        }
-
-        private static void InitializeBuilder(Runtime.Project project, PackageBuilder builder)
-        {
-            builder.Authors.AddRange(project.Authors);
-            builder.Owners.AddRange(project.Owners);
-
-            if (builder.Authors.Count == 0)
-            {
-                // TODO: DNX_AUTHOR is a temporary name
-                var defaultAuthor = Environment.GetEnvironmentVariable("DNX_AUTHOR");
-                if (string.IsNullOrEmpty(defaultAuthor))
-                {
-                    builder.Authors.Add(project.Name);
-                }
-                else
-                {
-                    builder.Authors.Add(defaultAuthor);
-                }
-            }
-
-            builder.Description = project.Description ?? project.Name;
-            builder.Id = project.Name;
-            builder.Version = project.Version;
-            builder.Title = project.Title;
-            builder.Summary = project.Summary;
-            builder.Copyright = project.Copyright;
-            builder.RequireLicenseAcceptance = project.RequireLicenseAcceptance;
-            builder.ReleaseNotes = project.ReleaseNotes;
-            builder.Language = project.Language;
-            builder.Tags.AddRange(project.Tags);
-
-            if (!string.IsNullOrEmpty(project.IconUrl))
-            {
-                builder.IconUrl = new Uri(project.IconUrl);
-            }
-
-            if (!string.IsNullOrEmpty(project.ProjectUrl))
-            {
-                builder.ProjectUrl = new Uri(project.ProjectUrl);
-            }
-
-            if (!string.IsNullOrEmpty(project.LicenseUrl))
-            {
-                builder.LicenseUrl = new Uri(project.LicenseUrl);
-            }
         }
 
         private void WriteSummary(List<DiagnosticMessage> diagnostics)

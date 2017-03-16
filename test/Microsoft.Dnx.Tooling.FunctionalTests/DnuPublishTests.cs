@@ -215,6 +215,25 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
         [Theory, TraceTest]
         [MemberData(nameof(DnxSdks))]
+        public void PublishedAppCanBeBundled(DnxSdk sdk)
+        {
+            // Arrange
+            var solution = TestUtils.GetSolution<DnuPublishTests>(sdk, "HelloWorld");
+            var outputPath = Path.Combine(solution.RootPath, "Output");
+            var project = solution.GetProject("HelloWorld");
+
+            // Act
+            sdk.Dnu.Restore(project).EnsureSuccess();
+            sdk.Dnu.Publish(project.ProjectDirectory, outputPath, $"--no-source --bundle nupkg --bundle-out \"{outputPath}\"").EnsureSuccess();
+
+            // Assert
+            Assert.True(File.Exists(Path.Combine(outputPath, "HelloWorld.1.0.0.nupkg")));
+
+            TestUtils.CleanUpTestDir<DnuPublishTests>(sdk);
+        }
+
+        [Theory, TraceTest]
+        [MemberData(nameof(DnxSdks))]
         public void IISCommandInvalid(DnxSdk sdk)
         {
             // Arrange

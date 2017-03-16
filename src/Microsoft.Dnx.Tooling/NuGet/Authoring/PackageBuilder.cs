@@ -518,7 +518,8 @@ namespace NuGet
 
         private static void CreatePart(ZipArchive package, string path, Stream sourceStream)
         {
-            if (PackageHelper.IsManifest(path))
+            var isRoot = string.IsNullOrWhiteSpace(Path.GetDirectoryName(path));
+            if (isRoot && PackageHelper.IsManifest(path))
             {
                 return;
             }
